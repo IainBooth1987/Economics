@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>BIZ-OMICS | Revision Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════
+   RESET & VARIABLES
+════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ff-sans:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --ff-mono:'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+  /* Dark mode defaults — same as Economics Checklist */
+  --bg:#0a0e1a;--surface:#111827;--surface2:#0d1526;
+  --amber:#f59e0b;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;
+  --text:#f1f5f9;--muted:#94a3b8;--border:rgba(255,255,255,0.08);
+  /* Legacy aliases */
+  --amber-dk:#f59e0b;--amber-lt:rgba(245,158,11,0.12);--amber-bg:#0a0e1a;
+  --slate:#f1f5f9;--slate-md:#94a3b8;--slate-lt:#64748b;
+  --orange:#f59e0b;
+  --r:14px;--r-sm:8px;
+  --shadow:0 2px 20px rgba(0,0,0,0.4);
+  --nav-h:68px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+html{font-size:16px}
+body{
+  font-family:var(--ff-sans);
+  background:var(--bg);color:var(--text);
+  min-height:100dvh;
+  padding-bottom:calc(var(--nav-h) + var(--safe-b));
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ════════════════════════════════════════════
+   BOTTOM NAV
+════════════════════════════════════════════ */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:rgba(10,14,26,0.96);border-top:1px solid var(--border);
+  display:flex;z-index:100;box-shadow:0 -2px 20px rgba(0,0,0,0.3);
+  overflow-x:auto;scrollbar-width:none;
+  backdrop-filter:blur(16px);
+}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{
+  flex:0 0 auto;min-width:64px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;border:none;background:none;
+  color:var(--muted);font-size:10px;font-weight:600;
+  font-family:var(--ff-sans);letter-spacing:.02em;
+  cursor:pointer;padding-top:8px;-webkit-tap-highlight-color:transparent;
+  transition:color .2s;
+}
+.nav-btn .ni{font-size:22px;line-height:1;transition:transform .2s}
+.nav-btn.active{color:var(--amber)}
+.nav-btn.active .ni{transform:translateY(-2px)}
+
+/* ════════════════════════════════════════════
+   VIEWS
+════════════════════════════════════════════ */
+.view{display:none}
+.view.active{display:block}
+
+/* ════════════════════════════════════════════
+   PAGE HEADER
+════════════════════════════════════════════ */
+.pg-header{
+  background:rgba(10,14,26,0.96);
+  color:var(--text);
+  padding:1.1rem 1.1rem 1rem;
+  position:sticky;top:0;z-index:50;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+}
+.pg-header h1{
+  font-size:1.15rem;font-weight:900;letter-spacing:-0.02em;color:var(--text);
+}
+.pg-header h1 .gold{color:var(--amber);}
+.pg-header .sub{font-size:0.68rem;color:var(--muted);margin-top:2px;
+  font-family:var(--ff-mono);letter-spacing:0.12em;text-transform:uppercase;}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:0.5rem;}
+
+/* ════════════════════════════════════════════
+   CONTENT AREA
+════════════════════════════════════════════ */
+.content{padding:14px;max-width:640px;margin:0 auto}
+
+/* ════════════════════════════════════════════
+   CARDS
+════════════════════════════════════════════ */
+.card{
+  background:var(--surface);border-radius:12px;
+  padding:14px;margin-bottom:10px;
+  border:1px solid var(--border);
+}
+.card-title{
+  font-size:0.72rem;font-weight:700;color:var(--amber);margin-bottom:11px;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.1em;
+}
+
+/* ════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;padding:0.38rem 0.95rem;border:1px solid var(--border);
+  border-radius:100px;
+  font-family:var(--ff-sans);font-size:0.78rem;font-weight:500;
+  cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent;
+  white-space:nowrap;background:transparent;color:var(--muted);
+}
+.btn:active{transform:scale(.97)}
+.btn:hover{color:var(--text);border-color:rgba(255,255,255,0.25);}
+.btn-primary{background:var(--amber);color:#000;border-color:rgba(245,158,11,0.4);font-weight:700;}
+.btn-primary:hover{opacity:0.88;}
+.btn-orange{background:rgba(245,158,11,0.15);color:var(--amber);border-color:rgba(245,158,11,0.3);}
+.btn-success{background:rgba(34,197,94,0.15);color:#86efac;border-color:rgba(34,197,94,0.3);}
+.btn-danger{background:rgba(239,68,68,0.15);color:#fca5a5;border-color:rgba(239,68,68,0.3);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-full{width:100%}
+.btn-sm{padding:0.3rem 0.75rem;font-size:0.73rem;}
+
+/* ════════════════════════════════════════════
+   FORMS
+════════════════════════════════════════════ */
+.fg{margin-bottom:12px}
+label{display:block;font-size:0.68rem;font-weight:600;color:var(--muted);margin-bottom:5px;
+  font-family:var(--ff-mono);text-transform:uppercase;letter-spacing:0.1em;}
+input[type=text],input[type=number],input[type=date],
+input[type=time],input[type=email],select,textarea{
+  width:100%;padding:0.5rem 0.75rem;border:1px solid var(--border);
+  border-radius:8px;font-family:var(--ff-sans);
+  font-size:0.88rem;color:var(--text);background:rgba(255,255,255,0.06);
+  transition:border-color .2s;-webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(245,158,11,0.4);}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--amber);cursor:pointer}
+input[type=color]{height:42px;padding:4px;cursor:pointer}
+
+/* ════════════════════════════════════════════
+   STATS GRID
+════════════════════════════════════════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.stat-tile{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:12px;text-align:center;
+}
+.stat-val{font-size:1.7rem;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-0.02em;}
+.stat-lbl{font-size:0.58rem;color:var(--muted);margin-top:3px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.1em;font-family:var(--ff-mono);}
+
+/* ════════════════════════════════════════════
+   PROGRESS BAR
+════════════════════════════════════════════ */
+.pbar{height:3px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin:5px 0}
+.pfill{height:100%;background:var(--amber);border-radius:4px;transition:width .5s}
+
+/* ════════════════════════════════════════════
+   BADGES
+════════════════════════════════════════════ */
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;
+  font-size:0.6rem;font-weight:700;font-family:var(--ff-mono);
+  letter-spacing:0.06em;text-transform:uppercase;}
+.badge-high{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+.badge-medium{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.badge-low{background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);}
+.badge-green{background:rgba(34,197,94,0.15);color:#86efac;border:1px solid rgba(34,197,94,0.3);}
+.badge-amber{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.badge-red{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);}
+
+/* ════════════════════════════════════════════
+   COUNTDOWN BANNER
+════════════════════════════════════════════ */
+.countdown{
+  background:var(--surface);border:1px solid var(--border);
+  text-align:center;padding:16px;border-radius:12px;margin-bottom:12px;
+}
+.cd-days{font-size:3rem;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-0.03em;}
+.cd-lbl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.12em;margin-top:4px;font-family:var(--ff-mono);}
+
+/* ════════════════════════════════════════════
+   BOTTOM SHEET MODAL
+════════════════════════════════════════════ */
+.overlay{
+  position:fixed;inset:0;background:rgba(5,8,18,0.82);
+  z-index:200;display:none;align-items:flex-end;
+  backdrop-filter:blur(8px);
+}
+.overlay.open{display:flex;animation:fadeIn .2s}
+.sheet{
+  background:var(--surface);border-radius:20px 20px 0 0;width:100%;
+  max-height:92dvh;overflow-y:auto;
+  padding:18px 16px calc(18px + var(--safe-b));
+  animation:slideUp .25s ease;
+  border:1px solid rgba(255,255,255,0.12);
+}
+.handle{width:40px;height:4px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 14px}
+.modal-title{font-size:1rem;font-weight:800;margin-bottom:14px;color:var(--text);}
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+.toast{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 12px);
+  left:50%;transform:translateX(-50%) translateY(10px);
+  background:#1f2937;border:1px solid rgba(255,255,255,0.12);
+  color:var(--text);padding:0.55rem 1.1rem;border-radius:10px;
+  font-size:0.76rem;font-weight:600;opacity:0;transition:all .3s;
+  z-index:300;white-space:nowrap;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ════════════════════════════════════════════
+   SESSION ITEMS
+════════════════════════════════════════════ */
+.sess-item{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:10px;border-radius:8px;margin-bottom:6px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);cursor:pointer;
+  transition:background .15s;
+}
+.sess-item:active{background:rgba(245,158,11,0.08);}
+.sess-item.done{opacity:.55}
+.sess-time{font-size:11px;font-weight:700;color:var(--slate-md);min-width:42px;padding-top:1px}
+.sess-info .sname{font-size:13px;font-weight:600}
+.sess-info .stopic{font-size:12px;color:var(--slate-md);margin-top:1px}
+.sess-check{margin-left:auto;font-size:18px;flex-shrink:0}
+.s-strip{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:38px}
+
+/* ════════════════════════════════════════════
+   DAY CARDS (TIMETABLE)
+════════════════════════════════════════════ */
+.day-card{
+  background:var(--surface);border-radius:12px;
+  border:1px solid var(--border);margin-bottom:10px;overflow:hidden;
+}
+.day-head{
+  padding:9px 13px;background:rgba(255,255,255,0.03);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.day-name{font-size:0.82rem;font-weight:700;color:var(--text);}
+.day-date-lbl{font-size:11px;color:var(--slate-md)}
+.day-sessions{padding:7px}
+
+/* ════════════════════════════════════════════
+   TIMER
+════════════════════════════════════════════ */
+.timer-wrap{text-align:center;margin:8px 0 18px}
+.timer-ring{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:200px;height:200px;border-radius:50%;
+  background:conic-gradient(var(--amber) 100%,rgba(255,255,255,0.08) 0%);
+  box-shadow:0 4px 30px rgba(0,0,0,0.4);margin-bottom:16px;
+  transition:background 0.8s linear;
+}
+.timer-inner{
+  background:var(--surface);border-radius:50%;
+  width:168px;height:168px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--border);
+}
+.timer-digits{font-size:2.4rem;font-weight:900;letter-spacing:-.02em;color:var(--text);}
+.timer-state{font-size:0.58rem;color:var(--muted);font-weight:700;
+  text-transform:uppercase;letter-spacing:.1em;margin-top:3px;font-family:var(--ff-mono);}
+
+/* ════════════════════════════════════════════
+   WELLBEING GRID
+════════════════════════════════════════════ */
+.wb-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.wb-item{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;
+  padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.wb-item.done{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.4);}
+.wb-icon{font-size:26px;margin-bottom:5px}
+.wb-label{font-size:12px;font-weight:600;color:var(--slate-md)}
+
+/* ════════════════════════════════════════════
+   SUBJECT CARD
+════════════════════════════════════════════ */
+.subj-card{
+  background:var(--surface);border-radius:12px;
+  border:1px solid var(--border);margin-bottom:10px;overflow:hidden;
+}
+.subj-head{padding:12px 14px;display:flex;gap:11px;align-items:flex-start}
+.subj-swatch{width:44px;height:44px;border-radius:10px;flex-shrink:0}
+.subj-body{flex:1;min-width:0}
+.subj-name{font-size:1rem;font-weight:900;color:var(--text);}
+.subj-meta{font-size:12px;color:var(--slate-md);margin-top:2px}
+.subj-topics{padding:0 14px 12px}
+.topic-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--border);
+}
+.topic-row:last-child{border:none}
+
+/* ════════════════════════════════════════════
+   CONF DOT
+════════════════════════════════════════════ */
+.cdot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+.cdot-red{background:#ef4444}.cdot-amber{background:#f59e0b}.cdot-green{background:#22c55e}
+/* Confidence label with pattern for colour-blind accessibility */
+.conf-label{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--slate-md)}
+.cdot-red::after{content:'●';position:absolute;font-size:7px;color:white;transform:translate(-1px,-1px);opacity:0}
+
+
+/* ════════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════════ */
+.empty{text-align:center;padding:30px 16px;color:var(--muted)}
+.empty .ei{font-size:36px;margin-bottom:8px}
+.empty p{font-size:14px}
+
+/* ════════════════════════════════════════════
+   BREATHING CIRCLE
+════════════════════════════════════════════ */
+.breath-ring{
+  width:180px;height:180px;border-radius:50%;margin:16px auto;
+  background:linear-gradient(135deg,#b45309,#f59e0b);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 30px rgba(0,0,0,0.4);transition:transform 1s ease,opacity 1s ease;
+}
+.breath-inner{
+  width:152px;height:152px;border-radius:50%;background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--border);
+}
+.breath-count{font-size:2.4rem;font-weight:900;color:var(--amber);}
+.breath-phase{font-size:0.72rem;color:var(--muted);margin-top:3px;font-family:var(--ff-mono);}
+
+/* ════════════════════════════════════════════
+   MISC
+════════════════════════════════════════════ */
+.divider{height:1px;background:var(--border);margin:14px 0}
+a{color:var(--amber);text-decoration:none;font-weight:600}
+
+/* Day pills */
+.pill-row{display:flex;gap:5px;margin-top:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.pill-row::-webkit-scrollbar{display:none}
+.day-pill{
+  padding:0.28rem 0.72rem;border:1px solid var(--border);border-radius:100px;
+  font-size:0.72rem;font-weight:600;
+  background:transparent;color:var(--muted);flex-shrink:0;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:all .15s;
+  font-family:var(--ff-sans);
+}
+.day-pill.active{background:var(--amber);color:#000;border-color:rgba(245,158,11,0.4);}
+.day-pill.today{box-shadow:0 0 0 2px rgba(245,158,11,0.4);}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(28,1fr);gap:3px}
+.hm-cell{aspect-ratio:1;border-radius:2px}
+
+/* Achievements */
+.ach-item{display:flex;gap:10px;align-items:center;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);margin-bottom:7px}
+.ach-icon{font-size:24px}
+.ach-name{font-size:13px;font-weight:600}
+.ach-desc{font-size:11px;color:var(--slate-lt)}
+
+/* Streak row */
+.streak-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.streak-day{font-size:9px;color:var(--slate-lt);margin-bottom:3px}
+.streak-dot{width:32px;height:32px;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white}
+
+/* Responsive */
+@media(min-width:600px){
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .wb-grid{grid-template-columns:repeat(4,1fr)}
+  .content{padding:18px}
+}
+
+
+/* ═══════════════════════════════════════
+   LIGHT MODE (matches Economics Checklist)
+═══════════════════════════════════════ */
+body.light-mode{
+  --bg:#f0f2f7;--surface:#fff;--surface2:#e8eaf0;
+  --text:#1a2744;--muted:#5a6485;--border:rgba(26,39,68,0.12);
+  --amber:#f59e0b;
+}
+body.light-mode .nav{background:rgba(240,242,247,0.97);box-shadow:0 -2px 16px rgba(26,39,68,0.08);}
+body.light-mode .pg-header{background:rgba(240,242,247,0.97);box-shadow:0 2px 12px rgba(26,39,68,0.07);}
+body.light-mode .card{box-shadow:0 1px 6px rgba(26,39,68,0.06);}
+body.light-mode .stat-tile{box-shadow:0 1px 6px rgba(26,39,68,0.06);}
+body.light-mode .day-card{box-shadow:0 1px 6px rgba(26,39,68,0.06);}
+body.light-mode .subj-card{box-shadow:0 1px 6px rgba(26,39,68,0.06);}
+body.light-mode .day-head{background:rgba(26,39,68,0.04);}
+body.light-mode .sess-item{background:rgba(26,39,68,0.03);}
+body.light-mode .sess-item:active{background:rgba(26,39,68,0.07);}
+body.light-mode .wb-item{background:rgba(26,39,68,0.03);}
+body.light-mode .wb-item.done{background:#f0fdf4;border-color:#86efac;}
+body.light-mode .ach-item{background:rgba(26,39,68,0.03);}
+body.light-mode .countdown{box-shadow:0 1px 6px rgba(26,39,68,0.06);}
+body.light-mode .btn-orange{background:rgba(245,158,11,0.12);color:#92400e;border-color:rgba(245,158,11,0.3);}
+body.light-mode .btn-success{background:rgba(34,197,94,0.12);color:#166534;border-color:rgba(34,197,94,0.3);}
+body.light-mode .btn-danger{background:rgba(239,68,68,0.12);color:#991b1b;border-color:rgba(239,68,68,0.3);}
+body.light-mode .badge-high{background:rgba(239,68,68,0.1);color:#991b1b;border-color:rgba(239,68,68,0.25);}
+body.light-mode .badge-medium{background:rgba(245,158,11,0.1);color:#92400e;border-color:rgba(245,158,11,0.25);}
+body.light-mode .badge-low{background:rgba(59,130,246,0.1);color:#1e40af;border-color:rgba(59,130,246,0.2);}
+body.light-mode .badge-green{background:rgba(34,197,94,0.1);color:#166534;border-color:rgba(34,197,94,0.25);}
+body.light-mode .badge-amber{background:rgba(245,158,11,0.1);color:#92400e;border-color:rgba(245,158,11,0.25);}
+body.light-mode .badge-red{background:rgba(239,68,68,0.1);color:#991b1b;border-color:rgba(239,68,68,0.25);}
+body.light-mode input,body.light-mode select,body.light-mode textarea{background:rgba(26,39,68,0.05);color:#1a2744;}
+body.light-mode input:focus,body.light-mode select:focus,body.light-mode textarea:focus{border-color:#1a2744;background:#fff;}
+body.light-mode .sheet{border-color:rgba(26,39,68,0.15);}
+body.light-mode .handle{background:rgba(26,39,68,0.15);}
+body.light-mode .toast{background:#fff;border-color:rgba(26,39,68,0.18);color:#1a2744;}
+body.light-mode .overlay{background:rgba(200,205,220,0.75);}
+body.light-mode .timer-inner{border-color:rgba(26,39,68,0.15);}
+body.light-mode .breath-inner{background:#fff;border-color:rgba(26,39,68,0.15);}
+body.light-mode .day-pill.active{background:#1a2744;color:#fff;border-color:#1a2744;}
+body.light-mode .nav-btn.active{color:#1a2744;}
+body.light-mode .stat-val{color:#1a2744;}
+body.light-mode .cd-days{color:#1a2744;}
+
+
+/* ═══ PRINT ═══ */
+@media print{
+  .nav,.btn,.theme-btn,select,input,.overlay,.timer-wrap,.wb-grid,.day-pills{display:none!important}
+  body{background:#fff!important;color:#000!important;padding-bottom:0!important;}
+  .pg-header{background:#1a2744!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#fff!important;position:static!important;}
+  .pg-header .sub{color:rgba(255,255,255,0.7)!important;}
+  .view{display:block!important;}.view:not(.active){display:none!important;}
+  .card{border:1px solid #ddd!important;box-shadow:none!important;break-inside:avoid;}
+  .stat-tile{border:1px solid #ddd!important;box-shadow:none!important;}
+  .day-card{border:1px solid #ddd!important;box-shadow:none!important;}
+}
+.theme-btn{font-size:0.95rem;cursor:pointer;background:none;border:1px solid var(--border);
+  border-radius:100px;padding:0.3rem 0.7rem;color:var(--muted);transition:all 0.18s;}
+.theme-btn:hover{color:var(--text);}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: HOME
+═══════════════════════════════════════════════════ -->
+<div id="view-home" class="view active">
+  <div class="pg-header">
+    <div class="hrow">
+      <div>
+        <h1 id="greeting">Revision Planner</h1>
+        <div class="sub" id="greet-sub">BIZ-OMICS · Revision Planner</div>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()" title="Toggle light/dark">☀️</button>
+      <button class="btn btn-ghost btn-sm" onclick="doExport()">⬇ JSON</button>
+      <button class="btn btn-ghost btn-sm" onclick="doExportCSV()">📊 CSV</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="countdown">
+      <div class="cd-days" id="cd-days">—</div>
+      <div class="cd-lbl">Days Until First Exam</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-tile"><div class="stat-val" id="h-hours">0</div><div class="stat-lbl">Hours Studied</div></div>
+      <div class="stat-tile"><div class="stat-val" id="h-streak">0</div><div class="stat-lbl">Day Streak 🔥</div></div>
+      <div class="stat-tile"><div class="stat-val" id="h-sessions">0</div><div class="stat-lbl">Sessions Done</div></div>
+      <div class="stat-tile"><div class="stat-val" id="h-subjects">0</div><div class="stat-lbl">Subjects</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Today's Sessions</div>
+      <div id="h-today"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📚 My Subjects</div>
+      <div id="h-subjects-snap"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="nav('timetable')">🗓 Timetable</button>
+      <button class="btn btn-orange"  onclick="nav('timer')">⏱ Start Timer</button>
+      <button class="btn btn-ghost"   onclick="nav('papers')">📋 Past Papers</button>
+      <button class="btn btn-success" onclick="nav('wellbeing')">🧘 Wellbeing</button>
+    </div>
+
+    <div id="h-setup" class="card" style="display:none;background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.4)">
+      <div class="card-title" id="h-setup-title">👋 Welcome!</div>
+      <p style="font-size:14px;color:var(--slate-md);margin-bottom:12px" id="h-setup-text">Add your subjects to get started with your revision plan.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="nav('subjects')">➕ Add Subjects</button>
+        <button class="btn btn-ghost" onclick="openSettings()">⚙ Setup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: SUBJECTS
+═══════════════════════════════════════════════════ -->
+<div id="view-subjects" class="view">
+  <div class="pg-header">
+    <div class="hrow">
+      <div><h1>📚 Subjects</h1><div class="sub" id="subjects-sub">Manage your subjects</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="openSettings()">⚙ Setup</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="subjects-list"></div>
+    <button class="btn btn-primary btn-full" onclick="openModal('m-addsub')">➕ Add Subject</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: TIMETABLE
+═══════════════════════════════════════════════════ -->
+<div id="view-timetable" class="view">
+  <div class="pg-header">
+    <div class="hrow">
+      <div><h1>🗓 Timetable</h1><div class="sub" id="tt-week-lbl">Week —</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm" onclick="chWeek(-1)">‹</button>
+        <button class="btn btn-ghost btn-sm" onclick="chWeek(1)">›</button>
+      </div>
+    </div>
+    <div class="pill-row" id="day-pills"></div>
+  </div>
+  <div class="content">
+    <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openAddSession()">⚡ Add Session</button>
+      <button class="btn btn-orange  btn-sm" onclick="openSmartPlan()">🤖 Smart Plan</button>
+      <button class="btn btn-ghost   btn-sm" onclick="copyLastWeek()">📋 Copy Last Week</button>
+    </div>
+    <div id="tt-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: TIMER
+═══════════════════════════════════════════════════ -->
+<div id="view-timer" class="view">
+  <div class="pg-header">
+    <div><h1>⏱ Study Timer</h1><div class="sub" id="timer-sub">Select a subject and start</div></div>
+  </div>
+  <div class="content">
+    <div class="timer-wrap">
+      <div class="timer-ring" id="timer-ring">
+        <div class="timer-inner">
+          <div class="timer-digits" id="timer-digits">50:00</div>
+          <div class="timer-state"  id="timer-state">READY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📚 Subject</div>
+      <select id="timer-subject" onchange="updateTimerSub()">
+        <option value="">— Select subject —</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⏰ Duration</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px">
+        <button class="btn btn-ghost btn-sm" onclick="setPreset(15)">15m</button>
+        <button class="btn btn-ghost btn-sm" onclick="setPreset(25)">25m</button>
+        <button class="btn btn-ghost btn-sm" onclick="setPreset(45)">45m</button>
+        <button class="btn btn-primary btn-sm" onclick="setPreset(50)">50m</button>
+        <button class="btn btn-ghost btn-sm" onclick="setPreset(90)">90m</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="custom-mins" min="1" max="180" placeholder="Custom mins" style="flex:1">
+        <button class="btn btn-ghost" onclick="setCustomTimer()">Set</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="btn btn-success" id="start-btn" onclick="startTimer()" style="padding:15px">▶ Start</button>
+      <button class="btn btn-ghost"                  onclick="pauseTimer()" style="padding:15px">⏸ Pause</button>
+      <button class="btn btn-ghost"                  onclick="resetTimer()" style="padding:15px">↺ Reset</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Today's Sessions</div>
+      <div id="timer-today"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: PROGRESS
+═══════════════════════════════════════════════════ -->
+<div id="view-progress" class="view">
+  <div class="pg-header">
+    <div><h1>📊 Progress</h1><div class="sub">Track your revision journey</div></div>
+  </div>
+  <div class="content">
+    <div class="countdown"><div class="cd-days" id="p-cd">—</div><div class="cd-lbl">Days Until First Exam</div></div>
+    <div class="stats-grid">
+      <div class="stat-tile"><div class="stat-val" id="p-hours">0</div><div class="stat-lbl">Hours Studied</div></div>
+      <div class="stat-tile"><div class="stat-val" id="p-streak">0</div><div class="stat-lbl">Day Streak 🔥</div></div>
+      <div class="stat-tile"><div class="stat-val" id="p-sessions">0</div><div class="stat-lbl">Sessions Done</div></div>
+      <div class="stat-tile"><div class="stat-val" id="p-goal">0%</div><div class="stat-lbl">Weekly Goal</div></div>
+    </div>
+    <div class="card"><div class="card-title">📚 Subject Progress</div><div id="p-subj"></div></div>
+    <div class="card"><div class="card-title">📋 Past Papers</div><div id="p-pp"></div></div>
+    <div class="card"><div class="card-title">🏆 Achievements</div><div id="p-ach"></div></div>
+    <div class="card">
+      <div class="card-title">📅 Last 28 Days</div>
+      <div class="heatmap" id="p-heat"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;font-size:11px;color:var(--slate-lt)">
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(255,255,255,0.06)"></div>None
+        <div style="width:12px;height:12px;border-radius:2px;background:rgba(245,158,11,0.4)"></div>Some
+        <div style="width:12px;height:12px;border-radius:2px;background:var(--amber)"></div>Great
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: WELLBEING
+═══════════════════════════════════════════════════ -->
+<div id="view-wellbeing" class="view">
+  <div class="pg-header">
+    <div><h1>🧘 Wellbeing</h1><div class="sub">Look after yourself</div></div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-title">✅ Today's Habits</div>
+      <div style="text-align:center;margin-bottom:12px">
+        <span style="font-weight:900;font-size:32px;font-weight:800;color:var(--amber)" id="wb-score">0</span>
+        <span style="font-size:15px;color:var(--slate-md)">/4 today</span>
+      </div>
+      <div class="wb-grid">
+        <div class="wb-item" id="wi-sleep"    onclick="toggleWb('sleep')"><div class="wb-icon">😴</div><div class="wb-label">8+ hrs Sleep</div></div>
+        <div class="wb-item" id="wi-exercise" onclick="toggleWb('exercise')"><div class="wb-icon">🏃</div><div class="wb-label">30min Exercise</div></div>
+        <div class="wb-item" id="wi-water"    onclick="toggleWb('water')"><div class="wb-icon">💧</div><div class="wb-label">2L Water</div></div>
+        <div class="wb-item" id="wi-breaks"   onclick="toggleWb('breaks')"><div class="wb-icon">☕</div><div class="wb-label">Regular Breaks</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🫁 Breathing Exercises</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-primary btn-full" onclick="startBreath('box')"   style="flex-direction:column;gap:3px;padding:13px"><span style="font-size:18px">🟦</span><span>Box Breathing</span><span style="font-size:10px;opacity:.8">4-4-4-4</span></button>
+        <button class="btn btn-orange  btn-full" onclick="startBreath('478')"   style="flex-direction:column;gap:3px;padding:13px"><span style="font-size:18px">🌊</span><span>4-7-8 Method</span><span style="font-size:10px;opacity:.8">Calming</span></button>
+        <button class="btn btn-success btn-full" onclick="startBreath('quick')" style="flex-direction:column;gap:3px;padding:13px"><span style="font-size:18px">⚡</span><span>Quick Calm</span><span style="font-size:10px;opacity:.8">5 breaths</span></button>
+        <button class="btn btn-ghost   btn-full" onclick="startBreath('belly')" style="flex-direction:column;gap:3px;padding:13px"><span style="font-size:18px">🫧</span><span>Belly Breathing</span><span style="font-size:10px;opacity:.7">Stress relief</span></button>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-title">📅 7-Day Streak</div><div class="streak-row" id="wb-streak"></div></div>
+
+    <div class="card">
+      <div class="card-title">💡 Exam Tips</div>
+      <div id="wb-tips"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     VIEW: PAST PAPERS
+═══════════════════════════════════════════════════ -->
+<div id="view-papers" class="view">
+  <div class="pg-header">
+    <div class="hrow">
+      <div><h1>📋 Past Papers</h1><div class="sub">Track practice papers</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="openAddPaper()">＋ Add</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-tile"><div class="stat-val" id="pp-total">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat-tile"><div class="stat-val" id="pp-done">0</div><div class="stat-lbl">Done ✅</div></div>
+      <div class="stat-tile"><div class="stat-val" id="pp-todo">0</div><div class="stat-lbl">To Do</div></div>
+    </div>
+    <div class="card" style="padding:10px 14px">
+      <div class="pbar" style="height:12px"><div class="pfill" id="pp-bar" style="width:0%"></div></div>
+      <div style="font-size:12px;color:var(--slate-lt);margin-top:5px" id="pp-lbl">0% complete</div>
+    </div>
+    <div class="card"><div class="card-title">📋 To Do (<span id="pp-todo-count">0</span>)</div><div id="pp-todo-list"></div></div>
+    <div class="card"><div class="card-title">✅ Completed (<span id="pp-done-count">0</span>)</div><div id="pp-done-list"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     BOTTOM NAV
+═══════════════════════════════════════════════════ -->
+<nav class="nav">
+  <button class="nav-btn active" id="nb-home"      onclick="nav('home')"><span class="ni">🏠</span>Home</button>
+  <button class="nav-btn"        id="nb-subjects"  onclick="nav('subjects')"><span class="ni">📚</span>Subjects</button>
+  <button class="nav-btn"        id="nb-timetable" onclick="nav('timetable')"><span class="ni">🗓</span>Timetable</button>
+  <button class="nav-btn"        id="nb-timer"     onclick="nav('timer')"><span class="ni">⏱</span>Timer</button>
+  <button class="nav-btn"        id="nb-progress"  onclick="nav('progress')"><span class="ni">📊</span>Progress</button>
+  <button class="nav-btn"        id="nb-papers"    onclick="nav('papers')"><span class="ni">📋</span>Papers</button>
+  <button class="nav-btn"        id="nb-wellbeing" onclick="nav('wellbeing')"><span class="ni">🧘</span>Wellbeing</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════════════ -->
+
+<!-- Add Subject -->
+<div class="overlay" id="m-addsub">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">Add Subject</div>
+    <div class="fg"><label>Subject Name</label><input type="text" id="ns-name" placeholder="e.g. Economics"></div>
+    <div class="fg"><label>Exam Board</label>
+      <select id="ns-board"><option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option><option>Edexcel IGCSE</option><option>Cambridge IGCSE</option><option>Other</option></select>
+    </div>
+    <div class="fg"><label>Exam Date (earliest paper)</label><input type="date" id="ns-date"></div>
+    <div class="fg"><label>Subject Colour</label><input type="color" id="ns-color" value="#d97706"></div>
+    <div class="fg"><label>Confidence Level</label>
+      <select id="ns-conf">
+        <option value="red">🔴 Low — needs lots of work</option>
+        <option value="amber" selected>🟡 Medium — some gaps</option>
+        <option value="green">🟢 High — feeling good</option>
+      </select>
+    </div>
+    <div class="fg"><label>Topics (one per line)</label>
+      <textarea id="ns-topics" rows="5" placeholder="Supply and demand&#10;Market failure&#10;Macroeconomics"></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addSubject()">Add Subject</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-addsub')">Cancel</button>
+  </div>
+</div>
+
+<!-- Edit Subject -->
+<div class="overlay" id="m-editsub">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">Edit Subject</div>
+    <input type="hidden" id="es-id">
+    <div class="fg"><label>Subject Name</label><input type="text" id="es-name"></div>
+    <div class="fg"><label>Exam Board</label>
+      <select id="es-board"><option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option><option>Edexcel IGCSE</option><option>Cambridge IGCSE</option><option>Other</option></select>
+    </div>
+    <div class="fg"><label>Exam Date</label><input type="date" id="es-date"></div>
+    <div class="fg"><label>Confidence</label>
+      <select id="es-conf"><option value="red">🔴 Low</option><option value="amber">🟡 Medium</option><option value="green">🟢 High</option></select>
+    </div>
+    <div class="fg"><label>Add Topics (one per line)</label><textarea id="es-topics" rows="4" placeholder="New topics to add..."></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveEditSubject()">Save Changes</button>
+    <button class="btn btn-danger   btn-full" style="margin-top:7px" onclick="deleteSubject()">🗑 Delete Subject</button>
+    <button class="btn btn-ghost    btn-full" style="margin-top:7px" onclick="closeModal('m-editsub')">Cancel</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="m-settings">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">⚙ Student Setup</div>
+    <div class="fg"><label>Your Name</label><input type="text" id="set-name" placeholder="First name"></div>
+    <div class="fg"><label>Year Group</label>
+      <select id="set-year">
+        <option value="Year 9">Year 9 (GCSE)</option>
+        <option value="Year 10">Year 10 (GCSE)</option>
+        <option value="Year 11">Year 11 (GCSE)</option>
+        <option value="Year 12">Year 12 (A-Level / AS)</option>
+        <option value="Year 13">Year 13 (A-Level)</option>
+      </select>
+    </div>
+    <div class="fg"><label>First Exam Date</label><input type="date" id="set-exam"></div>
+    <div class="fg"><label>Daily Study Goal (hours)</label><input type="number" id="set-goal" min="1" max="12" value="4"></div>
+    <div class="fg"><label>Session Length (minutes)</label><input type="number" id="set-sess" min="15" max="120" value="50"></div>
+    <div class="fg"><label>Break Length (minutes)</label><input type="number" id="set-break" min="5" max="30" value="10"></div>
+    <button class="btn btn-primary btn-full" onclick="saveSettings()">Save</button>
+    <div class="divider"></div>
+    <button class="btn btn-ghost  btn-full"                  onclick="doImport()">⬆ Import Data</button>
+    <button class="btn btn-ghost  btn-full" style="margin-top:7px" onclick="doExportCSV()">📊 Export CSV Timetable</button>
+    <button class="btn btn-danger btn-full" style="margin-top:7px" onclick="clearAll()">🗑 Clear All Data</button>
+    <button class="btn btn-ghost  btn-full" style="margin-top:7px" onclick="closeModal('m-settings')">Cancel</button>
+  </div>
+</div>
+
+<!-- Add Session -->
+<div class="overlay" id="m-addsess">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">Add Study Session</div>
+    <div class="fg"><label>Subject</label><select id="sess-subj" onchange="populateTopics()"></select></div>
+    <div class="fg"><label>Topic</label><select id="sess-topic"></select></div>
+    <div class="fg"><label>Date</label><input type="date" id="sess-date"></div>
+    <div class="fg"><label>Start Time</label><input type="time" id="sess-time" value="09:00"></div>
+    <div class="fg"><label>Duration (minutes)</label><input type="number" id="sess-dur" value="50" min="15" max="180" step="5"></div>
+    <div class="fg"><label>Priority</label>
+      <select id="sess-pri"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>
+    </div>
+    <div class="fg"><label>Notes</label><textarea id="sess-notes" rows="2" placeholder="Optional notes..."></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveSession()">Add Session</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-addsess')">Cancel</button>
+  </div>
+</div>
+
+<!-- Smart Plan -->
+<div class="overlay" id="m-smart">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">🤖 Smart Revision Plan</div>
+    <p style="font-size:13px;color:var(--slate-md);margin-bottom:14px">Creates sessions based on your subjects, confidence levels and preferences.</p>
+    <div class="fg"><label>Weeks until exams</label><input type="number" id="sm-weeks" value="8" min="1" max="26"></div>
+    <div class="fg"><label>Study days</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="sm-days">
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="1" checked>Mon</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="2" checked>Tue</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="3" checked>Wed</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="4" checked>Thu</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="5" checked>Fri</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="6">Sat</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" value="0">Sun</label>
+      </div>
+    </div>
+    <div class="fg"><label>Intensity</label>
+      <select id="sm-intensity">
+        <option value="light">Light (2 hrs/day)</option>
+        <option value="moderate" selected>Moderate (4 hrs/day)</option>
+        <option value="intensive">Intensive (6 hrs/day)</option>
+        <option value="extreme">Extreme (8+ hrs/day)</option>
+      </select>
+    </div>
+    <div class="fg" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sm-weak" checked style="width:auto"><label style="margin:0">Focus more on low-confidence subjects</label></div>
+    <div class="fg" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sm-spaced" checked style="width:auto"><label style="margin:0">Use spaced repetition</label></div>
+    <div class="fg">
+      <label>When regenerating</label>
+      <select id="sm-clear">
+        <option value="range">Replace sessions in selected date range only</option>
+        <option value="all-future">Clear ALL future unstarted sessions first</option>
+        <option value="smart-only">Clear only previous Smart Plan sessions</option>
+        <option value="add">Add on top without clearing anything</option>
+      </select>
+    </div>
+    <button class="btn btn-success btn-full" onclick="generateSmartPlan()" style="padding:14px">🚀 Generate Plan</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-smart')">Cancel</button>
+  </div>
+</div>
+
+<!-- Session Detail -->
+<div class="overlay" id="m-sessdetail">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title" id="sd-title">Session</div>
+    <div id="sd-body"></div>
+    <button class="btn btn-success btn-full" id="sd-complete-btn" onclick="toggleSessComplete()">✅ Mark Complete</button>
+    <button class="btn btn-danger  btn-full" style="margin-top:7px" onclick="deleteSess()">🗑 Delete</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-sessdetail')">Close</button>
+  </div>
+</div>
+
+<!-- Add Past Paper -->
+<div class="overlay" id="m-addpaper">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">Add Past Paper</div>
+    <div class="fg"><label>Subject</label><select id="pp-subj"></select></div>
+    <div class="fg"><label>Year</label><input type="number" id="pp-year" value="2024" min="2005" max="2025"></div>
+    <div class="fg"><label>Paper</label>
+      <select id="pp-paper"><option>Paper 1</option><option>Paper 2</option><option>Paper 3</option><option>Paper 4</option><option>Specimen</option></select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="addPaper()">Add Paper</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-addpaper')">Cancel</button>
+  </div>
+</div>
+
+<!-- Complete Past Paper -->
+<div class="overlay" id="m-completepaper">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title" id="cp-title">Mark Complete</div>
+    <input type="hidden" id="cp-id">
+    <div class="fg"><label>Your Score (optional)</label><input type="number" id="cp-score" placeholder="e.g. 68" min="0"></div>
+    <div class="fg"><label>Maximum Score (optional)</label><input type="number" id="cp-max" placeholder="e.g. 80" min="0"></div>
+    <div class="fg"><label>Weak Topics / Notes</label><textarea id="cp-notes" rows="3" placeholder="Topics to revisit..."></textarea></div>
+    <button class="btn btn-success btn-full" onclick="savePaperComplete()">✅ Mark Complete</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-completepaper')">Cancel</button>
+  </div>
+</div>
+
+<!-- Breathing Modal -->
+<div class="overlay" id="m-breath">
+  <div class="sheet" style="text-align:center">
+    <div class="handle"></div>
+    <div class="modal-title" id="br-title">Breathing Exercise</div>
+    <div style="font-size:13px;color:var(--slate-md);margin:-8px 0 12px;min-height:18px" id="br-desc"></div>
+    <div class="breath-ring" id="br-ring" style="transition:transform 0.8s ease,background 0.5s ease">
+      <div class="breath-inner">
+        <div class="breath-count" id="br-count"></div>
+        <div class="breath-phase" id="br-phase" style="font-size:11px;color:var(--slate-md);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:2px"></div>
+      </div>
+    </div>
+    <div style="font-size:18px;font-weight:600;color:var(--amber);min-height:28px;margin-bottom:10px;font-style:italic" id="br-instruction"></div>
+    <div style="font-size:12px;color:var(--slate-lt);min-height:18px;margin-bottom:14px;padding:0 10px" id="br-tip"></div>
+    <button class="btn btn-danger" onclick="stopBreath()">Stop Exercise</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ONBOARDING MODAL (first-run)
+═══════════════════════════════════════════════════ -->
+<div class="overlay" id="m-onboard" style="align-items:flex-end">
+  <div class="sheet" style="border-radius:24px 24px 0 0">
+    <div class="handle"></div>
+    <!-- Step indicator -->
+    <div id="ob-steps" style="display:flex;justify-content:center;gap:6px;margin-bottom:18px">
+      <div id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--amber);transition:all .2s"></div>
+      <div id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s"></div>
+      <div id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s"></div>
+    </div>
+    <div id="ob-step-1">
+      <div style="text-align:center;padding:8px 0 18px">
+        <div style="font-size:52px;margin-bottom:10px">👋</div>
+        <div class="modal-title" style="font-size:22px;margin-bottom:6px">Welcome to BIZ-OMICS<br>Revision Planner</div>
+        <p style="font-size:14px;color:var(--slate-md);line-height:1.5">Let's get you set up in 30 seconds so everything is tailored to you.</p>
+      </div>
+      <div class="fg"><label>Your first name</label><input type="text" id="ob-name" placeholder="e.g. Alex" autocomplete="given-name"></div>
+      <div class="fg"><label>Year group</label>
+        <select id="ob-year">
+          <option value="">— Select your year —</option>
+          <option value="Year 9">Year 9 (GCSE)</option>
+          <option value="Year 10">Year 10 (GCSE)</option>
+          <option value="Year 11">Year 11 (GCSE)</option>
+          <option value="Year 12">Year 12 (A-Level / AS)</option>
+          <option value="Year 13">Year 13 (A-Level)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" style="padding:14px;font-size:16px" onclick="obNext1()">Continue →</button>
+    </div>
+    <!-- Step 2: Exam date -->
+    <div id="ob-step-2" style="display:none">
+      <div style="text-align:center;padding:8px 0 18px">
+        <div style="font-size:52px;margin-bottom:10px">📅</div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:6px">When's your first exam?</div>
+        <p style="font-size:14px;color:var(--slate-md);line-height:1.5">This powers the countdown and helps the Smart Plan prioritise your revision.</p>
+      </div>
+      <div class="fg"><label>First exam date</label><input type="date" id="ob-exam"></div>
+      <div class="fg"><label>Daily study goal (hours)</label>
+        <select id="ob-goal">
+          <option value="2">2 hours — light</option>
+          <option value="3">3 hours</option>
+          <option value="4" selected>4 hours — recommended</option>
+          <option value="5">5 hours</option>
+          <option value="6">6 hours — intensive</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" style="padding:14px;font-size:16px" onclick="obNext2()">Continue →</button>
+      <button class="btn btn-ghost btn-full" style="margin-top:7px" onclick="obSkip2()">Skip for now</button>
+    </div>
+    <!-- Step 3: Done -->
+    <div id="ob-step-3" style="display:none">
+      <div style="text-align:center;padding:8px 0 24px">
+        <div style="font-size:52px;margin-bottom:10px">🚀</div>
+        <div class="modal-title" style="font-size:20px;margin-bottom:6px" id="ob-done-title">You're all set!</div>
+        <p style="font-size:14px;color:var(--slate-md);line-height:1.5;margin-bottom:18px" id="ob-done-sub">Head to Subjects to add your subjects, then build your timetable.</p>
+        <div style="background:rgba(245,158,11,0.12);border-radius:var(--r);padding:14px;text-align:left;margin-bottom:18px">
+          <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Quick start guide</div>
+          <div style="font-size:13px;color:var(--slate-md);display:flex;flex-direction:column;gap:7px">
+            <div>📚 <strong>Subjects</strong> — add your subjects &amp; topics</div>
+            <div>🗓 <strong>Timetable</strong> — use Smart Plan to auto-fill your week</div>
+            <div>⏱ <strong>Timer</strong> — start a session and track your hours</div>
+            <div>📋 <strong>Papers</strong> — log past papers and track scores</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="padding:14px;font-size:16px" onclick="obFinish()">Let's go! →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Log Timer Session -->
+<div class="overlay" id="m-logsess">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="modal-title">🎉 Session Complete!</div>
+    <p style="font-size:13px;color:var(--slate-md);margin-bottom:14px">Great work! Log this session to your progress?</p>
+    <div id="log-sess-info" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid var(--border);font-size:14px"></div>
+    <div class="fg"><label>Topic (optional)</label><input type="text" id="log-sess-topic" placeholder="What did you study?"></div>
+    <div class="fg"><label>Notes (optional)</label><textarea id="log-sess-notes" rows="2" placeholder="How did it go?"></textarea></div>
+    <button class="btn btn-success btn-full" onclick="confirmLogSession()">✅ Log Session</button>
+    <button class="btn btn-ghost   btn-full" style="margin-top:7px" onclick="closeModal('m-logsess')">Skip</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ═══ THEME TOGGLE ═══ */
+function toggleTheme(){
+  const light=document.body.classList.toggle('light-mode');
+  document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=light?'🌙':'☀️');
+  try{localStorage.setItem('bizomics-rp-theme',light?'light':'dark');}catch(e){}
+}
+(function(){
+  try{
+    if(localStorage.getItem('bizomics-rp-theme')==='light'){
+      document.body.classList.add('light-mode');
+      document.querySelectorAll('.theme-btn').forEach(b=>b.textContent='🌙');
+    }
+  }catch(e){}
+})();
+
+/* ── DATA ───────────────────────────────────────── */
+const KEY = 'revPlannerData';
+const DEF = {
+  studentInfo:{name:'',academicYear:'Year 11',examSession:'may-june',firstExamDate:'',timetableStartDate:''},
+  preferences:{dailyGoal:4,sessionLength:50,breakLength:10,studyPattern:'flexible'},
+  subjects:[],sessions:[],pastPapers:[],
+  stats:{totalHours:0,streak:0,completedSessions:0,lastStudyDate:null},
+  wellbeing:{today:{sleep:false,exercise:false,water:false,breaks:false},history:[],lastDate:''},
+  achievements:[]
+};
+
+function load(){
+  try{
+    const s=localStorage.getItem(KEY);
+    if(s){
+      const d=JSON.parse(s);
+      if(!d.pastPapers)d.pastPapers=[];
+      if(!d.wellbeing)d.wellbeing=DEF.wellbeing;
+      if(!d.wellbeing.lastDate)d.wellbeing.lastDate='';
+      return d;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+
+function save(){localStorage.setItem(KEY,JSON.stringify(D));showToast('💾 Saved');}
+
+let D=load();
+
+/* ── UTILS ──────────────────────────────────────── */
+function today(){return new Date().toISOString().split('T')[0]}
+function getLevelLabel(){
+  const yr=D.studentInfo.academicYear||'';
+  if(yr==='Year 9'||yr==='Year 10'||yr==='Year 11')return'GCSE';
+  if(yr==='Year 12')return'AS / A-Level';
+  if(yr==='Year 13')return'A-Level';
+  return'Revision';
+}
+function getDaysUntil(ds){
+  if(!ds)return null;
+  const t=new Date();t.setHours(0,0,0,0);
+  const d=new Date(ds+'T00:00:00');d.setHours(0,0,0,0);
+  return Math.ceil((d-t)/86400000);
+}
+function fmtDays(n){if(n===null)return'';if(n<0)return'Exam passed';if(n===0)return'Today!';return n+' days';}
+function getMon(d){const x=new Date(d);const dy=x.getDay();const diff=x.getDate()-dy+(dy===0?-6:1);return new Date(x.setDate(diff));}
+function getDateForDay(start,week,dayIdx){const b=new Date(start);b.setDate(b.getDate()+((week-1)*7)+dayIdx);return b;}
+function getWeekNum(start,date){const s=new Date(start);const d=new Date(date);const diff=Math.floor((d-s)/86400000);return Math.floor(diff/7)+1;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+/* ── MODAL ──────────────────────────────────────── */
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(el=>{
+  el.addEventListener('click',e=>{
+    if(e.target===el&&el.id!=='m-onboard')el.classList.remove('open');
+  });
+});
+
+/* ── NAVIGATION ─────────────────────────────────── */
+let currentView='home';
+function nav(v){
+  const ov=document.getElementById('view-'+currentView);if(ov)ov.classList.remove('active');
+  const ob=document.getElementById('nb-'+currentView);if(ob)ob.classList.remove('active');
+  currentView=v;
+  const nv=document.getElementById('view-'+v);if(nv)nv.classList.add('active');
+  const nb=document.getElementById('nb-'+v);if(nb)nb.classList.add('active');
+  renderView(v);
+}
+function renderView(v){
+  if(v==='home')renderHome();
+  else if(v==='subjects')renderSubjects();
+  else if(v==='timetable')renderTimetable();
+  else if(v==='timer')renderTimerView();
+  else if(v==='progress')renderProgress();
+  else if(v==='wellbeing')renderWellbeing();
+  else if(v==='papers')renderPapers();
+}
+
+/* ── EXPORT / IMPORT ────────────────────────────── */
+function doExport(){
+  // JSON backup
+  const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');
+  a.href=u;a.download='revision-planner-'+today()+'.json';a.click();URL.revokeObjectURL(u);
+}
+function doExportCSV(){
+  // CSV timetable export
+  const rows=[['Date','Day','Subject','Topic','Start Time','Duration (mins)','Priority','Completed','Notes']];
+  const sorted=[...D.sessions].filter(s=>!s.isBreak).sort((a,b)=>a.date.localeCompare(b.date)||(a.startTime||'').localeCompare(b.startTime||''));
+  sorted.forEach(s=>{
+    const sj=D.subjects.find(x=>x.id==s.subjectId)||{name:'Unknown'};
+    const d=new Date(s.date+'T12:00:00');
+    const day=d.toLocaleDateString('en-GB',{weekday:'long'});
+    rows.push([s.date,day,sj.name,s.topic||'',s.startTime||'',s.duration,s.priority||'medium',s.completed?'Yes':'No',s.notes||'']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const b=new Blob([csv],{type:'text/csv'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');
+  a.href=u;a.download='revision-timetable-'+today()+'.csv';a.click();URL.revokeObjectURL(u);
+  showToast('📊 CSV exported!');
+}
+function doImport(){
+  const i=document.createElement('input');i.type='file';i.accept='.json';
+  i.onchange=e=>{
+    const f=e.target.files[0];const r=new FileReader();
+    r.onload=ev=>{try{D=JSON.parse(ev.target.result);save();renderView(currentView);showToast('✓ Data imported');}catch(err){alert('Import error: '+err.message);}};
+    r.readAsText(f);
+  };i.click();
+}
+function clearAll(){
+  if(!confirm('Delete ALL data? Cannot be undone!'))return;
+  localStorage.removeItem(KEY);location.reload();
+}
+
+/* ══════════════════════════════════════════════════
+   HOME
+══════════════════════════════════════════════════ */
+function renderHome(){
+  // Ensure start date
+  ensureStartDate();
+
+  // Greeting
+  const h=new Date().getHours();
+  const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const name=D.studentInfo.name;
+  document.getElementById('greeting').textContent=name?`Hi, ${name} 👋`:h<12?'Good morning 👋':h<17?'Good afternoon 👋':'Good evening 👋';
+  document.getElementById('greet-sub').textContent='BIZ-OMICS · Revision Planner';
+  // Update subjects subtitle if visible
+  const subSub=document.getElementById('subjects-sub');if(subSub)subSub.textContent='Manage your '+getLevelLabel()+' subjects';
+
+  // Countdown
+  document.getElementById('cd-days').textContent=getDaysUntil(D.studentInfo.firstExamDate)??'—';
+
+  // Stats
+  document.getElementById('h-hours').textContent=Math.round(D.stats.totalHours||0);
+  document.getElementById('h-streak').textContent=D.stats.streak||0;
+  document.getElementById('h-sessions').textContent=D.stats.completedSessions||0;
+  document.getElementById('h-subjects').textContent=D.subjects.length;
+
+  // Today's sessions
+  const td=today();
+  const todaySess=D.sessions.filter(s=>s.date===td&&!s.isBreak).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+  const el=document.getElementById('h-today');
+  if(todaySess.length===0){
+    el.innerHTML=`<div class="empty"><div class="ei">📭</div><p>No sessions today.<br><a onclick="nav('timetable')">Go to Timetable →</a></p></div>`;
+  }else{
+    el.innerHTML=todaySess.map(s=>{
+      const sj=D.subjects.find(x=>x.id==s.subjectId)||{};
+      return `<div class="sess-item ${s.completed?'done':''}" onclick="toggleSessById(${s.id})">
+        <div class="s-strip" style="background:${sj.color||'#d97706'}"></div>
+        <div class="sess-info" style="flex:1">
+          <div class="sname">${sj.name||'Study'}</div>
+          <div class="stopic">${s.topic||''} · ${s.startTime||''} · ${s.duration}min</div>
+        </div>
+        <div class="sess-check">${s.completed?'✅':'⭕'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Subjects snapshot
+  const snap=document.getElementById('h-subjects-snap');
+  if(D.subjects.length===0){
+    snap.innerHTML=`<div class="empty"><div class="ei">➕</div><p><a onclick="nav('subjects')">Add your subjects →</a></p></div>`;
+    document.getElementById('h-setup').style.display='block';
+    const level=getLevelLabel();
+    const titleEl=document.getElementById('h-setup-title');
+    const textEl=document.getElementById('h-setup-text');
+    if(titleEl)titleEl.textContent=`👋 Welcome${D.studentInfo.name?' '+D.studentInfo.name:''}!`;
+    if(textEl)textEl.textContent=`Add your ${level} subjects to get started with your revision plan.`;
+  }else{
+    document.getElementById('h-setup').style.display='none';
+    snap.innerHTML=D.subjects.slice(0,4).map(s=>{
+      const dl=getDaysUntil(s.examDate);
+      const done=D.sessions.filter(x=>x.subjectId==s.id&&x.completed).length;
+      const tot=D.sessions.filter(x=>x.subjectId==s.id&&!x.isBreak).length;
+      const pct=tot>0?Math.round(done/tot*100):0;
+      return `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:${s.color||'#d97706'};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;display:flex;justify-content:space-between">
+            <span>${s.name}</span>
+            <span class="badge badge-${s.confidence||'amber'}">${s.confidence==='red'?'⬇ Low':s.confidence==='green'?'⬆ High':'↔ Med'}</span>
+          </div>
+          <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+          <div style="font-size:11px;color:var(--slate-lt)">${dl!==null?fmtDays(dl)+' to exam':s.board||''}</div>
+        </div>
+      </div>`;
+    }).join('')+(D.subjects.length>4?`<a onclick="nav('subjects')" style="font-size:13px">+${D.subjects.length-4} more →</a>`:'');
+  }
+}
+
+function toggleSessById(id){
+  const s=D.sessions.find(x=>x.id==id);if(!s)return;
+  s.completed=!s.completed;
+  if(s.completed){D.stats.completedSessions=(D.stats.completedSessions||0)+1;D.stats.totalHours=(D.stats.totalHours||0)+s.duration/60;const sj=D.subjects.find(x=>x.id==s.subjectId);if(sj)sj.hoursStudied=(sj.hoursStudied||0)+s.duration/60;}
+  else{D.stats.completedSessions=Math.max(0,(D.stats.completedSessions||0)-1);D.stats.totalHours=Math.max(0,(D.stats.totalHours||0)-s.duration/60);}
+  save();renderView(currentView);showToast(s.completed?'✅ Session complete!':'Session unmarked');
+}
+
+/* ══════════════════════════════════════════════════
+   SUBJECTS
+══════════════════════════════════════════════════ */
+function renderSubjects(){
+  const el=document.getElementById('subjects-list');
+  if(D.subjects.length===0){
+    el.innerHTML=`<div class="empty"><div class="ei">📚</div><p>No subjects yet.<br>Tap <strong>Add Subject</strong> below!</p></div>`;return;
+  }
+  el.innerHTML=D.subjects.map(s=>{
+    const done=(s.topics||[]).filter(t=>t.completed).length;
+    const tot=(s.topics||[]).length;
+    const pct=tot>0?Math.round(done/tot*100):0;
+    const dl=getDaysUntil(s.examDate);
+    const sessDone=D.sessions.filter(x=>x.subjectId==s.id&&x.completed).length;
+    const sessTot=D.sessions.filter(x=>x.subjectId==s.id&&!x.isBreak).length;
+    const topics=(s.topics||[]).slice(0,6).map(t=>`
+      <div class="topic-row">
+        <input type="checkbox" ${t.completed?'checked':''} onchange="toggleTopic(${s.id},${t.id})">
+        <span style="font-size:13px;flex:1;${t.completed?'text-decoration:line-through;opacity:.5':''}">${t.name}</span>
+        <span class="badge badge-${t.priority||'medium'}">${t.priority||'medium'}</span>
+      </div>`).join('');
+
+    return `<div class="subj-card">
+      <div class="subj-head">
+        <div class="subj-swatch" style="background:${s.color||'#d97706'}"></div>
+        <div class="subj-body">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="subj-name">${s.name}</span>
+            <button onclick="openEditSubject(${s.id})" style="background:none;border:none;cursor:pointer;font-size:17px;padding:3px">✏️</button>
+          </div>
+          <div class="subj-meta">${s.board||''}${dl!==null?' · '+fmtDays(dl)+' to exam':''}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:5px">
+            <span class="cdot cdot-${s.confidence||'amber'}" title="${s.confidence==='red'?'Low confidence':s.confidence==='green'?'High confidence':'Medium confidence'}"></span>
+            <span style="font-size:12px;color:var(--slate-md)">${s.confidence==='red'?'⬇ Low':s.confidence==='green'?'⬆ High':'↔ Medium'} confidence</span>
+            <span style="font-size:11px;color:var(--slate-lt);margin-left:auto">${sessDone}/${sessTot} sessions</span>
+          </div>
+          ${tot>0?`<div class="pbar" style="margin-top:6px"><div class="pfill" style="width:${pct}%"></div></div><div style="font-size:11px;color:var(--slate-lt)">${done}/${tot} topics (${pct}%)</div>`:''}
+        </div>
+      </div>
+      ${topics?`<div class="subj-topics">${topics}${(s.topics||[]).length>6?`<div style="font-size:12px;color:var(--amber);margin-top:6px">+${s.topics.length-6} more topics</div>`:''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function addSubject(){
+  const name=document.getElementById('ns-name').value.trim();
+  if(!name){alert('Enter a subject name');return;}
+  const topics=document.getElementById('ns-topics').value.split('\n').map(t=>t.trim()).filter(Boolean)
+    .map(t=>({id:Date.now()+Math.random(),name:t,priority:'medium',completed:false}));
+  D.subjects.push({
+    id:Date.now()+Math.random(),name,
+    board:document.getElementById('ns-board').value,
+    examDate:document.getElementById('ns-date').value,
+    color:document.getElementById('ns-color').value,
+    confidence:document.getElementById('ns-conf').value,
+    topics,hoursStudied:0,sessionsCompleted:0
+  });
+  save();closeModal('m-addsub');
+  document.getElementById('ns-name').value='';document.getElementById('ns-topics').value='';
+  renderSubjects();showToast(`✓ ${name} added`);
+}
+
+let editingSubjId=null;
+function openEditSubject(id){
+  editingSubjId=id;
+  const s=D.subjects.find(x=>x.id==id);if(!s)return;
+  document.getElementById('es-id').value=id;
+  document.getElementById('es-name').value=s.name;
+  document.getElementById('es-board').value=s.board||'AQA';
+  document.getElementById('es-date').value=s.examDate||'';
+  document.getElementById('es-conf').value=s.confidence||'amber';
+  document.getElementById('es-topics').value='';
+  openModal('m-editsub');
+}
+function saveEditSubject(){
+  const s=D.subjects.find(x=>x.id==editingSubjId);if(!s)return;
+  s.name=document.getElementById('es-name').value.trim()||s.name;
+  s.board=document.getElementById('es-board').value;
+  s.examDate=document.getElementById('es-date').value;
+  s.confidence=document.getElementById('es-conf').value;
+  const newT=document.getElementById('es-topics').value.split('\n').map(t=>t.trim()).filter(Boolean)
+    .map(t=>({id:Date.now()+Math.random(),name:t,priority:'medium',completed:false}));
+  s.topics=[...(s.topics||[]),...newT];
+  save();closeModal('m-editsub');renderSubjects();showToast('✓ Saved');
+}
+function deleteSubject(){
+  if(!confirm('Delete this subject and all its sessions?'))return;
+  D.subjects=D.subjects.filter(x=>x.id!=editingSubjId);
+  D.sessions=D.sessions.filter(x=>x.subjectId!=editingSubjId);
+  save();closeModal('m-editsub');renderSubjects();showToast('Deleted');
+}
+function toggleTopic(sId,tId){
+  const s=D.subjects.find(x=>x.id==sId);if(!s)return;
+  const t=s.topics.find(x=>x.id==tId);if(t)t.completed=!t.completed;
+  save();renderSubjects();
+}
+
+/* ── SETTINGS ───────────────────────────────────── */
+function openSettings(){
+  document.getElementById('set-name').value=D.studentInfo.name||'';
+  document.getElementById('set-year').value=D.studentInfo.academicYear||'Year 11';
+  document.getElementById('set-exam').value=D.studentInfo.firstExamDate||'';
+  document.getElementById('set-goal').value=D.preferences.dailyGoal||4;
+  document.getElementById('set-sess').value=D.preferences.sessionLength||50;
+  document.getElementById('set-break').value=D.preferences.breakLength||10;
+  openModal('m-settings');
+}
+function saveSettings(){
+  D.studentInfo.name=document.getElementById('set-name').value.trim();
+  D.studentInfo.academicYear=document.getElementById('set-year').value;
+  D.studentInfo.firstExamDate=document.getElementById('set-exam').value;
+  D.preferences.dailyGoal=parseInt(document.getElementById('set-goal').value)||4;
+  D.preferences.sessionLength=parseInt(document.getElementById('set-sess').value)||50;
+  D.preferences.breakLength=parseInt(document.getElementById('set-break').value)||10;
+  save();closeModal('m-settings');showToast('✓ Settings saved');
+}
+
+/* ══════════════════════════════════════════════════
+   TIMETABLE
+══════════════════════════════════════════════════ */
+let curWeek=1,selDay=null;
+
+function ensureStartDate(){
+  if(!D.studentInfo.timetableStartDate){
+    D.studentInfo.timetableStartDate=getMon(new Date()).toISOString().split('T')[0];
+    localStorage.setItem(KEY,JSON.stringify(D));
+  }
+}
+
+function renderTimetable(){
+  ensureStartDate();
+  curWeek=getWeekNum(D.studentInfo.timetableStartDate,new Date());
+  if(curWeek<1)curWeek=1;
+  renderTT();
+}
+
+function renderTT(){
+  const start=D.studentInfo.timetableStartDate;
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const mon=getDateForDay(start,curWeek,0);
+  const sun=getDateForDay(start,curWeek,6);
+  document.getElementById('tt-week-lbl').textContent=
+    `Week ${curWeek} · ${mon.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${sun.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`;
+
+  // Pills
+  const td=today();
+  document.getElementById('day-pills').innerHTML=['All',...days].map((d,i)=>{
+    const ds=i===0?null:getDateForDay(start,curWeek,i-1).toISOString().split('T')[0];
+    const isT=ds===td;
+    const act=i===0?(selDay===null):(selDay===i-1);
+    return `<button class="day-pill${act?' active':''}${isT?' today':''}" onclick="selDayFn(${i===0?'null':i-1})">${d}</button>`;
+  }).join('');
+
+  // Content
+  const range=selDay!==null?[selDay]:[0,1,2,3,4,5,6];
+  const content=document.getElementById('tt-content');
+  if(D.subjects.length===0){content.innerHTML=`<div class="empty"><div class="ei">📚</div><p>Add subjects first, then build your plan.</p></div>`;return;}
+
+  let html='';
+  range.forEach(di=>{
+    const dateObj=getDateForDay(start,curWeek,di);
+    const ds=dateObj.toISOString().split('T')[0];
+    const isT=ds===td;
+    const sess=D.sessions.filter(s=>s.date===ds&&!s.isBreak).sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
+    const dname=dateObj.toLocaleDateString('en-GB',{weekday:'long'});
+    const ddlbl=dateObj.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    html+=`<div class="day-card"${isT?' style="border-color:rgba(245,158,11,0.4)"':''}>
+      <div class="day-head"${isT?' style="background:rgba(245,158,11,0.12)"':''}>
+        <div>
+          <span class="day-name">${dname}</span>
+          ${isT?'<span style="font-size:10px;background:var(--amber);color:white;padding:1px 6px;border-radius:10px;margin-left:5px;font-weight:700">TODAY</span>':''}
+        </div>
+        <span class="day-date-lbl">${ddlbl} · ${sess.length} session${sess.length!==1?'s':''}</span>
+      </div>
+      <div class="day-sessions">
+        ${sess.length===0
+          ?`<div style="padding:10px;text-align:center;font-size:13px;color:var(--slate-lt)">No sessions — <a onclick="openAddSessionDate('${ds}')">add one ＋</a></div>`
+          :sess.map(s=>{const sj=D.subjects.find(x=>x.id==s.subjectId)||{};return`
+          <div class="sess-item${s.completed?' done':''}" onclick="openSessDetail(${s.id})">
+            <div class="s-strip" style="background:${sj.color||'#d97706'}"></div>
+            <div class="sess-info" style="flex:1">
+              <div class="sname">${sj.name||'Study'}</div>
+              <div class="stopic">${s.topic||''} · ${s.startTime||''} · ${s.duration}min</div>
+              ${s.notes?`<div style="font-size:11px;color:var(--slate-lt);margin-top:1px">${s.notes}</div>`:''}
+            </div>
+            <span class="badge badge-${s.priority||'medium'}" style="margin-right:5px">${s.priority||''}</span>
+            <div class="sess-check">${s.completed?'✅':'⭕'}</div>
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+  });
+  content.innerHTML=html||'<div class="empty"><div class="ei">📭</div><p>No sessions this week.</p></div>';
+}
+
+function selDayFn(d){selDay=d;renderTT();}
+function chWeek(d){curWeek+=d;if(curWeek<1)curWeek=1;renderTT();}
+
+/* Sessions */
+function openAddSession(){
+  document.getElementById('sess-date').value=today();
+  populateSubjSelect();openModal('m-addsess');
+}
+function openAddSessionDate(ds){
+  document.getElementById('sess-date').value=ds;
+  populateSubjSelect();openModal('m-addsess');
+}
+function populateSubjSelect(){
+  document.getElementById('sess-subj').innerHTML=D.subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  populateTopics();
+}
+function populateTopics(){
+  const sId=document.getElementById('sess-subj').value;
+  const s=D.subjects.find(x=>x.id==sId);
+  document.getElementById('sess-topic').innerHTML=`<option value="General study">General study</option>`+
+    (s&&s.topics&&s.topics.length?s.topics.map(t=>`<option value="${t.name}">${t.name}</option>`).join(''):'');
+}
+function saveSession(){
+  const sId=parseFloat(document.getElementById('sess-subj').value);
+  D.sessions.push({
+    id:Date.now()+Math.random(),subjectId:sId,
+    topic:document.getElementById('sess-topic').value,
+    date:document.getElementById('sess-date').value,
+    startTime:document.getElementById('sess-time').value,
+    duration:parseInt(document.getElementById('sess-dur').value)||50,
+    priority:document.getElementById('sess-pri').value,
+    notes:document.getElementById('sess-notes').value,
+    completed:false,isBreak:false
+  });
+  save();closeModal('m-addsess');renderTT();showToast('✓ Session added');
+}
+
+/* Session detail */
+let detailId=null;
+function openSessDetail(id){
+  detailId=id;
+  const s=D.sessions.find(x=>x.id==id);if(!s)return;
+  const sj=D.subjects.find(x=>x.id==s.subjectId)||{};
+  document.getElementById('sd-title').textContent=sj.name||'Session';
+  document.getElementById('sd-body').innerHTML=`
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px">${s.topic||'General study'}</div>
+      <div style="font-size:13px;color:var(--slate-md)">${s.date} · ${s.startTime||''} · ${s.duration}min</div>
+      <div style="margin-top:7px"><span class="badge badge-${s.priority||'medium'}">${s.priority||'medium'} priority</span></div>
+      ${s.notes?`<div style="font-size:13px;color:var(--slate-md);margin-top:7px">${s.notes}</div>`:''}
+    </div>`;
+  document.getElementById('sd-complete-btn').textContent=s.completed?'↩ Mark Incomplete':'✅ Mark Complete';
+  openModal('m-sessdetail');
+}
+function toggleSessComplete(){
+  const s=D.sessions.find(x=>x.id==detailId);if(!s)return;
+  s.completed=!s.completed;
+  if(s.completed){D.stats.completedSessions=(D.stats.completedSessions||0)+1;D.stats.totalHours=(D.stats.totalHours||0)+s.duration/60;const sj=D.subjects.find(x=>x.id==s.subjectId);if(sj)sj.hoursStudied=(sj.hoursStudied||0)+s.duration/60;}
+  else{D.stats.completedSessions=Math.max(0,(D.stats.completedSessions||0)-1);D.stats.totalHours=Math.max(0,(D.stats.totalHours||0)-s.duration/60);}
+  save();closeModal('m-sessdetail');renderTT();showToast(s.completed?'✅ Done!':'Unmarked');
+}
+function deleteSess(){
+  if(!confirm('Delete session?'))return;
+  D.sessions=D.sessions.filter(x=>x.id!=detailId);
+  save();closeModal('m-sessdetail');renderTT();showToast('Deleted');
+}
+
+/* Copy last week */
+function copyLastWeek(){
+  if(curWeek<=1){showToast('No previous week');return;}
+  const start=D.studentInfo.timetableStartDate;
+  let n=0;
+  for(let d=0;d<7;d++){
+    const src=getDateForDay(start,curWeek-1,d).toISOString().split('T')[0];
+    const tgt=getDateForDay(start,curWeek,d).toISOString().split('T')[0];
+    D.sessions.filter(s=>s.date===src&&!s.isBreak).forEach(s=>{
+      D.sessions.push({...s,id:Date.now()+Math.random(),date:tgt,completed:false});n++;
+    });
+  }
+  save();renderTT();showToast(`✓ Copied ${n} sessions`);
+}
+
+/* Smart Plan */
+function openSmartPlan(){
+  if(D.subjects.length===0){alert('Add subjects first!');return;}
+  openModal('m-smart');
+}
+function generateSmartPlan(){
+  const weeks=parseInt(document.getElementById('sm-weeks').value)||8;
+  const intMap={light:2,moderate:4,intensive:6,extreme:8};
+  const baseHrs=intMap[document.getElementById('sm-intensity').value]||4;
+  const studyDays=[...document.querySelectorAll('#sm-days input:checked')].map(c=>parseInt(c.value));
+  if(!studyDays.length){alert('Select at least one study day');return;}
+  const focusWeak=document.getElementById('sm-weak').checked;
+  const useSpaced=document.getElementById('sm-spaced').checked;
+  const clearMode=document.getElementById('sm-clear').value;
+  const start=D.studentInfo.timetableStartDate;
+  const sessLen=D.preferences.sessionLength||50;
+  const breakLen=D.preferences.breakLength||10;
+
+  // Clear sessions based on chosen mode
+  const rangeStart=getDateForDay(start,curWeek,0).toISOString().split('T')[0];
+  const rangeEnd=getDateForDay(start,curWeek+weeks-1,6).toISOString().split('T')[0];
+  const td=today();
+  if(clearMode==='range'){
+    // Remove incomplete sessions within the date range only
+    D.sessions=D.sessions.filter(s=>s.completed||s.date<rangeStart||s.date>rangeEnd);
+  } else if(clearMode==='all-future'){
+    // Remove all incomplete sessions from today onwards
+    D.sessions=D.sessions.filter(s=>s.completed||s.date<td);
+  } else if(clearMode==='smart-only'){
+    // Remove only future incomplete sessions previously generated by Smart Plan
+    D.sessions=D.sessions.filter(s=>{
+      if(s.completed||s.date<td)return true; // keep completed & past
+      const isSmartGen=s.notes&&(s.notes.includes('Smart Plan')||s.notes.includes('Final push'));
+      return !isSmartGen; // keep manual sessions, remove smart-generated
+    });
+  }
+  // 'add' mode: don't clear anything
+
+  // Spaced repetition tracker: topicKey -> last scheduled date string
+  const lastSeen={};
+  if(useSpaced){
+    D.sessions.forEach(s=>{
+      if(!s.isBreak&&s.topic){
+        const key=s.subjectId+'|'+s.topic;
+        if(!lastSeen[key]||s.date>lastSeen[key])lastSeen[key]=s.date;
+      }
+    });
+  }
+
+  const avail=[9,10,11,13,14,15,16,18,19,20];
+  let total=0;
+
+  for(let wk=0;wk<weeks;wk++){
+    // Date of this week's Monday
+    const wkMonday=getDateForDay(start,curWeek+wk,0);
+    const wkMondayStr=wkMonday.toISOString().split('T')[0];
+
+    // ── 1. EXAM URGENCY: for each subject, calculate days until exam from this week
+    // Subjects with exams within 2 weeks get a big urgency boost
+    const subjectUrgency={};
+    D.subjects.forEach(s=>{
+      if(!s.examDate){subjectUrgency[s.id]=1;return;}
+      const daysLeft=getDaysUntil(s.examDate);
+      // Skip subjects whose exam has already passed
+      if(daysLeft!==null&&daysLeft<0){subjectUrgency[s.id]=0;return;}
+      if(daysLeft===null){subjectUrgency[s.id]=1;return;}
+      // Ramp up: <7 days = 4x, <14 days = 3x, <21 days = 2x, else 1x
+      if(daysLeft<7)subjectUrgency[s.id]=4;
+      else if(daysLeft<14)subjectUrgency[s.id]=3;
+      else if(daysLeft<21)subjectUrgency[s.id]=2;
+      else subjectUrgency[s.id]=1;
+    });
+
+    // ── 2. INTENSITY RAMP: in final 2 weeks of plan, increase sessions/day by 50%
+    const isRampWeek=(wk>=weeks-2);
+    const hrsThisWeek=isRampWeek?Math.min(baseHrs*1.5,10):baseHrs;
+    const sessPerDay=Math.max(1,Math.floor(hrsThisWeek*60/(sessLen+breakLen)));
+
+    // ── 3. BUILD WEIGHTED TOPIC POOL for this specific week
+    let pool=[];
+    D.subjects.forEach(s=>{
+      // Skip subjects with exams already passed
+      if((subjectUrgency[s.id]||0)===0)return;
+
+      // Base weight: confidence
+      let confWeight=1;
+      if(focusWeak){
+        confWeight=s.confidence==='red'?3:s.confidence==='amber'?2:1;
+      }
+
+      // Combine confidence weight with urgency
+      const totalWeight=confWeight*(subjectUrgency[s.id]||1);
+
+      const topics=(s.topics&&s.topics.length)?s.topics:[{name:'General study',priority:'medium'}];
+
+      topics.forEach(t=>{
+        // ── 4. SPACED REPETITION: topics not seen recently get a boost
+        let spacedBoost=1;
+        if(useSpaced){
+          const key=s.id+'|'+t.name;
+          const ls=lastSeen[key];
+          if(!ls){
+            spacedBoost=3; // Never seen — high priority
+          } else {
+            const daysSince=Math.round((new Date(wkMondayStr)-new Date(ls))/86400000);
+            // Ebbinghaus-inspired: optimal review at 1, 3, 7, 14 days
+            if(daysSince>=14)spacedBoost=3;
+            else if(daysSince>=7)spacedBoost=2.5;
+            else if(daysSince>=3)spacedBoost=2;
+            else if(daysSince>=1)spacedBoost=1;
+            else spacedBoost=0.3; // Seen today — avoid repeating
+          }
+        }
+
+        const finalWeight=Math.round(totalWeight*spacedBoost);
+        for(let i=0;i<finalWeight;i++){
+          pool.push({subjectId:s.id,topic:t.name,priority:t.priority||'medium'});
+        }
+      });
+    });
+
+    if(pool.length===0){
+      // All exams passed — skip remaining weeks
+      break;
+    }
+
+    // Shuffle pool
+    pool.sort(()=>Math.random()-0.5);
+    let pi=0;
+
+    studyDays.forEach(dv=>{
+      const di=dv===0?6:dv-1;
+      const ds=getDateForDay(start,curWeek+wk,di).toISOString().split('T')[0];
+
+      // Do not schedule sessions before today
+      if(ds<today())return;
+
+      for(let i=0;i<sessPerDay&&i<avail.length;i++){
+        const td=pool[pi%pool.length];pi++;
+
+        // Track for spaced repetition
+        const key=td.subjectId+'|'+td.topic;
+        lastSeen[key]=ds;
+
+        const isUrgent=(subjectUrgency[td.subjectId]||1)>=3;
+        const noteWk=isRampWeek?'Final push':'Smart Plan';
+        const urgencyNote=isUrgent?' · Exam soon!':'';
+
+        D.sessions.push({
+          id:Date.now()+Math.random(),
+          subjectId:td.subjectId,
+          topic:td.topic,
+          date:ds,
+          startTime:`${avail[i].toString().padStart(2,'0')}:00`,
+          duration:sessLen,
+          priority:isUrgent?'high':td.priority,
+          notes:`${noteWk} · Wk ${curWeek+wk}${urgencyNote}`,
+          completed:false,
+          isBreak:false
+        });
+        total++;
+      }
+    });
+  }
+
+  save();closeModal('m-smart');renderTT();
+
+  // Build a summary message
+  const skipped=D.subjects.filter(s=>s.examDate&&getDaysUntil(s.examDate)!==null&&getDaysUntil(s.examDate)<0);
+  let msg=`✓ ${total} sessions planned over ${weeks} weeks`;
+  if(skipped.length)msg+=` (${skipped.map(s=>s.name).join(', ')} skipped — exam passed)`;
+  showToast(msg);
+}
+
+/* ══════════════════════════════════════════════════
+   TIMER
+══════════════════════════════════════════════════ */
+let timerTotal=50*60,timerLeft=50*60,timerInterval=null,timerRunning=false,timerStartedAt=null;
+
+function renderTimerView(){
+  const sel=document.getElementById('timer-subject');
+  sel.innerHTML='<option value="">— Select subject —</option>'+D.subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  renderTimerToday();updateTimerDisp();
+}
+function updateTimerSub(){
+  const sId=document.getElementById('timer-subject').value;
+  const s=D.subjects.find(x=>x.id==sId);
+  document.getElementById('timer-sub').textContent=s?`Studying: ${s.name}`:'Select a subject and start';
+}
+function updateTimerDisp(){
+  const m=Math.floor(timerLeft/60),s=timerLeft%60;
+  document.getElementById('timer-digits').textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  const pct=timerTotal>0?((timerTotal-timerLeft)/timerTotal)*100:0;
+  const ring=document.getElementById('timer-ring');
+  if(ring)ring.style.background=`conic-gradient(var(--amber) ${pct}%, rgba(255,255,255,0.08) 0%)`;
+}
+function setPreset(m){if(timerRunning)return;timerTotal=m*60;timerLeft=timerTotal;timerStartedAt=null;updateTimerDisp();document.getElementById('timer-state').textContent='READY';}
+function setCustomTimer(){const v=parseInt(document.getElementById('custom-mins').value);if(v>=1&&v<=180)setPreset(v);}
+function startTimer(){
+  if(timerRunning)return;
+  timerRunning=true;timerStartedAt=timerStartedAt||new Date();
+  document.getElementById('timer-state').textContent='STUDYING';
+  document.getElementById('start-btn').style.opacity='.4';
+  timerInterval=setInterval(()=>{
+    if(timerLeft<=0){
+      clearInterval(timerInterval);timerRunning=false;
+      document.getElementById('timer-state').textContent='DONE 🎉';
+      document.getElementById('start-btn').style.opacity='1';
+      if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      openLogSessionModal();return;
+    }
+    timerLeft--;updateTimerDisp();
+  },1000);
+}
+function pauseTimer(){
+  if(!timerRunning)return;clearInterval(timerInterval);timerRunning=false;
+  document.getElementById('timer-state').textContent='PAUSED';
+  document.getElementById('start-btn').style.opacity='1';
+}
+function resetTimer(){
+  clearInterval(timerInterval);timerRunning=false;timerLeft=timerTotal;timerStartedAt=null;
+  updateTimerDisp();document.getElementById('timer-state').textContent='READY';
+  document.getElementById('start-btn').style.opacity='1';
+}
+function openLogSessionModal(){
+  const sId=document.getElementById('timer-subject').value;
+  const sj=D.subjects.find(x=>x.id==sId);
+  const mins=Math.round(timerTotal/60);
+  const info=document.getElementById('log-sess-info');
+  info.innerHTML=`<strong>${sj?sj.name:'Unlinked study'}</strong> · ${mins} minutes · ${today()}`;
+  document.getElementById('log-sess-topic').value='';
+  document.getElementById('log-sess-notes').value='';
+  openModal('m-logsess');
+}
+function confirmLogSession(){
+  const topic=document.getElementById('log-sess-topic').value.trim()||'Timer session';
+  const notes=document.getElementById('log-sess-notes').value.trim()||'Logged via timer';
+  logTimerSession(topic,notes);
+  closeModal('m-logsess');
+  showToast('🎉 Session logged!');
+}
+
+function logTimerSession(topic,notes){
+  topic=topic||'Timer session';notes=notes||'Logged via timer';
+  const sId=document.getElementById('timer-subject').value;
+  const mins=Math.round(timerTotal/60);
+  const sj=D.subjects.find(x=>x.id==sId);
+  D.sessions.push({id:Date.now()+Math.random(),subjectId:sId?parseFloat(sId):null,
+    topic:topic,date:today(),
+    startTime:timerStartedAt?timerStartedAt.toTimeString().substring(0,5):'',
+    duration:mins,priority:'medium',notes:notes,completed:true,isBreak:false});
+  D.stats.completedSessions=(D.stats.completedSessions||0)+1;
+  D.stats.totalHours=(D.stats.totalHours||0)+mins/60;
+  if(sj)sj.hoursStudied=(sj.hoursStudied||0)+mins/60;
+  // Streak
+  const td=today(),last=D.stats.lastStudyDate;
+  if(last){const diff=Math.round((new Date(td)-new Date(last))/86400000);D.stats.streak=diff===1?(D.stats.streak||0)+1:diff===0?D.stats.streak:1;}
+  else D.stats.streak=1;
+  D.stats.lastStudyDate=td;
+  timerStartedAt=null;save();renderTimerToday();
+}
+function renderTimerToday(){
+  const td=today();
+  const sess=D.sessions.filter(s=>s.date===td&&!s.isBreak);
+  const el=document.getElementById('timer-today');if(!el)return;
+  if(!sess.length){el.innerHTML='<div class="empty"><p>No sessions yet today. Start the timer!</p></div>';return;}
+  el.innerHTML=sess.map(s=>{const sj=D.subjects.find(x=>x.id==s.subjectId)||{};return`
+    <div style="display:flex;gap:10px;align-items:center;padding:9px;background:var(--bg);border-radius:8px;margin-bottom:5px;border:1px solid var(--border)">
+      <div class="s-strip" style="background:${sj.color||'#d97706'}"></div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">${sj.name||'Study'}</div>
+      <div style="font-size:12px;color:var(--slate-md)">${s.startTime||''} · ${s.duration}min</div></div>
+      <span style="font-size:16px">${s.completed?'✅':'⭕'}</span>
+    </div>`;}).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   PROGRESS
+══════════════════════════════════════════════════ */
+function renderProgress(){
+  document.getElementById('p-cd').textContent=getDaysUntil(D.studentInfo.firstExamDate)??'—';
+  document.getElementById('p-hours').textContent=Math.round(D.stats.totalHours||0);
+  document.getElementById('p-streak').textContent=D.stats.streak||0;
+  document.getElementById('p-sessions').textContent=D.stats.completedSessions||0;
+
+  // Weekly goal
+  const wStart=getMon(new Date()).toISOString().split('T')[0];
+  const wHrs=D.sessions.filter(s=>s.completed&&s.date>=wStart).reduce((a,s)=>a+s.duration/60,0);
+  const gPct=Math.min(100,Math.round(wHrs/(D.preferences.dailyGoal*7)*100));
+  document.getElementById('p-goal').textContent=gPct+'%';
+
+  // Subject progress
+  const sEl=document.getElementById('p-subj');
+  if(!D.subjects.length){sEl.innerHTML='<div class="empty"><p>No subjects yet.</p></div>';}
+  else sEl.innerHTML=D.subjects.map(s=>{
+    const sess=D.sessions.filter(x=>x.subjectId==s.id&&!x.isBreak);
+    const done=sess.filter(x=>x.completed).length;
+    const pct=sess.length?Math.round(done/sess.length*100):0;
+    const hrs=Math.round((s.hoursStudied||0)*10)/10;
+    const dl=getDaysUntil(s.examDate);
+    return`<div style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <div style="display:flex;gap:7px;align-items:center">
+          <div style="width:11px;height:11px;border-radius:3px;background:${s.color||'#d97706'}"></div>
+          <span style="font-size:14px;font-weight:600">${s.name}</span>
+          <span class="cdot cdot-${s.confidence||'amber'}"></span>
+        </div>
+        <span style="font-size:12px;color:var(--slate-lt)">${hrs}h · ${done}/${sess.length}</span>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--slate-lt);margin-top:2px">
+        <span>${pct}% complete</span><span>${dl!==null?fmtDays(dl)+' to exam':''}</span>
+      </div>
+    </div>`;}).join('');
+
+  // PP summary
+  const ppEl=document.getElementById('p-pp');
+  const ppTot=D.pastPapers.length,ppDone=D.pastPapers.filter(p=>p.completed).length;
+  ppEl.innerHTML=ppTot===0?'<p style="font-size:13px;color:var(--slate-lt)">No past papers yet. <a onclick="nav(\'papers\')">Go to Past Papers →</a></p>':
+    `<div class="pbar" style="height:10px;margin-bottom:5px"><div class="pfill" style="width:${Math.round(ppDone/ppTot*100)}%"></div></div>
+    <div style="font-size:13px;color:var(--slate-md)">${ppDone}/${ppTot} papers done</div>
+    <a onclick="nav('papers')" style="font-size:13px;display:block;margin-top:7px">View Past Papers →</a>`;
+
+  // Achievements
+  const ACHS=[
+    {id:'first',icon:'🎯',name:'First Session',desc:'Complete your first session',check:d=>d.stats.completedSessions>=1},
+    {id:'onfire',icon:'🔥',name:'On Fire',desc:'Complete 10 sessions',check:d=>d.stats.completedSessions>=10},
+    {id:'machine',icon:'⚡',name:'Revision Machine',desc:'Complete 50 sessions',check:d=>d.stats.completedSessions>=50},
+    {id:'10hrs',icon:'⏰',name:'10 Hours',desc:'Study for 10 hours total',check:d=>d.stats.totalHours>=10},
+    {id:'50hrs',icon:'📚',name:'Dedicated Scholar',desc:'Study for 50 hours total',check:d=>d.stats.totalHours>=50},
+    {id:'3subj',icon:'🌟',name:'All Subjects',desc:'Add at least 3 subjects',check:d=>d.subjects.length>=3},
+    {id:'ppro',icon:'📋',name:'Past Paper Pro',desc:'Complete 5 past papers',check:d=>d.pastPapers.filter(p=>p.completed).length>=5},
+    {id:'streak5',icon:'🗓',name:'Week Warrior',desc:'5-day study streak',check:d=>(d.stats.streak||0)>=5},
+  ];
+  const prevUnlocked=new Set(D.achievements||[]);
+  document.getElementById('p-ach').innerHTML=ACHS.map(a=>{
+    const u=a.check(D);
+    if(u&&!prevUnlocked.has(a.id)){
+      D.achievements=D.achievements||[];D.achievements.push(a.id);
+      setTimeout(()=>showToast(`🏆 Achievement unlocked: ${a.name}!`),400);
+    }
+    return`<div class="ach-item"${u?'':' style="opacity:.4;filter:grayscale(1)"'}>
+      <div class="ach-icon">${a.icon}</div>
+      <div><div class="ach-name">${a.name}${u?'':' 🔒'}</div><div class="ach-desc">${a.desc}</div></div>
+    </div>`;}).join('');
+
+  // Heatmap
+  const hm=document.getElementById('p-heat');
+  let hmHtml='';
+  for(let i=27;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const c=D.sessions.filter(s=>s.date===ds&&s.completed).length;
+    const bg=c===0?'rgba(255,255,255,0.06)':c<3?'rgba(245,158,11,0.4)':'var(--amber)';
+    hmHtml+=`<div class="hm-cell" title="${ds}: ${c} sessions" style="background:${bg}"></div>`;
+  }
+  hm.innerHTML=hmHtml;
+}
+
+/* ══════════════════════════════════════════════════
+   WELLBEING
+══════════════════════════════════════════════════ */
+function renderWellbeing(){
+  // Check for day rollover
+  const td=today();
+  if(D.wellbeing.lastDate&&D.wellbeing.lastDate!==td){
+    D.wellbeing.history=D.wellbeing.history||[];
+    D.wellbeing.history.push({date:D.wellbeing.lastDate,...D.wellbeing.today});
+    D.wellbeing.today={sleep:false,exercise:false,water:false,breaks:false};
+  }
+  D.wellbeing.lastDate=td;
+  save();
+
+  ['sleep','exercise','water','breaks'].forEach(k=>{
+    document.getElementById('wi-'+k).classList.toggle('done',!!D.wellbeing.today[k]);
+  });
+  const score=Object.values(D.wellbeing.today).filter(Boolean).length;
+  document.getElementById('wb-score').textContent=score;
+
+  // Streak row
+  const row=document.getElementById('wb-streak');
+  let sHtml='';
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const isTd=ds===td;
+    const hist=D.wellbeing.history&&D.wellbeing.history.find(h=>h.date===ds);
+    const sc=isTd?score:hist?[hist.sleep,hist.exercise,hist.water,hist.breaks].filter(Boolean).length:0;
+    const bg=sc===0?'var(--amber-lt)':sc<3?'var(--amber)':'var(--green)';
+    const dn=d.toLocaleDateString('en-GB',{weekday:'short'});
+    sHtml+=`<div><div class="streak-day">${dn}</div>
+      <div class="streak-dot" style="background:${bg};${isTd?'border:2px solid var(--amber-dk)':''}">${sc}</div>
+    </div>`;
+  }
+  row.innerHTML=sHtml;
+
+  // Subject-aware tips
+  const UNIVERSAL_TIPS=[['🧠','Take a 10-min break every hour to maintain focus'],['👀','20-20-20 rule: every 20 min, look 20 ft away for 20 sec'],['💪','Stretch or walk between sessions to boost circulation'],['🍎','Eat balanced meals — blood sugar affects concentration'],['😌','5-10 min mindfulness or meditation daily reduces anxiety'],['😴','Aim for 8-9 hours sleep — memory consolidates during sleep'],['📵','Phone on Do Not Disturb during revision sessions'],['👥','Teach a concept to a friend to deepen your own understanding']];
+  const SUBJECT_TIPS={
+    economics:[['📈','Draw and label every diagram before writing explanations'],['⛓','Chain your analysis: cause → effect → further effect → evaluation'],['🌍','Link theory to real-world examples (UK data, current events)'],['🔢','In calculation questions, always show your working step by step'],['⚖️','For extended answers: argue for AND against before evaluating']],
+    business:[['💼','Use real business examples — name actual companies like Apple, Tesla, Tesco'],['🔄','For strategy questions, consider all stakeholders separately'],['📊','Interpret data in context — what does it mean for this business?'],['🧩','Link functional areas: operations affects finance, marketing affects HR'],['⭐','SWOT/PESTLE are starting points — always reach a justified judgement']],
+    maths:[['✏️','Always show your method — method marks can save you'],['🔁','Check answers by substituting back into the original equation'],['⏱','If stuck, move on and return — don\'t lose time on one question'],['📐','Sketch graphs first, then identify key features analytically'],['🎯','In statistics questions, always interpret results in context']],
+    english:[['📖','Quote accurately and precisely — fewer, well-chosen quotes are better'],['🔍','Analyse language: why this word/technique, what is its effect?'],['📝','Plan your essay in 5 minutes — it saves 15 minutes of rambling'],['🧭','Structure: point, evidence, analyse, evaluate for each paragraph'],['🗣','Consider the writer\'s purpose and context in every response']],
+    history:[['📅','Dates matter for sequencing arguments and establishing causation'],['⚖️','Balance your argument — consider multiple factors before judging'],['🔎','Use specific evidence not vague generalisations'],['🔄','Link periods: how did earlier events shape later ones?'],['💬','Specific named examples always score better than vague references']],
+    science:[['🔬','Command words: describe = what, explain = why, evaluate = weigh up'],['📊','Graphs: always label axes with units, use the full scale available'],['⚗️','For 6-mark questions, cover three linked points with full explanation'],['🔢','Check significant figures and units in every calculation answer'],['🧪','Required practicals: know variables — independent, dependent, control']],
+    geography:[['🗺','Always refer to specific named places with supporting data'],['📉','For graphs: identify the trend AND explain the cause'],['🌦','Learn your case studies thoroughly — examiners reward specific detail'],['📐','Structure answers: describe → explain → evaluate'],['🌍','Human and physical geography both require real case study evidence']],
+    languages:[['🗣','Speak your answers aloud — pronunciation and recall improve together'],['📝','Learn opinion phrases in the target language to boost marks'],['📖','Read a short passage in your target language daily'],['🔢','Practise past, present, and future tenses — all appear in exams'],['🎧','Listen to native content (music, short clips) to train your ear']],
+    rs:[['📖','Know your key scholars and quotations for each topic'],['⚖️','Always present both sides before reaching your own judgement'],['🔤','Define technical terms clearly at the start of extended answers'],['🧠','Apply ethical theories (utilitarianism, natural law etc.) to scenarios'],['💡','For evaluate questions: reasons for, reasons against, then conclude']],
+    computing:[['💻','Trace tables: work through algorithms step by step on paper'],['🔣','Know your data types: integer, string, Boolean, float'],['🔒','Cybersecurity: always consider both prevention AND detection'],['📐','Binary and hex: practise conversions until they are automatic'],['🧩','Decompose big problems into sub-problems before writing any code']],
+    art:[['🎨','Annotate your sketchbook — examiners reward written reflection'],['🖼','Research artists fully: style, context, influence, technique'],['📸','Document your creative process at every stage'],['✏️','Practise observational drawing regularly — it underpins all work'],['💡','Show experimentation: try each technique in multiple ways']],
+  };
+  // Match subjects by keyword — works for both GCSE and A-Level
+  let extraTips=[];
+  D.subjects.forEach(s=>{
+    const n=s.name.toLowerCase();
+    if(n.includes('econ'))extraTips.push(...(SUBJECT_TIPS.economics||[]));
+    if(n.includes('business')||n.includes('biz'))extraTips.push(...(SUBJECT_TIPS.business||[]));
+    if(n.includes('math'))extraTips.push(...(SUBJECT_TIPS.maths||[]));
+    if(n.includes('english')||n.includes('lit')||n.includes('lang'))extraTips.push(...(SUBJECT_TIPS.english||[]));
+    if(n.includes('hist'))extraTips.push(...(SUBJECT_TIPS.history||[]));
+    if(n.includes('bio')||n.includes('chem')||n.includes('phys')||n.includes('science')||n.includes('combined'))extraTips.push(...(SUBJECT_TIPS.science||[]));
+    if(n.includes('geog'))extraTips.push(...(SUBJECT_TIPS.geography||[]));
+    if(n.includes('french')||n.includes('spanish')||n.includes('german')||n.includes('mfl')||n.includes('mandarin')||n.includes('italian'))extraTips.push(...(SUBJECT_TIPS.languages||[]));
+    if(n==='rs'||n.includes('religious')||n.includes('ethics')||n.includes('philosophy'))extraTips.push(...(SUBJECT_TIPS.rs||[]));
+    if(n.includes('comput')||n.includes('ict'))extraTips.push(...(SUBJECT_TIPS.computing||[]));
+    if(n.includes('art')||n.includes('design')||n.includes('photography')||n.includes('textil'))extraTips.push(...(SUBJECT_TIPS.art||[]));
+  });
+  // Deduplicate and combine
+  const seenTips=new Set();
+  const allTips=[...extraTips,...UNIVERSAL_TIPS].filter(t=>{
+    if(seenTips.has(t[1]))return false;seenTips.add(t[1]);return true;
+  });
+  document.getElementById('wb-tips').innerHTML=allTips.map(([icon,tip])=>
+    `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:18px;flex-shrink:0">${icon}</span>
+      <span style="font-size:13px;color:var(--slate-md)">${tip}</span>
+    </div>`).join('');
+}
+function toggleWb(k){D.wellbeing.today[k]=!D.wellbeing.today[k];save();renderWellbeing();}
+
+/* Breathing */
+const BREATHS={
+  box:{
+    name:'Box Breathing',
+    desc:'Equal counts of inhale, hold, exhale, hold — great for focus',
+    phases:[
+      {label:'Breathe in',sec:4,scale:1.18,color:'var(--amber)',msgs:['Breathe in slowly...','Fill your lungs...','Deep breath in...','Slow and steady...']},
+      {label:'Hold',sec:4,scale:1.18,color:'#ea580c',msgs:['Hold gently...','Stay still...','Keep holding...','Nice and calm...']},
+      {label:'Breathe out',sec:4,scale:0.88,color:'#16a34a',msgs:['Breathe out slowly...','Release the tension...','Let it all go...','Empty your lungs...']},
+      {label:'Hold',sec:4,scale:0.88,color:'#2563eb',msgs:['Hold empty...','Stay relaxed...','Just a moment...','Almost there...']},
+    ],
+    cycles:4,
+    tips:['Keep your shoulders relaxed','Let your belly rise and fall','Close your eyes if comfortable','Each cycle gets easier'],
+  },
+  '478':{
+    name:'4-7-8 Breathing',
+    desc:'A natural tranquiliser for the nervous system',
+    phases:[
+      {label:'Breathe in',sec:4,scale:1.18,color:'var(--amber)',msgs:['Breathe in through your nose...','Slow inhale...','Fill from the belly up...','Gentle breath in...']},
+      {label:'Hold',sec:7,scale:1.18,color:'#ea580c',msgs:['Hold your breath...','Stay with it...','Counting to 7...','Keep holding — nearly there...']},
+      {label:'Breathe out',sec:8,scale:0.85,color:'#16a34a',msgs:['Breathe out through your mouth...','Slow exhale...','Whoosh it out...','Let everything go...']},
+    ],
+    cycles:4,
+    tips:['Place tongue behind upper front teeth','The exhale should make a whoosh sound','This works best lying down','Consistent daily practice amplifies the effect'],
+  },
+  quick:{
+    name:'Quick Calm',
+    desc:'5 deep breaths to reset in under a minute',
+    phases:[
+      {label:'Breathe in',sec:4,scale:1.2,color:'var(--amber)',msgs:['Big breath in...','Breathe in deeply...','Fill your lungs...','One more deep breath...','Last one — breathe in...']},
+      {label:'Breathe out',sec:5,scale:0.85,color:'#16a34a',msgs:['Slow breath out...','Release slowly...','Let it go...','Breathe away the tension...','Final exhale — you are done...']},
+    ],
+    cycles:5,
+    tips:['Perfect before an exam or test','Even one deep breath helps','You can do this anywhere, anytime','Notice how different you feel after 5 rounds'],
+  },
+  belly:{
+    name:'Belly Breathing',
+    desc:'Diaphragmatic breathing to reduce stress hormones',
+    phases:[
+      {label:'Breathe in',sec:5,scale:1.15,color:'var(--amber)',msgs:['Breathe into your belly...','Feel your stomach rise...','Let your belly expand...','Slow and deep...','Breathe right down low...']},
+      {label:'Breathe out',sec:5,scale:0.88,color:'#16a34a',msgs:['Belly falls as you exhale...','Feel your stomach drop...','Slow release...','Let your belly sink...','Breathe out completely...']},
+    ],
+    cycles:6,
+    tips:['Place a hand on your belly to feel it rise','Your chest should stay relatively still','This is how we breathe when we sleep','Slower is better — aim for 6 breaths per minute'],
+  },
+};
+
+let breathType=null,breathPhase=0,breathCycle=0,breathInt=null,breathMsgIdx=0;
+
+function startBreath(type){
+  clearInterval(breathInt);
+  breathType=BREATHS[type];breathPhase=0;breathCycle=0;breathMsgIdx=0;
+  document.getElementById('br-title').textContent=breathType.name;
+  document.getElementById('br-desc').textContent=breathType.desc;
+  // Show first tip
+  renderBreathTip();
+  openModal('m-breath');
+  // Brief countdown before starting
+  const ring=document.getElementById('br-ring');
+  ring.style.transition='transform 0.5s ease, background 0.5s ease';
+  ring.style.transform='scale(1)';
+  document.getElementById('br-instruction').textContent='Get comfortable...';
+  document.getElementById('br-count').textContent='';
+  document.getElementById('br-phase').textContent='Starting in 3...';
+  let countdown=3;
+  const pre=setInterval(()=>{
+    countdown--;
+    if(countdown>0){document.getElementById('br-phase').textContent=`Starting in ${countdown}...`;}
+    else{clearInterval(pre);runBreathPhase();}
+  },1000);
+}
+
+function renderBreathTip(){
+  const tips=breathType.tips;
+  const tip=tips[breathCycle%tips.length];
+  const el=document.getElementById('br-tip');
+  if(el)el.textContent='💡 '+tip;
+}
+
+function runBreathPhase(){
+  if(!breathType)return;
+  const phase=breathType.phases[breathPhase];
+  const ring=document.getElementById('br-ring');
+  if(navigator.vibrate)navigator.vibrate(80);
+
+  // Pick a varied message for this cycle
+  const msgs=phase.msgs;
+  const msg=msgs[breathCycle%msgs.length];
+  document.getElementById('br-instruction').textContent=msg;
+  document.getElementById('br-phase').textContent=`Round ${breathCycle+1} of ${breathType.cycles}`;
+
+  // Smooth circle animation
+  ring.style.transition=`transform ${phase.sec*0.85}s ease-in-out, background ${0.4}s ease`;
+  ring.style.transform=`scale(${phase.scale})`;
+  ring.style.background=`radial-gradient(circle, ${phase.color}cc, ${phase.color})`;
+
+  let t=phase.sec;
+  document.getElementById('br-count').textContent=t;
+
+  breathInt=setInterval(()=>{
+    t--;
+    document.getElementById('br-count').textContent=t>0?t:'';
+    if(t<=0){
+      clearInterval(breathInt);
+      breathPhase++;
+      if(breathPhase>=breathType.phases.length){
+        breathPhase=0;breathCycle++;
+        renderBreathTip();
+      }
+      if(breathCycle>=breathType.cycles){
+        // Done!
+        ring.style.transition='transform 1s ease, background 1s ease';
+        ring.style.transform='scale(1)';
+        ring.style.background='linear-gradient(135deg,#16a34a,#15803d)';
+        document.getElementById('br-instruction').textContent='🎉 Well done!';
+        document.getElementById('br-count').textContent='✓';
+        document.getElementById('br-phase').textContent='Exercise complete';
+        return;
+      }
+      // Small gap between phases
+      setTimeout(runBreathPhase, 300);
+    }
+  },1000);
+}
+function stopBreath(){
+  clearInterval(breathInt);breathType=null;
+  const ring=document.getElementById('br-ring');
+  ring.style.transform='scale(1)';
+  ring.style.background='linear-gradient(135deg,#b45309,#f59e0b)';
+  closeModal('m-breath');
+}
+
+/* ══════════════════════════════════════════════════
+   PAST PAPERS
+══════════════════════════════════════════════════ */
+function renderPapers(){
+  const tot=D.pastPapers.length,done=D.pastPapers.filter(p=>p.completed).length,todo=tot-done;
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('pp-total').textContent=tot;
+  document.getElementById('pp-done').textContent=done;
+  document.getElementById('pp-todo').textContent=todo;
+  document.getElementById('pp-bar').style.width=pct+'%';
+  document.getElementById('pp-lbl').textContent=`${pct}% complete · ${done}/${tot} papers done`;
+  document.getElementById('pp-todo-count').textContent=todo;
+  document.getElementById('pp-done-count').textContent=done;
+
+  const todoList=D.pastPapers.filter(p=>!p.completed);
+  const tEl=document.getElementById('pp-todo-list');
+  tEl.innerHTML=todoList.length===0?'<div class="empty"><p>No papers pending 🎉</p></div>':
+    todoList.map(p=>`
+    <div style="display:flex;gap:9px;align-items:center;padding:9px;background:var(--bg);border-radius:8px;margin-bottom:5px;border:1px solid var(--border)">
+      <div class="s-strip" style="background:${p.subjectColor||'#d97706'}"></div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600">${p.subjectName}</div>
+      <div style="font-size:12px;color:var(--slate-md)">${p.year} ${p.paper}${p.board?' · '+p.board:''}</div></div>
+      <button onclick="openComplPaper(${p.id})" class="btn btn-success btn-sm">✓ Done</button>
+      <button onclick="delPaper(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--slate-lt);font-size:18px;padding:3px">×</button>
+    </div>`).join('');
+
+  const doneList=D.pastPapers.filter(p=>p.completed).sort((a,b)=>(b.completedDate||'').localeCompare(a.completedDate||''));
+  const dEl=document.getElementById('pp-done-list');
+  dEl.innerHTML=doneList.length===0?'<div class="empty"><p>No completed papers yet.</p></div>':
+    doneList.map(p=>{
+      const sc=p.score!=null&&p.maxScore!=null?`<span class="badge badge-green" style="margin-left:5px">${p.score}/${p.maxScore} (${Math.round(p.score/p.maxScore*100)}%)</span>`:'';
+      return`<div style="background:#f0fdf4;padding:9px;border-radius:8px;margin-bottom:5px;border-left:4px solid ${p.subjectColor||'#d97706'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">✅ ${p.subjectName} — ${p.year} ${p.paper} ${sc}</div>
+            <div style="font-size:12px;color:var(--slate-md);margin-top:2px">${p.board||''}${p.completedDate?' · '+new Date(p.completedDate).toLocaleDateString('en-GB'):''}</div>
+            ${p.weakTopics?`<div style="font-size:12px;color:var(--red);margin-top:3px">⚠ ${p.weakTopics}</div>`:''}
+          </div>
+          <button onclick="delPaper(${p.id})" style="background:none;border:none;cursor:pointer;color:var(--slate-lt);font-size:18px;padding:3px">×</button>
+        </div>
+      </div>`;}).join('');
+}
+function openAddPaper(){
+  document.getElementById('pp-subj').innerHTML=D.subjects.length?
+    D.subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''):
+    '<option value="">Add subjects first</option>';
+  openModal('m-addpaper');
+}
+function addPaper(){
+  const sId=parseFloat(document.getElementById('pp-subj').value);
+  const s=D.subjects.find(x=>x.id==sId);
+  if(!s){alert('Select a subject');return;}
+  D.pastPapers.push({
+    id:Date.now()+Math.random(),subjectId:sId,subjectName:s.name,
+    subjectColor:s.color||'#d97706',board:s.board||'',
+    year:parseInt(document.getElementById('pp-year').value),
+    paper:document.getElementById('pp-paper').value,
+    completed:false,score:null,maxScore:null,weakTopics:'',completedDate:null
+  });
+  save();closeModal('m-addpaper');renderPapers();showToast(`✓ ${s.name} added`);
+}
+let complPaperId=null;
+function openComplPaper(id){
+  complPaperId=id;
+  const p=D.pastPapers.find(x=>x.id==id);if(!p)return;
+  document.getElementById('cp-title').textContent=`✅ ${p.subjectName} ${p.year} ${p.paper}`;
+  document.getElementById('cp-score').value='';
+  document.getElementById('cp-max').value='';
+  document.getElementById('cp-notes').value='';
+  openModal('m-completepaper');
+}
+function savePaperComplete(){
+  const p=D.pastPapers.find(x=>x.id==complPaperId);if(!p)return;
+  p.completed=true;p.completedDate=today();
+  const sc=document.getElementById('cp-score').value;
+  const mx=document.getElementById('cp-max').value;
+  if(sc)p.score=parseInt(sc);if(mx)p.maxScore=parseInt(mx);
+  p.weakTopics=document.getElementById('cp-notes').value;
+  save();closeModal('m-completepaper');renderPapers();showToast('✅ Paper marked complete!');
+}
+function delPaper(id){
+  if(!confirm('Delete this paper?'))return;
+  D.pastPapers=D.pastPapers.filter(x=>x.id!=id);
+  save();renderPapers();showToast('Deleted');
+}
+
+/* ══════════════════════════════════════════════════
+   ONBOARDING
+══════════════════════════════════════════════════ */
+function isFirstRun(){
+  // First run if no name AND no subjects AND no exam date set
+  return !D.studentInfo.name && D.subjects.length===0 && !D.studentInfo.firstExamDate;
+}
+
+function obSetDot(n){
+  [1,2,3].forEach(i=>{
+    const d=document.getElementById('ob-dot-'+i);
+    if(d)d.style.background=i===n?'var(--amber)':i<n?'rgba(245,158,11,0.4)':'var(--border)';
+  });
+}
+
+function obNext1(){
+  const name=document.getElementById('ob-name').value.trim();
+  const year=document.getElementById('ob-year').value;
+  if(!year){showToast('Please select your year group');return;}
+  D.studentInfo.name=name;
+  D.studentInfo.academicYear=year;
+  document.getElementById('ob-step-1').style.display='none';
+  document.getElementById('ob-step-2').style.display='block';
+  obSetDot(2);
+  const yr=new Date().getFullYear();
+  const examYr=new Date().getMonth()>=9?yr+1:yr;
+  document.getElementById('ob-exam').value=`${examYr}-05-15`;
+}
+
+function obNext2(){
+  const exam=document.getElementById('ob-exam').value;
+  const goal=document.getElementById('ob-goal').value;
+  if(exam)D.studentInfo.firstExamDate=exam;
+  D.preferences.dailyGoal=parseInt(goal)||4;
+  obShowDone();
+}
+
+function obSkip2(){
+  obShowDone();
+}
+
+function obShowDone(){
+  document.getElementById('ob-step-2').style.display='none';
+  document.getElementById('ob-step-3').style.display='block';
+  obSetDot(3);
+  const name=D.studentInfo.name;
+  const level=getLevelLabel();
+  document.getElementById('ob-done-title').textContent=name?`You're all set, ${name}!`:"You're all set!";
+  document.getElementById('ob-done-sub').textContent=`Your ${level} revision planner is ready. Add your subjects to get started.`;
+}
+
+function obFinish(){
+  save();
+  closeModal('m-onboard');
+  renderHome();
+  // Send them straight to subjects so they can add their first subject
+  nav('subjects');
+}
+
+/* ══════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════ */
+function init(){
+  ensureStartDate();
+  renderHome();
+  if(isFirstRun()){
+    // Small delay so the home view renders visibly behind the sheet
+    setTimeout(()=>openModal('m-onboard'),120);
+  }
+}
+init();
+</script>
+</body>
+</html>
