@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPP Simulator | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,700;9..144,0,900;9..144,1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080e0b;--surface:#0d1f19;--surface2:#0a1a14;
+  --accent:#10b981;--accent-lt:#34d399;--accent-glow:rgba(16,185,129,0.12);
+  --amber:#f59e0b;--amber-glow:rgba(245,158,11,0.12);--amber-border:rgba(245,158,11,0.22);
+  --text:#eef5f2;--muted:rgba(238,245,242,0.55);--dim:rgba(238,245,242,0.28);
+  --border:rgba(255,255,255,0.07);--border-acc:rgba(16,185,129,0.22);
+  --radius:16px;--ff:'DM Sans',sans-serif;--ff-serif:'Fraunces',serif;
+  --correct-bg:rgba(16,185,129,0.13);--correct-b:rgba(16,185,129,0.38);
+  --wrong-bg:rgba(239,68,68,0.13);--wrong-b:rgba(239,68,68,0.38);
+}
+[data-theme="light"]{
+  --bg:#f3f7f5;--surface:#ffffff;--surface2:#edf2ef;
+  --text:#081a10;--muted:#4a6358;--dim:#8fa89d;
+  --border:rgba(0,0,0,0.08);--border-acc:rgba(16,185,129,0.28);
+  --accent-glow:rgba(16,185,129,0.07);--amber-glow:rgba(245,158,11,0.07);--amber-border:rgba(245,158,11,0.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s;line-height:1.6;}
+
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 48px;height:64px;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(18px);}
+.back{display:flex;align-items:center;gap:8px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;padding-right:20px;margin-right:20px;border-right:1px solid var(--border);transition:color .2s;white-space:nowrap;}
+.back:hover{color:var(--text);}
+.back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.brand{font-family:var(--ff-serif);font-size:17px;font-weight:700;flex:1;}
+.brand span{color:var(--accent);}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.badge{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:2.5px;border:1px solid var(--border);padding:5px 12px;border-radius:20px;}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── TAB BAR ── */
+.tab-bar{position:sticky;top:64px;z-index:190;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 48px;}
+.tab{padding:0 24px;height:48px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--ff);}
+.tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.tab:hover{color:var(--muted);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── TAB PANELS ── */
+.panel{display:none;}
+.panel.active{display:block;}
+.page{max-width:900px;margin:0 auto;padding:48px 32px 80px;}
+
+/* ── HERO ── */
+.hero{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;margin-bottom:56px;}
+.hero-text{}
+.hero-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:4px;color:var(--accent);font-weight:700;margin-bottom:14px;}
+.hero h1{font-family:var(--ff-serif);font-size:clamp(36px,5vw,54px);font-weight:900;line-height:1.0;letter-spacing:-1.5px;margin-bottom:14px;}
+.hero h1 em{color:var(--accent);font-style:italic;font-weight:300;}
+.hero-desc{font-size:14px;color:var(--muted);font-weight:300;max-width:400px;line-height:1.8;margin-bottom:16px;}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.hero-tag{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);color:var(--dim);font-weight:500;}
+.burger-wrap{flex-shrink:0;width:200px;height:200px;display:flex;align-items:center;justify-content:center;}
+
+/* ── SECTIONS ── */
+.section{margin-bottom:44px;}
+.sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.sec-num{font-family:var(--ff-serif);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-glow);border:1px solid var(--border-acc);border-radius:8px;padding:4px 10px;}
+.sec-title{font-family:var(--ff-serif);font-size:21px;font-weight:700;letter-spacing:-0.3px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;}
+.card+.card,.card+.section,.section+.section{margin-top:0;}
+.key-pt{background:var(--accent-glow);border:1px solid var(--border-acc);border-radius:11px;padding:16px 18px;margin:18px 0;font-size:13px;line-height:1.75;}
+.key-pt strong{color:var(--accent-lt);display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;}
+.formula{background:var(--amber-glow);border:1px solid var(--amber-border);border-radius:11px;padding:18px 22px;margin:18px 0;}
+.formula-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--amber);font-weight:700;margin-bottom:6px;}
+.formula code{font-family:'SF Mono',Consolas,monospace;font-size:13px;color:var(--amber);line-height:1.8;display:block;}
+p{font-size:13px;color:var(--muted);line-height:1.85;margin-bottom:12px;}
+p:last-child{margin-bottom:0;}
+h3{font-size:14px;font-weight:600;margin:18px 0 8px;color:var(--text);}
+
+/* ── INPUTS ── */
+.input-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0;}
+.ig label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;margin-bottom:5px;}
+.ig input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;font-size:14px;color:var(--text);font-family:var(--ff);outline:none;transition:border-color .15s;}
+.ig input:focus{border-color:var(--accent);}
+[data-theme="light"] .ig input{background:#f5f9f7;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;border:none;font-size:13px;font-weight:600;font-family:var(--ff);cursor:pointer;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-amber{background:var(--amber);color:#000;}
+.btn-amber:hover{opacity:.88;transform:translateY(-1px);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+
+/* ── RESULT BOX ── */
+.result{background:var(--accent-glow);border:1px solid var(--border-acc);border-radius:11px;padding:18px 22px;margin-top:14px;display:none;}
+.result.show{display:block;}
+.result-main{font-family:var(--ff-serif);font-size:22px;font-weight:700;color:var(--accent-lt);margin-bottom:3px;}
+.result-sub{font-size:12px;color:var(--muted);}
+.verdict{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;}
+.v-over{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);}
+.v-under{background:var(--accent-glow);color:var(--accent-lt);border:1px solid var(--border-acc);}
+.v-fair{background:var(--amber-glow);color:var(--amber);border:1px solid var(--amber-border);}
+
+/* ── WORKING STEPS ── */
+.working{margin-top:14px;display:none;}
+.working.show{display:block;}
+.step{display:flex;gap:12px;margin-bottom:10px;}
+.sn{width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid var(--border-acc);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:2px;}
+.sb{}
+.sl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;margin-bottom:3px;}
+.sc{font-size:12px;color:var(--muted);line-height:1.7;font-family:'SF Mono',Consolas,monospace;}
+.conclusion{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7;}
+
+/* ── BIG MAC SIMULATOR ── */
+.bm-hero{text-align:center;margin-bottom:40px;padding-top:8px;}
+.bm-hero h2{font-family:var(--ff-serif);font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-1px;margin-bottom:10px;}
+.bm-hero h2 em{color:var(--amber);font-style:italic;font-weight:300;}
+.bm-hero p{font-size:13px;color:var(--muted);max-width:460px;margin:0 auto;}
+
+.bm-illustration{display:flex;justify-content:center;margin:24px 0 32px;}
+
+.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0;}
+.country-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;transition:border-color .2s,transform .2s;}
+.country-card:hover{border-color:var(--border-acc);transform:translateY(-2px);}
+.cc-flag{font-size:26px;margin-bottom:8px;}
+.cc-name{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;margin-bottom:6px;}
+.cc-price{font-family:var(--ff-serif);font-size:24px;font-weight:700;color:var(--amber);}
+.cc-status{font-size:11px;margin-top:6px;padding:3px 8px;border-radius:20px;display:inline-block;}
+.status-over{background:rgba(239,68,68,0.12);color:#f87171;}
+.status-under{background:var(--accent-glow);color:var(--accent-lt);}
+.status-fair{background:var(--amber-glow);color:var(--amber);}
+
+.compare-controls{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px;}
+.compare-controls h3{margin-top:0;}
+.compare-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;}
+
+.gauge-wrap{margin:20px 0;}
+.gauge-label{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:6px;}
+.gauge-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border);}
+.gauge-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.gauge-undervalued{background:linear-gradient(90deg,var(--accent),var(--accent-lt));}
+.gauge-overvalued{background:linear-gradient(90deg,#ef4444,#f87171);}
+
+.insight-box{background:var(--amber-glow);border:1px solid var(--amber-border);border-radius:11px;padding:16px 18px;margin-top:16px;font-size:13px;color:var(--muted);line-height:1.75;}
+.insight-box strong{color:var(--amber);}
+
+/* ── LIMITATIONS ── */
+.limit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.lb{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;text-align:left;cursor:pointer;transition:all .18s;font-family:var(--ff);font-size:12px;font-weight:600;color:var(--muted);}
+.lb:hover,.lb.active{border-color:var(--border-acc);color:var(--text);background:var(--accent-glow);}
+.lb .lbn{font-size:9px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.limit-panel{background:var(--surface);border:1px solid var(--border-acc);border-radius:12px;padding:22px;display:none;animation:fadeIn .2s ease;}
+.limit-panel.show{display:block;}
+.limit-panel h4{font-size:14px;font-weight:600;margin-bottom:10px;}
+.limit-panel ul{padding-left:16px;}
+.limit-panel li{font-size:13px;color:var(--muted);line-height:1.85;margin-bottom:3px;}
+.limit-panel li strong{color:var(--text);}
+.impact{background:var(--amber-glow);border:1px solid var(--amber-border);border-radius:8px;padding:11px 13px;margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7;}
+.impact strong{color:var(--amber);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── QUIZ ── */
+.quiz-hero{text-align:center;margin-bottom:32px;}
+.quiz-hero h2{font-family:var(--ff-serif);font-size:clamp(28px,4vw,40px);font-weight:900;letter-spacing:-1px;margin-bottom:8px;}
+.quiz-hero h2 em{color:var(--accent);font-style:italic;font-weight:300;}
+.score-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.score-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-weight:700;}
+.score-val{font-family:var(--ff-serif);font-size:24px;font-weight:700;color:var(--accent);}
+.qblock{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:12px;animation:fadeIn .25s ease;}
+.qnum{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:7px;}
+.qtext{font-size:14px;font-weight:500;color:var(--text);margin-bottom:14px;line-height:1.6;}
+.qopts{display:flex;flex-direction:column;gap:7px;}
+.qopt{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px 15px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;text-align:left;font-family:var(--ff);font-weight:500;}
+.qopt:hover:not(:disabled){border-color:var(--border-acc);color:var(--text);}
+.qopt.correct{background:var(--correct-bg);border-color:var(--correct-b);color:var(--accent-lt);}
+.qopt.wrong{background:var(--wrong-bg);border-color:var(--wrong-b);color:#f87171;}
+.qopt:disabled{cursor:default;}
+.qfb{margin-top:10px;padding:12px 14px;border-radius:9px;font-size:12px;line-height:1.75;display:none;}
+.qfb.show{display:block;}
+.qfb.correct{background:var(--correct-bg);border:1px solid var(--correct-b);color:var(--accent-lt);}
+.qfb.wrong{background:var(--wrong-bg);border:1px solid var(--wrong-b);color:#fca5a5;}
+.finish{background:var(--accent-glow);border:1px solid var(--border-acc);border-radius:14px;padding:36px;text-align:center;display:none;margin-top:20px;}
+.finish.show{display:block;}
+.finish-score{font-family:var(--ff-serif);font-size:52px;font-weight:900;color:var(--accent);}
+.finish-msg{font-size:14px;color:var(--muted);margin:8px 0 20px;}
+
+/* ── FOOTER ── */
+.footer{border-top:1px solid var(--border);padding:22px 48px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  .hdr,.tab-bar{padding:0 20px;}
+  .page{padding:28px 16px 60px;}
+  .hero{grid-template-columns:1fr;}
+  .burger-wrap{display:none;}
+  .country-grid{grid-template-columns:1fr;}
+  .limit-grid{grid-template-columns:1fr;}
+  .tab{padding:0 14px;font-size:12px;}
+  .footer{padding:18px 20px;flex-direction:column;gap:6px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a href="../economics/index.html" class="back">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Economics
+  </a>
+  <div class="brand">BIZ-<span>OMICS</span></div>
+  <div class="hdr-right">
+    <div class="badge">PPP Simulator</div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<!-- TAB BAR -->
+<nav class="tab-bar">
+  <button class="tab active" onclick="switchTab('learn',this)">
+    <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    Learn
+  </button>
+  <button class="tab" onclick="switchTab('bigmac',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Big Mac Simulator
+  </button>
+  <button class="tab" onclick="switchTab('quiz',this)">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Quiz
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     TAB 1 — LEARN
+════════════════════════════════════════════ -->
+<div class="panel active" id="panel-learn">
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-text">
+      <div class="hero-eyebrow">International Economics · A-Level</div>
+      <h1>Purchasing<br><em>Power Parity</em></h1>
+      <p class="hero-desc">An interactive guide to PPP theory, the Big Mac Index, exchange rate calculators and why rates deviate from equilibrium.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">AQA</span>
+        <span class="hero-tag">Edexcel</span>
+        <span class="hero-tag">OCR</span>
+        <span class="hero-tag">WJEC</span>
+      </div>
+    </div>
+    <div class="burger-wrap">
+      <!-- Stylish burger SVG illustration -->
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+        <!-- Glow -->
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="80%" r="50%">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bunTop" cx="50%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#fbbf24"/>
+            <stop offset="100%" stop-color="#d97706"/>
+          </radialGradient>
+          <radialGradient id="bunBot" cx="50%" cy="60%" r="60%">
+            <stop offset="0%" stop-color="#fcd34d"/>
+            <stop offset="100%" stop-color="#f59e0b"/>
+          </radialGradient>
+          <linearGradient id="patty" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#7c2d12"/>
+            <stop offset="100%" stop-color="#451a03"/>
+          </linearGradient>
+          <linearGradient id="cheese" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#fde68a"/>
+            <stop offset="100%" stop-color="#fbbf24"/>
+          </linearGradient>
+          <linearGradient id="lettuce" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#16a34a"/>
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.35"/>
+          </filter>
+        </defs>
+        <!-- Background glow -->
+        <ellipse cx="100" cy="170" rx="70" ry="18" fill="url(#glow)"/>
+        <!-- Group with shadow -->
+        <g filter="url(#shadow)">
+          <!-- Bottom bun -->
+          <ellipse cx="100" cy="152" rx="58" ry="12" fill="url(#bunBot)"/>
+          <rect x="42" y="140" width="116" height="14" rx="3" fill="url(#bunBot)"/>
+          <!-- Sesame seeds on bottom bun -->
+          <ellipse cx="70" cy="143" rx="4" ry="2.5" fill="#d97706" opacity="0.6" transform="rotate(-20,70,143)"/>
+          <ellipse cx="100" cy="141" rx="4" ry="2.5" fill="#d97706" opacity="0.6"/>
+          <ellipse cx="130" cy="143" rx="4" ry="2.5" fill="#d97706" opacity="0.6" transform="rotate(20,130,143)"/>
+
+          <!-- Tomato -->
+          <rect x="46" y="130" width="108" height="10" rx="3" fill="#ef4444" opacity="0.9"/>
+          <rect x="48" y="131" width="22" height="7" rx="2" fill="#dc2626" opacity="0.5"/>
+          <rect x="78" y="131" width="22" height="7" rx="2" fill="#dc2626" opacity="0.5"/>
+          <rect x="110" y="131" width="22" height="7" rx="2" fill="#dc2626" opacity="0.5"/>
+
+          <!-- Lettuce (wavy) -->
+          <path d="M42 126 Q52 118 62 126 Q72 118 82 126 Q92 118 102 126 Q112 118 122 126 Q132 118 142 126 Q152 118 158 126 L158 132 L42 132 Z" fill="url(#lettuce)"/>
+
+          <!-- Cheese -->
+          <rect x="40" y="112" width="120" height="12" rx="2" fill="url(#cheese)"/>
+          <!-- Cheese drips -->
+          <path d="M40 123 L36 130 L44 123 Z" fill="#fbbf24"/>
+          <path d="M160 123 L164 130 L156 123 Z" fill="#fbbf24"/>
+          <path d="M70 124 L67 131 L74 124 Z" fill="#fbbf24"/>
+          <path d="M130 124 L127 131 L134 124 Z" fill="#fbbf24"/>
+
+          <!-- Patty -->
+          <rect x="44" y="96" width="112" height="18" rx="5" fill="url(#patty)"/>
+          <!-- Patty texture lines -->
+          <line x1="55" y1="98" x2="55" y2="112" stroke="#6b2d12" stroke-width="1" opacity="0.4"/>
+          <line x1="75" y1="98" x2="75" y2="112" stroke="#6b2d12" stroke-width="1" opacity="0.4"/>
+          <line x1="95" y1="98" x2="95" y2="112" stroke="#6b2d12" stroke-width="1" opacity="0.4"/>
+          <line x1="115" y1="98" x2="115" y2="112" stroke="#6b2d12" stroke-width="1" opacity="0.4"/>
+          <line x1="135" y1="98" x2="135" y2="112" stroke="#6b2d12" stroke-width="1" opacity="0.4"/>
+
+          <!-- Sauce squiggle -->
+          <path d="M55 94 Q65 88 75 94 Q85 88 95 94 Q105 88 115 94 Q125 88 135 94 Q145 88 150 94" stroke="#dc2626" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+          <!-- Top bun -->
+          <ellipse cx="100" cy="72" rx="58" ry="26" fill="url(#bunTop)"/>
+          <ellipse cx="100" cy="62" rx="52" ry="18" fill="#fbbf24" opacity="0.3"/>
+          <!-- Sesame seeds on top bun -->
+          <ellipse cx="80" cy="58" rx="5" ry="3" fill="#d97706" opacity="0.7" transform="rotate(-15,80,58)"/>
+          <ellipse cx="100" cy="52" rx="5" ry="3" fill="#d97706" opacity="0.7"/>
+          <ellipse cx="120" cy="58" rx="5" ry="3" fill="#d97706" opacity="0.7" transform="rotate(15,120,58)"/>
+          <ellipse cx="90" cy="67" rx="4" ry="2.5" fill="#d97706" opacity="0.55" transform="rotate(-10,90,67)"/>
+          <ellipse cx="112" cy="65" rx="4" ry="2.5" fill="#d97706" opacity="0.55" transform="rotate(10,112,65)"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <div class="sec-hdr"><div class="sec-num">01</div><div class="sec-title">What is Purchasing Power Parity?</div></div>
+    <div class="card">
+      <p><strong style="color:var(--text)">Purchasing Power Parity (PPP)</strong> is an economic theory stating that exchange rates between currencies should adjust so that an identical basket of goods costs the same in every country when expressed in a common currency.</p>
+      <div class="key-pt"><strong>Core Principle</strong>If a basket of goods costs £100 in the UK and $120 in the USA, PPP theory suggests the exchange rate should be £1 = $1.20, giving consumers equal purchasing power in both countries.</div>
+      <p>PPP is used by economists to compare living standards across countries, predict long-run exchange rate movements, and assess whether currencies are overvalued or undervalued.</p>
+      <div class="formula"><div class="formula-lbl">The PPP Formula</div><code>PPP Exchange Rate = Price in Country B ÷ Price in Country A</code></div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CALCULATOR -->
+  <div class="section">
+    <div class="sec-hdr"><div class="sec-num">02</div><div class="sec-title">Interactive PPP Calculator</div></div>
+    <div class="card">
+      <p>Enter the price of an identical basket of goods in two countries to calculate the PPP exchange rate. Updates live as you type.</p>
+      <div class="input-grid">
+        <div class="ig"><label>🇬🇧 Country A Price (£)</label><input type="number" id="priceA" value="100" step="0.01" oninput="calcPPP()"></div>
+        <div class="ig"><label>🇺🇸 Country B Price ($)</label><input type="number" id="priceB" value="120" step="0.01" oninput="calcPPP()"></div>
+        <div class="ig"><label>💱 Actual Rate (£1 = $?)</label><input type="number" id="actualRate" value="1.27" step="0.01" oninput="calcPPP()"></div>
+      </div>
+      <div class="result show" id="pppRes">
+        <div class="result-main" id="pppMain">£1 = $1.2000</div>
+        <div class="result-sub">PPP exchange rate</div>
+        <div id="pppVerdict"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-outline" onclick="toggleWorking('pppWork',this)">Show working ↓</button></div>
+      <div class="working" id="pppWork">
+        <div class="step"><div class="sn">1</div><div class="sb"><div class="sl">Identify prices</div><div class="sc" id="pw1">—</div></div></div>
+        <div class="step"><div class="sn">2</div><div class="sb"><div class="sl">Apply formula</div><div class="sc" id="pw2">—</div></div></div>
+        <div class="step"><div class="sn">3</div><div class="sb"><div class="sl">Result</div><div class="sc" id="pw3">—</div></div></div>
+        <div class="step"><div class="sn">4</div><div class="sb"><div class="sl">Compare to actual</div><div class="sc" id="pw4">—</div></div></div>
+        <div class="conclusion" id="pw5">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: ABSOLUTE VS RELATIVE -->
+  <div class="section">
+    <div class="sec-hdr"><div class="sec-num">03</div><div class="sec-title">Absolute vs Relative PPP</div></div>
+    <div class="card">
+      <h3>Absolute PPP</h3>
+      <p>The strict version. States that identical goods should cost exactly the same everywhere when converted to a common currency. Rarely holds in practice due to trade barriers, taxes and non-traded goods.</p>
+      <div class="formula"><div class="formula-lbl">Absolute PPP</div><code>Exchange Rate = Price Level (B) ÷ Price Level (A)</code></div>
+      <h3>Relative PPP</h3>
+      <p>The more realistic version. States that the percentage change in the exchange rate should equal the inflation rate differential between two countries. Allows for permanent price level differences.</p>
+      <div class="formula"><div class="formula-lbl">Relative PPP</div><code>% Change in Exchange Rate ≈ Inflation (B) − Inflation (A)</code></div>
+      <h3 style="margin-top:20px;">Relative PPP Calculator</h3>
+      <div class="input-grid">
+        <div class="ig"><label>🇬🇧 UK Inflation (%)</label><input type="number" id="infUK" value="2" step="0.1" oninput="calcRelPPP()"></div>
+        <div class="ig"><label>🇺🇸 US Inflation (%)</label><input type="number" id="infUS" value="5" step="0.1" oninput="calcRelPPP()"></div>
+      </div>
+      <div class="result show" id="relRes">
+        <div class="result-main" id="relMain">£ should appreciate ~3.0% vs $</div>
+        <div class="result-sub" id="relSub">US inflation exceeds UK by 3.0pp</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: LIMITATIONS -->
+  <div class="section">
+    <div class="sec-hdr"><div class="sec-num">04</div><div class="sec-title">Limitations of PPP Theory</div></div>
+    <div class="card">
+      <p>PPP rarely holds in the real world. Click each limitation to explore why it breaks down.</p>
+      <div class="limit-grid" style="margin-top:18px;">
+        <button class="lb" onclick="showLimit(1,this)"><div class="lbn">01</div>Trade Barriers & Transport Costs</button>
+        <button class="lb" onclick="showLimit(2,this)"><div class="lbn">02</div>Non-Traded Goods & Services</button>
+        <button class="lb" onclick="showLimit(3,this)"><div class="lbn">03</div>Market Imperfections</button>
+        <button class="lb" onclick="showLimit(4,this)"><div class="lbn">04</div>Different Consumer Preferences</button>
+        <button class="lb" onclick="showLimit(5,this)"><div class="lbn">05 ★</div>Balassa-Samuelson Effect</button>
+        <button class="lb" onclick="showLimit(6,this)"><div class="lbn">06</div>Capital Flows & Speculation</button>
+      </div>
+      <div class="limit-panel" id="limitPanel"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</div><!-- /panel-learn -->
+
+
+<!-- ═══════════════════════════════════════════
+     TAB 2 — BIG MAC SIMULATOR
+════════════════════════════════════════════ -->
+<div class="panel" id="panel-bigmac">
+<div class="page">
+
+  <div class="bm-hero">
+    <h2>The Big Mac <em>Index</em></h2>
+    <p>Created by <em>The Economist</em> in 1986. Enter real Big Mac prices to see which currencies are over or undervalued according to PPP theory.</p>
+  </div>
+
+  <!-- Big burger illustration centred -->
+  <div class="bm-illustration">
+    <svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" width="320" height="180">
+      <defs>
+        <radialGradient id="glowBM" cx="50%" cy="90%" r="50%">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="bTop" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#fbbf24"/>
+          <stop offset="100%" stop-color="#d97706"/>
+        </linearGradient>
+        <linearGradient id="bBot" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#fcd34d"/>
+          <stop offset="100%" stop-color="#f59e0b"/>
+        </linearGradient>
+        <linearGradient id="patt" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#7c2d12"/>
+          <stop offset="100%" stop-color="#451a03"/>
+        </linearGradient>
+        <filter id="sh2"><feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/></filter>
+      </defs>
+      <ellipse cx="140" cy="152" rx="100" ry="14" fill="url(#glowBM)"/>
+      <g filter="url(#sh2)">
+        <!-- Bottom bun -->
+        <ellipse cx="140" cy="138" rx="82" ry="13" fill="url(#bBot)"/>
+        <rect x="58" y="126" width="164" height="14" rx="4" fill="url(#bBot)"/>
+        <!-- Tomato -->
+        <rect x="62" y="116" width="156" height="11" rx="3" fill="#ef4444" opacity="0.9"/>
+        <!-- Lettuce -->
+        <path d="M58 111 Q72 102 86 111 Q100 102 114 111 Q128 102 142 111 Q156 102 170 111 Q184 102 198 111 Q210 102 222 111 L222 118 L58 118 Z" fill="#4ade80"/>
+        <!-- Cheese -->
+        <rect x="56" y="98" width="168" height="13" rx="2" fill="#fde68a"/>
+        <path d="M56 110 L50 118 L62 110 Z" fill="#fbbf24"/>
+        <path d="M224 110 L230 118 L218 110 Z" fill="#fbbf24"/>
+        <path d="M95 111 L91 119 L99 111 Z" fill="#fbbf24"/>
+        <path d="M175 111 L171 119 L179 111 Z" fill="#fbbf24"/>
+        <!-- Patty -->
+        <rect x="60" y="82" width="160" height="18" rx="6" fill="url(#patt)"/>
+        <line x1="80" y1="84" x2="80" y2="98" stroke="#6b2d12" stroke-width="1.5" opacity="0.4"/>
+        <line x1="108" y1="84" x2="108" y2="98" stroke="#6b2d12" stroke-width="1.5" opacity="0.4"/>
+        <line x1="136" y1="84" x2="136" y2="98" stroke="#6b2d12" stroke-width="1.5" opacity="0.4"/>
+        <line x1="164" y1="84" x2="164" y2="98" stroke="#6b2d12" stroke-width="1.5" opacity="0.4"/>
+        <line x1="192" y1="84" x2="192" y2="98" stroke="#6b2d12" stroke-width="1.5" opacity="0.4"/>
+        <!-- Sauce -->
+        <path d="M72 80 Q86 73 100 80 Q114 73 128 80 Q142 73 156 80 Q170 73 184 80 Q198 73 210 80" stroke="#dc2626" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- Top bun -->
+        <ellipse cx="140" cy="58" rx="82" ry="28" fill="url(#bTop)"/>
+        <ellipse cx="140" cy="46" rx="72" ry="18" fill="#fbbf24" opacity="0.25"/>
+        <!-- Seeds -->
+        <ellipse cx="108" cy="42" rx="7" ry="4" fill="#d97706" opacity="0.7" transform="rotate(-15,108,42)"/>
+        <ellipse cx="140" cy="36" rx="7" ry="4" fill="#d97706" opacity="0.7"/>
+        <ellipse cx="172" cy="42" rx="7" ry="4" fill="#d97706" opacity="0.7" transform="rotate(15,172,42)"/>
+        <ellipse cx="122" cy="54" rx="6" ry="3.5" fill="#d97706" opacity="0.55" transform="rotate(-8,122,54)"/>
+        <ellipse cx="158" cy="52" rx="6" ry="3.5" fill="#d97706" opacity="0.55" transform="rotate(8,158,52)"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Price inputs -->
+  <div class="compare-controls">
+    <h3 style="margin-bottom:14px;">Enter current Big Mac prices</h3>
+    <div class="input-grid">
+      <div class="ig"><label>🇬🇧 UK (£)</label><input type="number" id="bm_uk" value="4.19" step="0.01" oninput="updateBM()"></div>
+      <div class="ig"><label>🇺🇸 USA ($)</label><input type="number" id="bm_usa" value="5.69" step="0.01" oninput="updateBM()"></div>
+      <div class="ig"><label>🇪🇺 Eurozone (€)</label><input type="number" id="bm_eu" value="5.10" step="0.01" oninput="updateBM()"></div>
+      <div class="ig"><label>🇯🇵 Japan (¥)</label><input type="number" id="bm_jp" value="450" step="1" oninput="updateBM()"></div>
+      <div class="ig"><label>💱 Actual £1 = $?</label><input type="number" id="bm_rate_usd" value="1.27" step="0.01" oninput="updateBM()"></div>
+      <div class="ig"><label>💱 Actual £1 = €?</label><input type="number" id="bm_rate_eur" value="1.17" step="0.01" oninput="updateBM()"></div>
+      <div class="ig"><label>💱 Actual £1 = ¥?</label><input type="number" id="bm_rate_jpy" value="192" step="1" oninput="updateBM()"></div>
+    </div>
+  </div>
+
+  <!-- Country cards -->
+  <div class="country-grid" id="bmCards">
+    <div class="country-card">
+      <div class="cc-flag">🇬🇧</div>
+      <div class="cc-name">United Kingdom</div>
+      <div class="cc-price" id="bmc_uk">£4.19</div>
+      <div class="cc-status" style="background:var(--accent-glow);color:var(--accent-lt);">Base currency</div>
+    </div>
+    <div class="country-card">
+      <div class="cc-flag">🇺🇸</div>
+      <div class="cc-name">United States</div>
+      <div class="cc-price" id="bmc_usa">$5.69</div>
+      <div class="cc-status" id="bms_usa">—</div>
+    </div>
+    <div class="country-card">
+      <div class="cc-flag">🇪🇺</div>
+      <div class="cc-name">Eurozone</div>
+      <div class="cc-price" id="bmc_eu">€5.10</div>
+      <div class="cc-status" id="bms_eu">—</div>
+    </div>
+    <div class="country-card">
+      <div class="cc-flag">🇯🇵</div>
+      <div class="cc-name">Japan</div>
+      <div class="cc-price" id="bmc_jp">¥450</div>
+      <div class="cc-status" id="bms_jp">—</div>
+    </div>
+  </div>
+
+  <!-- Detailed comparison -->
+  <div class="compare-result" id="bmDetail">
+    <h3 style="margin-top:0;margin-bottom:16px;">Detailed Analysis</h3>
+    <div id="bmAnalysis"></div>
+  </div>
+
+</div>
+</div><!-- /panel-bigmac -->
+
+
+<!-- ═══════════════════════════════════════════
+     TAB 3 — QUIZ
+════════════════════════════════════════════ -->
+<div class="panel" id="panel-quiz">
+<div class="page">
+
+  <div class="quiz-hero">
+    <h2>Test Your <em>Knowledge</em></h2>
+    <p style="color:var(--muted);font-size:13px;max-width:400px;margin:0 auto;">Six questions covering PPP theory, calculations and real-world applications.</p>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-lbl">Your score</div>
+    <div class="score-val"><span id="scoreNum">0</span> / 6</div>
+  </div>
+
+  <div class="qblock"><div class="qnum">Question 1 of 6</div><div class="qtext">A basket of goods costs €80 in France and £100 in the UK. What is the PPP exchange rate?</div><div class="qopts"><button class="qopt" onclick="ans(1,'A',this)">A) £1 = €1.25</button><button class="qopt" onclick="ans(1,'B',this)">B) £1 = €0.80</button><button class="qopt" onclick="ans(1,'C',this)">C) £1 = €1.00</button></div><div class="qfb" id="fb1"></div></div>
+
+  <div class="qblock"><div class="qnum">Question 2 of 6</div><div class="qtext">Which version of PPP allows for permanent price level differences between countries?</div><div class="qopts"><button class="qopt" onclick="ans(2,'A',this)">A) Absolute PPP</button><button class="qopt" onclick="ans(2,'B',this)">B) Relative PPP</button><button class="qopt" onclick="ans(2,'C',this)">C) Neither version</button></div><div class="qfb" id="fb2"></div></div>
+
+  <div class="qblock"><div class="qnum">Question 3 of 6</div><div class="qtext">The Balassa-Samuelson effect predicts that rich countries will have:</div><div class="qopts"><button class="qopt" onclick="ans(3,'A',this)">A) Lower price levels than PPP predicts</button><button class="qopt" onclick="ans(3,'B',this)">B) Higher price levels than PPP predicts</button><button class="qopt" onclick="ans(3,'C',this)">C) Price levels exactly equal to PPP predictions</button></div><div class="qfb" id="fb3"></div></div>
+
+  <div class="qblock"><div class="qnum">Question 4 of 6</div><div class="qtext">UK inflation is 3%, US inflation is 7%. According to Relative PPP, what should happen to the pound against the dollar?</div><div class="qopts"><button class="qopt" onclick="ans(4,'A',this)">A) The pound should depreciate by ~4%</button><button class="qopt" onclick="ans(4,'B',this)">B) The pound should appreciate by ~4%</button><button class="qopt" onclick="ans(4,'C',this)">C) The exchange rate should not change</button></div><div class="qfb" id="fb4"></div></div>
+
+  <div class="qblock"><div class="qnum">Question 5 of 6</div><div class="qtext">A haircut costs £10 in the UK and the equivalent of £2 in India. This persistent price gap is mainly because haircuts are:</div><div class="qopts"><button class="qopt" onclick="ans(5,'A',this)">A) Traded goods subject to international competition</button><button class="qopt" onclick="ans(5,'B',this)">B) Non-traded services that cannot be imported</button><button class="qopt" onclick="ans(5,'C',this)">C) Luxury goods excluded from PPP baskets</button></div><div class="qfb" id="fb5"></div></div>
+
+  <div class="qblock"><div class="qnum">Question 6 of 6</div><div class="qtext">A Big Mac costs £4.50 in the UK and $6.30 in the USA. The actual exchange rate is £1 = $1.20. What does the Big Mac Index suggest about the dollar?</div><div class="qopts"><button class="qopt" onclick="ans(6,'A',this)">A) The dollar is undervalued</button><button class="qopt" onclick="ans(6,'B',this)">B) The dollar is overvalued</button><button class="qopt" onclick="ans(6,'C',this)">C) The dollar is fairly valued</button></div><div class="qfb" id="fb6"></div></div>
+
+  <div class="finish" id="finish">
+    <div class="finish-score" id="finalScore">0/6</div>
+    <div class="finish-msg" id="finishMsg"></div>
+    <button class="btn btn-primary" onclick="resetQuiz()">Try again</button>
+  </div>
+
+</div>
+</div><!-- /panel-quiz -->
+
+<footer class="footer">
+  <div>BIZ-OMICS · Economics · PPP Simulator</div>
+  <div style="opacity:.4;">biz-omics.co.uk</div>
+</footer>
+
+<script>
+/* ── THEME ── */
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('biz-ppp-theme',n);
+  document.getElementById('theme-btn').textContent=n==='light'?'🌙':'☀';
+}
+(function(){
+  const t=localStorage.getItem('biz-ppp-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  const b=document.getElementById('theme-btn');
+  if(b)b.textContent=t==='light'?'🌙':'☀';
+})();
+
+/* ── TABS ── */
+function switchTab(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── TOGGLE WORKING ── */
+function toggleWorking(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle('show');
+  btn.textContent=el.classList.contains('show')?'Hide working ↑':'Show working ↓';
+}
+
+/* ── PPP CALCULATOR ── */
+function calcPPP(){
+  const a=parseFloat(document.getElementById('priceA').value)||0;
+  const b=parseFloat(document.getElementById('priceB').value)||0;
+  const act=parseFloat(document.getElementById('actualRate').value)||0;
+  if(!a||!b)return;
+  const rate=b/a;
+  const diff=(rate/act-1)*100;
+  const over=rate<act;
+  document.getElementById('pppMain').textContent='£1 = $'+rate.toFixed(4);
+  const vHTML=act?`<span class="verdict ${over?'v-under':'v-over'}">${over?'↓ Dollar undervalued':'↑ Dollar overvalued'} by ${Math.abs(diff).toFixed(1)}%</span>`:'';
+  document.getElementById('pppVerdict').innerHTML=vHTML;
+  document.getElementById('pw1').textContent=`Country A (UK): £${a.toFixed(2)}  ·  Country B (USA): $${b.toFixed(2)}`;
+  document.getElementById('pw2').textContent=`PPP Rate = $${b.toFixed(2)} ÷ £${a.toFixed(2)}`;
+  document.getElementById('pw3').textContent=`PPP Rate = ${rate.toFixed(4)}  →  £1 = $${rate.toFixed(4)}`;
+  document.getElementById('pw4').textContent=`PPP: £1=$${rate.toFixed(4)}  ·  Actual: £1=$${act.toFixed(2)}  ·  Gap: ${Math.abs(diff).toFixed(1)}%`;
+  document.getElementById('pw5').textContent=`The dollar is ${over?'undervalued':'overvalued'} by ${Math.abs(diff).toFixed(1)}% vs the pound. PPP theory predicts the dollar should ${over?'strengthen':'weaken'} in the long run.`;
+}
+calcPPP();
+
+/* ── RELATIVE PPP ── */
+function calcRelPPP(){
+  const uk=parseFloat(document.getElementById('infUK').value)||0;
+  const us=parseFloat(document.getElementById('infUS').value)||0;
+  const d=us-uk;
+  const dir=d>0?'appreciate':'depreciate';
+  document.getElementById('relMain').textContent=`£ should ${dir} ~${Math.abs(d).toFixed(1)}% vs $`;
+  document.getElementById('relSub').textContent=d===0?'Inflation rates are equal — no change predicted':`${d>0?'US':'UK'} inflation exceeds ${d>0?'UK':'US'} by ${Math.abs(d).toFixed(1)}pp → pound ${dir}s`;
+}
+calcRelPPP();
+
+/* ── LIMITATIONS ── */
+const limitData={
+  1:{title:'Trade Barriers & Transport Costs',pts:['<strong>Tariffs</strong> — import taxes make foreign goods more expensive','<strong>Quotas</strong> — limits on how much can be imported','<strong>Transport costs</strong> — shipping bulky goods is expensive','<strong>Insurance & logistics</strong> — international shipping adds further costs'],impact:'These costs prevent prices from equalising across borders. Even if a good is cheaper abroad, import costs can make it uneconomical to arbitrage the price difference.'},
+  2:{title:'Non-Traded Goods & Services',pts:['<strong>Personal services</strong> — haircuts, dental work, massages','<strong>Real estate</strong> — you cannot import a house','<strong>Restaurant meals</strong> — local dining experiences','<strong>Public services</strong> — healthcare, education'],impact:'Since these cannot be traded internationally, prices are not subject to international competition. A haircut in London can cost 10× more than in Mumbai with no market force to equalise them.'},
+  3:{title:'Market Imperfections',pts:['<strong>Monopolies</strong> can charge different prices in different markets','<strong>Different tax systems</strong> — VAT and excise duties vary widely','<strong>Regulations</strong> — safety standards and licensing add costs','<strong>Price discrimination</strong> — companies deliberately charge more in wealthy markets'],impact:'These imperfections allow persistent price differences. Pharmaceutical companies often charge vastly different prices for the same drug across countries, and regulations prevent simple arbitrage.'},
+  4:{title:'Different Consumer Preferences',pts:['<strong>Cultural differences</strong> — rice is a staple in Asia, less so in Europe','<strong>Climate variations</strong> — winter clothing is essential in Canada, not in Singapore','<strong>Brand preferences</strong> — luxury in one country, standard in another','<strong>Dietary restrictions</strong> — religious and cultural food preferences affect demand'],impact:'Different demand levels affect prices. Comparing "baskets of goods" is difficult when the ideal basket varies significantly by country and culture.'},
+  5:{title:'The Balassa-Samuelson Effect ★',pts:['<strong>High productivity in traded sectors</strong> (manufacturing, tech) in rich countries','<strong>Wages rise economy-wide</strong> — high-productivity sectors pull up wages everywhere','<strong>Non-traded prices rise</strong> — a Swiss barber earns more than an Indian barber, not due to greater productivity, but because Swiss wages are high across the board','<strong>Overall price level is systematically higher</strong> in wealthy countries'],impact:'This is a permanent structural feature, not a temporary deviation. PPP systematically underestimates costs in rich countries and overestimates them in poor countries. Critical for A-Level evaluation.'},
+  6:{title:'Capital Flows & Financial Speculation',pts:['<strong>Interest rate differentials</strong> attract capital flows that shift exchange rates','<strong>Portfolio investment</strong> — billions move across borders daily in stocks and bonds','<strong>Safe haven flows</strong> — during crises, money floods into USD and CHF','<strong>Currency speculation</strong> — traders betting on future movements'],impact:'Financial flows can completely overwhelm trade flows in the short and medium term. PPP may work over decades, but capital movements dominate over 1–10 years. This is why PPP is a poor short-run predictor.'}
+};
+function showLimit(n,btn){
+  document.querySelectorAll('.lb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d=limitData[n];
+  const p=document.getElementById('limitPanel');
+  p.innerHTML=`<h4>${d.title}</h4><ul>${d.pts.map(x=>`<li>${x}</li>`).join('')}</ul><div class="impact"><strong>Impact on PPP:</strong> ${d.impact}</div>`;
+  p.classList.add('show');
+}
+
+/* ── BIG MAC SIMULATOR ── */
+function updateBM(){
+  const uk=parseFloat(document.getElementById('bm_uk').value)||0;
+  const usa=parseFloat(document.getElementById('bm_usa').value)||0;
+  const eu=parseFloat(document.getElementById('bm_eu').value)||0;
+  const jp=parseFloat(document.getElementById('bm_jp').value)||0;
+  const rusd=parseFloat(document.getElementById('bm_rate_usd').value)||0;
+  const reur=parseFloat(document.getElementById('bm_rate_eur').value)||0;
+  const rjpy=parseFloat(document.getElementById('bm_rate_jpy').value)||0;
+
+  document.getElementById('bmc_uk').textContent='£'+uk.toFixed(2);
+  document.getElementById('bmc_usa').textContent='$'+usa.toFixed(2);
+  document.getElementById('bmc_eu').textContent='€'+eu.toFixed(2);
+  document.getElementById('bmc_jp').textContent='¥'+Math.round(jp);
+
+  function statusHTML(ppp,actual,sym,name){
+    if(!actual)return'';
+    const diff=(ppp/actual-1)*100;
+    const abs=Math.abs(diff).toFixed(1);
+    if(Math.abs(diff)<2)return`<span class="cc-status status-fair">≈ Fairly valued</span>`;
+    if(ppp<actual)return`<span class="cc-status status-under">↓ ${name} undervalued ${abs}%</span>`;
+    return`<span class="cc-status status-over">↑ ${name} overvalued ${abs}%</span>`;
+  }
+
+  const pppUSD=usa/uk, pppEUR=eu/uk, pppJPY=jp/uk;
+  document.getElementById('bms_usa').outerHTML=`<div class="cc-status" id="bms_usa">${statusHTML(pppUSD,rusd,'$','Dollar')}</div>`;
+  document.getElementById('bms_eu').outerHTML=`<div class="cc-status" id="bms_eu">${statusHTML(pppEUR,reur,'€','Euro')}</div>`;
+  document.getElementById('bms_jp').outerHTML=`<div class="cc-status" id="bms_jp">${statusHTML(pppJPY,rjpy,'¥','Yen')}</div>`;
+
+  function analysisRow(flag,name,sym,price,ppp,actual,decimals){
+    if(!actual)return'';
+    const diff=(ppp/actual-1)*100;
+    const abs=Math.abs(diff);
+    const over=ppp<actual;
+    const pct=Math.min(abs,50)/50*100;
+    return`<div style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:20px;">${flag}</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${name}</div>
+          <div style="font-size:11px;color:var(--muted);">PPP rate: £1 = ${sym}${ppp.toFixed(decimals)}  ·  Actual: £1 = ${sym}${actual.toFixed(decimals)}</div>
+        </div>
+        <span class="verdict ${over?'v-under':'v-over'}" style="margin-left:auto;">${over?'↓ Undervalued':'↑ Overvalued'} ${abs.toFixed(1)}%</span>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-label"><span>${over?name+' cheap':'PPP rate'}</span><span>${over?'PPP rate':name+' expensive'}</span></div>
+        <div class="gauge-track"><div class="gauge-fill ${over?'gauge-undervalued':'gauge-overvalued'}" style="width:${pct}%;"></div></div>
+      </div>
+      <div class="insight-box"><strong>Insight:</strong> At PPP, £1 should buy ${sym}${ppp.toFixed(decimals)}, but actually buys ${sym}${actual.toFixed(decimals)}. The ${name.split(' ')[0]} is ${over?'cheaper than expected — PPP predicts it should strengthen over time.':'more expensive than expected — PPP predicts it should weaken over time.'}</div>
+    </div>`;
+  }
+
+  document.getElementById('bmAnalysis').innerHTML=
+    analysisRow('🇺🇸','US Dollar','$',usa,pppUSD,rusd,4)+
+    analysisRow('🇪🇺','Euro','€',eu,pppEUR,reur,4)+
+    analysisRow('🇯🇵','Japanese Yen','¥',jp,pppJPY,rjpy,1);
+}
+updateBM();
+
+/* ── QUIZ ── */
+const correctAnswers={1:'B',2:'B',3:'B',4:'B',5:'B',6:'B'};
+const feedbacks={
+  1:{B:'✓ Correct! PPP Rate = €80 ÷ £100 = 0.80. Divide the foreign price by the domestic price: £1 = €0.80.',A:'✗ Incorrect. You calculated the inverse: £100 ÷ €80 = 1.25 (this gives €1 = £1.25). The correct approach is €80 ÷ £100 = 0.80.',C:'✗ Incorrect. Use the formula: PPP Rate = Foreign Price ÷ Domestic Price = €80 ÷ £100 = 0.80, so £1 = €0.80.'},
+  2:{B:'✓ Correct! Relative PPP focuses on changes in exchange rates and inflation differentials, allowing permanent price level differences.',A:'✗ Incorrect. Absolute PPP requires identical price levels — the strict version that rarely holds in practice.',C:'✗ Incorrect. Relative PPP explicitly allows for permanent price level differences between countries.'},
+  3:{B:'✓ Correct! High productivity in traded sectors pushes up wages economy-wide, making rich countries systematically more expensive than PPP predicts.',A:'✗ Incorrect. It is rich, not poor, countries that have systematically higher price levels than PPP predicts.',C:'✗ Incorrect. The Balassa-Samuelson effect creates a systematic deviation from PPP — rich countries are always more expensive than predicted.'},
+  4:{B:'✓ Correct! US inflation (7%) exceeds UK (3%) by 4pp. Relative PPP predicts the pound should appreciate ~4% against the dollar.',A:'✗ Incorrect. When a country has lower inflation, its currency should appreciate, not depreciate. The UK has lower inflation here.',C:'✗ Incorrect. A 4pp inflation differential predicts a ~4% exchange rate adjustment according to Relative PPP.'},
+  5:{B:'✓ Correct! Haircuts are non-traded services — you cannot import a cheaper haircut from abroad, so price differences persist without any equalising market force.',A:'✗ Incorrect. Haircuts are a classic non-traded service, which is precisely why their prices vary so dramatically between countries.',C:'✗ Incorrect. Haircuts are non-traded services, not luxury goods. Their persistent price gap illustrates a key PPP limitation.'},
+  6:{B:'✓ Correct! PPP rate = $6.30 ÷ £4.50 = £1 = $1.40. Actual rate is £1 = $1.20. Since the dollar buys fewer pounds than PPP suggests, the dollar is overvalued by ~16.7%.',A:'✗ Incorrect. The PPP rate is $6.30 ÷ £4.50 = 1.40, but the actual is 1.20. The actual rate is below PPP, meaning the dollar is overvalued, not undervalued.',C:'✗ Incorrect. The PPP rate (1.40) differs significantly from the actual rate (1.20) — the dollar is overvalued by about 16.7%.'}
+};
+let score=0;const answered={};
+function ans(q,opt,el){
+  if(answered[q])return;
+  answered[q]=true;
+  const correct=correctAnswers[q]===opt;
+  if(correct)score++;
+  document.getElementById('scoreNum').textContent=score;
+  el.parentElement.querySelectorAll('.qopt').forEach(o=>{
+    o.disabled=true;
+    if(o.textContent.trim().startsWith(correctAnswers[q]+')'))o.classList.add('correct');
+  });
+  if(!correct)el.classList.add('wrong');
+  const fb=document.getElementById('fb'+q);
+  fb.textContent=feedbacks[q][opt]||feedbacks[q][correctAnswers[q]];
+  fb.className='qfb show '+(correct?'correct':'wrong');
+  if(Object.keys(answered).length===6){
+    setTimeout(()=>{
+      const fin=document.getElementById('finish');
+      fin.classList.add('show');
+      document.getElementById('finalScore').textContent=score+'/6';
+      const msgs=['Keep going — review the Learn tab and try again!','Good effort — re-read sections 3 and 4 and retry.','Solid understanding! Review your wrong answers.','Great work! Strong grasp of PPP theory.','Excellent — nearly perfect!','Outstanding! Full marks — PPP mastered. 🎉'];
+      document.getElementById('finishMsg').textContent=msgs[score];
+    },600);
+  }
+}
+function resetQuiz(){
+  score=0;Object.keys(answered).forEach(k=>delete answered[k]);
+  document.getElementById('scoreNum').textContent='0';
+  document.getElementById('finish').classList.remove('show');
+  for(let i=1;i<=6;i++){
+    document.getElementById('fb'+i).className='qfb';
+    document.getElementById('fb'+i).textContent='';
+    document.querySelectorAll(`#panel-quiz .qblock`)[i-1].querySelectorAll('.qopt').forEach(o=>{o.disabled=false;o.classList.remove('correct','wrong');});
+  }
+}
+</script>
+</body>
+</html>
