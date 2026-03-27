@@ -582,15 +582,36 @@ function closeContact(){
   },300);
 }
 function handleOverlay(e){if(e.target===document.getElementById('contact-overlay'))closeContact();}
-function sendContact(){
+async function sendContact(){
   var name=document.getElementById('c-name').value.trim();
   var email=document.getElementById('c-email').value.trim();
   var msg=document.getElementById('c-msg').value.trim();
-  var subject=encodeURIComponent('BIZ-OMICS enquiry'+(name?' from '+name:''));
-  var body=encodeURIComponent('Name: '+(name||'—')+'\nEmail: '+(email||'—')+'\n\nMessage:\n'+(msg||'—'));
-  window.location.href='mailto:contact@biz-omics.co.uk?subject='+subject+'&body='+body;
-  document.getElementById('contact-form').style.display='none';
-  document.getElementById('contact-success').style.display='block';
+  if(!name||!email||!msg){alert('Please fill in all fields.');return;}
+  var btn=document.querySelector('.modal-submit');
+  btn.textContent='Sending…';btn.disabled=true;
+  try{
+    var res=await fetch('https://api.web3forms.com/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        access_key:'0ac9dc5d-a8c9-43df-b555-c535d99452ba',
+        subject:'BIZ-OMICS Economics enquiry from '+name,
+        name:name,email:email,message:msg,
+        from_name:'BIZ-OMICS Contact Form'
+      })
+    });
+    var data=await res.json();
+    if(data.success){
+      document.getElementById('contact-form').style.display='none';
+      document.getElementById('contact-success').style.display='block';
+    } else {
+      alert('Something went wrong. Please try again.');
+      btn.textContent='Send message →';btn.disabled=false;
+    }
+  } catch(e){
+    alert('Network error. Please try again.');
+    btn.textContent='Send message →';btn.disabled=false;
+  }
 }
 </script>
 
@@ -621,7 +642,7 @@ function sendContact(){
     </div>
     <div class="modal-success" id="contact-success">
       <div class="tick">✉️</div>
-      <p><strong>Almost there!</strong><br>Your email app will open addressed to<br>contact@biz-omics.co.uk</p>
+      <p><strong>Message sent!</strong><br>Thanks for getting in touch.<br>We'll get back to you at your email address.</p>
     </div>
   </div>
 </div>
