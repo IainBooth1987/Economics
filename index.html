@@ -334,8 +334,8 @@ footer{
     </div>
     <div class="modal-success" id="contact-success">
       <div class="s-icon">✉️</div>
-      <strong>Almost there!</strong>
-      <p>Your email app will open addressed to<br>contact@biz-omics.co.uk</p>
+      <strong>Message sent!</strong>
+      <p>Thanks for getting in touch.<br>We'll get back to you at your email address.</p>
     </div>
   </div>
 </div>
@@ -358,15 +358,36 @@ function closeContact(){
   },300);
 }
 function handleOverlay(e){if(e.target===document.getElementById('contact-overlay'))closeContact();}
-function sendContact(){
+async function sendContact(){
   const name=document.getElementById('c-name').value.trim();
   const email=document.getElementById('c-email').value.trim();
   const msg=document.getElementById('c-msg').value.trim();
-  const subject=encodeURIComponent('BIZ-OMICS enquiry'+(name?' from '+name:''));
-  const body=encodeURIComponent('Name: '+(name||'—')+'\nEmail: '+(email||'—')+'\n\nMessage:\n'+(msg||'—'));
-  window.location.href='mailto:contact@biz-omics.co.uk?subject='+subject+'&body='+body;
-  document.getElementById('contact-form').style.display='none';
-  document.getElementById('contact-success').style.display='block';
+  if(!name||!email||!msg){alert('Please fill in all fields.');return;}
+  const btn=document.querySelector('.modal-submit');
+  btn.textContent='Sending…';btn.disabled=true;
+  try{
+    const res=await fetch('https://api.web3forms.com/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        access_key:'0ac9dc5d-a8c9-43df-b555-c535d99452ba',
+        subject:'BIZ-OMICS enquiry from '+name,
+        name:name,email:email,message:msg,
+        from_name:'BIZ-OMICS Contact Form'
+      })
+    });
+    const data=await res.json();
+    if(data.success){
+      document.getElementById('contact-form').style.display='none';
+      document.getElementById('contact-success').style.display='block';
+    } else {
+      alert('Something went wrong. Please try again.');
+      btn.textContent='Send message →';btn.disabled=false;
+    }
+  } catch(e){
+    alert('Network error. Please try again.');
+    btn.textContent='Send message →';btn.disabled=false;
+  }
 }
 </script>
 
