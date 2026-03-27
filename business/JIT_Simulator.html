@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIT Simulator | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,700;9..144,0,900;9..144,1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080e0b;--surface:#0d1f19;--surface2:#0a1a14;
+  --accent:#10b981;--accent-lt:#34d399;--accent-glow:rgba(16,185,129,0.12);
+  --amber:#f59e0b;--amber-glow:rgba(245,158,11,0.1);--amber-b:rgba(245,158,11,0.22);
+  --red:#ef4444;--red-glow:rgba(239,68,68,0.1);--red-b:rgba(239,68,68,0.25);
+  --blue:#3b82f6;--blue-b:rgba(59,130,246,0.25);
+  --text:#eef5f2;--muted:rgba(238,245,242,0.55);--dim:rgba(238,245,242,0.28);
+  --border:rgba(255,255,255,0.07);--border-acc:rgba(16,185,129,0.22);
+  --radius:14px;--ff:'DM Sans',sans-serif;--ffs:'Fraunces',serif;
+}
+[data-theme="light"]{
+  --bg:#f3f7f5;--surface:#fff;--surface2:#edf2ef;
+  --text:#081a10;--muted:#4a6358;--dim:#8fa89d;
+  --border:rgba(0,0,0,0.08);--border-acc:rgba(16,185,129,0.28);
+  --accent-glow:rgba(16,185,129,0.07);--amber-glow:rgba(245,158,11,0.07);
+  --red-glow:rgba(239,68,68,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;transition:background .2s,color .2s;}
+
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 24px;height:54px;background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(18px);}
+.back{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:500;padding-right:16px;margin-right:16px;border-right:1px solid var(--border);transition:color .2s;white-space:nowrap;}
+.back:hover{color:var(--text);}
+.back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.brand{font-family:var(--ffs);font-size:16px;font-weight:700;flex:1;}
+.brand span{color:var(--accent);}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+.hdr-badge{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;border:1px solid var(--border);padding:4px 10px;border-radius:20px;}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── PROGRESS ── */
+.prog-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;}
+.prog-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-lt));border-radius:3px;transition:width .5s ease;}
+.prog-label{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600;}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 60px;display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start;}
+.main-col{}
+.side-col{position:sticky;top:70px;}
+
+/* ── LIVE METRICS PANEL ── */
+.metrics-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+.metrics-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;}
+.metric-lbl{font-size:12px;color:var(--muted);}
+.metric-val{font-size:13px;font-weight:700;color:var(--text);transition:all .4s;}
+.metric-val.flash-up{animation:flashUp .6s ease;}
+.metric-val.flash-dn{animation:flashDn .6s ease;}
+@keyframes flashUp{0%,100%{color:var(--text);}50%{color:var(--accent-lt);}}
+@keyframes flashDn{0%,100%{color:var(--text);}50%{color:#f87171;}}
+.metric-chg{font-size:10px;font-weight:700;margin-left:4px;}
+.metric-chg.up{color:var(--accent-lt);}
+.metric-chg.dn{color:#f87171;}
+.scores-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.score-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center;}
+.score-lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.score-val{font-family:var(--ffs);font-size:18px;font-weight:700;color:var(--accent-lt);}
+.score-bar-track{height:4px;background:var(--bg);border-radius:2px;margin-top:4px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.score-efficiency .score-bar-fill{background:var(--accent);}
+.score-relations .score-bar-fill{background:#3b82f6;}
+.score-cost .score-bar-fill{background:var(--amber);}
+.score-risk .score-bar-fill{background:#e879f9;}
+
+/* ── FACTORY VISUAL ── */
+.factory-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;overflow:hidden;}
+.factory-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.factory-subtitle{font-size:10px;color:var(--dim);}
+.factory-svg{width:100%;display:block;}
+.factory-status{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;min-height:16px;}
+
+/* ── TIMER ── */
+.timer-wrap{display:flex;align-items:center;gap:10px;background:var(--amber-glow);border:1px solid var(--amber-b);border-radius:10px;padding:10px 14px;margin-bottom:14px;transition:all .3s;}
+.timer-wrap.urgent{background:var(--red-glow);border-color:var(--red-b);}
+.timer-icon{font-size:16px;}
+.timer-body{flex:1;}
+.timer-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--amber);font-weight:700;margin-bottom:4px;}
+.timer-wrap.urgent .timer-label{color:#f87171;}
+.timer-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.timer-fill{height:100%;background:var(--amber);border-radius:3px;transition:width .1s linear;}
+.timer-fill.urgent{background:var(--red);}
+.timer-count{font-family:var(--ffs);font-size:20px;font-weight:700;color:var(--amber);min-width:30px;text-align:right;}
+.timer-count.urgent{color:#f87171;}
+.timer-wrap.gone{display:none;}
+
+/* ── CURRICULUM PANEL ── */
+.curric-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.ctabs{display:flex;border-bottom:1px solid var(--border);}
+.ctab{flex:1;padding:8px 4px;font-size:10px;font-weight:600;text-align:center;cursor:pointer;border:none;background:none;font-family:var(--ff);color:var(--dim);transition:all .15s;border-bottom:2px solid transparent;}
+.ctab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ctab-body{display:none;padding:12px;max-height:300px;overflow-y:auto;}
+.ctab-body.active{display:block;}
+.term-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
+.term-name{font-size:11px;font-weight:700;color:var(--accent-lt);margin-bottom:2px;}
+.term-def{font-size:11px;color:var(--muted);line-height:1.55;}
+.obj-item{display:flex;gap:7px;margin-bottom:8px;font-size:11px;color:var(--muted);line-height:1.55;}
+.obj-icon{color:var(--accent);flex-shrink:0;}
+.spec-row{margin-bottom:6px;font-size:11px;color:var(--muted);}
+.spec-chip{display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;margin-right:4px;font-weight:700;}
+.chip-aqa{background:rgba(59,130,246,0.15);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);}
+.chip-edx{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);}
+.chip-ocr{background:rgba(16,185,129,0.15);color:var(--accent-lt);border:1px solid var(--border-acc);}
+
+/* ── SCENARIO BOX ── */
+.scenario-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;}
+.scenario-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:8px;}
+.scenario-box h2{font-family:var(--ffs);font-size:22px;font-weight:700;letter-spacing:-0.3px;margin-bottom:10px;}
+.scenario-box p{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:8px;}
+.scenario-box p:last-child{margin-bottom:0;}
+.scenario-box strong{color:var(--text);}
+.challenge-list{list-style:none;margin:12px 0;}
+.challenge-list li{padding:10px 12px;margin-bottom:6px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--amber);font-size:13px;color:var(--muted);}
+.challenge-list li strong{color:var(--text);}
+
+/* ── DECISION SECTION ── */
+.decision-section{margin-bottom:20px;}
+.decision-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.decision-hdr h3{font-size:14px;font-weight:700;color:var(--text);}
+.spec-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 9px;border-radius:20px;background:var(--accent-glow);border:1px solid var(--border-acc);color:var(--accent-lt);font-weight:600;white-space:nowrap;flex-shrink:0;}
+.decision-options{display:flex;flex-direction:column;gap:10px;}
+.decision-option{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;}
+.decision-option:hover{border-color:var(--border-acc);background:var(--accent-glow);}
+.decision-option.selected{border-color:var(--accent);background:var(--accent-glow);}
+.decision-option h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.decision-option p{font-size:12px;color:var(--muted);line-height:1.65;}
+.impact-tags{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:5px;}
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.tag-pos{background:var(--accent-glow);color:var(--accent-lt);border:1px solid var(--border-acc);}
+.tag-neg{background:var(--red-glow);color:#f87171;border:1px solid var(--red-b);}
+.tag-neu{background:var(--amber-glow);color:var(--amber);border:1px solid var(--amber-b);}
+
+/* ── BUTTONS ── */
+.btn-primary{background:var(--accent);color:#000;border:none;border-radius:9px;padding:11px 24px;font-size:13px;font-weight:700;font-family:var(--ff);cursor:pointer;transition:all .15s;}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:11px 20px;font-size:13px;font-weight:600;font-family:var(--ff);cursor:pointer;transition:all .15s;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+
+/* ── OUTCOME BOX ── */
+.outcome-box{background:var(--surface);border:1px solid var(--border-acc);border-radius:var(--radius);padding:22px;margin-bottom:16px;animation:slideIn .4s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.outcome-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.outcome-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.outcome-section h4{font-size:13px;font-weight:700;color:var(--accent-lt);margin-bottom:8px;}
+.outcome-section p{font-size:13px;color:var(--muted);line-height:1.8;}
+.outcome-highlight{background:var(--accent-glow);border:1px solid var(--border-acc);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:13px;color:var(--muted);line-height:1.7;}
+.outcome-highlight strong{color:var(--accent-lt);}
+.outcome-warn{background:var(--amber-glow);border:1px solid var(--amber-b);border-radius:10px;padding:14px 16px;margin-top:14px;font-size:13px;color:var(--muted);line-height:1.7;}
+.outcome-warn strong{color:var(--amber);}
+
+/* ── INTRO METRICS ── */
+.intro-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0;}
+.intro-metric{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.intro-metric-lbl{font-size:11px;color:var(--dim);margin-bottom:4px;}
+.intro-metric-val{font-family:var(--ffs);font-size:20px;font-weight:700;color:var(--amber);}
+
+/* ── PROS CONS ── */
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+.pros,.cons{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.pros h4{color:var(--accent-lt);font-size:12px;font-weight:700;margin-bottom:8px;}
+.cons h4{color:#f87171;font-size:12px;font-weight:700;margin-bottom:8px;}
+.pros ul,.cons ul{padding-left:14px;}
+.pros li,.cons li{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:3px;}
+
+/* ── DEBRIEF ── */
+.debrief-grade{font-family:var(--ffs);font-size:52px;font-weight:900;color:var(--accent);text-align:center;margin:8px 0 4px;}
+.debrief-msg{font-size:14px;color:var(--muted);text-align:center;margin-bottom:20px;}
+.debrief-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0;}
+.dstat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.dstat-val{font-family:var(--ffs);font-size:20px;font-weight:700;color:var(--accent-lt);}
+.dstat-lbl{font-size:11px;color:var(--dim);margin-top:3px;}
+.debrief-section{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
+.debrief-section h4{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin-bottom:10px;}
+.topic-row{display:flex;gap:8px;margin-bottom:8px;font-size:12px;color:var(--muted);line-height:1.6;}
+.topic-icon{flex-shrink:0;}
+.revise-item{margin-bottom:7px;font-size:12px;color:var(--muted);line-height:1.6;padding-left:12px;border-left:2px solid var(--border-acc);margin-left:3px;padding-top:2px;padding-bottom:2px;}
+
+/* ── RIVAL COMPANY ── */
+.rival-panel{background:var(--surface);border:1px solid var(--red-b);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.rival-title{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#f87171;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.rival-name{font-size:13px;font-weight:700;color:#f87171;margin-bottom:6px;}
+.rival-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;font-size:12px;}
+.rival-lbl{color:var(--muted);}
+.rival-val{font-weight:700;color:var(--text);}
+.rival-compare{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;}
+.rival-ahead{color:#f87171;}
+.rival-behind{color:var(--accent-lt);}
+.rival-bar-wrap{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.rival-bar-label{font-size:10px;color:var(--dim);width:60px;text-align:right;}
+.rival-bar-track{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative;}
+.rival-bar-you{height:100%;background:var(--accent);border-radius:3px;transition:width .5s ease;}
+.rival-bar-them{position:absolute;top:0;right:0;height:100%;background:rgba(239,68,68,0.5);border-radius:3px;transition:width .5s ease;}
+.rival-status{text-align:center;margin-top:10px;font-size:11px;font-weight:700;padding:5px;border-radius:6px;}
+.rival-winning{background:var(--accent-glow);color:var(--accent-lt);border:1px solid var(--border-acc);}
+.rival-losing{background:var(--red-glow);color:#f87171;border:1px solid var(--red-b);}
+.rival-tied{background:var(--amber-glow);color:var(--amber);border:1px solid var(--amber-b);}
+
+/* ── CRISIS EVENT ── */
+.crisis-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.crisis-overlay.show{display:flex;}
+.crisis-card{background:var(--surface);border:2px solid var(--red-b);border-radius:18px;padding:28px;max-width:520px;width:100%;animation:crisisIn .3s cubic-bezier(.34,1.3,.64,1);}
+@keyframes crisisIn{from{opacity:0;transform:scale(.9) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.crisis-tag{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#f87171;font-weight:700;margin-bottom:8px;}
+.crisis-title{font-family:var(--ffs);font-size:20px;font-weight:700;margin-bottom:10px;color:var(--text);}
+.crisis-desc{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:16px;}
+.crisis-spec{font-size:11px;color:var(--dim);margin-bottom:14px;}
+.crisis-choices{display:flex;flex-direction:column;gap:9px;}
+.crisis-btn{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px 14px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--ff);color:var(--text);text-align:left;transition:all .15s;}
+.crisis-btn:hover{border-color:var(--border-acc);background:var(--accent-glow);color:var(--accent-lt);}
+.crisis-btn small{display:block;font-weight:400;color:var(--muted);margin-top:3px;}
+
+/* ── SOUND BTN ── */
+.sound-toggle{background:none;border:1px solid var(--border);border-radius:50%;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.sound-toggle:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── NOTIFICATION TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border-acc);border-radius:20px;padding:10px 20px;font-size:13px;font-weight:500;z-index:600;animation:toastIn .3s ease,toastOut .3s ease 3.5s forwards;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.bad{border-color:var(--red-b);color:#f87171;}
+.toast.good{border-color:var(--border-acc);color:var(--accent-lt);}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+@keyframes toastOut{to{opacity:0;transform:translate(-50%,12px);}}
+.hidden{display:none;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:800px){
+  .wrap{grid-template-columns:1fr;}
+  .side-col{position:static;}
+  .pros-cons{grid-template-columns:1fr;}
+  .intro-metrics{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a href="../business/index.html" class="back">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Business
+  </a>
+  <div class="brand">BIZ-<span>OMICS</span></div>
+  <div class="hdr-right">
+    <div class="hdr-badge">Operations Simulator</div>
+    <button class="sound-toggle" id="sound-btn" onclick="toggleSound()" title="Toggle sound">🔊</button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="prog-label" id="prog-label">Introduction</div>
+</div>
+
+<!-- MAIN WRAP -->
+<div class="wrap">
+
+  <!-- MAIN COLUMN -->
+  <div class="main-col">
+
+    <!-- ══ INTRO ══ -->
+    <div id="screen-intro">
+      <div class="scenario-box">
+        <div class="scenario-eyebrow">Operations Management Simulation</div>
+        <h2>🏭 JIT Implementation Simulator</h2>
+        <p><strong>Congratulations on your appointment as Operations Manager of ManuTech Industries.</strong></p>
+        <p>The board has authorised a full transition from traditional <strong>Just in Case (JIC)</strong> inventory management to <strong>Just in Time (JIT)</strong>. Your mission: plan and execute the transformation over three rounds spanning 12 months.</p>
+        <p>Every decision you make will update the company's live metrics in real time — watch the numbers change as you commit to each choice.</p>
+
+        <div class="intro-metrics">
+          <div class="intro-metric"><div class="intro-metric-lbl">Current Inventory Value</div><div class="intro-metric-val">£2.4M</div></div>
+          <div class="intro-metric"><div class="intro-metric-lbl">Warehouse Space Used</div><div class="intro-metric-val">15,000 m²</div></div>
+          <div class="intro-metric"><div class="intro-metric-lbl">Stock Obsolescence/yr</div><div class="intro-metric-val">£180K</div></div>
+          <div class="intro-metric"><div class="intro-metric-lbl">Active Suppliers</div><div class="intro-metric-val">45</div></div>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros"><h4>✅ Why switch to JIT?</h4><ul>
+            <li>Frees up tied-up working capital</li>
+            <li>Reduces warehouse overhead costs</li>
+            <li>Cuts stock obsolescence losses</li>
+            <li>Improves cash flow position</li>
+            <li>Encourages lean, efficient culture</li>
+          </ul></div>
+          <div class="cons"><h4>⚠️ Risks of JIT</h4><ul>
+            <li>Vulnerable to supply chain disruptions</li>
+            <li>Requires reliable, trusted suppliers</li>
+            <li>Zero tolerance for quality failures</li>
+            <li>High dependency on IT systems</li>
+            <li>Staff resistance to change</li>
+          </ul></div>
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn-primary" onclick="startRound(1)">Begin Implementation →</button></div>
+    </div>
+
+    <!-- ══ ROUND 1 ══ -->
+    <div id="screen-r1" class="hidden">
+      <div class="scenario-box">
+        <div class="scenario-eyebrow">Round 1 · Months 1–3</div>
+        <h2>Planning the Transition</h2>
+        <p>You've announced the shift to JIT. Now make three foundational decisions. Each choice updates your performance metrics immediately — watch what happens to efficiency, relationships, cost and risk as you decide.</p>
+      </div>
+
+      <!-- TIMER -->
+      <div class="timer-wrap gone" id="timer-wrap">
+        <div class="timer-icon">⏱️</div>
+        <div class="timer-body">
+          <div class="timer-label">Decision time remaining</div>
+          <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+        </div>
+        <div class="timer-count" id="timer-count">45</div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 1: How will you manage workforce resistance?</h3>
+          <span class="spec-tag">📚 Change management · AQA 3.6</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r1d1','training',this,{efficiency:5,relations:10,cost:-8,risk:5})">
+            <h4>📚 Comprehensive Training Programme</h4>
+            <p>Invest £150K in training, workshops and change management. Involve employees throughout the transition.</p>
+            <div class="impact-tags"><span class="tag tag-pos">High buy-in</span><span class="tag tag-pos">Smoother transition</span><span class="tag tag-neg">£150K cost</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d1','mandate',this,{efficiency:8,relations:-5,cost:3,risk:-8})">
+            <h4>⚡ Top-Down Mandate</h4>
+            <p>Announce changes and expect compliance. Provide basic briefings only. Focus budget on systems rather than people.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Faster rollout</span><span class="tag tag-pos">Lower cost</span><span class="tag tag-neg">Resistance risk</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d1','gradual',this,{efficiency:3,relations:6,cost:-2,risk:3})">
+            <h4>🎯 Pilot Programme</h4>
+            <p>Trial JIT in one volunteer department. Use early success to build momentum and win over sceptics gradually.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Lower risk</span><span class="tag tag-neu">Moderate cost</span><span class="tag tag-neg">Slower rollout</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 2: How will you prepare your suppliers?</h3>
+          <span class="spec-tag">📚 Supply chain · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r1d2','partnership',this,{efficiency:8,relations:15,cost:-5,risk:-10})">
+            <h4>🤝 Strategic Partnership</h4>
+            <p>Reduce supplier base from 45 to 12 key partners. Offer long-term contracts with guaranteed volumes. Share forecasts, collaborate on quality.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Strong relationships</span><span class="tag tag-pos">Better quality</span><span class="tag tag-neg">High dependency</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d2','competitive',this,{efficiency:3,relations:-8,cost:8,risk:-5})">
+            <h4>💰 Maintain Competition</h4>
+            <p>Keep all 45 suppliers but demand JIT delivery terms. Use competitive pressure to negotiate lower prices.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Cost leverage</span><span class="tag tag-neg">Weaker relationships</span><span class="tag tag-neg">Quality risks</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d2','hybrid',this,{efficiency:5,relations:5,cost:2,risk:2})">
+            <h4>⚖️ Tiered Supplier Strategy</h4>
+            <p>Create a preferred tier of 20 suppliers with better terms, maintain 25 backup suppliers for security.</p>
+            <div class="impact-tags"><span class="tag tag-neu">Balanced approach</span><span class="tag tag-pos">Some security</span><span class="tag tag-neu">Moderate cost</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 3: What is your technology investment strategy?</h3>
+          <span class="spec-tag">📚 Operations technology · Edexcel Theme 3</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r1d3','comprehensive',this,{efficiency:15,relations:3,cost:-15,risk:5})">
+            <h4>🚀 Full ERP System Overhaul</h4>
+            <p>Invest £800K in enterprise ERP with real-time tracking, automated ordering and full supplier integration.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Best visibility</span><span class="tag tag-pos">Automation</span><span class="tag tag-neg">£800K cost</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d3','essential',this,{efficiency:5,relations:0,cost:-3,risk:-3})">
+            <h4>💻 Essential Systems Only</h4>
+            <p>Invest £250K in basic inventory software and barcode scanning. Manual monitoring where needed.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Affordable</span><span class="tag tag-neg">Limited automation</span><span class="tag tag-neg">More manual work</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r1d3','phased',this,{efficiency:10,relations:2,cost:-8,risk:2})">
+            <h4>📊 Phased Cloud Rollout</h4>
+            <p>Start with £400K cloud-based system. Implement core features first, add advanced modules as benefits are realised.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Scalable</span><span class="tag tag-pos">Manageable cost</span><span class="tag tag-neu">Moderate capability</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="btn-r1" onclick="showOutcome(1)" disabled>Continue to Outcome →</button>
+      </div>
+    </div>
+
+    <!-- ══ ROUND 1 OUTCOME ══ -->
+    <div id="screen-r1-outcome" class="hidden">
+      <div class="outcome-box" id="content-r1-outcome"></div>
+      <div class="btn-row"><button class="btn-primary" onclick="startRound(2)">Continue to Round 2 →</button></div>
+    </div>
+
+    <!-- ══ ROUND 2 ══ -->
+    <div id="screen-r2" class="hidden">
+      <div class="scenario-box">
+        <div class="scenario-eyebrow">Round 2 · Months 4–9</div>
+        <h2>Facing the Challenges</h2>
+        <p>Three months in — and the teething problems have arrived. Navigate these crises while maintaining operations and stakeholder confidence.</p>
+        <ul class="challenge-list">
+          <li><strong>⚠️ Supply Disruption:</strong> Severe weather in Europe has delayed key component shipments by 5 days. The production line may halt.</li>
+          <li><strong>💷 Cost Pressures:</strong> Suppliers are requesting 8–12% price increases, citing small batch sizes and frequent deliveries.</li>
+          <li><strong>📉 Quality Issues:</strong> Increased delivery frequency has led to three batches of substandard components slipping through.</li>
+          <li><strong>😟 Workforce Anxiety:</strong> Staff are reverting to old practices. Some departments are rebuilding informal buffer stocks.</li>
+        </ul>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 4: How do you handle the supply disruption?</h3>
+          <span class="spec-tag">📚 Supply chain risk · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r2d1','emergency',this,{efficiency:-5,relations:-3,cost:-12,risk:-8})">
+            <h4>🚨 Emergency Stock Purchase</h4>
+            <p>Source components from alternative suppliers at a 35% premium. Rebuild a small buffer stock for critical items.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Maintains production</span><span class="tag tag-neg">High cost</span><span class="tag tag-neg">Undermines JIT</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d1','flexible',this,{efficiency:5,relations:-2,cost:3,risk:8})">
+            <h4>🔄 Production Flexibility</h4>
+            <p>Shift production to products using available components. Work with customers to adjust delivery schedules temporarily.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Stays true to JIT</span><span class="tag tag-neu">Customer goodwill needed</span><span class="tag tag-neg">Disrupted schedules</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d1','dual',this,{efficiency:2,relations:3,cost:-5,risk:10})">
+            <h4>🛡️ Dual Sourcing Strategy</h4>
+            <p>Expedite from secondary supplier (20% premium). Implement geographic diversification for critical components going forward.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Future resilience</span><span class="tag tag-pos">Balanced</span><span class="tag tag-neg">Moderate cost</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 5: How do you respond to supplier price increases?</h3>
+          <span class="spec-tag">📚 Supplier relations · Lean production · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r2d2','accept',this,{efficiency:2,relations:8,cost:-8,risk:3})">
+            <h4>✅ Accept and Adjust</h4>
+            <p>Accept the increases but negotiate 6-month fixed pricing. Work to improve efficiency elsewhere to offset costs.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Maintains relationships</span><span class="tag tag-neg">Higher input costs</span><span class="tag tag-neu">Margin pressure</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d2','negotiate',this,{efficiency:-2,relations:-8,cost:8,risk:-3})">
+            <h4>💬 Aggressive Negotiation</h4>
+            <p>Counter with 4% maximum. Threaten to switch suppliers. Increase batch sizes slightly to reduce their costs.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Controls costs</span><span class="tag tag-neg">Relationship strain</span><span class="tag tag-neg">Compromises JIT</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d2','value',this,{efficiency:5,relations:10,cost:-3,risk:5})">
+            <h4>🎯 Value Engineering</h4>
+            <p>Accept 5% short-term but collaborate with suppliers on component redesign to reduce their costs long-term. Share the savings.</p>
+            <div class="impact-tags"><span class="tag tag-pos">True partnership</span><span class="tag tag-pos">Long-term savings</span><span class="tag tag-neu">Short-term cost</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 6: How do you address quality concerns?</h3>
+          <span class="spec-tag">📚 TQM · Quality at source · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r2d3','inspection',this,{efficiency:-5,relations:0,cost:-8,risk:5})">
+            <h4>🔍 Enhanced Inspection</h4>
+            <p>Rigorous receiving inspection for all deliveries. Hire 3 additional quality inspectors at £120K/year.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Catches defects</span><span class="tag tag-neg">Slower receiving</span><span class="tag tag-neg">£120K cost</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d3','supplier',this,{efficiency:3,relations:12,cost:-2,risk:6})">
+            <h4>🏭 Supplier Quality Programmes</h4>
+            <p>Work with suppliers to improve their own quality control. Conduct audits, share standards, provide support.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Root cause fix</span><span class="tag tag-pos">Partnership building</span><span class="tag tag-neg">Takes time</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r2d3','penalty',this,{efficiency:5,relations:-5,cost:5,risk:3})">
+            <h4>⚖️ Performance-Based Contracts</h4>
+            <p>Implement penalty clauses for quality failures. Pay premiums for perfect quality records. Data-driven accountability.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Clear incentives</span><span class="tag tag-neu">Transactional</span><span class="tag tag-neg">Strains relations</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="btn-r2" onclick="showOutcome(2)" disabled>Continue to Outcome →</button>
+      </div>
+    </div>
+
+    <!-- ══ ROUND 2 OUTCOME ══ -->
+    <div id="screen-r2-outcome" class="hidden">
+      <div class="outcome-box" id="content-r2-outcome"></div>
+      <div class="btn-row"><button class="btn-primary" onclick="startRound(3)">Continue to Round 3 →</button></div>
+    </div>
+
+    <!-- ══ ROUND 3 ══ -->
+    <div id="screen-r3" class="hidden">
+      <div class="scenario-box">
+        <div class="scenario-eyebrow">Round 3 · Months 10–12</div>
+        <h2>Harvesting the Benefits</h2>
+        <p>Twelve months in — the initial challenges have been navigated. JIT benefits are becoming tangible. Now decide how to maximise and sustain the gains.</p>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 7: What do you do with freed warehouse space?</h3>
+          <span class="spec-tag">📚 Asset management · Capital allocation · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r3d1','sell',this,{efficiency:5,relations:0,cost:20,risk:-5})">
+            <h4>💰 Sell the Asset</h4>
+            <p>Sell 9,000 m² for £2.7M. Immediate capital gain. Lease back small buffer space if ever needed.</p>
+            <div class="impact-tags"><span class="tag tag-pos">£2.7M cash</span><span class="tag tag-pos">Reduced overhead</span><span class="tag tag-neg">Less flexibility</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d1','repurpose',this,{efficiency:10,relations:2,cost:-5,risk:5})">
+            <h4>🏭 Convert to Production</h4>
+            <p>Invest freed space into new production capacity. Expand output or enter new product lines.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Revenue growth</span><span class="tag tag-pos">Better asset use</span><span class="tag tag-neu">Requires investment</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d1','lease',this,{efficiency:2,relations:0,cost:8,risk:3})">
+            <h4>📋 Lease to Third Party</h4>
+            <p>Lease excess space for £180K/year. Steady income while retaining ownership and optionality.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Steady income</span><span class="tag tag-pos">Retain asset</span><span class="tag tag-neu">Moderate return</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 8: How do you deploy the freed cash flow?</h3>
+          <span class="spec-tag">📚 Stakeholder objectives · Capital allocation · AQA 3.7</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r3d2','dividend',this,{efficiency:0,relations:5,cost:5,risk:-2})">
+            <h4>💵 Return to Shareholders</h4>
+            <p>Pay a special dividend of £1.2M. Reward shareholders for supporting the transformation.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Shareholder satisfaction</span><span class="tag tag-pos">Signals confidence</span><span class="tag tag-neg">Foregone investment</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d2','technology',this,{efficiency:12,relations:-2,cost:-5,risk:8})">
+            <h4>🤖 Automation Investment</h4>
+            <p>Invest in robotics and AI quality control. Further reduce labour costs and improve consistency.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Long-run efficiency</span><span class="tag tag-pos">Cost reduction</span><span class="tag tag-neg">Workforce concerns</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d2','expansion',this,{efficiency:5,relations:3,cost:-3,risk:5})">
+            <h4>📈 Market Expansion</h4>
+            <p>Use operational efficiency as a competitive advantage to enter new markets or product segments.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Revenue growth</span><span class="tag tag-pos">Strategic positioning</span><span class="tag tag-neu">Execution risk</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-section">
+        <div class="decision-hdr">
+          <h3>Decision 9: How do you sustain supplier relationships long-term?</h3>
+          <span class="spec-tag">📚 Supply chain excellence · Kaizen · AQA 3.5</span>
+        </div>
+        <div class="decision-options">
+          <div class="decision-option" onclick="choose('r3d3','integrate',this,{efficiency:12,relations:15,cost:-3,risk:-5})">
+            <h4>🔗 Deep Integration</h4>
+            <p>Implement vendor-managed inventory and data sharing with key suppliers. Create unprecedented supply chain efficiency.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Maximum efficiency</span><span class="tag tag-pos">True partnership</span><span class="tag tag-neg">High interdependence</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d3','reward',this,{efficiency:5,relations:10,cost:-5,risk:3})">
+            <h4>🏆 Supplier Recognition Programme</h4>
+            <p>Formal rewards, preferred status and public recognition for high-performing suppliers. Motivate through positive reinforcement.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Motivation</span><span class="tag tag-pos">Loyalty</span><span class="tag tag-neu">Sustainable balance</span></div>
+          </div>
+          <div class="decision-option" onclick="choose('r3d3','competitive',this,{efficiency:3,relations:-8,cost:8,risk:-3})">
+            <h4>⚔️ Ongoing Competitive Pressure</h4>
+            <p>Maintain regular re-tendering and benchmarking. Keep suppliers aware that alternatives are always being assessed.</p>
+            <div class="impact-tags"><span class="tag tag-pos">Cost discipline</span><span class="tag tag-neg">Transactional culture</span><span class="tag tag-neg">Limits collaboration</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="btn-r3" onclick="showDebrief()" disabled>Complete Simulation →</button>
+      </div>
+    </div>
+
+    <!-- ══ FINAL DEBRIEF ══ -->
+    <div id="screen-debrief" class="hidden">
+      <div class="scenario-box">
+        <div class="scenario-eyebrow">Simulation Complete</div>
+        <h2>Final Assessment</h2>
+      </div>
+      <div id="debrief-content"></div>
+    </div>
+
+  </div><!-- /main-col -->
+
+  <!-- SIDE COLUMN -->
+  <div class="side-col">
+
+    <!-- FACTORY VISUAL -->
+    <div class="factory-wrap">
+      <div class="factory-title">
+        🏭 ManuTech Factory
+        <span class="factory-subtitle" id="factory-phase-label">Just in Case mode</span>
+      </div>
+      <svg class="factory-svg" viewBox="0 0 260 110" xmlns="http://www.w3.org/2000/svg" id="factory-svg">
+        <!-- Background -->
+        <rect width="260" height="110" fill="none"/>
+
+        <!-- Warehouse (shrinks as JIT improves) -->
+        <g id="warehouse-group" style="transform-origin:10px 90px;">
+          <rect id="warehouse-rect" x="5" y="50" width="55" height="40" rx="2" fill="rgba(245,158,11,0.15)" stroke="rgba(245,158,11,0.4)" stroke-width="1.5"/>
+          <text x="32" y="67" text-anchor="middle" fill="rgba(245,158,11,0.7)" font-size="7" font-family="DM Sans,sans-serif">WAREHOUSE</text>
+          <text id="wh-size-label" x="32" y="78" text-anchor="middle" fill="rgba(245,158,11,0.5)" font-size="6" font-family="DM Sans,sans-serif">15,000 m²</text>
+          <!-- Boxes in warehouse -->
+          <rect id="wh-box1" x="10" y="72" width="8" height="7" rx="1" fill="rgba(245,158,11,0.35)"/>
+          <rect id="wh-box2" x="20" y="72" width="8" height="7" rx="1" fill="rgba(245,158,11,0.35)"/>
+          <rect id="wh-box3" x="30" y="72" width="8" height="7" rx="1" fill="rgba(245,158,11,0.35)"/>
+          <rect id="wh-box4" x="40" y="72" width="8" height="7" rx="1" fill="rgba(245,158,11,0.35)"/>
+          <rect id="wh-box5" x="50" y="72" width="8" height="7" rx="1" fill="rgba(245,158,11,0.35)"/>
+        </g>
+
+        <!-- Factory building -->
+        <rect x="90" y="40" width="80" height="50" rx="3" fill="rgba(16,185,129,0.12)" stroke="rgba(16,185,129,0.3)" stroke-width="1.5"/>
+        <!-- Roof triangles -->
+        <polygon points="88,40 130,20 172,40" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+        <!-- Windows -->
+        <rect x="98" y="52" width="10" height="8" rx="1" fill="rgba(16,185,129,0.25)"/>
+        <rect x="118" y="52" width="10" height="8" rx="1" fill="rgba(16,185,129,0.25)"/>
+        <rect x="138" y="52" width="10" height="8" rx="1" fill="rgba(16,185,129,0.25)"/>
+        <rect x="158" y="52" width="10" height="8" rx="1" fill="rgba(16,185,129,0.25)"/>
+        <!-- Door -->
+        <rect x="118" y="72" width="24" height="18" rx="2" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+        <!-- Chimney smoke -->
+        <rect x="148" y="24" width="6" height="16" rx="1" fill="rgba(16,185,129,0.2)"/>
+        <ellipse id="smoke1" cx="151" cy="20" rx="4" ry="3" fill="rgba(16,185,129,0.2)" style="animation:smokeRise 2s ease-in-out infinite;"/>
+        <ellipse id="smoke2" cx="151" cy="14" rx="3" ry="2.5" fill="rgba(16,185,129,0.15)" style="animation:smokeRise 2s ease-in-out .5s infinite;"/>
+        <text x="130" y="35" text-anchor="middle" fill="rgba(16,185,129,0.6)" font-size="6" font-family="DM Sans,sans-serif">PRODUCTION</text>
+
+        <!-- Conveyor belt -->
+        <rect x="65" y="82" width="180" height="8" rx="2" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <line x1="65" y1="86" x2="245" y2="86" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="10,6" style="animation:beltMove 1.5s linear infinite;" id="belt-line"/>
+
+        <!-- Moving boxes on belt -->
+        <g id="belt-boxes">
+          <rect class="belt-box" x="80" y="78" width="10" height="9" rx="1" fill="rgba(16,185,129,0.4)" style="animation:boxSlide 3s linear infinite;"/>
+          <rect class="belt-box" x="115" y="78" width="10" height="9" rx="1" fill="rgba(16,185,129,0.35)" style="animation:boxSlide 3s linear .8s infinite;"/>
+          <rect class="belt-box" x="150" y="78" width="10" height="9" rx="1" fill="rgba(16,185,129,0.3)" style="animation:boxSlide 3s linear 1.6s infinite;"/>
+        </g>
+
+        <!-- Supplier truck (left) -->
+        <g id="truck-group" style="animation:truckPull 2s ease-in-out infinite;">
+          <rect x="5" y="98" width="30" height="9" rx="2" fill="rgba(59,130,246,0.3)" stroke="rgba(59,130,246,0.4)" stroke-width="1"/>
+          <rect x="28" y="96" width="12" height="11" rx="1" fill="rgba(59,130,246,0.4)"/>
+          <circle cx="11" cy="108" r="2.5" fill="rgba(59,130,246,0.6)"/>
+          <circle cx="25" cy="108" r="2.5" fill="rgba(59,130,246,0.6)"/>
+          <text x="18" y="104.5" text-anchor="middle" fill="rgba(59,130,246,0.8)" font-size="5" font-family="DM Sans,sans-serif">SUPPLIER</text>
+        </g>
+
+        <!-- Customer (right) -->
+        <g>
+          <rect x="215" y="55" width="40" height="30" rx="3" fill="rgba(232,121,249,0.12)" stroke="rgba(232,121,249,0.3)" stroke-width="1"/>
+          <text x="235" y="68" text-anchor="middle" fill="rgba(232,121,249,0.6)" font-size="6" font-family="DM Sans,sans-serif">CUSTOMER</text>
+          <text x="235" y="77" text-anchor="middle" fill="rgba(232,121,249,0.5)" font-size="5" font-family="DM Sans,sans-serif">ORDER</text>
+          <!-- Tick/cross indicator -->
+          <text id="customer-indicator" x="235" y="100" text-anchor="middle" fill="rgba(232,121,249,0.7)" font-size="9" font-family="DM Sans,sans-serif">⏳</text>
+        </g>
+
+        <!-- Workers -->
+        <g id="worker1" style="animation:workerBob 1.2s ease-in-out infinite;">
+          <circle cx="105" cy="68" r="4" fill="rgba(16,185,129,0.4)"/>
+          <line x1="105" y1="72" x2="105" y2="80" stroke="rgba(16,185,129,0.4)" stroke-width="1.5"/>
+        </g>
+        <g id="worker2" style="animation:workerBob 1.2s ease-in-out .4s infinite;">
+          <circle cx="125" cy="68" r="4" fill="rgba(16,185,129,0.4)"/>
+          <line x1="125" y1="72" x2="125" y2="80" stroke="rgba(16,185,129,0.4)" stroke-width="1.5"/>
+        </g>
+        <!-- JIT indicator arrows (supplier → factory → customer) -->
+        <text id="flow-arrow" x="75" y="90" fill="rgba(16,185,129,0.4)" font-size="8">→</text>
+        <text x="185" y="90" fill="rgba(16,185,129,0.4)" font-size="8">→</text>
+      </svg>
+      <div class="factory-status" id="factory-status">JIC mode: large buffer stocks held. Efficiency low.</div>
+    </div>
+
+    <!-- RIVAL COMPANY -->
+    <div class="rival-panel" id="rival-panel">
+      <div class="rival-title">
+        <span>⚔️ Rival: FastTrack Ltd</span>
+        <span id="rival-week" style="font-size:10px;color:var(--dim);">Week 1</span>
+      </div>
+      <div class="rival-bar-wrap">
+        <span class="rival-bar-label">You</span>
+        <div class="rival-bar-track">
+          <div class="rival-bar-you" id="rival-bar-you" style="width:50%"></div>
+          <div class="rival-bar-them" id="rival-bar-them" style="width:50%"></div>
+        </div>
+        <span class="rival-bar-label" style="text-align:left;">FastTrack</span>
+      </div>
+      <div class="rival-row" style="margin-top:8px;">
+        <span class="rival-lbl">Their JIT progress</span>
+        <span class="rival-val" id="rival-progress">45%</span>
+      </div>
+      <div class="rival-row">
+        <span class="rival-lbl">Their supplier count</span>
+        <span class="rival-val" id="rival-suppliers">38</span>
+      </div>
+      <div class="rival-row">
+        <span class="rival-lbl">Inventory reduction</span>
+        <span class="rival-val" id="rival-inv">12%</span>
+      </div>
+      <div class="rival-status rival-tied" id="rival-status">⚖️ Neck and neck</div>
+    </div>
+
+    <!-- LIVE METRICS -->
+    <div class="metrics-panel">
+      <div class="metrics-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Live Company Metrics
+      </div>
+      <div class="metric-row"><span class="metric-lbl">Inventory Value</span><span class="metric-val" id="m-inventory">£2,400,000<span class="metric-chg" id="mc-inventory"></span></span></div>
+      <div class="metric-row"><span class="metric-lbl">Warehouse Space</span><span class="metric-val" id="m-warehouse">15,000 m²<span class="metric-chg" id="mc-warehouse"></span></span></div>
+      <div class="metric-row"><span class="metric-lbl">Obsolescence/yr</span><span class="metric-val" id="m-obsolete">£180,000<span class="metric-chg" id="mc-obsolete"></span></span></div>
+      <div class="metric-row"><span class="metric-lbl">Active Suppliers</span><span class="metric-val" id="m-suppliers">45<span class="metric-chg" id="mc-suppliers"></span></span></div>
+      <div class="scores-grid">
+        <div class="score-card score-efficiency">
+          <div class="score-lbl">Efficiency</div>
+          <div class="score-val" id="s-efficiency">50</div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="sb-efficiency" style="width:50%"></div></div>
+        </div>
+        <div class="score-card score-relations">
+          <div class="score-lbl">Relations</div>
+          <div class="score-val" id="s-relations">50</div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="sb-relations" style="width:50%"></div></div>
+        </div>
+        <div class="score-card score-cost">
+          <div class="score-lbl">Cost Ctrl</div>
+          <div class="score-val" id="s-cost">50</div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="sb-cost" style="width:50%"></div></div>
+        </div>
+        <div class="score-card score-risk">
+          <div class="score-lbl">Risk Mgmt</div>
+          <div class="score-val" id="s-risk">50</div>
+          <div class="score-bar-track"><div class="score-bar-fill" id="sb-risk" style="width:50%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CURRICULUM PANEL -->
+    <div class="curric-panel">
+      <div class="ctabs">
+        <button class="ctab active" onclick="switchCTab('terms',this)">Terms</button>
+        <button class="ctab" onclick="switchCTab('obj',this)">Objectives</button>
+        <button class="ctab" onclick="switchCTab('spec',this)">Spec</button>
+      </div>
+      <div class="ctab-body active" id="ctab-terms">
+        <div class="term-card"><div class="term-name">Just in Time (JIT)</div><div class="term-def">A lean production method where materials arrive exactly when needed, eliminating buffer stock and reducing working capital tied up in inventory.</div></div>
+        <div class="term-card"><div class="term-name">Just in Case (JIC)</div><div class="term-def">Traditional approach holding large safety stocks to protect against supply disruption — costs more but provides security.</div></div>
+        <div class="term-card"><div class="term-name">Lean Production</div><div class="term-def">A systematic approach to eliminating waste (muda) in all forms — excess stock, waiting time, overproduction, unnecessary motion.</div></div>
+        <div class="term-card"><div class="term-name">Kaizen</div><div class="term-def">Japanese philosophy of continuous incremental improvement involving all employees. Central to sustaining JIT after implementation.</div></div>
+        <div class="term-card"><div class="term-name">Kanban</div><div class="term-def">Visual signalling system used in JIT to trigger production or replenishment only when demand requires it — prevents overproduction.</div></div>
+        <div class="term-card"><div class="term-name">TQM (Total Quality Management)</div><div class="term-def">Quality management philosophy ensuring every employee is responsible for quality — critical in JIT where defects cannot be absorbed by buffer stock.</div></div>
+        <div class="term-card"><div class="term-name">Working Capital</div><div class="term-def">Current assets minus current liabilities. JIT frees working capital by reducing inventory, improving cash flow and financial flexibility.</div></div>
+        <div class="term-card"><div class="term-name">Supply Chain</div><div class="term-def">The network of organisations, activities and resources involved in creating and delivering a product from raw materials to the end customer.</div></div>
+      </div>
+      <div class="ctab-body" id="ctab-obj">
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Understand JIT as a lean production method and contrast it with JIC</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Evaluate the benefits and risks of implementing JIT in a manufacturing context</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Analyse the role of supplier relationships in the success or failure of JIT</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Assess how change management affects the speed and success of operational transformation</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Evaluate trade-offs between cost control and supplier partnership approaches</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Understand how TQM and Kaizen link to JIT in sustaining quality without buffer stock</span></div>
+        <div class="obj-item"><span class="obj-icon">✦</span><span>Analyse stakeholder conflicts between shareholder returns and long-term investment</span></div>
+      </div>
+      <div class="ctab-body" id="ctab-spec">
+        <div class="spec-row"><span class="spec-chip chip-aqa">AQA</span>3.5.1 — Production, productivity and efficiency</div>
+        <div class="spec-row"><span class="spec-chip chip-aqa">AQA</span>3.5.2 — Capacity utilisation and lean production</div>
+        <div class="spec-row"><span class="spec-chip chip-aqa">AQA</span>3.5.3 — Inventory management and JIT</div>
+        <div class="spec-row"><span class="spec-chip chip-aqa">AQA</span>3.6 — Managing people through change</div>
+        <div class="spec-row"><span class="spec-chip chip-edx">Edexcel</span>Theme 2 — Building a Business: operations</div>
+        <div class="spec-row"><span class="spec-chip chip-edx">Edexcel</span>Theme 3 — Business decisions: lean production</div>
+        <div class="spec-row"><span class="spec-chip chip-ocr">OCR</span>2.3 — Operations management</div>
+        <div class="spec-row"><span class="spec-chip chip-ocr">OCR</span>2.4 — Human resources and change</div>
+      </div>
+    </div>
+
+  </div><!-- /side-col -->
+</div><!-- /wrap -->
+
+<!-- CRISIS OVERLAY -->
+<div class="crisis-overlay" id="crisis-overlay">
+  <div class="crisis-card">
+    <div class="crisis-tag" id="crisis-tag">🚨 Crisis Event</div>
+    <div class="crisis-title" id="crisis-title"></div>
+    <div class="crisis-desc" id="crisis-desc"></div>
+    <div class="crisis-spec" id="crisis-spec"></div>
+    <div class="crisis-choices" id="crisis-choices"></div>
+  </div>
+</div>
+
+<script>
+/* ── THEME ── */
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  localStorage.setItem('biz-jit-theme',n);
+  document.getElementById('theme-btn').textContent=n==='light'?'🌙':'☀';
+}
+(function(){
+  const t=localStorage.getItem('biz-jit-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('theme-btn').textContent=t==='light'?'🌙':'☀';
+})();
+
+/* ── CURRICULUM TABS ── */
+function switchCTab(id,btn){
+  document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ctab-body').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ctab-'+id).classList.add('active');
+}
+
+/* ── GAME STATE ── */
+const G={
+  scores:{efficiency:50,relations:50,cost:50,risk:50},
+  decisions:{},
+  metrics:{inventory:2400000,warehouse:15000,obsolete:180000,suppliers:45}
+};
+
+/* ── METRIC EFFECTS PER DECISION ── */
+const METRIC_FX={
+  // R1
+  'r1d1-training':   {inventory:-80000,warehouse:-200,obsolete:-5000,suppliers:0},
+  'r1d1-mandate':    {inventory:-20000,warehouse:-50,obsolete:-1000,suppliers:0},
+  'r1d1-gradual':    {inventory:-40000,warehouse:-100,obsolete:-2000,suppliers:0},
+  'r1d2-partnership':{inventory:-300000,warehouse:-1000,obsolete:-20000,suppliers:-33},
+  'r1d2-competitive':{inventory:-100000,warehouse:-500,obsolete:-8000,suppliers:0},
+  'r1d2-hybrid':     {inventory:-180000,warehouse:-700,obsolete:-12000,suppliers:-25},
+  'r1d3-comprehensive':{inventory:-50000,warehouse:-500,obsolete:-15000,suppliers:0},
+  'r1d3-essential':  {inventory:-20000,warehouse:-200,obsolete:-5000,suppliers:0},
+  'r1d3-phased':     {inventory:-35000,warehouse:-350,obsolete:-10000,suppliers:0},
+  // R2
+  'r2d1-emergency':  {inventory:60000,warehouse:500,obsolete:8000,suppliers:0},
+  'r2d1-flexible':   {inventory:-20000,warehouse:-100,obsolete:-2000,suppliers:0},
+  'r2d1-dual':       {inventory:0,warehouse:0,obsolete:0,suppliers:2},
+  'r2d2-accept':     {inventory:0,warehouse:0,obsolete:0,suppliers:0},
+  'r2d2-negotiate':  {inventory:-50000,warehouse:-200,obsolete:-3000,suppliers:-5},
+  'r2d2-value':      {inventory:-30000,warehouse:-100,obsolete:-8000,suppliers:0},
+  'r2d3-inspection': {inventory:-5000,warehouse:0,obsolete:-10000,suppliers:0},
+  'r2d3-supplier':   {inventory:-10000,warehouse:0,obsolete:-15000,suppliers:-2},
+  'r2d3-penalty':    {inventory:-8000,warehouse:0,obsolete:-12000,suppliers:0},
+  // R3
+  'r3d1-sell':       {inventory:-500000,warehouse:-9000,obsolete:-30000,suppliers:0},
+  'r3d1-repurpose':  {inventory:-400000,warehouse:-7000,obsolete:-25000,suppliers:0},
+  'r3d1-lease':      {inventory:-200000,warehouse:-4000,obsolete:-15000,suppliers:0},
+  'r3d2-dividend':   {inventory:0,warehouse:0,obsolete:0,suppliers:0},
+  'r3d2-technology': {inventory:-100000,warehouse:-500,obsolete:-20000,suppliers:0},
+  'r3d2-expansion':  {inventory:-80000,warehouse:-300,obsolete:-10000,suppliers:0},
+  'r3d3-integrate':  {inventory:-150000,warehouse:-1000,obsolete:-30000,suppliers:-8},
+  'r3d3-reward':     {inventory:-50000,warehouse:-300,obsolete:-10000,suppliers:-2},
+  'r3d3-competitive':{inventory:-20000,warehouse:-100,obsolete:-5000,suppliers:-3},
+};
+
+const ROUND_DECISIONS={1:['r1d1','r1d2','r1d3'],2:['r2d1','r2d2','r2d3'],3:['r3d1','r3d2','r3d3']};
+let currentRound=0;
+
+/* ── FORMAT ── */
+const fc=v=>'£'+Math.abs(Math.round(v)).toLocaleString();
+const fmt={
+  inventory:v=>'£'+Math.round(v).toLocaleString(),
+  warehouse:v=>Math.round(v).toLocaleString()+' m²',
+  obsolete:v=>'£'+Math.round(v).toLocaleString()+'/yr',
+  suppliers:v=>Math.round(v).toString()
+};
+
+/* ── UPDATE METRICS DISPLAY ── */
+function updateMetrics(key,delta){
+  const old=G.metrics[key];
+  G.metrics[key]=Math.max(0,old+delta);
+  const el=document.getElementById('m-'+key);
+  const chgEl=document.getElementById('mc-'+key);
+  el.childNodes[0].textContent=fmt[key](G.metrics[key]);
+  if(Math.abs(delta)>0){
+    const isGood=(key==='inventory'||key==='warehouse'||key==='obsolete')?delta<0:delta>0;
+    chgEl.textContent=' ('+(delta>0?'+':'')+fmt[key](delta)+')';
+    chgEl.className='metric-chg '+(isGood?'up':'dn');
+    el.classList.remove('flash-up','flash-dn');
+    void el.offsetWidth;
+    el.classList.add(isGood?'flash-up':'flash-dn');
+    setTimeout(()=>{chgEl.textContent='';el.classList.remove('flash-up','flash-dn');},3000);
+  }
+}
+
+/* ── UPDATE SCORES DISPLAY ── */
+function updateScores(){
+  ['efficiency','relations','cost','risk'].forEach(k=>{
+    G.scores[k]=Math.max(0,Math.min(100,G.scores[k]));
+    document.getElementById('s-'+k).textContent=G.scores[k];
+    document.getElementById('sb-'+k).style.width=G.scores[k]+'%';
+  });
+}
+
+/* ── CHOOSE ── */
+function choose(decisionId,choice,el,scoreDeltas){
+  // Deselect siblings
+  el.closest('.decision-options').querySelectorAll('.decision-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // If switching, reverse previous metric effects
+  const prevKey=G.decisions[decisionId];
+  if(prevKey){
+    const prevFx=METRIC_FX[decisionId+'-'+prevKey];
+    if(prevFx)Object.entries(prevFx).forEach(([k,v])=>updateMetrics(k,-v));
+    // Reverse scores
+    const prevScoreFx=el.closest('.decision-section')._prevScores;
+    if(prevScoreFx)Object.entries(prevScoreFx).forEach(([k,v])=>{G.scores[k]-=v;});
+  }
+
+  // Apply new effects
+  const fx=METRIC_FX[decisionId+'-'+choice];
+  if(fx)Object.entries(fx).forEach(([k,v])=>updateMetrics(k,v));
+  Object.entries(scoreDeltas).forEach(([k,v])=>{G.scores[k]+=v;});
+  el.closest('.decision-section')._prevScores=scoreDeltas;
+  G.decisions[decisionId]=choice;
+  updateScores();
+  checkRoundReady();
+}
+
+/* ── CHECK ROUND READY ── */
+function checkRoundReady(){
+  const required=ROUND_DECISIONS[currentRound];
+  const made=required.filter(d=>G.decisions[d]);
+  const btn=document.getElementById('btn-r'+currentRound);
+  if(btn)btn.disabled=made.length<required.length;
+}
+
+/* ── PROGRESS ── */
+const PROG={1:'20%',r1out:'35%',2:'50%',r2out:'65%',3:'80%',debrief:'100%'};
+const PROG_LABELS={1:'Round 1: Planning',r1out:'Round 1 Results',2:'Round 2: Challenges',r2out:'Round 2 Results',3:'Round 3: Benefits',debrief:'Complete!'};
+function setProgress(key){
+  document.getElementById('prog-fill').style.width=PROG[key]||'0%';
+  document.getElementById('prog-label').textContent=PROG_LABELS[key]||'Introduction';
+}
+
+/* ── SCREENS ── */
+function hideAll(){document.querySelectorAll('[id^="screen-"]').forEach(s=>s.classList.add('hidden'));}
+function show(id){hideAll();document.getElementById('screen-'+id).classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ── ROUND START ── */
+function startRound(n){
+  currentRound=n;
+  show('r'+n);
+  setProgress(n);
+  checkRoundReady();
+}
+
+/* ── OUTCOME TEXTS ── */
+const OUTCOMES={
+  r1d1:{
+    training:'Your £150K investment in comprehensive training has paid off. Employee resistance is minimal — many staff are now advocates for the change. The transition is proceeding smoothly.',
+    mandate:'The top-down approach enabled rapid implementation, but resistance is building quietly. Informal networks are sharing concerns. You\'ll need to address this or it may undermine the transition.',
+    gradual:'The pilot programme has been a success. The volunteer department is showing impressive results and other teams are requesting to join. Full implementation will take longer, but momentum is building organically.'
+  },
+  r1d2:{
+    partnership:'Strong partnerships with 12 key suppliers are established. They are committed to JIT delivery and quality is improving. Note: you are now highly dependent on these suppliers — any disruption will have significant impact.',
+    competitive:'Suppliers are complying but relationships are transactional. Some have expressed concerns about long-term viability. Cost savings are good for now, but sustainability is uncertain.',
+    hybrid:'Your tiered approach provides a balanced foundation — preferred suppliers are deepening relationships while backup suppliers provide resilience. Complex to manage but offers both efficiency and security.'
+  },
+  r1d3:{
+    comprehensive:'The ERP system is transforming operations. Real-time visibility is excellent and automation is reducing errors. The £800K investment is significant — but it is already delivering returns in efficiency.',
+    essential:'Basic systems are operational and adequate. Manual processes fill the gaps, requiring more staff time. Good current inventory visibility but limited predictive capability. Capital preserved for other needs.',
+    phased:'The cloud system provides solid core functionality. Scalable architecture means you can add modules as benefits are realised. A balanced approach managing both current needs and future growth.'
+  },
+  r2d1:{
+    emergency:'Production continued without interruption, preserving customer relationships. However, the premium cost and buffer stock rebuild have undermined JIT principles. Some stakeholders are questioning your commitment.',
+    flexible:'By shifting production to available components you maintained operations while staying true to JIT. Most customers accepted schedule adjustments, appreciating your transparency. This demonstrated genuine JIT resilience.',
+    dual:'Expedited shipments solved the immediate crisis while geographic diversification builds long-term resilience. You\'ve demonstrated that JIT doesn\'t mean vulnerability — it means smart supplier strategy.'
+  },
+  r2d2:{
+    accept:'Accepting increases maintained strong supplier relationships and secured 6-month price stability. Margins are under pressure, but operational efficiency improvements are offsetting some costs.',
+    negotiate:'Your firm stance capped increases at 4%, protecting margins. However, two key suppliers have become less cooperative. The relationship has become more transactional and less collaborative.',
+    value:'The collaborative redesign approach is showing promise. Short-term cost accepted, but £85K in annual savings identified. Suppliers see you as a true partner — this is JIT partnership philosophy at its best.'
+  },
+  r2d3:{
+    inspection:'Enhanced inspection is catching all defective components. However, receiving times have increased 40%, reducing JIT responsiveness. You are treating symptoms rather than root causes.',
+    supplier:'Working with suppliers to improve their quality control is yielding results. Defect rates are dropping. It takes time, but you are building a sustainable quality culture — quality at source, not inspection afterwards.',
+    penalty:'Performance-based contracts have created clear accountability and quality has improved. However, some suppliers feel the relationship has become overly contractual. Results achieved, but partnership spirit is diminishing.'
+  },
+  r3d1:{
+    sell:'Selling the warehouse generated £2.7M, delighting shareholders and strengthening the balance sheet. You are now fully committed to JIT with no fallback — a bold move that signals confidence in the new model.',
+    repurpose:'Converting warehouse space to production capacity has enabled a 35% increase in output potential. You\'ve turned freed space into a growth opportunity — maximising the asset rather than liquidating it.',
+    lease:'Leasing generates £180K annual income while preserving ownership and flexibility. A pragmatic middle path balancing immediate benefit with strategic optionality.'
+  },
+  r3d2:{
+    dividend:'The special dividend rewarded shareholders and generated goodwill. Share price rose 8% on announcement. You\'ve demonstrated that operational transformation delivers tangible shareholder value.',
+    technology:'Investment in automation is projected to reduce costs by £420K annually. Some workforce concerns about job security need managing — but you\'re building a technologically competitive operation.',
+    expansion:'Early results from new markets are promising. You\'re using JIT efficiency as a strategic springboard for growth, not just cost reduction — positioning for long-term competitive advantage.'
+  },
+  r3d3:{
+    integrate:'Deep integration with key suppliers has created unprecedented efficiency. Supply chain costs down 18%, quality at record levels. True partnership achieved — though you are now highly interdependent.',
+    reward:'The recognition programme has boosted loyalty while maintaining appropriate boundaries. Suppliers appreciate being valued and understand the business relationship. A sustainable balance found.',
+    competitive:'Continuous competitive pressure has maintained cost discipline. However, several long-term suppliers have expressed frustration. You\'ve prioritised cost over partnership — limiting future collaboration.'
+  }
+};
+
+/* ── SHOW OUTCOMES ── */
+function showOutcome(round){
+  const decisions=ROUND_DECISIONS[round];
+  const labels={
+    r1d1:'👥 Workforce Transition',r1d2:'🤝 Supplier Relationships',r1d3:'💻 Technology Infrastructure',
+    r2d1:'⚠️ Supply Chain Crisis',r2d2:'💷 Cost Management',r2d3:'🔍 Quality Assurance',
+    r3d1:'🏢 Asset Optimisation',r3d2:'💰 Capital Allocation',r3d3:'🤝 Supply Chain Excellence'
+  };
+  let html='<h3 style="font-family:var(--ffs);font-size:18px;font-weight:700;margin-bottom:16px;">Round '+round+' — Outcome Report</h3>';
+  decisions.forEach(d=>{
+    const choice=G.decisions[d];
+    const text=OUTCOMES[d]?.[choice]||'';
+    html+=`<div class="outcome-section"><h4>${labels[d]||d}</h4><p>${text}</p></div>`;
+  });
+  const warnings={
+    1:'<div class="outcome-warn"><strong>⚠️ Challenges Ahead:</strong> The foundation is laid. Round 2 will test the resilience of your decisions when real disruptions hit.</div>',
+    2:'<div class="outcome-highlight"><strong>✅ Turning Point:</strong> The teething problems are subsiding. The benefits of JIT are starting to emerge. Your crisis decisions have shaped the culture and relationships that will define long-term success.</div>'
+  };
+  if(warnings[round])html+=warnings[round];
+  document.getElementById('content-r'+round+'-outcome').innerHTML=html;
+  show('r'+round+'-outcome');
+  setProgress('r'+round+'out');
+}
+
+/* ── DEBRIEF ── */
+function showDebrief(){
+  const avg=(G.scores.efficiency+G.scores.relations+G.scores.cost+G.scores.risk)/4;
+  const grades=[
+    {min:70,grade:'A*',msg:'Outstanding operations management. You achieved the full benefits of JIT while maintaining strong stakeholder relationships and managing risk effectively.'},
+    {min:58,grade:'A',msg:'Excellent performance. Strong strategic decisions throughout — a few trade-offs cost points but the overall transformation is credible and sustainable.'},
+    {min:45,grade:'B',msg:'Good implementation. You successfully transitioned to JIT but some decisions created unnecessary costs or relationship strain that could have been avoided.'},
+    {min:32,grade:'C',msg:'Adequate performance. JIT is in place but the implementation has left some vulnerabilities — supplier relationships, cost management or risk management need attention.'},
+    {min:0,grade:'D',msg:'JIT was implemented but significant strategic errors have left the business exposed. Review the key terms and try again with a clearer understanding of lean principles.'}
+  ];
+  const result=grades.find(g=>avg>=g.min)||grades[grades.length-1];
+
+  // Topic analysis
+  const topicMap={
+    r1d1:{icon:'👥',name:'Change Management & Workforce',spec:'AQA 3.6 — managing people through operational change'},
+    r1d2:{icon:'🤝',name:'Supplier Relationship Management',spec:'AQA 3.5 — supply chain strategy and lean production'},
+    r1d3:{icon:'💻',name:'Technology Investment Decisions',spec:'Edexcel Theme 3 — capital investment in operations'},
+    r2d1:{icon:'⚠️',name:'Supply Chain Risk Management',spec:'AQA 3.5.3 — JIT vulnerability and contingency planning'},
+    r2d2:{icon:'💷',name:'Cost Management & Negotiation',spec:'AQA 3.5 — supplier costs in lean production'},
+    r2d3:{icon:'🔍',name:'TQM & Quality at Source',spec:'AQA 3.5.2 — total quality management and JIT'},
+    r3d1:{icon:'🏢',name:'Asset Management & Capital',spec:'AQA 3.7 — capital allocation and shareholder value'},
+    r3d2:{icon:'💰',name:'Stakeholder Objectives',spec:'AQA 3.7 — shareholder vs long-run investment tension'},
+    r3d3:{icon:'🔗',name:'Kaizen & Continuous Improvement',spec:'AQA 3.5.2 — sustaining lean culture long-term'}
+  };
+
+  // Build revision suggestions
+  const revise=[];
+  if(G.scores.efficiency<50)revise.push('Revise <strong>lean production methods</strong> — Kaizen, Kanban and waste elimination are central to maximising JIT efficiency gains.');
+  if(G.scores.relations<50)revise.push('Study <strong>supplier relationship management</strong> — JIT is fundamentally dependent on trust and collaboration, not just contractual compliance.');
+  if(G.scores.cost<50)revise.push('Review <strong>working capital management</strong> — understand how inventory reductions release cash and how to weigh short-run costs against long-run savings.');
+  if(G.scores.risk<50)revise.push('Analyse <strong>JIT risks and contingency planning</strong> — dual sourcing, geographic diversification and production flexibility are key mitigation strategies.');
+  if(revise.length===0)revise.push('Excellent all-round performance. Consolidate by examining real-world JIT case studies — Toyota, Nissan and Dell all offer rich examples of the decisions you faced here.');
+
+  const html=`
+    <div class="debrief-grade">${result.grade}</div>
+    <div class="debrief-msg">${result.msg}</div>
+    <div class="debrief-stats">
+      <div class="dstat"><div class="dstat-val">${G.scores.efficiency}</div><div class="dstat-lbl">Efficiency Score</div></div>
+      <div class="dstat"><div class="dstat-val">${G.scores.relations}</div><div class="dstat-lbl">Relations Score</div></div>
+      <div class="dstat"><div class="dstat-val">${G.scores.cost}</div><div class="dstat-lbl">Cost Score</div></div>
+      <div class="dstat"><div class="dstat-val">${G.scores.risk}</div><div class="dstat-lbl">Risk Score</div></div>
+    </div>
+    <div class="debrief-stats" style="margin-top:8px;">
+      <div class="dstat"><div class="dstat-val">${fmt.inventory(G.metrics.inventory)}</div><div class="dstat-lbl">Final Inventory</div></div>
+      <div class="dstat"><div class="dstat-val">${fmt.warehouse(G.metrics.warehouse)}</div><div class="dstat-lbl">Warehouse Used</div></div>
+      <div class="dstat"><div class="dstat-val">${fmt.obsolete(G.metrics.obsolete)}</div><div class="dstat-lbl">Obsolescence/yr</div></div>
+      <div class="dstat"><div class="dstat-val">${G.metrics.suppliers}</div><div class="dstat-lbl">Suppliers</div></div>
+    </div>
+    <div class="debrief-section">
+      <h4>Topics Covered in This Simulation</h4>
+      ${Object.entries(topicMap).map(([k,t])=>`<div class="topic-row"><span class="topic-icon">${t.icon}</span><div><strong>${t.name}</strong><br><span style="font-size:10px;color:var(--dim);">${t.spec}</span></div></div>`).join('')}
+    </div>
+    <div class="debrief-section">
+      <h4>Revision Suggestions</h4>
+      ${revise.map(r=>`<div class="revise-item">• ${r}</div>`).join('')}
+    </div>
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn-primary" onclick="restart()">Try Again</button>
+      <button class="btn-outline" onclick="window.scrollTo({top:0,behavior:'smooth'})">Review Metrics ↑</button>
+    </div>
+  `;
+  document.getElementById('debrief-content').innerHTML=html;
+  show('debrief');
+  setProgress('debrief');
+}
+
+/* ── SOUND ── */
+let soundOn=true;
+function toggleSound(){
+  soundOn=!soundOn;
+  document.getElementById('sound-btn').textContent=soundOn?'🔊':'🔇';
+}
+function playSound(type){
+  if(!soundOn)return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    const configs={
+      click:{freq:600,dur:.08,type:'square'},
+      good:{freq:880,dur:.15,type:'sine'},
+      bad:{freq:220,dur:.25,type:'sawtooth'},
+      crisis:{freq:300,dur:.4,type:'sawtooth'},
+      complete:{freq:523,dur:.2,type:'sine'}
+    };
+    const c=configs[type]||configs.click;
+    osc.frequency.value=c.freq;osc.type=c.type;
+    gain.gain.setValueAtTime(0,ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.07,ctx.currentTime+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+c.dur);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+c.dur);
+    if(type==='complete'){
+      [659,784,1047].forEach((f,i)=>setTimeout(()=>{
+        const o2=ctx.createOscillator();const g2=ctx.createGain();
+        o2.connect(g2);g2.connect(ctx.destination);
+        o2.frequency.value=f;o2.type='sine';
+        g2.gain.setValueAtTime(0,ctx.currentTime);
+        g2.gain.linearRampToValueAtTime(0.07,ctx.currentTime+0.01);
+        g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
+        o2.start(ctx.currentTime);o2.stop(ctx.currentTime+0.2);
+      },(i+1)*120));
+    }
+  }catch(e){}
+}
+
+/* ── TOAST ── */
+function toast(msg,type='good'){
+  const t=document.createElement('div');
+  t.className='toast '+(type==='bad'?'bad':'good');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+
+/* ── RIVAL COMPANY ── */
+const RIVAL={progress:45,suppliers:38,invReduction:12,week:1};
+const RIVAL_EVENTS=[
+  {round:1,msg:'FastTrack signed a deal with a premium supplier — their delivery reliability just improved!',effect:{progress:8,invReduction:5}},
+  {round:2,msg:'FastTrack suffered a supply chain disruption — they\'ve been forced to revert to buffer stock!',effect:{progress:-12,invReduction:-8}},
+  {round:3,msg:'FastTrack completed a full ERP rollout ahead of schedule — their efficiency is surging.',effect:{progress:15,invReduction:10}}
+];
+function updateRival(round){
+  const ev=RIVAL_EVENTS.find(e=>e.round===round);
+  if(ev){
+    RIVAL.progress=Math.max(0,Math.min(100,RIVAL.progress+ev.effect.progress));
+    RIVAL.invReduction=Math.max(0,RIVAL.invReduction+ev.effect.invReduction);
+    setTimeout(()=>toast('⚔️ Rival news: '+ev.msg,ev.effect.progress>0?'bad':'good'),800);
+  }
+  RIVAL.week=round*4;
+  const yourScore=(G.scores.efficiency+G.scores.relations+G.scores.cost+G.scores.risk)/4;
+  document.getElementById('rival-progress').textContent=RIVAL.progress+'%';
+  document.getElementById('rival-suppliers').textContent=Math.max(10,RIVAL.suppliers-(round*5));
+  document.getElementById('rival-inv').textContent=RIVAL.invReduction+'%';
+  document.getElementById('rival-week').textContent='Month '+(round*3);
+  const youPct=Math.round(yourScore);
+  const themPct=RIVAL.progress;
+  document.getElementById('rival-bar-you').style.width=youPct+'%';
+  document.getElementById('rival-bar-them').style.width=themPct+'%';
+  const status=document.getElementById('rival-status');
+  if(youPct>themPct+5){status.textContent='✅ You\'re ahead!';status.className='rival-status rival-winning';}
+  else if(themPct>youPct+5){status.textContent='⚠️ FastTrack is ahead';status.className='rival-status rival-losing';}
+  else{status.textContent='⚖️ Neck and neck';status.className='rival-status rival-tied';}
+}
+
+/* ── CRISIS EVENTS ── */
+const CRISES=[
+  {
+    tag:'🔥 Factory Fire',title:'Supplier Warehouse Fire',
+    desc:'Your primary components supplier has suffered a warehouse fire. 60% of their stock is destroyed. They estimate a 2-week production halt. Your production line has 3 days of components left.',
+    spec:'Supply chain risk · JIT vulnerability · AQA 3.5.3',
+    choices:[
+      {text:'🚨 Emergency air freight from overseas backup (£85K)',small:'Expensive but maintains production immediately',fn:()=>{G.scores.efficiency+=2;G.scores.cost-=12;G.scores.risk+=5;toast('✈️ Air freight secured — production continues. Cost hit taken.','')}},
+      {text:'📞 Activate dual-sourcing contingency plan',small:'Requires prior dual-sourcing setup — only available if you chose it',fn:()=>{const had=G.decisions.r2d1==='dual';if(had){G.scores.efficiency+=5;G.scores.risk+=10;toast('✅ Dual sourcing paid off — disruption managed with minimal impact.','good');}else{G.scores.efficiency-=8;G.scores.risk-=5;toast('❌ No backup supplier available — you didn\'t set up dual sourcing!','bad');}}},
+      {text:'🔄 Halt production, communicate with customers',small:'Transparent but causes delays — tests customer relationships',fn:()=>{G.scores.efficiency-=5;G.scores.relations+=6;G.scores.risk+=3;toast('💬 Production paused. Customers notified. Trust maintained.','')}},
+    ]
+  },
+  {
+    tag:'⚡ Tech Failure',title:'ERP System Crash',
+    desc:'Your inventory management system has crashed during a major delivery window. Three suppliers are waiting for confirmed orders. Without the system, deliveries may go to the wrong locations.',
+    spec:'Technology dependency · Operations risk · Edexcel Theme 3',
+    choices:[
+      {text:'📋 Revert to emergency paper-based system',small:'Manual fallback — slow but reliable',fn:()=>{G.scores.efficiency-=6;G.scores.risk+=4;toast('📋 Paper system activated. Slow but it works.','')}},
+      {text:'💻 Emergency IT support — pay overtime premium',small:'£12K but system restored within hours',fn:()=>{G.scores.efficiency+=3;G.scores.cost-=5;toast('💻 IT team restored the system. Costly but fast.','')}},
+      {text:'📞 Call suppliers directly to coordinate manually',small:'Relies on relationships built during implementation',fn:()=>{const goodRels=G.scores.relations>55;if(goodRels){G.scores.efficiency+=2;G.scores.relations+=5;toast('📞 Strong relationships saved the day — suppliers responded immediately!','good');}else{G.scores.efficiency-=10;G.scores.relations-=5;toast('📞 Suppliers unresponsive — poor relationships left you stranded.','bad');}}},
+    ]
+  },
+  {
+    tag:'📰 Media Scandal',title:'Supplier Ethical Breach',
+    desc:'A national newspaper has exposed your key supplier for poor working conditions in their overseas factory. Social media is demanding you cut ties. But switching would disrupt your entire JIT supply chain.',
+    spec:'Business ethics · Stakeholder management · AQA 3.7',
+    choices:[
+      {text:'✂️ Cut supplier ties immediately — ethics first',small:'Costly disruption but protects brand reputation',fn:()=>{G.scores.relations-=5;G.scores.cost-=8;G.scores.efficiency-=5;toast('✂️ Supplier dropped. Disruption ahead but brand protected.','good')}},
+      {text:'🤝 Work with supplier to improve conditions',small:'Collaborative approach — slower but builds true partnership',fn:()=>{G.scores.relations+=8;G.scores.efficiency+=2;toast('🤝 Improvement programme launched. CSR and JIT aligned.','good')}},
+      {text:'🤐 Issue PR statement but maintain supply relationship',small:'Risk of further backlash if exposed',fn:()=>{const lucky=Math.random()>0.5;if(lucky){G.scores.cost+=3;toast('📰 PR statement accepted. Story dies down.','')}else{G.scores.relations-=12;G.scores.efficiency-=5;toast('🔥 Story escalated! Backlash is severe.','bad');}}},
+    ]
+  },
+  {
+    tag:'🏛️ Government Policy',title:'New Import Tariffs Announced',
+    desc:'The government has announced a 15% tariff on components from your main supply region, effective in 8 weeks. Your cost model depends on these imports. Competitors are scrambling to respond.',
+    spec:'External environment · PESTLE · AQA 3.8',
+    choices:[
+      {text:'🇬🇧 Accelerate switch to domestic suppliers',small:'Higher unit cost but tariff-immune',fn:()=>{G.scores.cost-=8;G.scores.risk+=12;G.scores.relations+=3;toast('🇬🇧 Domestic sourcing secured. Higher cost, lower risk.','')}},
+      {text:'📦 Build strategic buffer stock before tariff kicks in',small:'Contradicts JIT principles but protects margins temporarily',fn:()=>{G.scores.efficiency-=10;G.scores.cost+=5;toast('📦 Buffer stock built. JIT principles compromised temporarily.','bad')}},
+      {text:'💬 Negotiate cost-sharing with existing suppliers',small:'Collaborative approach to share tariff burden',fn:()=>{G.scores.relations+=8;G.scores.cost-=3;toast('💬 Cost-sharing agreement reached. Partnership strengthened.','good')}},
+    ]
+  }
+];
+let crisisQueue=[];
+let crisisCallback=null;
+function triggerCrisis(afterRound,callback){
+  const available=CRISES.filter((_,i)=>!crisisQueue.includes(i));
+  if(!available.length){callback();return;}
+  const idx=CRISES.indexOf(available[Math.floor(Math.random()*available.length)]);
+  crisisQueue.push(idx);
+  const crisis=CRISES[idx];
+  playSound('crisis');
+  document.getElementById('crisis-tag').textContent=crisis.tag;
+  document.getElementById('crisis-title').textContent=crisis.title;
+  document.getElementById('crisis-desc').textContent=crisis.desc;
+  document.getElementById('crisis-spec').textContent='📚 Spec link: '+crisis.spec;
+  const choicesEl=document.getElementById('crisis-choices');
+  choicesEl.innerHTML='';
+  crisisCallback=callback;
+  crisis.choices.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='crisis-btn';
+    btn.innerHTML=`${c.text}<small>${c.small}</small>`;
+    btn.onclick=()=>{
+      c.fn();
+      updateScores();
+      updateRival(afterRound);
+      document.getElementById('crisis-overlay').classList.remove('show');
+      playSound('good');
+      setTimeout(callback,400);
+    };
+    choicesEl.appendChild(btn);
+  });
+  document.getElementById('crisis-overlay').classList.add('show');
+  toast('⚠️ Crisis event! Make a decision before continuing.','bad');
+}
+
+/* ── FACTORY VISUAL ── */
+const FACTORY_STATES={
+  intro:{label:'Just in Case mode',status:'JIC: large buffer stocks held. Efficiency low.',warehouseScale:1,boxes:5,beltSpeed:'2s'},
+  r1_training:{label:'Training phase',status:'Employees learning JIT. Enthusiasm building.',warehouseScale:.88,boxes:4,beltSpeed:'1.6s'},
+  r1_partnership:{label:'Supplier consolidation',status:'Supplier base reducing. Relationships deepening.',warehouseScale:.7,boxes:3,beltSpeed:'1.3s'},
+  r2:{label:'JIT transitioning',status:'Buffer stocks shrinking. Delivery frequency rising.',warehouseScale:.5,boxes:2,beltSpeed:'1s'},
+  r3:{label:'JIT operational',status:'Lean production running. Just-in-time deliveries active.',warehouseScale:.28,boxes:1,beltSpeed:'.7s'},
+  debrief:{label:'JIT complete ✅',status:'Full JIT achieved. Warehouse freed. Cash flow positive.',warehouseScale:.12,boxes:0,beltSpeed:'.5s'}
+};
+function updateFactory(key){
+  const s=FACTORY_STATES[key]||FACTORY_STATES.intro;
+  const label=document.getElementById('factory-phase-label');
+  const status=document.getElementById('factory-status');
+  const wg=document.getElementById('warehouse-group');
+  const whl=document.getElementById('wh-size-label');
+  const belt=document.getElementById('belt-line');
+  const custInd=document.getElementById('customer-indicator');
+  if(label)label.textContent=s.label;
+  if(status)status.textContent=s.status;
+  if(wg){wg.style.transition='transform 1.2s ease';wg.style.transformOrigin='10px 90px';wg.style.transform='scaleX('+s.warehouseScale+')';}
+  const sizeMap={1:'15,000 m²',.88:'13,000 m²',.7:'10,500 m²',.5:'7,500 m²',.28:'4,200 m²',.12:'1,800 m²'};
+  if(whl)whl.textContent=sizeMap[s.warehouseScale]||'—';
+  if(belt)belt.style.animationDuration=s.beltSpeed;
+  document.querySelectorAll('.belt-box').forEach(b=>{b.style.animationDuration=parseFloat(s.beltSpeed)*2+'s';});
+  for(let i=1;i<=5;i++){const b=document.getElementById('wh-box'+i);if(b)b.style.display=i<=s.boxes?'block':'none';}
+  if(custInd){
+    if(key==='debrief'||key==='r3')custInd.textContent='✅';
+    else if(key==='r2'||key==='r1_partnership')custInd.textContent='🔄';
+    else custInd.textContent='⏳';
+  }
+}
+
+/* ── TIMER ── */
+let timerInterval=null;
+let timerActive=false;
+const TIMER_SEC=45;
+function startTimer(){
+  clearInterval(timerInterval);
+  let sec=TIMER_SEC;
+  timerActive=true;
+  const wrap=document.getElementById('timer-wrap');
+  const fill=document.getElementById('timer-fill');
+  const count=document.getElementById('timer-count');
+  if(!wrap)return;
+  wrap.className='timer-wrap';
+  fill.className='timer-fill';
+  fill.style.width='100%';
+  count.className='timer-count';
+  count.textContent=sec;
+  timerInterval=setInterval(()=>{
+    if(!timerActive)return;
+    sec--;
+    const pct=(sec/TIMER_SEC)*100;
+    fill.style.width=pct+'%';
+    count.textContent=sec;
+    if(sec<=10){
+      wrap.className='timer-wrap urgent';
+      fill.className='timer-fill urgent';
+      count.className='timer-count urgent';
+      if(sec===10)playSound('crisis');
+    }
+    if(sec<=0){
+      clearInterval(timerInterval);
+      timerActive=false;
+      wrap.className='timer-wrap gone';
+      autoSelectMissing();
+      toast('⏱️ Time up! Remaining decisions auto-selected.','bad');
+    }
+  },1000);
+}
+function stopTimer(){
+  timerActive=false;
+  clearInterval(timerInterval);
+  const wrap=document.getElementById('timer-wrap');
+  if(wrap)wrap.className='timer-wrap gone';
+}
+function autoSelectMissing(){
+  (ROUND_DECISIONS[currentRound]||[]).forEach(d=>{
+    if(!G.decisions[d]){
+      const first=document.querySelector('[onclick*="\''+d+'\'"]');
+      if(first)first.click();
+    }
+  });
+}
+
+/* ── PATCH showOutcome to trigger crisis ── */
+const _origShowOutcome=showOutcome;
+showOutcome=function(round){
+  stopTimer();
+  _origShowOutcome(round);
+  playSound('complete');
+  if(round===1)updateFactory('r1_partnership');
+  else if(round===2)updateFactory('r2');
+};
+
+/* ── PATCH startRound to trigger crisis + timer + factory ── */
+const _origStartRound=startRound;
+startRound=function(n){
+  if(n>1){
+    triggerCrisis(n-1,()=>{
+      _origStartRound(n);
+      startTimer();
+      updateFactory(n===2?'r2':'r3');
+    });
+  } else {
+    _origStartRound(n);
+    startTimer();
+    updateFactory('r1_training');
+  }
+};
+
+/* ── PATCH choose for sound + factory flash + timer stop ── */
+const _origChoose=choose;
+choose=function(id,choice,el,deltas){
+  playSound('click');
+  _origChoose(id,choice,el,deltas);
+  // Flash factory SVG
+  const svg=document.getElementById('factory-svg');
+  if(svg){svg.style.filter='brightness(1.4)';setTimeout(()=>svg.style.filter='',400);}
+  // Toast on big moves
+  const bigMove=Object.values(deltas).some(v=>Math.abs(v)>=10);
+  if(bigMove){
+    const positive=Object.values(deltas).reduce((a,b)=>a+b,0)>0;
+    setTimeout(()=>toast(positive?'📈 Strong decision — metrics improved!':'📉 Costly trade-off made.',positive?'good':'bad'),300);
+  }
+  // Stop timer if round complete
+  const required=ROUND_DECISIONS[currentRound]||[];
+  const made=required.filter(d=>G.decisions[d]);
+  if(made.length===required.length)stopTimer();
+};
+
+/* ── PATCH showDebrief ── */
+const _origDebrief=showDebrief;
+showDebrief=function(){
+  stopTimer();
+  updateFactory('debrief');
+  _origDebrief();
+  playSound('complete');
+  updateRival(3);
+};
+
+/* ── INIT rival display ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('rival-suppliers').textContent=RIVAL.suppliers;
+  updateFactory('intro');
+});
+
+function restart(){
+  Object.assign(G,{
+    scores:{efficiency:50,relations:50,cost:50,risk:50},
+    decisions:{},
+    metrics:{inventory:2400000,warehouse:15000,obsolete:180000,suppliers:45}
+  });
+  crisisQueue=[];
+  stopTimer();
+  updateScores();
+  updateFactory('intro');
+  ['inventory','warehouse','obsolete','suppliers'].forEach(k=>{
+    document.getElementById('m-'+k).childNodes[0].textContent=fmt[k](G.metrics[k]);
+    document.getElementById('mc-'+k).textContent='';
+  });
+  show('intro');
+  document.getElementById('prog-fill').style.width='0%';
+  document.getElementById('prog-label').textContent='Introduction';
+}
+</script>
+</body>
+</html>
