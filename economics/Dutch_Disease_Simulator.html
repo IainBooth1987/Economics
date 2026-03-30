@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Dutch Disease Simulator</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --green: #10b981; --red: #ef4444; --orange: #f97316;
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+
+        /* Hero */
+        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .hero h1 { font-size: 1.9rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero p { color: var(--muted); font-size: 0.9rem; line-height: 1.7; max-width: 600px; margin: 0 auto; }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin-bottom: 1rem; display: block; }
+
+        /* Theory accordion */
+        .theory-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 2rem; overflow: hidden; }
+        .theory-toggle-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.4rem; background: none; border: none; color: var(--text); cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; font-weight: 700; }
+        .theory-toggle-btn:hover { background: rgba(255,255,255,0.03); }
+        .theory-toggle-icon { font-family: var(--ff-mono); font-size: 1.1rem; color: var(--accent); transition: transform 0.25s; }
+        .theory-toggle-icon.open { transform: rotate(45deg); }
+        .theory-body { display: none; padding: 0 1.4rem 1.4rem; font-size: 0.85rem; line-height: 1.8; color: var(--muted); }
+        .theory-body.show { display: block; }
+        [data-theme="light"] .theory-body { color: #374151; }
+        .theory-body h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 1.1rem 0 0.4rem; }
+        .theory-body ul { padding-left: 1.2rem; }
+        .theory-body li { margin-bottom: 0.3rem; }
+        .mechanism-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0; }
+        .mech-box { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 7px; padding: 0.45rem 0.85rem; font-size: 0.78rem; font-weight: 600; color: var(--accent2); }
+        .mech-arrow { color: var(--muted); font-size: 0.9rem; }
+
+        /* Layout */
+        .sim-layout { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; align-items: start; }
+        @media (max-width: 820px) { .sim-layout { grid-template-columns: 1fr; } }
+
+        /* Controls panel */
+        .controls-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; position: sticky; top: 80px; }
+        .ctrl-section { margin-bottom: 1.4rem; }
+        .ctrl-section:last-child { margin-bottom: 0; }
+        .ctrl-section-title { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); margin-bottom: 0.9rem; display: block; }
+        .slider-item { margin-bottom: 1rem; }
+        .slider-item:last-child { margin-bottom: 0; }
+        .slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem; }
+        .slider-label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .slider-val { font-family: var(--ff-mono); font-size: 0.8rem; color: var(--accent); font-weight: 700; }
+        .slider-hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+        input[type=range] { width: 100%; height: 5px; background: var(--border); border-radius: 3px; outline: none; -webkit-appearance: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        .checkbox-row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
+        .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+        .checkbox-row label { font-size: 0.83rem; font-weight: 600; color: var(--text); cursor: pointer; }
+        .savings-row { transition: opacity 0.2s; }
+        .savings-row.disabled { opacity: 0.3; pointer-events: none; }
+        .btn-reset { width: 100%; padding: 0.6rem; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: var(--ff-sans); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; margin-top: 1rem; }
+        .btn-reset:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-reset:hover { border-color: rgba(0,0,0,0.25); }
+
+        /* Right panel */
+        .right-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        /* Metrics */
+        .metrics-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 0.65rem; }
+        @media (min-width: 600px) { .metrics-grid { grid-template-columns: repeat(4,1fr); } }
+        .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+        .metric-card.highlight { border-color: rgba(59,130,246,0.3); }
+        .metric-card.warn { border-color: rgba(249,115,22,0.35); }
+        .metric-card.danger { border-color: rgba(239,68,68,0.35); }
+        .metric-lbl { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.35rem; }
+        .metric-val { font-family: var(--ff-mono); font-size: 1.4rem; font-weight: 800; color: var(--text); }
+        .metric-val.green { color: var(--green); }
+        .metric-val.amber { color: var(--amber); }
+        .metric-val.red { color: var(--red); }
+        .metric-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.2rem; }
+
+        /* Sector bar */
+        .sector-bar-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.3rem; }
+        .sector-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin: 0.65rem 0; }
+        .sector-seg { transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; font-family: var(--ff-mono); font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.9); overflow: hidden; }
+        .seg-resource { background: var(--amber); }
+        .seg-tradable { background: var(--accent); }
+        .seg-services { background: var(--green); }
+        .bar-legend { display: flex; gap: 1.1rem; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.76rem; color: var(--muted); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Chart */
+        .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.3rem; }
+        .chart-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .chart-tab { padding: 0.3rem 0.75rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; transition: all 0.15s; }
+        .chart-tab.active { background: rgba(59,130,246,0.15); border-color: var(--accent); color: var(--accent2); }
+        canvas { display: block; width: 100%; border-radius: 6px; }
+
+        /* Narrative panel */
+        .narrative-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; }
+        .narrative-panel h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; }
+        .narrative-text { font-size: 0.85rem; line-height: 1.85; color: var(--muted); }
+        [data-theme="light"] .narrative-text { color: #374151; }
+        .narrative-text p { margin-bottom: 0.6rem; }
+        .narrative-text p:last-child { margin-bottom: 0; }
+        .narrative-text strong { color: var(--text); }
+        .exam-tip { margin-top: 0.9rem; padding: 0.75rem 1rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; font-size: 0.8rem; color: var(--muted); }
+        [data-theme="light"] .exam-tip { color: #374151; }
+        .exam-tip strong { color: var(--accent2); }
+
+        /* Case studies */
+        .cases-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.4rem; }
+        .cases-panel h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.9rem; }
+        .case-btns { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.5rem; margin-bottom: 0.85rem; }
+        @media (max-width: 560px) { .case-btns { grid-template-columns: repeat(2,1fr); } }
+        .case-btn { padding: 0.6rem 0.5rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.72rem; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.3; transition: all 0.15s; }
+        .case-btn:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .case-btn.active-case { background: rgba(59,130,246,0.12); border-color: var(--accent); color: var(--accent2); }
+        .case-btn .flag { font-size: 1.1rem; display: block; margin-bottom: 0.15rem; }
+        .case-info { display: none; padding: 0.85rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem; line-height: 1.7; color: var(--muted); }
+        .case-info.show { display: block; }
+        [data-theme="light"] .case-info { color: #374151; }
+        .case-info h4 { font-size: 0.87rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 640px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 4rem; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Free Sample</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+
+<div class="hero">
+    <h1>Dutch Disease <em>Simulator</em></h1>
+    <p>Explore how a resource boom reshapes an economy — raising the real exchange rate, squeezing manufacturing, and creating structural dependence. Adjust the controls and watch the Corden–Neary model in action.</p>
+</div>
+
+<!-- THEORY ACCORDION -->
+<div class="theory-box">
+    <button class="theory-toggle-btn" onclick="toggleTheory()">
+        <span>📚 The Corden–Neary Model — What is Dutch Disease?</span>
+        <span class="theory-toggle-icon" id="theory-icon">+</span>
+    </button>
+    <div class="theory-body" id="theory-body">
+        <p><strong>Dutch Disease</strong> describes the negative consequences that arise when a natural resource boom causes currency appreciation and deindustrialisation. The term was coined by <em>The Economist</em> in 1977 to describe the Netherlands' experience after discovering natural gas in Groningen in 1959.</p>
+
+        <h3>Two Mechanisms (Corden &amp; Neary, 1982)</h3>
+
+        <p><strong>1. The Spending Effect</strong> — resource revenues increase national income, boosting demand for non-tradable goods (services, construction). These can't be imported, so their prices rise. This pushes up the real exchange rate, making exports less competitive.</p>
+        <div class="mechanism-row">
+            <div class="mech-box">Resource Boom</div><span class="mech-arrow">→</span>
+            <div class="mech-box">Higher Income</div><span class="mech-arrow">→</span>
+            <div class="mech-box">↑ Demand for Services</div><span class="mech-arrow">→</span>
+            <div class="mech-box">↑ Non-tradable Prices</div><span class="mech-arrow">→</span>
+            <div class="mech-box">Real Exchange Rate Appreciates</div>
+        </div>
+
+        <p><strong>2. The Resource Movement Effect</strong> — higher wages in the booming resource sector attract labour and capital away from manufacturing. This directly reduces the tradable goods sector even before any exchange rate effect.</p>
+        <div class="mechanism-row">
+            <div class="mech-box">Higher Resource Wages</div><span class="mech-arrow">→</span>
+            <div class="mech-box">Labour Moves from Manufacturing</div><span class="mech-arrow">→</span>
+            <div class="mech-box">Deindustrialisation</div>
+        </div>
+
+        <h3>Why does it matter?</h3>
+        <ul>
+            <li><strong>Hysteresis:</strong> Once manufacturing capacity is lost — skills atrophy, supply chains dissolve — it is very costly to rebuild. The damage is persistent.</li>
+            <li><strong>Volatility exposure:</strong> An economy dependent on commodity prices faces boom-bust cycles outside its control.</li>
+            <li><strong>Spillover loss:</strong> Manufacturing generates knowledge spillovers, R&amp;D, and productivity growth that resource extraction typically does not.</li>
+        </ul>
+
+        <h3>Policy response — the Sovereign Wealth Fund</h3>
+        <p>Saving resource revenues abroad (as Norway does with its Government Pension Fund Global) "sterilises" the boom — keeping money out of the domestic economy and preventing the spending effect from driving up the real exchange rate. This is the key policy variable in this simulator.</p>
+    </div>
+</div>
+
+<div class="sim-layout">
+    <!-- LEFT: CONTROLS -->
+    <div class="controls-panel">
+        <div class="ctrl-section">
+            <span class="ctrl-section-title">Resource Boom</span>
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="slider-label">Boom Intensity</span>
+                    <span class="slider-val" id="val-boom">0%</span>
+                </div>
+                <input type="range" id="boom" min="0" max="100" value="0" step="5" oninput="update()">
+                <div class="slider-hint">Size of resource discovery relative to economy</div>
+            </div>
+        </div>
+
+        <div class="ctrl-section">
+            <span class="ctrl-section-title">Sovereign Wealth Fund</span>
+            <div class="checkbox-row">
+                <input type="checkbox" id="fund" onchange="update()">
+                <label for="fund">Enable sovereign wealth fund</label>
+            </div>
+            <div class="slider-item savings-row disabled" id="savings-row">
+                <div class="slider-header">
+                    <span class="slider-label">Savings Rate</span>
+                    <span class="slider-val" id="val-savings">30%</span>
+                </div>
+                <input type="range" id="savings" min="0" max="100" value="30" step="5" oninput="update()">
+                <div class="slider-hint">% of resource revenue saved abroad — Norway ≈ 75%</div>
+            </div>
+        </div>
+
+        <div class="ctrl-section">
+            <span class="ctrl-section-title">Transmission Strength</span>
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="slider-label">Spending Effect</span>
+                    <span class="slider-val" id="val-spending">50%</span>
+                </div>
+                <input type="range" id="spending" min="0" max="100" value="50" step="5" oninput="update()">
+                <div class="slider-hint">How strongly income gains fuel domestic demand &amp; inflation</div>
+            </div>
+            <div class="slider-item">
+                <div class="slider-header">
+                    <span class="slider-label">Resource Movement Effect</span>
+                    <span class="slider-val" id="val-movement">50%</span>
+                </div>
+                <input type="range" id="movement" min="0" max="100" value="50" step="5" oninput="update()">
+                <div class="slider-hint">Ease with which labour &amp; capital shift to resource sector</div>
+            </div>
+        </div>
+
+        <button class="btn-reset" onclick="resetAll()">↩ Reset to baseline</button>
+    </div>
+
+    <!-- RIGHT: OUTPUTS -->
+    <div class="right-panel">
+
+        <!-- KEY METRICS -->
+        <div>
+            <span class="mono-label">Key Economic Outcomes</span>
+            <div class="metrics-grid">
+                <div class="metric-card highlight">
+                    <div class="metric-lbl">Tradable Sector</div>
+                    <div class="metric-val" id="m-tradable">35.0%</div>
+                    <div class="metric-sub">Share of GDP — watch this fall</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-lbl">Real Exchange Rate</div>
+                    <div class="metric-val" id="m-rer">100</div>
+                    <div class="metric-sub">Index (100 = baseline)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-lbl">Export Competitiveness</div>
+                    <div class="metric-val" id="m-comp">100%</div>
+                    <div class="metric-sub">Manufacturing export index</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-lbl">Inflation</div>
+                    <div class="metric-val" id="m-inf">2.0%</div>
+                    <div class="metric-sub">Domestic price pressure</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTOR BAR -->
+        <div class="sector-bar-wrap">
+            <span class="mono-label">Economic Structure (% of GDP)</span>
+            <div class="sector-bar" id="sector-bar">
+                <div class="sector-seg seg-resource" id="seg-resource" style="width:15%">15%</div>
+                <div class="sector-seg seg-tradable" id="seg-tradable" style="width:35%">35%</div>
+                <div class="sector-seg seg-services" id="seg-services" style="width:50%">50%</div>
+            </div>
+            <div class="bar-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span>Resources <span id="leg-res">15.0%</span></span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><span>Tradables (Mfg) <span id="leg-trd">35.0%</span></span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span>Services <span id="leg-srv">50.0%</span></span></div>
+                <div class="legend-item" id="fund-legend" style="display:none"><div class="legend-dot" style="background:var(--muted)"></div><span>Sovereign Fund: <span id="leg-fund">£0bn</span></span></div>
+            </div>
+        </div>
+
+        <!-- TIME SERIES CHART -->
+        <div class="chart-wrap">
+            <span class="mono-label">Time Series — move sliders to record shock path</span>
+            <div class="chart-tabs">
+                <button class="chart-tab" id="tab-rer" onclick="setView('rer')">Real Exchange Rate</button>
+                <button class="chart-tab active" id="tab-tradable" onclick="setView('tradable')">Tradable Sector</button>
+                <button class="chart-tab" id="tab-comp" onclick="setView('comp')">Competitiveness</button>
+                <button class="chart-tab" id="tab-inf" onclick="setView('inf')">Inflation</button>
+            </div>
+            <canvas id="chartCanvas" height="200"></canvas>
+        </div>
+
+        <!-- LIVE NARRATIVE -->
+        <div class="narrative-panel">
+            <h3>Live Economic Analysis</h3>
+            <div class="narrative-text" id="narrative">
+                <p>Set the <strong>Boom Intensity</strong> slider to begin the simulation.</p>
+            </div>
+        </div>
+
+        <!-- CASE STUDIES -->
+        <div class="cases-panel">
+            <h3>Real-World Case Studies</h3>
+            <div class="case-btns">
+                <button class="case-btn" id="cs-norway" onclick="loadCase('norway')"><span class="flag">🇳🇴</span>Norway<br><small>Gold Standard</small></button>
+                <button class="case-btn" id="cs-botswana" onclick="loadCase('botswana')"><span class="flag">🇧🇼</span>Botswana<br><small>Diamond Success</small></button>
+                <button class="case-btn" id="cs-uk" onclick="loadCase('uk')"><span class="flag">🇬🇧</span>UK<br><small>North Sea Oil</small></button>
+                <button class="case-btn" id="cs-netherlands" onclick="loadCase('netherlands')"><span class="flag">🇳🇱</span>Netherlands<br><small>The Original</small></button>
+                <button class="case-btn" id="cs-venezuela" onclick="loadCase('venezuela')"><span class="flag">🇻🇪</span>Venezuela<br><small>Cautionary Tale</small></button>
+                <button class="case-btn" id="cs-australia" onclick="loadCase('australia')"><span class="flag">🇦🇺</span>Australia<br><small>Mixed Outcomes</small></button>
+                <button class="case-btn" id="cs-chile" onclick="loadCase('chile')"><span class="flag">🇨🇱</span>Chile<br><small>Copper Model</small></button>
+                <button class="case-btn" onclick="resetAll()" style="font-size:0.72rem;color:var(--muted)"><span class="flag">↩</span>Reset<br><small>Baseline</small></button>
+            </div>
+            <div class="case-info" id="case-info"></div>
+        </div>
+
+    </div>
+</div>
+
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; Free Sample &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── Theme ── */
+(function(){
+    var t=localStorage.getItem('biz-omics-theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    document.getElementById('theme-btn').textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('biz-omics-theme',next);
+    document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+
+/* ── Theory accordion ── */
+function toggleTheory(){
+    const body=document.getElementById('theory-body');
+    const icon=document.getElementById('theory-icon');
+    const open=body.classList.toggle('show');
+    icon.textContent=open?'−':'+';
+    icon.classList.toggle('open',open);
+}
+
+/* ── State ── */
+let boom=0,hasFund=false,savings=30,spending=50,movement=50;
+// Fixed structural params (sensible defaults, hidden from students)
+const RESOURCE_EXPORT=0.90, TRADABLE_EXPORT=0.60, TRADE_ELAST=15, LABOR_MOB=0.55;
+
+let rerMomentum=0, prevBoom=0, compHistory=[100,100,100], fundSize=0;
+let rer=100,tradable=35,resource=15,services=50,comp=100,inflation=2,absorp=100;
+let currentView='tradable', timeCounter=0;
+let series={rer:[100],tradable:[35],comp:[100],inf:[2],t:[0]};
+
+/* ── Sliders ── */
+function update(){
+    boom=parseInt(document.getElementById('boom').value);
+    hasFund=document.getElementById('fund').checked;
+    savings=parseInt(document.getElementById('savings').value);
+    spending=parseInt(document.getElementById('spending').value);
+    movement=parseInt(document.getElementById('movement').value);
+
+    document.getElementById('val-boom').textContent=boom+'%';
+    document.getElementById('val-savings').textContent=savings+'%';
+    document.getElementById('val-spending').textContent=spending+'%';
+    document.getElementById('val-movement').textContent=movement+'%';
+
+    const sr=document.getElementById('savings-row');
+    sr.classList.toggle('disabled',!hasFund);
+
+    calculate();
+    display();
+    recordSeries();
+    drawChart();
+    updateNarrative();
+}
+
+/* ── Calculate ── */
+function calculate(){
+    // Absorption capacity
+    let rawAbsorp=100;
+    if(boom>60) rawAbsorp=100-Math.pow((boom-60)/40,1.5)*40;
+    absorp=Math.max(40,rawAbsorp);
+
+    const effectiveBoom=hasFund?boom*(1-(savings/100)*0.8):boom;
+    const spendEff=(effectiveBoom/100)*(spending/100)*(absorp/100)*0.6;
+    const movEff=(boom/100)*(movement/100)*LABOR_MOB*0.5;
+
+    resource=15+boom*0.35;
+    const tradableLoss=movEff*40;
+    tradable=Math.max(10,35-tradableLoss);
+    services=100-resource-tradable;
+
+    // RER with overshooting
+    const baseRER=100+spendEff*120;
+    const boomChange=boom-prevBoom;
+    rerMomentum=rerMomentum*0.85+boomChange*0.8;
+    rer=Math.max(80,Math.min(180,baseRER+rerMomentum));
+    prevBoom=boom;
+
+    // Competitiveness (with J-curve lag)
+    const baseComp=200-rer;
+    compHistory.push(baseComp);
+    if(compHistory.length>6) compHistory.shift();
+    const w=[0.40,0.30,0.20,0.10];
+    comp=0;
+    for(let i=0;i<Math.min(w.length,compHistory.length);i++){
+        comp+=compHistory[compHistory.length-1-i]*w[i];
+    }
+
+    // Inflation
+    let inf=2+spendEff*12;
+    if(absorp<80) inf+=(80-absorp)/10;
+    if(hasFund) inf*=(1-(savings/100)*0.5);
+    inflation=Math.max(0,Math.min(25,inf));
+
+    // Sovereign fund growth
+    if(hasFund) fundSize=Math.min(2000,fundSize+boom*(savings/100)*5);
+}
+
+/* ── Display ── */
+function display(){
+    // Colour helpers
+    function mCol(el,val,goodHigh=false){
+        const el2=document.getElementById(el);
+        el2.className='metric-val';
+        if(goodHigh){el2.classList.add(val>85?'green':val>65?'amber':'red');}
+        else{el2.classList.add(val<25?'red':val<40?'amber':'green');}
+    }
+
+    document.getElementById('m-tradable').textContent=tradable.toFixed(1)+'%';
+    mCol('m-tradable',tradable);
+
+    const rerEl=document.getElementById('m-rer');
+    rerEl.textContent=rer.toFixed(0);
+    rerEl.className='metric-val '+(rer>140?'red':rer>115?'amber':'green');
+
+    document.getElementById('m-comp').textContent=comp.toFixed(0)+'%';
+    mCol('m-comp',comp,true);
+
+    const infEl=document.getElementById('m-inf');
+    infEl.textContent=inflation.toFixed(1)+'%';
+    infEl.className='metric-val '+(inflation>10?'red':inflation>5?'amber':'green');
+
+    // Sector bar
+    document.getElementById('seg-resource').style.width=resource.toFixed(1)+'%';
+    document.getElementById('seg-resource').textContent=resource.toFixed(0)+'%';
+    document.getElementById('seg-tradable').style.width=tradable.toFixed(1)+'%';
+    document.getElementById('seg-tradable').textContent=tradable.toFixed(0)+'%';
+    document.getElementById('seg-services').style.width=services.toFixed(1)+'%';
+    document.getElementById('seg-services').textContent=services.toFixed(0)+'%';
+
+    document.getElementById('leg-res').textContent=resource.toFixed(1)+'%';
+    document.getElementById('leg-trd').textContent=tradable.toFixed(1)+'%';
+    document.getElementById('leg-srv').textContent=services.toFixed(1)+'%';
+
+    const fl=document.getElementById('fund-legend');
+    fl.style.display=hasFund?'flex':'none';
+    document.getElementById('leg-fund').textContent='£'+fundSize.toFixed(0)+'bn';
+}
+
+/* ── Time series ── */
+function recordSeries(){
+    timeCounter++;
+    series.rer.push(rer); series.tradable.push(tradable);
+    series.comp.push(comp); series.inf.push(inflation); series.t.push(timeCounter);
+    if(series.t.length>60){['rer','tradable','comp','inf','t'].forEach(k=>series[k].shift());}
+}
+
+function setView(v){
+    currentView=v;
+    document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+v).classList.add('active');
+    drawChart();
+}
+
+function drawChart(){
+    const canvas=document.getElementById('chartCanvas');
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=canvas.offsetWidth; const H=200;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+
+    const pad={t:20,r:15,b:30,l:42};
+    const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=isDark?'#111827':'#ffffff';
+    ctx.fillRect(0,0,W,H);
+
+    const cfg={
+        rer:{data:series.rer,min:80,max:180,color:'#f59e0b',label:'Real Exchange Rate (index)'},
+        tradable:{data:series.tradable,min:0,max:50,color:'#3b82f6',label:'Tradable Sector (% GDP)'},
+        comp:{data:series.comp,min:50,max:130,color:'#10b981',label:'Export Competitiveness (index)'},
+        inf:{data:series.inf,min:0,max:25,color:'#ef4444',label:'Inflation (%)'}
+    };
+    const c=cfg[currentView];
+    const data=c.data; const n=data.length;
+
+    // Grid
+    const gridCol=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)';
+    const textCol=isDark?'#64748b':'#94a3b8';
+    ctx.strokeStyle=gridCol; ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){
+        const y=pad.t+ch-(ch/4)*i;
+        ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+        ctx.fillStyle=textCol; ctx.font='10px monospace'; ctx.textAlign='right';
+        ctx.fillText(((c.min+(c.max-c.min)/4*i)).toFixed(0),pad.l-5,y+4);
+    }
+
+    // Baseline reference line at 100 if applicable
+    if(c.min<=100&&c.max>=100){
+        const ref=pad.t+ch-((100-c.min)/(c.max-c.min))*ch;
+        ctx.strokeStyle=isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.12)';
+        ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(pad.l,ref); ctx.lineTo(pad.l+cw,ref); ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    if(n<2){return;}
+
+    // Area fill
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+        const x=pad.l+(cw/(n-1))*i;
+        const y=pad.t+ch-((data[i]-c.min)/(c.max-c.min))*ch;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.lineTo(pad.l+cw,pad.t+ch); ctx.lineTo(pad.l,pad.t+ch); ctx.closePath();
+    ctx.fillStyle=c.color+'25'; ctx.fill();
+
+    // Line
+    ctx.strokeStyle=c.color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+        const x=pad.l+(cw/(n-1))*i;
+        const y=pad.t+ch-((data[i]-c.min)/(c.max-c.min))*ch;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle=isDark?'#94a3b8':'#64748b'; ctx.font='10px monospace'; ctx.textAlign='left';
+    ctx.fillText(c.label,pad.l,H-8);
+}
+
+/* ── Live narrative ── */
+function updateNarrative(){
+    const el=document.getElementById('narrative');
+    if(boom===0){
+        el.innerHTML='<p>Set the <strong>Boom Intensity</strong> slider to begin the simulation. Try dragging it to 50%, then 80%, and observe the structural changes.</p>';
+        return;
+    }
+
+    let html='';
+    const boomDesc=boom<30?'modest':boom<60?'significant':boom<80?'major':'extreme';
+    const rerAppreciation=((rer-100)/100*100).toFixed(0);
+
+    // Core narrative
+    html+=`<p>A <strong>${boomDesc} resource boom (${boom}%)</strong> is generating substantial revenue flows into the economy. `;
+    if(hasFund){
+        const savedPct=savings;
+        html+=`By saving <strong>${savedPct}% of revenues abroad</strong> through the sovereign wealth fund, the government is sterilising part of the boom — limiting the domestic spending effect and moderating currency appreciation.`;
+    } else {
+        html+=`Without a sovereign wealth fund, <strong>all resource revenues enter the domestic economy</strong>, driving up demand for non-tradable goods and services.`;
+    }
+    html+='</p>';
+
+    // Exchange rate
+    if(rer>105){
+        html+=`<p>The real exchange rate has <strong>appreciated by ${rerAppreciation}%</strong> above its baseline value. `;
+        html+=rer>140?'This severe overvaluation makes manufactured exports highly uncompetitive on world markets.':
+              rer>120?'This significant overvaluation is placing considerable pressure on the tradable sector.':
+              'This moderate appreciation is beginning to affect export competitiveness.';
+        html+='</p>';
+    }
+
+    // Sector structure
+    const tradableFall=(35-tradable).toFixed(1);
+    if(tradable<33){
+        html+=`<p>The tradable goods (manufacturing) sector has contracted from 35% to <strong>${tradable.toFixed(1)}% of GDP</strong> — a loss of ${tradableFall} percentage points. `;
+        html+=tradable<15?'At this level, the economy faces serious deindustrialisation, with hysteresis effects making recovery extremely difficult once skills and supply chains are lost.':
+              tradable<22?'This substantial contraction reflects significant deindustrialisation — the resource movement effect is drawing labour and capital away from manufacturing.':
+              'The resource movement effect is beginning to draw labour and capital toward the booming sector.';
+        html+='</p>';
+    }
+
+    // Competitiveness
+    if(comp<85){
+        html+=`<p>Export competitiveness has fallen to <strong>${comp.toFixed(0)}</strong> (baseline: 100). `;
+        html+=comp<65?'At this level, manufactured exporters are losing contracts to foreign rivals. The tradable sector cannot recover without a correction in the real exchange rate.':
+              'Manufacturing exporters are facing increasing difficulty competing at prevailing exchange rates.';
+        html+='</p>';
+    }
+
+    // Inflation
+    if(inflation>4){
+        html+=`<p>Inflation is running at <strong>${inflation.toFixed(1)}%</strong> — driven by demand-pull pressures as resource revenues fuel spending on non-tradable goods and services. `;
+        html+=inflation>10?'This level of inflation is eroding real wages, reducing living standards for workers outside the resource sector, and adding to the competitiveness loss.':
+              'This above-target inflation is adding to the spending effect and real exchange rate appreciation.';
+        html+='</p>';
+    }
+
+    // Sovereign fund
+    if(hasFund&&fundSize>100){
+        html+=`<p>The sovereign wealth fund has accumulated <strong>£${fundSize.toFixed(0)}bn</strong> in foreign assets. This represents a claim on future income once resource revenues decline — the long-run payoff for short-run fiscal discipline.</p>`;
+    }
+
+    // Exam tip
+    let tip='';
+    if(!hasFund&&boom>50&&tradable<25){
+        tip='<strong>Exam tip:</strong> This scenario illustrates the core Dutch Disease diagnosis. To evaluate in a 25-mark answer: acknowledge the short-run income gains, then analyse the spending and resource movement effects in sequence, consider the long-run structural damage (hysteresis), and assess whether the welfare gains to the population offset the loss of manufacturing capacity.';
+    } else if(hasFund&&savings>60&&boom>50){
+        tip='<strong>Exam tip:</strong> Norway\'s approach — high savings rate + fiscal rules — is the textbook response. In evaluation: consider whether it\'s politically sustainable to deny current generations the benefit of resource wealth, whether investment of fund returns back into domestic productivity offsets any movement effect, and whether other countries can replicate the institutional quality required.';
+    } else if(boom>0){
+        tip='<strong>Exam tip:</strong> A strong answer on Dutch Disease distinguishes between the two mechanisms (spending vs movement), evaluates the role of exchange rate regime, considers the degree of labour market flexibility, and discusses sovereign wealth funds as a supply-side structural policy response.';
+    }
+    if(tip) html+=`<div class="exam-tip">${tip}</div>`;
+
+    el.innerHTML=html;
+}
+
+/* ── Case studies ── */
+const cases={
+    norway:{boom:65,fund:true,savings:75,spending:35,movement:45,
+        title:'🇳🇴 Norway — The Gold Standard',
+        text:'Norway discovered North Sea oil in 1969 and established its Government Pension Fund Global in 1990. By saving approximately 75% of oil revenues abroad, Norway avoided the spending effect almost entirely. The krone appreciated modestly but manufacturing held up, and the sovereign fund reached £1.4 trillion. The key was institutional discipline: a strict fiscal rule limits annual drawdown to 3% of the fund\'s value. Norway shows that Dutch Disease is not inevitable — it requires deliberate, sustained policy restraint.'},
+    botswana:{boom:55,fund:true,savings:60,spending:45,movement:40,
+        title:'🇧🇼 Botswana — Diamond Success',
+        text:'Botswana discovered diamonds after independence in 1966. Through prudent management and a Pula Fund to sterilise revenues, it achieved 9% average annual growth from 1966–1999 while maintaining economic diversification. The lesson: institutional quality and governance matter as much as resource wealth itself. Many resource-rich African nations failed where Botswana succeeded, because they lacked the political institutions to resist distributing revenues immediately.'},
+    uk:{boom:70,fund:false,savings:0,spending:75,movement:70,
+        title:'🇬🇧 UK — North Sea Oil (1970s–80s)',
+        text:'Britain discovered North Sea oil but spent revenues on current consumption and tax cuts rather than a sovereign fund. Sterling appreciated sharply ("Thatcher\'s petro-pound"), and manufacturing employment fell from 7.1m (1979) to 5.1m (1983). Combined with tight monetary policy, Dutch Disease contributed significantly to deindustrialisation. The UK\'s experience directly influenced Norway\'s very different approach — and is a recurring example in UK policy debates about whether a sovereign wealth fund should have been established.'},
+    netherlands:{boom:75,fund:false,savings:0,spending:80,movement:85,
+        title:'🇳🇱 Netherlands — The Original Disease',
+        text:'Discovery of the Groningen gas field in 1959 led to a textbook case of Dutch Disease. Revenues were spent domestically, driving the guilder up and manufacturing employment from 31% (1960) to 18% (1980). The Economist coined the term "Dutch Disease" in 1977 to describe exactly this phenomenon. It is ironic that the country after which the condition is named later developed some of the strongest institutions for managing resource revenues in Europe.'},
+    venezuela:{boom:85,fund:false,savings:0,spending:95,movement:90,
+        title:'🇻🇪 Venezuela — The Cautionary Tale',
+        text:'Despite holding the world\'s largest proven oil reserves, Venezuela spent all revenues domestically with no sovereign fund. Extreme oil dependence (95%+ of exports), sustained currency overvaluation, and manufacturing collapse created catastrophic fragility. When oil prices fell after 2014, the economy collapsed into hyperinflation exceeding 1,000,000%. Venezuela represents the maximum severity end of Dutch Disease — the spending effect unconstrained, the movement effect complete, and no fiscal buffer against the commodity cycle.'},
+    australia:{boom:60,fund:true,savings:45,spending:60,movement:55,
+        title:'🇦🇺 Australia — Mixed Outcomes',
+        text:'Australia\'s mining boom (2003–2013) brought prosperity but also currency appreciation of ~60%, hurting manufacturing and tourism. The Future Fund was established (2006) but not all resource revenues were saved. Manufacturing declined from 13% to 6% of GDP — partial Dutch Disease despite sound policy. Australia illustrates that even moderate, well-managed booms produce structural change that proves difficult to reverse once commodity prices normalise.'},
+    chile:{boom:58,fund:true,savings:55,spending:52,movement:48,
+        title:'🇨🇱 Chile — Copper Stabilisation',
+        text:'The world\'s largest copper producer established the Economic and Social Stabilisation Fund (2007) and Pension Reserve Fund, saving roughly 55% of above-reference copper revenues. Manufacturing held at ~12% of GDP, inflation was contained, and boom-bust cycles were moderated. Chile represents a pragmatic middle path — not Norway\'s extreme fiscal discipline, but far from Venezuela\'s profligacy. Its experience is increasingly cited as a model for Latin American resource economies.'}
+};
+
+function loadCase(id){
+    document.querySelectorAll('.case-btn').forEach(b=>b.classList.remove('active-case'));
+    document.getElementById('cs-'+id).classList.add('active-case');
+    const c=cases[id];
+    document.getElementById('boom').value=c.boom;
+    document.getElementById('fund').checked=c.fund;
+    document.getElementById('savings').value=c.savings;
+    document.getElementById('spending').value=c.spending;
+    document.getElementById('movement').value=c.movement;
+    update();
+    const info=document.getElementById('case-info');
+    info.innerHTML=`<h4>${c.title}</h4><p>${c.text}</p>`;
+    info.classList.add('show');
+}
+
+function resetAll(){
+    document.querySelectorAll('.case-btn').forEach(b=>b.classList.remove('active-case'));
+    document.getElementById('boom').value=0;
+    document.getElementById('fund').checked=false;
+    document.getElementById('savings').value=30;
+    document.getElementById('spending').value=50;
+    document.getElementById('movement').value=50;
+    rerMomentum=0; prevBoom=0; compHistory=[100,100,100]; fundSize=0;
+    series={rer:[100],tradable:[35],comp:[100],inf:[2],t:[0]};
+    timeCounter=0;
+    document.getElementById('case-info').classList.remove('show');
+    update();
+}
+
+/* ── Init ── */
+window.addEventListener('resize',()=>drawChart());
+update();
+</script>
+</body>
+</html>

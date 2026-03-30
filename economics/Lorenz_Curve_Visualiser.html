@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Lorenz Curve &amp; Gini Visualiser</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --red: #ef4444; --green: #10b981; --orange: #f97316;
+            --curve1: #3b82f6; --curve2: #f59e0b;
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+        .hero { text-align: center; margin-bottom: 2.5rem; }
+        .hero h1 { font-size: 1.9rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero p { color: var(--muted); font-size: 0.9rem; line-height: 1.7; max-width: 600px; margin: 0 auto; }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin-bottom: 0.85rem; display: block; }
+
+        /* Layout */
+        .page-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; align-items: start; }
+        @media (max-width: 900px) { .page-layout { grid-template-columns: 1fr; } }
+
+        /* Panels */
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; overflow-x: auto; }
+        .tab { padding: 0.6rem 1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; white-space: nowrap; }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Country/preset buttons */
+        .country-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+        .country-btn { padding: 0.6rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.78rem; font-weight: 600; color: var(--muted); text-align: left; line-height: 1.35; transition: all 0.15s; }
+        .country-btn:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .country-btn.active { background: rgba(59,130,246,0.12); border-color: var(--accent); color: var(--accent2); }
+        .country-btn small { display: block; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; font-weight: 400; }
+        .country-btn.active small { color: var(--accent2); opacity: 0.8; }
+
+        /* Redistribution toggle */
+        .redist-toggle { display: flex; align-items: center; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+        .redist-btn { flex: 1; padding: 0.55rem 0.75rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.78rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; text-align: center; }
+        .redist-btn.active { background: var(--accent); color: #fff; }
+
+        /* Comparison */
+        .comp-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .comp-row label { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+        .comp-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--curve2); cursor: pointer; }
+        select { padding: 0.5rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-family: var(--ff-sans); font-size: 0.8rem; flex: 1; }
+        [data-theme="light"] select { background: #f1f5f9; }
+
+        /* Sliders for custom mode */
+        .slider-grid { display: grid; gap: 0.6rem; }
+        .slider-row { display: flex; align-items: center; gap: 0.6rem; }
+        .slider-row label { font-family: var(--ff-mono); font-size: 0.67rem; color: var(--muted); min-width: 68px; }
+        .slider-row input[type=range] { flex: 1; height: 4px; background: var(--border); border-radius: 2px; outline: none; -webkit-appearance: none; cursor: pointer; }
+        .slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        .slider-row input[type=range]::-moz-range-thumb { width: 14px; height: 14px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        .slider-val { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); min-width: 32px; text-align: right; }
+
+        /* Theory */
+        .theory-body { font-size: 0.84rem; line-height: 1.8; color: var(--muted); max-height: 440px; overflow-y: auto; padding-right: 4px; }
+        [data-theme="light"] .theory-body { color: #374151; }
+        .theory-body h3 { font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 1rem 0 0.4rem; }
+        .theory-body ul { padding-left: 1.1rem; }
+        .theory-body li { margin-bottom: 0.3rem; }
+        .formula-box { background: var(--surface2); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 0.75rem 1rem; margin: 0.75rem 0; font-family: var(--ff-mono); font-size: 0.82rem; color: var(--accent2); }
+        .gini-scale { display: grid; gap: 0.3rem; margin: 0.6rem 0; }
+        .gini-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.79rem; }
+        .gini-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .q-box { background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.81rem; color: var(--muted); }
+        [data-theme="light"] .q-box { color: #374151; }
+
+        /* RIGHT panel */
+        .right-col { display: flex; flex-direction: column; gap: 1.25rem; }
+
+        /* Chart */
+        .chart-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+        canvas { display: block; width: 100%; border-radius: 8px; }
+        .legend-row { display: flex; justify-content: center; gap: 1.25rem; margin-top: 0.85rem; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.78rem; color: var(--muted); }
+        .leg-line { width: 24px; height: 3px; border-radius: 2px; }
+        .leg-dash { width: 24px; height: 2px; background: repeating-linear-gradient(to right, var(--muted) 0, var(--muted) 4px, transparent 4px, transparent 8px); }
+
+        /* Metrics */
+        .metrics-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.6rem; margin-bottom: 1rem; }
+        @media (max-width: 600px) { .metrics-grid { grid-template-columns: repeat(2,1fr); } }
+        .metric-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 0.9rem 0.75rem; text-align: center; }
+        .metric-card.highlight { border-color: rgba(59,130,246,0.3); }
+        .metric-val { font-family: var(--ff-mono); font-size: 1.3rem; font-weight: 800; color: var(--text); }
+        .metric-val.green { color: var(--green); }
+        .metric-val.amber { color: var(--amber); }
+        .metric-val.red { color: var(--red); }
+        .metric-lbl { font-family: var(--ff-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 0.25rem; }
+        .interp-box { font-size: 0.82rem; line-height: 1.7; color: var(--muted); padding: 0.8rem 1rem; background: var(--surface2); border-radius: 8px; }
+        [data-theme="light"] .interp-box { color: #374151; }
+
+        /* Quintile table */
+        .table-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        td { padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--muted); font-family: var(--ff-mono); font-size: 0.78rem; }
+        td:first-child { color: var(--text); font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        .bar-cell { display: flex; align-items: center; gap: 0.5rem; }
+        .bar-fill { height: 8px; border-radius: 3px; background: var(--accent); min-width: 2px; }
+        .bar-fill.curve2 { background: var(--curve2); }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 640px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 4rem; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Free Sample</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+<div class="hero">
+    <h1>Lorenz Curve &amp; <em>Gini Coefficient</em></h1>
+    <p>Visualise income inequality across countries. Switch between market income and post-tax disposable income to see the effect of redistribution — the key government intervention mechanism at A-Level.</p>
+</div>
+
+<div class="page-layout">
+
+    <!-- LEFT: CONTROLS -->
+    <div class="panel">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('countries')">Real Countries</button>
+            <button class="tab" onclick="switchTab('theoretical')">Theoretical</button>
+            <button class="tab" onclick="switchTab('custom')">Custom</button>
+            <button class="tab" onclick="switchTab('theory')">Theory</button>
+        </div>
+
+        <!-- COUNTRIES TAB -->
+        <div class="tab-content active" id="tab-countries">
+            <span class="mono-label">Select a country</span>
+            <div class="country-grid" id="country-btns">
+                <button class="country-btn active" onclick="loadCountry('uk',this)">🇬🇧 United Kingdom<small>Gini: 0.35 (post-tax)</small></button>
+                <button class="country-btn" onclick="loadCountry('usa',this)">🇺🇸 United States<small>Gini: 0.41</small></button>
+                <button class="country-btn" onclick="loadCountry('sweden',this)">🇸🇪 Sweden<small>Gini: 0.29</small></button>
+                <button class="country-btn" onclick="loadCountry('norway',this)">🇳🇴 Norway<small>Gini: 0.27</small></button>
+                <button class="country-btn" onclick="loadCountry('germany',this)">🇩🇪 Germany<small>Gini: 0.32</small></button>
+                <button class="country-btn" onclick="loadCountry('france',this)">🇫🇷 France<small>Gini: 0.30</small></button>
+                <button class="country-btn" onclick="loadCountry('brazil',this)">🇧🇷 Brazil<small>Gini: 0.53</small></button>
+                <button class="country-btn" onclick="loadCountry('india',this)">🇮🇳 India<small>Gini: 0.47</small></button>
+                <button class="country-btn" onclick="loadCountry('china',this)">🇨🇳 China<small>Gini: 0.49</small></button>
+                <button class="country-btn" onclick="loadCountry('southafrica',this)">🇿🇦 South Africa<small>Gini: 0.63</small></button>
+                <button class="country-btn" onclick="loadCountry('kenya',this)">🇰🇪 Kenya<small>Gini: 0.48</small></button>
+                <button class="country-btn" onclick="loadCountry('denmark',this)">🇩🇰 Denmark<small>Gini: 0.29</small></button>
+            </div>
+
+            <span class="mono-label" style="margin-top:0.75rem">Income measure</span>
+            <div class="redist-toggle" id="redist-toggle">
+                <button class="redist-btn active" id="btn-post" onclick="setRedist('post')">Post-tax &amp; benefits</button>
+                <button class="redist-btn" id="btn-pre" onclick="setRedist('pre')">Market income (pre-tax)</button>
+            </div>
+            <div id="redist-note" style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;display:none;"></div>
+        </div>
+
+        <!-- THEORETICAL TAB -->
+        <div class="tab-content" id="tab-theoretical">
+            <span class="mono-label">Theoretical distributions</span>
+            <div class="country-grid">
+                <button class="country-btn" onclick="loadCountry('equal',this)">⚖️ Perfect Equality<small>Gini: 0.00</small></button>
+                <button class="country-btn" onclick="loadCountry('moderate',this)">📊 Moderate<small>Gini: 0.35</small></button>
+                <button class="country-btn" onclick="loadCountry('high',this)">📈 High<small>Gini: 0.50</small></button>
+                <button class="country-btn" onclick="loadCountry('extreme',this)">⚠️ Extreme<small>Gini: 0.70</small></button>
+            </div>
+            <div style="font-size:0.79rem;color:var(--muted);margin-top:0.75rem;line-height:1.65;">
+                <strong style="color:var(--text)">Perfect equality</strong> means every decile earns 10% — the Lorenz curve follows the diagonal exactly. Real distributions always bow below it; the degree of bowing determines the Gini coefficient.
+            </div>
+        </div>
+
+        <!-- CUSTOM TAB -->
+        <div class="tab-content" id="tab-custom">
+            <span class="mono-label">Set each income decile share (must sum to 100%)</span>
+            <div class="slider-grid" id="custom-sliders"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:0.75rem;">
+                <span style="font-size:0.78rem;color:var(--muted)">Total: <span id="custom-total" style="font-family:var(--ff-mono);color:var(--text)">100.0%</span></span>
+                <button onclick="resetCustom()" style="font-size:0.75rem;color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:0.25rem 0.65rem;cursor:pointer;">Reset</button>
+            </div>
+        </div>
+
+        <!-- THEORY TAB -->
+        <div class="tab-content" id="tab-theory">
+            <div class="theory-body">
+                <h3>What is the Lorenz Curve?</h3>
+                <p>The <strong>Lorenz curve</strong>, developed by Max Lorenz in 1905, plots cumulative income share against cumulative population share, starting with the poorest. The diagonal from (0,0) to (100,100) is the <strong>line of perfect equality</strong> — where every decile earns 10%.</p>
+
+                <h3>The Gini Coefficient</h3>
+                <p>The Gini coefficient is the ratio of the area between the line of equality and the Lorenz curve (area A) to the total area under the line of equality (A+B):</p>
+                <div class="formula-box">Gini = A ÷ (A + B) = 1 − 2 × (area under Lorenz curve)</div>
+                <p>It ranges from 0 (perfect equality) to 1 (maximum inequality, one person owns everything).</p>
+
+                <h3>Interpreting Gini values</h3>
+                <div class="gini-scale">
+                    <div class="gini-row"><div class="gini-dot" style="background:#10b981"></div><span><strong>0.00 – 0.25</strong> Very low — Nordic countries (Norway 0.27, Denmark 0.29)</span></div>
+                    <div class="gini-row"><div class="gini-dot" style="background:#60a5fa"></div><span><strong>0.25 – 0.35</strong> Low — Western Europe (Germany 0.32, France 0.30)</span></div>
+                    <div class="gini-row"><div class="gini-dot" style="background:#f59e0b"></div><span><strong>0.35 – 0.45</strong> Moderate — UK (0.35), USA (0.41), China (0.49)</span></div>
+                    <div class="gini-row"><div class="gini-dot" style="background:#f97316"></div><span><strong>0.45 – 0.60</strong> High — Brazil (0.53), India (0.47), Kenya (0.48)</span></div>
+                    <div class="gini-row"><div class="gini-dot" style="background:#ef4444"></div><span><strong>0.60+</strong> Very high — South Africa (0.63)</span></div>
+                </div>
+
+                <h3>Redistribution — the key A-Level mechanism</h3>
+                <p>Market income (before taxes and benefits) is far more unequal than disposable income. In the UK, the market Gini is ~0.52 but falls to ~0.35 after redistribution — a reduction of 17 Gini points. This gap is achieved through:</p>
+                <ul>
+                    <li><strong>Progressive income tax</strong> — higher earners pay a greater % of income</li>
+                    <li><strong>Means-tested benefits</strong> — Universal Credit, Housing Benefit etc.</li>
+                    <li><strong>Universal benefits</strong> — Child Benefit, State Pension</li>
+                    <li><strong>Benefits in kind</strong> — NHS, state education (not captured in income Gini)</li>
+                </ul>
+                <p>Use the <strong>"Income measure" toggle</strong> in the Countries tab to see this effect for each country.</p>
+
+                <h3>Limitations — for exam evaluation</h3>
+                <ul>
+                    <li>Two very different distributions can share the same Gini — it doesn't show <em>where</em> inequality occurs</li>
+                    <li>Measures income inequality, not wealth inequality (wealth Ginis are typically 0.6–0.8)</li>
+                    <li>Doesn't capture absolute living standards — a rising tide may lift all boats even if the Gini rises</li>
+                    <li>Difficult to compare across countries with different cost-of-living levels</li>
+                    <li>The Lorenz curve can intersect — two countries with the same Gini may have very different distributions</li>
+                </ul>
+
+                <h3>Discussion questions</h3>
+                <div class="q-box">
+                    <ul style="padding-left:1rem;line-height:1.85">
+                        <li>Should governments target reducing the Gini or raising absolute incomes of the poorest?</li>
+                        <li>Why might some inequality be beneficial for growth incentives?</li>
+                        <li>How do progressive taxes and benefits affect the shape of the Lorenz curve?</li>
+                        <li>Why is the UK's market Gini (~0.52) so much higher than its disposable income Gini (~0.35)?</li>
+                        <li>What are the social consequences of high inequality beyond income?</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARISON (always visible) -->
+        <div style="margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid var(--border);">
+            <span class="mono-label">Comparison curve</span>
+            <div class="comp-row">
+                <label><input type="checkbox" id="comp-check" onchange="toggleComp()"> Show comparison</label>
+                <select id="comp-select" onchange="updateComp()" disabled style="opacity:0.4">
+                    <option value="">— Select —</option>
+                    <option value="uk">🇬🇧 United Kingdom</option>
+                    <option value="usa">🇺🇸 United States</option>
+                    <option value="sweden">🇸🇪 Sweden</option>
+                    <option value="norway">🇳🇴 Norway</option>
+                    <option value="germany">🇩🇪 Germany</option>
+                    <option value="france">🇫🇷 France</option>
+                    <option value="brazil">🇧🇷 Brazil</option>
+                    <option value="india">🇮🇳 India</option>
+                    <option value="china">🇨🇳 China</option>
+                    <option value="southafrica">🇿🇦 South Africa</option>
+                    <option value="kenya">🇰🇪 Kenya</option>
+                    <option value="denmark">🇩🇰 Denmark</option>
+                    <option value="equal">⚖️ Perfect Equality</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: OUTPUTS -->
+    <div class="right-col">
+
+        <!-- CHART -->
+        <div class="chart-panel">
+            <span class="mono-label">Lorenz Curve</span>
+            <canvas id="lorenzCanvas" height="440"></canvas>
+            <div class="legend-row">
+                <div class="leg-item"><div class="leg-dash"></div><span>Line of Equality</span></div>
+                <div class="leg-item"><div class="leg-line" style="background:var(--curve1)"></div><span id="leg-primary">United Kingdom</span></div>
+                <div class="leg-item" id="leg-comp-item" style="display:none"><div class="leg-line" style="background:var(--curve2)"></div><span id="leg-comp">Comparison</span></div>
+            </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="metrics-panel">
+            <span class="mono-label">Key Inequality Measures</span>
+            <div class="metrics-grid">
+                <div class="metric-card highlight">
+                    <div class="metric-val" id="m-gini">0.350</div>
+                    <div class="metric-lbl">Gini Coefficient</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-val" id="m-ratio">8.8:1</div>
+                    <div class="metric-lbl">Top 10% ÷ Bottom 10%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-val" id="m-bot40">18.4%</div>
+                    <div class="metric-lbl">Bottom 40% Share</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-val" id="m-top10">24.5%</div>
+                    <div class="metric-lbl">Top 10% Share</div>
+                </div>
+            </div>
+            <div class="interp-box" id="interp-box">Select a country to see interpretation.</div>
+        </div>
+
+        <!-- DECILE TABLE -->
+        <div class="table-panel">
+            <span class="mono-label">Income Share by Decile</span>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Decile</th>
+                        <th>Primary share</th>
+                        <th style="width:40%">Distribution</th>
+                        <th id="col-comp" style="display:none">Comparison</th>
+                    </tr>
+                </thead>
+                <tbody id="decile-table"></tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; Free Sample &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── Theme ── */
+(function(){
+    var t=localStorage.getItem('biz-omics-theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    document.getElementById('theme-btn').textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('biz-omics-theme',next);
+    document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+    draw();
+}
+
+/* ── Data ── */
+// Each country: post (post-tax) and pre (market income) decile shares
+const countries = {
+    uk:          { name:'United Kingdom',  post:[2.8,4.1,5.2,6.3,7.6,9.1,10.8,12.8,16.8,24.5], pre:[1.0,2.2,3.5,4.9,6.4,8.2,10.4,13.2,18.5,31.7] },
+    usa:         { name:'United States',   post:[1.9,3.2,4.3,5.4,6.7,8.3,10.2,12.9,17.2,29.9], pre:[1.2,2.4,3.6,4.9,6.4,8.2,10.3,13.1,17.8,32.1] },
+    sweden:      { name:'Sweden',          post:[3.6,5.1,6.2,7.2,8.3,9.5,10.8,12.4,15.1,21.8], pre:[1.5,2.8,4.2,5.6,7.0,8.8,10.8,13.2,17.5,28.6] },
+    norway:      { name:'Norway',          post:[3.9,5.4,6.4,7.4,8.4,9.6,10.9,12.5,14.9,20.6], pre:[2.0,3.5,4.8,6.1,7.5,9.1,11.0,13.4,17.0,25.6] },
+    germany:     { name:'Germany',         post:[3.4,5.0,6.0,7.0,8.2,9.4,10.8,12.5,15.2,22.5], pre:[1.8,3.2,4.5,5.8,7.2,8.8,10.7,13.0,17.2,27.8] },
+    france:      { name:'France',          post:[3.5,4.9,5.9,7.0,8.2,9.5,10.9,12.6,15.4,22.1], pre:[1.6,3.0,4.4,5.7,7.1,8.8,10.7,13.1,17.5,28.1] },
+    brazil:      { name:'Brazil',          post:[1.2,2.3,3.4,4.5,5.8,7.4,9.5,12.3,17.1,36.5], pre:[0.9,1.8,2.8,3.8,5.2,6.8,8.9,12.1,17.3,40.4] },
+    india:       { name:'India',           post:[3.1,4.5,5.5,6.4,7.4,8.5,9.8,11.5,14.5,28.8], pre:[2.8,4.2,5.2,6.1,7.1,8.2,9.6,11.4,14.8,30.6] },
+    china:       { name:'China',           post:[2.5,3.8,4.8,5.8,7.0,8.4,10.1,12.3,16.2,29.1], pre:[2.0,3.2,4.2,5.3,6.5,8.0,9.8,12.2,16.7,32.1] },
+    southafrica: { name:'South Africa',    post:[0.8,1.6,2.5,3.5,4.7,6.2,8.3,11.2,16.4,44.8], pre:[0.5,1.2,2.0,2.9,4.1,5.7,7.9,11.0,17.0,47.7] },
+    kenya:       { name:'Kenya',           post:[2.9,4.3,5.3,6.2,7.2,8.4,9.8,11.7,15.0,29.2], pre:[2.6,4.0,5.0,5.9,6.9,8.1,9.6,11.5,15.3,31.1] },
+    denmark:     { name:'Denmark',         post:[3.7,5.2,6.2,7.2,8.3,9.5,10.8,12.4,15.1,21.6], pre:[1.9,3.3,4.6,5.9,7.3,9.0,11.0,13.4,17.2,26.4] },
+    equal:       { name:'Perfect Equality',post:[10,10,10,10,10,10,10,10,10,10], pre:[10,10,10,10,10,10,10,10,10,10] },
+    moderate:    { name:'Moderate Inequality',post:[2.5,4.0,5.0,6.0,7.5,9.0,11.0,13.0,16.0,26.0], pre:[2.5,4.0,5.0,6.0,7.5,9.0,11.0,13.0,16.0,26.0] },
+    high:        { name:'High Inequality', post:[1.5,3.0,4.0,5.0,6.5,8.0,10.0,12.5,17.0,32.5], pre:[1.5,3.0,4.0,5.0,6.5,8.0,10.0,12.5,17.0,32.5] },
+    extreme:     { name:'Extreme Inequality',post:[0.5,1.5,2.5,3.5,4.5,6.0,8.0,11.0,17.0,45.5], pre:[0.5,1.5,2.5,3.5,4.5,6.0,8.0,11.0,17.0,45.5] },
+    custom:      { name:'Custom', post:[10,10,10,10,10,10,10,10,10,10], pre:[10,10,10,10,10,10,10,10,10,10] }
+};
+
+// redistribution gap note
+const redistNote = {
+    uk:          'UK redistribution reduces the Gini by ~0.17 (from ~0.52 to ~0.35) via progressive taxation, Universal Credit, Housing Benefit, and other transfers.',
+    usa:         'US redistribution reduces the Gini by ~0.09. Less redistribution than Europe — fewer means-tested benefits and lower top marginal tax rates.',
+    sweden:      'Sweden reduces inequality by ~0.17 via one of the world\'s most comprehensive welfare states: high-quality childcare, universal healthcare, and generous parental leave.',
+    norway:      'Norway reduces the Gini by ~0.15. Sovereign wealth fund revenues supplement welfare spending, enabling strong redistribution without punishing income tax rates.',
+    germany:     'Germany reduces the Gini by ~0.16. Bismarckian social insurance system — linked to employment — provides strong redistribution through pensions and unemployment insurance.',
+    france:      'France reduces the Gini by ~0.17. Highly centralised welfare state with strong union protection, statutory minimum wage (SMIC), and universal health coverage.',
+    brazil:      'Brazil shows limited redistribution (~0.08 Gini reduction). High inequality persists despite Bolsa Família transfers — tax system is regressive in parts.',
+    india:       'India shows minimal redistribution (~0.02). Limited social protection coverage; informal labour market dominates.',
+    china:       'China shows limited redistribution (~0.04). Rapid growth reduced absolute poverty but rural-urban hukou system entrenches structural inequality.',
+    southafrica: 'South Africa shows moderate redistribution (~0.05) via social grants. Market income inequality remains the world\'s highest — legacy of apartheid-era wealth concentration.',
+    kenya:       'Kenya shows minimal redistribution (~0.03). Limited formal social protection; inequality primarily reflects rural/urban and land ownership divides.',
+    denmark:     'Denmark reduces the Gini by ~0.18. Flexicurity model: easy hiring and firing combined with generous unemployment benefits and active labour market policy.',
+    equal:'',moderate:'',high:'',extreme:'',custom:''
+};
+
+let currentKey='uk', redistMode='post', compShares=null, compName='';
+let customVals=[10,10,10,10,10,10,10,10,10,10];
+
+/* ── Tabs ── */
+function switchTab(id){
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['countries','theoretical','custom','theory'][i]===id));
+    ['countries','theoretical','custom','theory'].forEach(n=>document.getElementById('tab-'+n).classList.toggle('active',n===id));
+    if(id==='custom'){currentKey='custom'; draw(); updateMetrics(); updateTable();}
+}
+
+/* ── Redistribution ── */
+function setRedist(mode){
+    redistMode=mode;
+    document.getElementById('btn-post').classList.toggle('active',mode==='post');
+    document.getElementById('btn-pre').classList.toggle('active',mode==='pre');
+    const note=document.getElementById('redist-note');
+    const n=redistNote[currentKey]||'';
+    if(mode==='pre'&&n){note.innerHTML='<strong style="color:var(--text)">Redistribution note:</strong> '+n;note.style.display='block';}
+    else{note.style.display='none';}
+    draw(); updateMetrics(); updateTable();
+}
+
+/* ── Country load ── */
+function loadCountry(key, btn){
+    currentKey=key;
+    redistMode='post';
+    document.getElementById('btn-post').classList.add('active');
+    document.getElementById('btn-pre').classList.remove('active');
+    document.getElementById('redist-note').style.display='none';
+    if(btn){document.querySelectorAll('.country-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+    document.getElementById('leg-primary').textContent=countries[key].name;
+    draw(); updateMetrics(); updateTable();
+}
+
+function getShares(key, mode){
+    if(key==='custom') return customVals;
+    return countries[key][mode]||countries[key].post;
+}
+
+/* ── Comparison ── */
+function toggleComp(){
+    const on=document.getElementById('comp-check').checked;
+    const sel=document.getElementById('comp-select');
+    sel.disabled=!on; sel.style.opacity=on?'1':'0.4';
+    if(!on){compShares=null;document.getElementById('leg-comp-item').style.display='none';document.getElementById('col-comp').style.display='none';draw();updateTable();}
+}
+function updateComp(){
+    const v=document.getElementById('comp-select').value;
+    if(v){compShares=getShares(v,'post');compName=countries[v].name;document.getElementById('leg-comp').textContent=compName;document.getElementById('leg-comp-item').style.display='flex';document.getElementById('col-comp').style.display='';}
+    else{compShares=null;document.getElementById('leg-comp-item').style.display='none';document.getElementById('col-comp').style.display='none';}
+    draw(); updateTable();
+}
+
+/* ── Gini calc ── */
+function gini(shares){
+    let cum=0,area=0;
+    for(let i=0;i<10;i++){let prev=cum;cum+=shares[i]/100;area+=(prev+cum)*0.05;}
+    return Math.max(0,Math.min(1,1-2*area));
+}
+
+/* ── Draw ── */
+function draw(){
+    const canvas=document.getElementById('lorenzCanvas');
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=canvas.offsetWidth||600;
+    const H=440;
+    canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+
+    const pad={t:40,r:25,b:50,l:55};
+    const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+    const bg=isDark?'#111827':'#ffffff';
+    const gridCol=isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';
+    const textCol=isDark?'#64748b':'#94a3b8';
+    const axisCol=isDark?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.2)';
+
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle=gridCol; ctx.lineWidth=1;
+    for(let i=0;i<=10;i++){
+        const x=pad.l+(cw/10)*i, y=pad.t+(ch/10)*i;
+        ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ch);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle=axisCol; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ch);ctx.lineTo(pad.l+cw,pad.t+ch);ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle=textCol; ctx.font=`10px var(--ff-mono,monospace)`;
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let i=0;i<=5;i++){const y=pad.t+(ch/5)*i;const v=100-i*20;ctx.fillText(v+'%',pad.l-8,y);}
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    for(let i=0;i<=5;i++){const x=pad.l+(cw/5)*i;ctx.fillText(i*20+'%',x,pad.t+ch+8);}
+
+    // Axis titles
+    ctx.fillStyle=textCol; ctx.font='11px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText('Cumulative Population (%)',pad.l+cw/2,H-4);
+    ctx.save();ctx.translate(13,pad.t+ch/2);ctx.rotate(-Math.PI/2);
+    ctx.textBaseline='middle';ctx.fillText('Cumulative Income (%)',0,0);ctx.restore();
+
+    // Line of equality
+    ctx.strokeStyle=isDark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
+    ctx.setLineDash([6,5]); ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(pad.l,pad.t+ch);ctx.lineTo(pad.l+cw,pad.t);ctx.stroke();
+    ctx.setLineDash([]);
+
+    function drawLorenz(shares, color, lineW){
+        // Area fill
+        ctx.beginPath();ctx.moveTo(pad.l,pad.t+ch);
+        let cum=0;
+        for(let i=0;i<10;i++){cum+=shares[i]/100;const x=pad.l+(cw*(i+1)/10);const y=pad.t+ch-cum*ch;ctx.lineTo(x,y);}
+        ctx.lineTo(pad.l+cw,pad.t+ch);ctx.closePath();
+        ctx.fillStyle=color+'22';ctx.fill();
+
+        // Line
+        ctx.strokeStyle=color; ctx.lineWidth=lineW; ctx.lineJoin='round'; ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(pad.l,pad.t+ch);
+        cum=0;
+        for(let i=0;i<10;i++){cum+=shares[i]/100;const x=pad.l+(cw*(i+1)/10);const y=pad.t+ch-cum*ch;ctx.lineTo(x,y);}
+        ctx.stroke();
+
+        // Points
+        cum=0;
+        for(let i=0;i<10;i++){cum+=shares[i]/100;const x=pad.l+(cw*(i+1)/10);const y=pad.t+ch-cum*ch;
+            ctx.beginPath();ctx.arc(x,y,4,0,2*Math.PI);ctx.fillStyle=color;ctx.fill();
+            ctx.beginPath();ctx.arc(x,y,4,0,2*Math.PI);ctx.strokeStyle=bg;ctx.lineWidth=1.5;ctx.stroke();}
+    }
+
+    if(compShares) drawLorenz(compShares,'#f59e0b',2.5);
+    const primary=getShares(currentKey,redistMode);
+    drawLorenz(primary,'#3b82f6',3);
+
+    // Gini label on chart
+    const g=gini(primary);
+    ctx.fillStyle='#3b82f6'; ctx.font='bold 13px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='top';
+    ctx.fillText('Gini = '+g.toFixed(3),pad.l+cw-8,pad.t+8);
+    if(compShares){const gc=gini(compShares);ctx.fillStyle='#f59e0b';ctx.fillText('Gini = '+gc.toFixed(3),pad.l+cw-8,pad.t+26);}
+}
+
+/* ── Metrics ── */
+function updateMetrics(){
+    const shares=getShares(currentKey,redistMode);
+    const g=gini(shares);
+    const bot10=shares[0], top10=shares[9];
+    const ratio=bot10>0?(top10/bot10).toFixed(1):'>50';
+    const bot40=shares.slice(0,4).reduce((s,v)=>s+v,0);
+
+    const gEl=document.getElementById('m-gini');
+    gEl.textContent=g.toFixed(3);
+    gEl.className='metric-val '+(g<0.30?'green':g<0.42?'amber':'red');
+
+    document.getElementById('m-ratio').textContent=ratio+':1';
+    document.getElementById('m-bot40').textContent=bot40.toFixed(1)+'%';
+    document.getElementById('m-top10').textContent=top10.toFixed(1)+'%';
+
+    let interp='';
+    if(currentKey!=='custom'&&currentKey!=='equal'&&currentKey!=='moderate'&&currentKey!=='high'&&currentKey!=='extreme'){
+        const name=countries[currentKey].name;
+        const modeLabel=redistMode==='post'?'post-tax disposable income':'market income (before taxes and benefits)';
+        interp+=`<strong>${name}</strong> — ${modeLabel}. `;
+    }
+    if(g<0.25)interp+='Very low inequality, typical of highly egalitarian Nordic countries with comprehensive welfare states.';
+    else if(g<0.35)interp+='Low to moderate inequality, comparable to Western European countries with strong redistribution systems.';
+    else if(g<0.45)interp+='Moderate to high inequality. Significant income disparities exist, though welfare systems provide some redistribution.';
+    else if(g<0.55)interp+='High inequality. Substantial gaps between top and bottom income groups; policy intervention is typically contested.';
+    else interp+='Very high inequality — among the most unequal distributions globally. Historical, structural, or institutional factors often explain persistence.';
+
+    if(redistMode==='pre'&&currentKey!=='custom'&&currentKey!=='equal'&&currentKey!=='moderate'&&currentKey!=='high'&&currentKey!=='extreme'){
+        const postG=gini(countries[currentKey].post);
+        const diff=(g-postG).toFixed(3);
+        interp+=` Redistribution reduces the Gini by <strong>${diff}</strong> (from ${g.toFixed(3)} to ${postG.toFixed(3)}).`;
+    }
+    document.getElementById('interp-box').innerHTML=interp;
+}
+
+/* ── Decile table ── */
+function updateTable(){
+    const shares=getShares(currentKey,redistMode);
+    const labels=['Poorest 10%','2nd decile','3rd decile','4th decile','5th decile','6th decile','7th decile','8th decile','9th decile','Richest 10%'];
+    const maxShare=Math.max(...shares,compShares?Math.max(...compShares):0);
+    let html='';
+    for(let i=0;i<10;i++){
+        const w=(shares[i]/maxShare*100).toFixed(1);
+        const comp=compShares?`<td style="font-family:var(--ff-mono);font-size:0.78rem;color:#f59e0b">${compShares[i].toFixed(1)}%</td>`:'';
+        html+=`<tr>
+            <td>${labels[i]}</td>
+            <td style="color:var(--accent2);font-family:var(--ff-mono)">${shares[i].toFixed(1)}%</td>
+            <td><div class="bar-cell"><div class="bar-fill" style="width:${w}%"></div></div></td>
+            ${comp}
+        </tr>`;
+    }
+    document.getElementById('decile-table').innerHTML=html;
+}
+
+/* ── Custom sliders ── */
+(function buildCustomSliders(){
+    const labels=['Poorest 10%','2nd','3rd','4th','5th','6th','7th','8th','9th','Richest 10%'];
+    const grid=document.getElementById('custom-sliders');
+    labels.forEach((lbl,i)=>{
+        const row=document.createElement('div');
+        row.className='slider-row';
+        row.innerHTML=`<label>${lbl}</label><input type="range" min="0.5" max="40" step="0.5" value="${customVals[i]}" id="cs-${i}" oninput="updateCustom(${i},this.value)"><span class="slider-val" id="cv-${i}">${customVals[i].toFixed(1)}%</span>`;
+        grid.appendChild(row);
+    });
+})();
+
+function updateCustom(i,v){
+    customVals[i]=parseFloat(v);
+    document.getElementById('cv-'+i).textContent=parseFloat(v).toFixed(1)+'%';
+    const total=customVals.reduce((s,n)=>s+n,0);
+    document.getElementById('custom-total').textContent=total.toFixed(1)+'%';
+    document.getElementById('custom-total').style.color=Math.abs(total-100)<0.1?'var(--green)':'var(--red)';
+    if(currentKey==='custom'){draw();updateMetrics();updateTable();}
+}
+
+function resetCustom(){
+    customVals=[10,10,10,10,10,10,10,10,10,10];
+    for(let i=0;i<10;i++){document.getElementById('cs-'+i).value=10;document.getElementById('cv-'+i).textContent='10.0%';}
+    document.getElementById('custom-total').textContent='100.0%';
+    document.getElementById('custom-total').style.color='var(--green)';
+    if(currentKey==='custom'){draw();updateMetrics();updateTable();}
+}
+
+/* ── Init ── */
+window.addEventListener('resize',draw);
+loadCountry('uk',null);
+</script>
+</body>
+</html>

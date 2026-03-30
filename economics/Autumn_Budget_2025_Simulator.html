@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Autumn Budget 2025 Simulator</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --red: #ef4444; --green: #10b981; --orange: #f97316;
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+        /* Hero */
+        .hero { text-align: center; margin-bottom: 2.5rem; padding: 2.5rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+        .hero h1 { font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero p { color: var(--muted); font-size: 0.92rem; line-height: 1.7; max-width: 640px; margin: 0 auto 1rem; }
+        .brief-tag { display: inline-block; font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); background: rgba(245,158,11,0.1); padding: 0.25rem 0.7rem; border-radius: 100px; border: 1px solid rgba(245,158,11,0.2); }
+        /* Fiscal position */
+        .section-title { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1rem; display: block; }
+        .fiscal-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+        .fiscal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1rem; }
+        .fiscal-card.red { border-color: rgba(239,68,68,0.3); }
+        .fiscal-card.amber { border-color: rgba(249,115,22,0.3); }
+        .fiscal-card.blue { border-color: rgba(59,130,246,0.3); }
+        .fiscal-val { font-family: var(--ff-mono); font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .fiscal-val.red { color: var(--red); }
+        .fiscal-val.amber { color: var(--orange); }
+        .fiscal-val.blue { color: var(--accent); }
+        .fiscal-val.green { color: var(--green); }
+        .fiscal-label { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+        /* Constraints */
+        .constraints-box { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 10px; padding: 1.1rem 1.3rem; margin-bottom: 2rem; font-size: 0.84rem; line-height: 1.75; color: var(--muted); }
+        .constraints-box strong { color: var(--amber); }
+        [data-theme="light"] .constraints-box { color: #374151; }
+        /* Decision categories */
+        .cat-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+        .cat-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 1.1rem; display: block; }
+        .decision { border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 0.75rem; background: var(--surface2); }
+        .decision:last-child { margin-bottom: 0; }
+        .decision strong { font-size: 0.9rem; color: var(--text); }
+        .decision .context { font-size: 0.78rem; color: var(--muted); margin: 0.3rem 0 0.6rem; font-style: italic; }
+        .decision p { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.7rem; }
+        [data-theme="light"] .decision p { color: #374151; }
+        .slider-row { display: flex; align-items: center; gap: 0.75rem; }
+        .slider-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+        input[type=range] { flex: 1; height: 6px; background: var(--border); border-radius: 3px; outline: none; -webkit-appearance: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        input[type=range]::-moz-range-thumb { width: 18px; height: 18px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        .val-badge { font-family: var(--ff-mono); font-size: 0.73rem; font-weight: 700; min-width: 110px; text-align: right; color: var(--text); }
+        /* Buttons */
+        .btn-row { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; flex-wrap: wrap; }
+        .btn { padding: 0.75rem 2rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.18s; }
+        .btn-run { background: var(--accent); color: #fff; }
+        .btn-run:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-reset { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-reset:hover { color: var(--text); }
+        /* Results */
+        .results { display: none; margin-top: 2rem; }
+        .results.show { display: block; animation: fadeUp 0.4s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .results-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .res-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1rem; text-align: center; }
+        .res-card.success { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.06); }
+        .res-card.warning { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.06); }
+        .res-card.danger { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.06); }
+        .res-val { font-family: var(--ff-mono); font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .res-label { font-size: 0.75rem; color: var(--muted); }
+        .res-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; }
+        .analysis-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
+        .analysis-block h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; }
+        .analysis-block p { font-size: 0.84rem; line-height: 1.75; color: var(--muted); margin-bottom: 0.6rem; }
+        .analysis-block p:last-child { margin-bottom: 0; }
+        [data-theme="light"] .analysis-block p { color: #374151; }
+        .analysis-block ul { list-style: none; padding: 0; }
+        .analysis-block li { font-size: 0.84rem; line-height: 1.7; color: var(--muted); padding: 0.2rem 0; }
+        [data-theme="light"] .analysis-block li { color: #374151; }
+        .compare-box { background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 0.9rem 1.1rem; margin-top: 1rem; font-size: 0.82rem; line-height: 1.7; color: var(--muted); }
+        [data-theme="light"] .compare-box { color: #374151; }
+        .compare-box strong { color: var(--accent2); }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 760px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 4rem; } .fiscal-grid { grid-template-columns: repeat(2,1fr); } .results-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 480px) { .fiscal-grid { grid-template-columns: 1fr; } .results-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Free Sample</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+
+<div class="hero">
+    <span class="brief-tag">Autumn Budget · 26 November 2025</span>
+    <h1 style="margin-top:0.75rem;">The <em>Impossible Job</em></h1>
+    <p>You are Rachel Reeves. It is November 2025. The OBR has handed you a deteriorating forecast — sluggish growth, £150bn borrowing, debt approaching £3 trillion. You must close the fiscal gap, meet your own rules, and avoid breaking your manifesto pledges. Move the sliders. Make your choices. See the consequences.</p>
+</div>
+
+<!-- FISCAL POSITION -->
+<span class="section-title">Starting Position — UK Public Finances, November 2025</span>
+<div class="fiscal-grid">
+    <div class="fiscal-card red">
+        <div class="fiscal-val red">£150bn</div>
+        <div class="fiscal-label">Annual borrowing (2024–25) — highest since pandemic</div>
+    </div>
+    <div class="fiscal-card red">
+        <div class="fiscal-val red">~95% GDP</div>
+        <div class="fiscal-label">Public debt-to-GDP — must fall by 2029–30 under fiscal rules</div>
+    </div>
+    <div class="fiscal-card amber">
+        <div class="fiscal-val amber">1.5%</div>
+        <div class="fiscal-label">OBR average GDP growth forecast (five-year) — downgraded again</div>
+    </div>
+    <div class="fiscal-card blue">
+        <div class="fiscal-val blue">3.5%</div>
+        <div class="fiscal-label">Inflation (2025) — well above 2% target, driving spending pressure</div>
+    </div>
+</div>
+
+<!-- CONSTRAINTS -->
+<div class="constraints-box">
+    <strong>Labour Manifesto Constraints you must respect:</strong><br>
+    No increase in Income Tax rates, employee National Insurance, or VAT &nbsp;·&nbsp; PSNFL must be falling as % of GDP by 2029–30 &nbsp;·&nbsp; Current spending to be covered by tax receipts &nbsp;·&nbsp; Infrastructure investment commitments maintained
+</div>
+
+<!-- DECISIONS -->
+<span class="section-title">Your Budget Decisions</span>
+
+<!-- REVENUE -->
+<div class="cat-block">
+    <span class="cat-title">💰 Revenue Measures</span>
+
+    <div class="decision">
+        <strong>Income Tax Threshold Freeze</strong>
+        <div class="context">Current: Thresholds already frozen until 2028 (£12,570 personal allowance, £50,270 higher rate)</div>
+        <p>Extend the freeze further — or end it early and raise thresholds above inflation to ease the cost-of-living burden.</p>
+        <div class="slider-row">
+            <span class="slider-label">End freeze early</span>
+            <input type="range" min="-2" max="4" value="0" step="1" oninput="updateDisplay('threshold',this.value)">
+            <span class="slider-label">Extend 4 more yrs</span>
+            <span class="val-badge" id="threshold-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Salary Sacrifice Pension NIC Relief</strong>
+        <div class="context">Current: Unlimited NI relief on salary sacrifice pension contributions — costs ~£7bn/yr to Treasury</div>
+        <p>Cap NI relief on pension salary sacrifice — raising revenue but reducing incentives for private retirement saving.</p>
+        <div class="slider-row">
+            <span class="slider-label">Keep generous</span>
+            <input type="range" min="-4" max="8" value="0" step="2" oninput="updateDisplay('pension',this.value)">
+            <span class="slider-label">Cap tightly</span>
+            <span class="val-badge" id="pension-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Wealth &amp; Property Taxes</strong>
+        <div class="context">Current: No mansion tax; dividend/savings tax rate at 8.75%/33.75%; CGT at 18%/24%</div>
+        <p>Introduce a high-value property surcharge ("mansion tax") and raise rates on investment income — or keep wealth taxes light to avoid capital flight.</p>
+        <div class="slider-row">
+            <span class="slider-label">Light touch</span>
+            <input type="range" min="-4" max="12" value="0" step="2" oninput="updateDisplay('wealth',this.value)">
+            <span class="slider-label">Aggressive</span>
+            <span class="val-badge" id="wealth-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Gambling &amp; Sin Taxes</strong>
+        <div class="context">Current: Remote gaming duty at 21%; general betting duty at 15%</div>
+        <p>Raise duties on remote gambling and online betting — politically popular but limited revenue yield.</p>
+        <div class="slider-row">
+            <span class="slider-label">Hold rates</span>
+            <input type="range" min="0" max="10" value="0" step="2" oninput="updateDisplay('gambling',this.value)">
+            <span class="slider-label">Sharp rises</span>
+            <span class="val-badge" id="gambling-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Corporation Tax Rate</strong>
+        <div class="context">Current: £90bn annual yield at 25% main rate — roadmap pledged stability to 2030</div>
+        <p>Adjust the rate: cut to boost investment and signal pro-business credentials, or raise to close the fiscal gap faster.</p>
+        <div class="slider-row">
+            <span class="slider-label">Cut to 20%</span>
+            <input type="range" min="-15" max="15" value="0" step="3" oninput="updateDisplay('corp',this.value)">
+            <span class="slider-label">Raise to 30%</span>
+            <span class="val-badge" id="corp-display">25% (no change)</span>
+        </div>
+    </div>
+</div>
+
+<!-- SPENDING -->
+<div class="cat-block">
+    <span class="cat-title">✂️ Spending Choices</span>
+
+    <div class="decision">
+        <strong>Welfare &amp; Benefits</strong>
+        <div class="context">Current: £230bn+ welfare spend; two-child limit costs £3bn/yr to remove; welfare U-turns from summer already budgeted</div>
+        <p>Abolish the two-child benefit cap and restore winter fuel payments — or hold the line on eligibility to protect fiscal headroom.</p>
+        <div class="slider-row">
+            <span class="slider-label">Hold/tighten</span>
+            <input type="range" min="-10" max="10" value="0" step="2" oninput="updateDisplay('welfare',this.value)">
+            <span class="slider-label">Expand &amp; restore</span>
+            <span class="val-badge" id="welfare-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>NHS &amp; Public Services</strong>
+        <div class="context">Current: £168bn NHS England budget; waiting lists remain a core political pressure point</div>
+        <p>Boost NHS funding to cut waiting lists and deliver on your top manifesto pledge — or demand efficiencies to keep spending flat.</p>
+        <div class="slider-row">
+            <span class="slider-label">Find efficiencies</span>
+            <input type="range" min="-10" max="15" value="0" step="5" oninput="updateDisplay('nhs',this.value)">
+            <span class="slider-label">Major boost</span>
+            <span class="val-badge" id="nhs-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Defence Spending</strong>
+        <div class="context">Current: ~2.3% GDP on defence; PM has committed to reaching 2.5% by 2027, funded by cutting overseas aid</div>
+        <p>Accelerate the path to 2.5% GDP — signalling strength to NATO allies — or slow the ramp-up to ease near-term fiscal pressure.</p>
+        <div class="slider-row">
+            <span class="slider-label">Slow ramp</span>
+            <input type="range" min="-8" max="12" value="0" step="4" oninput="updateDisplay('defence',this.value)">
+            <span class="slider-label">Accelerate fast</span>
+            <span class="val-badge" id="defence-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Departmental Day-to-Day Spending</strong>
+        <div class="context">Current: Real-terms departmental spending flat or falling in many areas outside NHS/defence</div>
+        <p>Inject new money into schools, policing, local government — or enforce spending restraint to demonstrate fiscal discipline to markets.</p>
+        <div class="slider-row">
+            <span class="slider-label">Restraint</span>
+            <input type="range" min="-15" max="20" value="0" step="5" oninput="updateDisplay('depts',this.value)">
+            <span class="slider-label">Significant boost</span>
+            <span class="val-badge" id="depts-display">No change</span>
+        </div>
+    </div>
+</div>
+
+<!-- GROWTH -->
+<div class="cat-block">
+    <span class="cat-title">📈 Growth &amp; Investment</span>
+
+    <div class="decision">
+        <strong>Infrastructure &amp; Housebuilding</strong>
+        <div class="context">Current: Planning reforms underway; housing target 1.5m homes by 2030; OBR estimates reforms add 0.2% to GDP</div>
+        <p>Accelerate capital investment and housebuilding — borrowing more now for long-run supply-side gains — or scale back to limit near-term borrowing.</p>
+        <div class="slider-row">
+            <span class="slider-label">Scale back</span>
+            <input type="range" min="-15" max="20" value="0" step="5" oninput="updateDisplay('infra',this.value)">
+            <span class="slider-label">Accelerate</span>
+            <span class="val-badge" id="infra-display">No change</span>
+        </div>
+    </div>
+
+    <div class="decision">
+        <strong>Business Incentives &amp; Skills</strong>
+        <div class="context">Current: £3bn skills budget; Employers NIC raised to 15% from Apr 2025 putting pressure on hiring</div>
+        <p>Offset the employer NIC impact with enhanced investment allowances and skills funding — or accept the cost and direct money elsewhere.</p>
+        <div class="slider-row">
+            <span class="slider-label">Scale back</span>
+            <input type="range" min="-6" max="10" value="0" step="2" oninput="updateDisplay('skills',this.value)">
+            <span class="slider-label">Enhance</span>
+            <span class="val-badge" id="skills-display">No change</span>
+        </div>
+    </div>
+</div>
+
+<div class="btn-row">
+    <button class="btn btn-run" onclick="runBudget()">📊 Calculate Budget Impact</button>
+    <button class="btn btn-reset" onclick="resetAll()">↩ Reset All</button>
+</div>
+
+<!-- RESULTS -->
+<div class="results" id="results">
+    <span class="section-title">Your Budget Results</span>
+    <div class="results-grid">
+        <div class="res-card" id="card-fiscal">
+            <div class="res-val" id="val-gap">—</div>
+            <div class="res-label">Annual Fiscal Impact</div>
+            <div class="res-sub" id="sub-gap">—</div>
+        </div>
+        <div class="res-card" id="card-debt">
+            <div class="res-val" id="val-debt">—</div>
+            <div class="res-label">Fiscal Rule Status</div>
+            <div class="res-sub" id="sub-debt">—</div>
+        </div>
+        <div class="res-card" id="card-pop">
+            <div class="res-val" id="val-pop">—</div>
+            <div class="res-label">Political Capital</div>
+            <div class="res-sub" id="sub-pop">—</div>
+        </div>
+        <div class="res-card" id="card-growth">
+            <div class="res-val" id="val-growth">—</div>
+            <div class="res-label">GDP Growth Impact</div>
+            <div class="res-sub" id="sub-growth">—</div>
+        </div>
+    </div>
+
+    <div class="analysis-block" id="analysis-main">
+        <h3>Detailed Analysis</h3>
+        <div id="analysis-text"></div>
+    </div>
+
+    <div class="analysis-block" id="analysis-manifesto">
+        <h3>Manifesto Compliance Check</h3>
+        <ul id="manifesto-text"></ul>
+    </div>
+
+    <div class="analysis-block" id="analysis-outlook">
+        <h3>Economic &amp; Political Outlook</h3>
+        <div id="outlook-text"></div>
+    </div>
+
+    <div class="compare-box">
+        <strong>What did Reeves actually do?</strong> The real Autumn Budget 2025 (26 Nov) extended the income tax threshold freeze by 3 years to 2031, capped salary sacrifice pension NIC relief at £2,000/yr (from 2029), introduced a mansion tax surcharge of £2,500–£7,500 on homes worth £2m+ (from 2028), raised gambling duties sharply (remote gaming duty to 40%), kept corporation tax at 25%, abolished the two-child benefit cap, gave the NHS a significant cash injection, and accelerated defence spending toward 2.5% GDP. The result: taxes rose to an all-time high of 38% of GDP, fiscal headroom increased to £22bn, and the OBR forecast sluggish growth of 1.5% per year over the parliament. How close did your choices come?
+    </div>
+</div>
+
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; Free Sample &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t=localStorage.getItem('biz-omics-theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    var btn=document.getElementById('theme-btn');
+    if(btn)btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('biz-omics-theme',next);
+    document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+
+/* ── Slider display functions ── */
+function updateDisplay(id, v){
+    v=parseInt(v);
+    const el=document.getElementById(id+'-display');
+    if(!el)return;
+    switch(id){
+        case 'threshold':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Freeze +${v} yrs (+£${v*2.8}bn)`;
+            else el.textContent=`Unfreeze (−£${Math.abs(v)*1.4}bn)`;
+            break;
+        case 'pension':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Cap relief (+£${v*0.8}bn)`;
+            else el.textContent=`Extend relief (−£${Math.abs(v)*0.7}bn)`;
+            break;
+        case 'wealth':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Raise wealth taxes (+£${v*0.9}bn)`;
+            else el.textContent=`Cut wealth taxes (−£${Math.abs(v)*0.6}bn)`;
+            break;
+        case 'gambling':
+            if(v===0)el.textContent='No change';
+            else el.textContent=`Raise duties (+£${v*0.25}bn)`;
+            break;
+        case 'corp':
+            var rate=25+Math.round(v/3);
+            if(v===0)el.textContent='25% (no change)';
+            else if(v>0)el.textContent=`${rate}% (+£${v*0.9}bn)`;
+            else el.textContent=`${rate}% (−£${Math.abs(v)*0.8}bn)`;
+            break;
+        case 'welfare':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Expand (−£${v*1.2}bn)`;
+            else el.textContent=`Tighten (+£${Math.abs(v)*1.0}bn)`;
+            break;
+        case 'nhs':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Boost (+£${v*1.5}bn)`;
+            else el.textContent=`Efficiency cuts (+£${Math.abs(v)*0.6}bn saved)`;
+            break;
+        case 'defence':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Accelerate (−£${v*0.8}bn)`;
+            else el.textContent=`Slow ramp (+£${Math.abs(v)*0.5}bn saved)`;
+            break;
+        case 'depts':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Inject spending (−£${v*1.0}bn)`;
+            else el.textContent=`Restrain (saves £${Math.abs(v)*0.7}bn)`;
+            break;
+        case 'infra':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Accelerate (−£${v*1.1}bn cap.)`;
+            else el.textContent=`Scale back (+£${Math.abs(v)*0.7}bn saved)`;
+            break;
+        case 'skills':
+            if(v===0)el.textContent='No change';
+            else if(v>0)el.textContent=`Enhance (−£${v*0.5}bn)`;
+            else el.textContent=`Scale back (+£${Math.abs(v)*0.35}bn saved)`;
+            break;
+    }
+}
+
+function getSliderValues(){
+    const sliders=document.querySelectorAll('input[type=range]');
+    return Array.from(sliders).map(s=>parseInt(s.value));
+}
+
+function runBudget(){
+    const v=getSliderValues();
+    // v[0]=threshold, v[1]=pension, v[2]=wealth, v[3]=gambling, v[4]=corp
+    // v[5]=welfare, v[6]=nhs, v[7]=defence, v[8]=depts, v[9]=infra, v[10]=skills
+
+    // Revenue impact (positive = raises money)
+    const rev = v[0]*2.8 + v[1]*0.8 + v[2]*0.9 + v[3]*0.25 + v[4]*0.9;
+    // Spending impact (positive = saves money for the Chancellor)
+    const spend = -v[5]*1.2 - v[6]*1.5 - v[7]*0.8 - v[8]*1.0 - v[9]*1.1 - v[10]*0.5;
+    const fiscal = rev + spend; // net fiscal improvement vs baseline
+
+    // Debt rule: need fiscal to be positive (closing the gap)
+    const debtOK = fiscal > 5;
+
+    // Popularity: based on welfare/NHS generosity, welfare cuts = unpopular, tax rises unpopular
+    let pop = 38; // baseline approval
+    pop += v[5]*1.5;   // expanding welfare = popular
+    pop += v[6]*1.2;   // boosting NHS = popular
+    pop -= v[0]*1.8;   // threshold freeze = unpopular (stealth tax)
+    pop -= v[2]*0.9;   // wealth taxes = mixed
+    pop -= v[4]*0.5;   // corp tax rise = mildly unpopular
+    pop += v[7]*0.4;   // defence = moderately popular
+    pop = Math.max(15, Math.min(70, pop));
+
+    // Growth: investment boosts growth, tax rises dampen it
+    let growth = 1.5; // OBR baseline
+    growth += v[9]*0.04; // infrastructure
+    growth += v[10]*0.02; // skills
+    growth -= v[4]*0.02;  // corp tax drag
+    growth -= v[0]*0.03;  // threshold freeze reduces consumer demand
+    growth += v[7]*0.01;  // defence as industrial policy
+    growth = Math.max(0.2, Math.min(3.5, growth));
+
+    // Display results
+    const gapEl=document.getElementById('val-gap');
+    const debtEl=document.getElementById('val-debt');
+    const popEl=document.getElementById('val-pop');
+    const growEl=document.getElementById('val-growth');
+
+    gapEl.textContent=fiscal>=0?`+£${fiscal.toFixed(0)}bn`:`−£${Math.abs(fiscal).toFixed(0)}bn`;
+    gapEl.style.color=fiscal>=0?'#10b981':'#ef4444';
+    document.getElementById('sub-gap').textContent=fiscal>=15?'Strong consolidation':fiscal>=5?'Modest tightening':fiscal>=0?'Minimal improvement':'Fiscal loosening — gap widens';
+    setCardClass('card-fiscal',fiscal>=15?'success':fiscal>=5?'warning':'danger');
+
+    debtEl.textContent=debtOK?'Likely met':'At risk';
+    debtEl.style.color=debtOK?'#10b981':'#ef4444';
+    document.getElementById('sub-debt').textContent=debtOK?'PSNFL falling as % of GDP':'Rule breach — market pressure likely';
+    setCardClass('card-debt',debtOK?'success':'danger');
+
+    popEl.textContent=pop.toFixed(0)+'%';
+    popEl.style.color=pop>=50?'#10b981':pop>=38?'#f97316':'#ef4444';
+    document.getElementById('sub-pop').textContent=pop>=50?'Strong mandate':pop>=38?'Holding on':pop>=28?'Under pressure':'Politically toxic';
+    setCardClass('card-pop',pop>=50?'success':pop>=38?'warning':'danger');
+
+    growEl.textContent=growth.toFixed(1)+'%';
+    growEl.style.color=growth>=2?'#10b981':growth>=1.5?'#f97316':'#ef4444';
+    document.getElementById('sub-growth').textContent=growth>=2.5?'Above trend — strong':growth>=1.5?'Sluggish but stable':'Below trend — concern';
+    setCardClass('card-growth',growth>=2?'success':growth>=1.5?'warning':'danger');
+
+    // Analysis text
+    let analysis='';
+    if(v[0]>0)analysis+=`<p><strong>Threshold Freeze:</strong> Extending the freeze for ${v[0]} year(s) beyond 2028 generates approximately £${(v[0]*2.8).toFixed(0)}bn through fiscal drag — pulling millions more workers into higher tax bands as wages rise. This is politically sensitive: Reeves explicitly told the BBC she recognised it means "asking ordinary people to contribute a bit more." With thresholds now frozen until ${2028+v[0]}, the effective tax burden on middle-income workers continues rising silently.</p>`;
+    if(v[0]<0)analysis+=`<p><strong>Threshold Unfreeze:</strong> Raising thresholds ahead of schedule gives a real-terms tax cut to millions of workers — strongly popular but costs £${Math.abs(v[0]*1.4).toFixed(0)}bn annually, increasing pressure on spending cuts or other tax rises to compensate.</p>`;
+    if(v[1]>0)analysis+=`<p><strong>Pension NIC Cap:</strong> Limiting NI relief on salary sacrifice pension contributions raises £${(v[1]*0.8).toFixed(0)}bn but risks reducing private retirement saving. The OBR estimates the real 2025 policy (capping at £2,000/yr from 2029) raises £4.7bn by 2029–30. Critics argue this particularly hits mid-career professionals and NHS staff who rely on salary sacrifice.</p>`;
+    if(v[2]>6)analysis+=`<p><strong>Wealth Tax Risks:</strong> Aggressive property and investment income taxes above this level risk triggering behavioural responses — high-net-worth individuals selling assets before implementation or restructuring holdings. HMRC estimates suggest each 1% relocation of wealthy taxpayers costs £200–300m in annual receipts. The actual Budget introduced a £2,500–£7,500 mansion surcharge (from 2028) expected to raise only ~£400m/yr.</p>`;
+    if(v[3]>4)analysis+=`<p><strong>Gambling Duties:</strong> Rising gambling duties are politically popular (82% public support according to YouGov) and the Budget did raise remote gaming duty from 21% to 40% from April 2026. However, revenue yield is relatively limited — around £1–2bn — compared to threshold freezes or pension changes.</p>`;
+    if(v[4]>0)analysis+=`<p><strong>Corporation Tax Rise:</strong> Raising above 25% breaks the Corporate Tax Roadmap's stability pledge and risks deterring business investment at a moment when the government desperately needs private capital. The IFS noted that higher productivity growth — not higher tax rates — is the real route to fiscal sustainability.</p>`;
+    if(v[5]>4)analysis+=`<p><strong>Welfare Expansion:</strong> Abolishing the two-child cap costs approximately £3bn/yr but the OBR estimates it immediately lifts 630,000 children out of absolute poverty. The actual Budget did abolish it. However, expanded welfare alongside frozen thresholds creates a difficult political narrative — "hard on working people, soft on benefit claimants" — that the opposition will exploit.</p>`;
+    if(v[6]>5)analysis+=`<p><strong>NHS Investment:</strong> Significant NHS funding boosts address the #1 political priority (cutting waiting lists) but feed through to GDP only gradually via health-related economic participation. The real Budget gave the NHS a significant multi-year settlement. Without productivity reform, additional money risks being absorbed by pay and demand rather than improving outputs.</p>`;
+    if(v[9]>5)analysis+=`<p><strong>Infrastructure:</strong> Capital investment in housing and infrastructure adds to near-term borrowing but the OBR estimates planning reforms alone add 0.2% to GDP cumulatively. The key economic debate is whether investment borrowing today generates sufficient long-run returns to justify higher near-term debt.</p>`;
+
+    document.getElementById('analysis-text').innerHTML=analysis||'<p>Move the sliders further to generate more detailed policy analysis.</p>';
+
+    // Manifesto check
+    let mf='';
+    mf+=`<li>${v[0]===0?'✅':'⚠️'} Income Tax rates: ${v[0]===0?'Unchanged — compliant':'Not raised, but freeze extends fiscal drag burden'}</li>`;
+    mf+=`<li>✅ Employee National Insurance: Not increased — compliant</li>`;
+    mf+=`<li>✅ VAT: Not increased — compliant</li>`;
+    mf+=`<li>${debtOK?'✅':'❌'} Fiscal Rule (PSNFL falling as % of GDP): ${debtOK?'Likely satisfied':'At risk of breach'}</li>`;
+    mf+=`<li>${v[4]>0?'⚠️':'✅'} Corporation Tax Roadmap: ${v[4]>0?'Rate rise may undermine stability pledge':'Maintained at 25%'}</li>`;
+    document.getElementById('manifesto-text').innerHTML=mf;
+
+    // Outlook
+    let outlook='';
+    if(pop<32)outlook+=`<p><strong>Political Risk:</strong> At ${pop.toFixed(0)}% approval, your government faces serious electoral danger. Fiscally severe choices without visible public service improvements create a "pain with no gain" narrative. Prepare for backbench rebellions and potential U-turns — which markets will read as loss of fiscal credibility.</p>`;
+    else if(pop>=50)outlook+=`<p><strong>Political Capital:</strong> ${pop.toFixed(0)}% approval gives you room to make difficult choices — but remember fiscal drag is a slow-burn. As workers are gradually pulled into higher tax brackets, public reaction may worsen over the parliament.</p>`;
+    else outlook+=`<p><strong>Political Balance:</strong> At ${pop.toFixed(0)}% approval you have moderate room to manoeuvre, but the government's messaging challenge is acute: justify threshold freezes to ordinary workers while pointing to NHS improvement and benefit increases as compensation.</p>`;
+    if(!debtOK)outlook+=`<p><strong>Market Risk:</strong> Insufficient fiscal consolidation risks bond market pressure. The UK's 30-year gilt yields have already hit levels not seen since 1998. A failure to meet the fiscal rules convincingly could trigger a gilt market selloff, forcing a crisis response that constrains all future choices.</p>`;
+    if(growth>=2)outlook+=`<p><strong>Growth Dividend:</strong> Strong growth at ${growth.toFixed(1)}% eases the fiscal maths — higher output means higher tax receipts and lower welfare spending without any rate changes. This is the "growth solution" that avoids the most painful trade-offs.</p>`;
+    else if(growth<1.2)outlook+=`<p><strong>Growth Trap:</strong> Sluggish growth at ${growth.toFixed(1)}% makes all the numbers harder. Lower receipts mean the fiscal rules are harder to meet, and slow living standards growth makes unpopular tax choices politically toxic. The OBR warns this is already the central risk to the government's strategy.</p>`;
+    if(fiscal>25&&pop>40&&growth>1.5)outlook+=`<p><strong>Chancellor's Assessment:</strong> A genuinely strong budget — you've closed a large fiscal gap while maintaining political viability and protecting growth. Gilt markets should respond positively and the fiscal rules look credible. But watch for the OBR's next forecast: even modest headroom can evaporate quickly.</p>`;
+    document.getElementById('outlook-text').innerHTML=outlook;
+
+    document.getElementById('results').classList.add('show');
+    document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function setCardClass(id,cls){
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.className='res-card '+cls;
+}
+
+function resetAll(){
+    document.querySelectorAll('input[type=range]').forEach(s=>s.value=0);
+    ['threshold','pension','wealth','gambling','corp','welfare','nhs','defence','depts','infra','skills'].forEach(id=>{
+        updateDisplay(id,0);
+    });
+    document.getElementById('results').classList.remove('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

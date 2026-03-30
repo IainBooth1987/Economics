@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Harrod-Domar Growth Model</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --green: #10b981; --red: #ef4444; --orange: #f97316;
+            --gw: #10b981; --ga: #3b82f6; --gn: #94a3b8;
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+        .hero { text-align: center; margin-bottom: 2rem; }
+        .hero h1 { font-size: 1.9rem; font-weight: 900; margin-bottom: 0.5rem; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero p { color: var(--muted); font-size: 0.9rem; line-height: 1.7; max-width: 600px; margin: 0 auto; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin-bottom: 0.85rem; display: block; }
+
+        /* Theory accordion */
+        .theory-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 2rem; overflow: hidden; }
+        .theory-toggle-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.4rem; background: none; border: none; color: var(--text); cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; font-weight: 700; }
+        .theory-toggle-btn:hover { background: rgba(255,255,255,0.03); }
+        .theory-icon { font-family: var(--ff-mono); font-size: 1.1rem; color: var(--accent); transition: transform 0.25s; }
+        .theory-icon.open { transform: rotate(45deg); }
+        .theory-body { display: none; padding: 0 1.4rem 1.5rem; }
+        .theory-body.show { display: block; }
+
+        .theory-section { margin-bottom: 1.4rem; }
+        .theory-section:last-child { margin-bottom: 0; }
+        .theory-h { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; display: block; }
+        .theory-p { font-size: 0.84rem; line-height: 1.8; color: var(--muted); margin-bottom: 0.55rem; }
+        [data-theme="light"] .theory-p { color: #374151; }
+        .theory-p:last-child { margin-bottom: 0; }
+        .theory-p strong { color: var(--text); }
+        .theory-ul { padding-left: 1.1rem; font-size: 0.84rem; line-height: 1.85; color: var(--muted); }
+        [data-theme="light"] .theory-ul { color: #374151; }
+        .theory-ul li { margin-bottom: 0.2rem; }
+        .theory-ul strong { color: var(--text); }
+
+        .eq-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; margin: 0.85rem 0; }
+        @media (max-width: 700px) { .eq-grid { grid-template-columns: 1fr; } }
+        .eq-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 1rem 1.1rem; }
+        .eq-name { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 0.4rem; }
+        .eq-formula { font-family: var(--ff-mono); font-size: 1rem; color: var(--accent2); font-weight: 700; margin-bottom: 0.4rem; }
+        .eq-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+        [data-theme="light"] .eq-desc { color: #374151; }
+
+        .insight-box { background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+        [data-theme="light"] .insight-box { color: #374151; }
+        .insight-box strong { color: var(--accent2); }
+        .warn-box { background: rgba(249,115,22,0.07); border-left: 3px solid var(--orange); border-radius: 0 7px 7px 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+        [data-theme="light"] .warn-box { color: #374151; }
+        .warn-box strong { color: var(--orange); }
+
+        /* Main sim layout */
+        .sim-layout { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; align-items: start; }
+        @media (max-width: 860px) { .sim-layout { grid-template-columns: 1fr; } }
+
+        /* Controls */
+        .controls-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.3rem; position: sticky; top: 80px; }
+        .ctrl-h { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); margin-bottom: 0.9rem; display: block; }
+        .ctrl-group { margin-bottom: 1.1rem; }
+        .ctrl-group:last-of-type { margin-bottom: 0; }
+        .slider-hd { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+        .slider-lbl { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+        .slider-val { font-family: var(--ff-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; }
+        .slider-hint { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+        input[type=range] { width: 100%; height: 5px; background: var(--border); border-radius: 3px; outline: none; -webkit-appearance: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+        input[type=range]::-moz-range-thumb { width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+
+        .toggle-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.85rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; cursor: pointer; }
+        .toggle-pill { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+        .toggle-pill.on { background: var(--accent); }
+        .toggle-pill::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; background:#fff; border-radius:50%; transition: left 0.2s; }
+        .toggle-pill.on::after { left:19px; }
+        .toggle-lbl { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+        .num-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .num-item label { font-size: 0.72rem; color: var(--muted); display: block; margin-bottom: 0.2rem; }
+        .num-item input { width: 100%; padding: 0.4rem 0.6rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--ff-mono); font-size: 0.8rem; }
+        .num-item input:focus { outline: none; border-color: var(--accent); }
+        .sep { height: 1px; background: var(--border); margin: 1rem 0; }
+        .scenario-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; margin-bottom: 0.75rem; }
+        .s-btn { padding: 0.45rem 0.5rem; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--ff-sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; text-align: center; line-height: 1.35; transition: all 0.15s; }
+        .s-btn:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .s-btn.active-s { background: rgba(59,130,246,0.12); border-color: var(--accent); color: var(--accent2); }
+        .shock-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+        .shock-btn { padding: 0.4rem 0.5rem; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--ff-sans); font-size: 0.7rem; cursor: pointer; transition: all 0.15s; }
+        .shock-btn:hover { border-color: rgba(245,158,11,0.4); color: var(--amber); }
+        .btn-reset { width: 100%; padding: 0.55rem; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); font-family: var(--ff-sans); font-size: 0.8rem; cursor: pointer; margin-top: 0.75rem; transition: all 0.15s; }
+        .btn-reset:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+        /* Right col */
+        .right-col { display: flex; flex-direction: column; gap: 1.25rem; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.35rem; }
+
+        /* Alert bar */
+        .alert-bar { padding: 0.75rem 1.1rem; border-radius: 9px; font-size: 0.83rem; font-weight: 600; text-align: center; transition: all 0.3s; }
+        .alert-bar.stable { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+        .alert-bar.unstable { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+        .alert-bar.knife { background: rgba(245,158,11,0.1); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+
+        /* Metrics */
+        .metrics-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.6rem; }
+        @media (max-width: 700px) { .metrics-grid { grid-template-columns: repeat(2,1fr); } }
+        .metric-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 0.9rem 0.75rem; }
+        .metric-card.gw { border-color: rgba(16,185,129,0.3); }
+        .metric-card.ga { border-color: rgba(59,130,246,0.3); }
+        .metric-card.gn { border-color: rgba(148,163,184,0.3); }
+        .metric-card.gap { border-color: rgba(249,115,22,0.3); }
+        .metric-val { font-family: var(--ff-mono); font-size: 1.3rem; font-weight: 800; color: var(--text); }
+        .metric-val.gw-col { color: var(--green); }
+        .metric-val.ga-col { color: var(--accent); }
+        .metric-lbl { font-family: var(--ff-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 0.25rem; }
+        .metric-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.15rem; }
+
+        /* Gap analysis */
+        .gap-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+        .gap-row:last-child { border-bottom: none; }
+        .gap-lbl { color: var(--muted); }
+        .gap-val { font-family: var(--ff-mono); font-weight: 700; }
+        .gap-val.pos { color: var(--red); }
+        .gap-val.neg { color: var(--accent); }
+        .consequence { padding: 0.7rem 0.9rem; background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 7px; margin-top: 0.75rem; font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+        [data-theme="light"] .consequence { color: #374151; }
+
+        /* Canvas */
+        canvas { display: block; width: 100%; border-radius: 7px; }
+        .legend-row { display: flex; gap: 1.25rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.77rem; color: var(--muted); }
+        .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Narrative */
+        .narrative-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem 1.35rem; }
+        .narrative-panel h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        #narrative { font-size: 0.84rem; line-height: 1.85; color: var(--muted); }
+        [data-theme="light"] #narrative { color: #374151; }
+        #narrative p { margin-bottom: 0.55rem; }
+        #narrative p:last-child { margin-bottom: 0; }
+        #narrative strong { color: var(--text); }
+        .exam-tip { margin-top: 0.85rem; padding: 0.7rem 0.9rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0; font-size: 0.79rem; color: var(--muted); }
+        [data-theme="light"] .exam-tip { color: #374151; }
+        .exam-tip strong { color: var(--accent2); }
+
+        /* Country examples */
+        .country-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.45rem; }
+        .c-btn { padding: 0.55rem 0.5rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.72rem; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.3; transition: all 0.15s; }
+        .c-btn:hover { border-color: rgba(59,130,246,0.3); color: var(--text); }
+        .c-btn.active-c { background: rgba(59,130,246,0.12); border-color: var(--accent); color: var(--accent2); }
+        .c-btn .flag { display: block; font-size: 1rem; margin-bottom: 0.1rem; }
+        .case-info { display: none; margin-top: 0.85rem; padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; font-size: 0.81rem; line-height: 1.7; color: var(--muted); }
+        .case-info.show { display: block; }
+        [data-theme="light"] .case-info { color: #374151; }
+        .case-info h4 { font-size: 0.86rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 640px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 4rem; } }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Free Sample</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+<div class="hero">
+    <h1>Harrod-Domar <em>Growth Model</em></h1>
+    <p>Explore the relationship between savings, investment, and economic growth — and discover why steady growth is so difficult to achieve. Adjust the model parameters and observe the knife-edge problem in action.</p>
+</div>
+
+<!-- THEORY ACCORDION -->
+<div class="theory-box">
+    <button class="theory-toggle-btn" onclick="toggleTheory()">
+        <span>📚 Theory — The Harrod-Domar Model in Full</span>
+        <span class="theory-icon" id="theory-icon">+</span>
+    </button>
+    <div class="theory-body" id="theory-body">
+
+        <div class="theory-section">
+            <span class="theory-h">Background</span>
+            <p class="theory-p">The Harrod-Domar model, developed independently by Roy Harrod (1939) and Evsey Domar (1946), was the first major post-Keynesian growth model. It extended Keynesian economics into the long run, asking: what rate of investment is required to keep the economy growing smoothly? Its central insight is that growth requires sustained investment — and that maintaining that investment at precisely the right level is exceptionally difficult.</p>
+            <p class="theory-p">The model became highly influential in development economics during the 1950s–70s, providing theoretical justification for foreign aid and public investment in developing countries. The basic prescription was simple: if a poor country can raise its savings rate (s) or reduce its capital-output ratio (v), it can accelerate growth.</p>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">The Three Growth Rates</span>
+            <div class="eq-grid">
+                <div class="eq-card">
+                    <div class="eq-name">Warranted Growth Rate</div>
+                    <div class="eq-formula">Gw = s/v − δ</div>
+                    <div class="eq-desc">The growth rate at which all savings are invested and all capital is fully utilised. Entrepreneurs are satisfied — actual investment equals intended investment. s = savings rate, v = capital-output ratio, δ = depreciation rate.</div>
+                </div>
+                <div class="eq-card">
+                    <div class="eq-name">Actual Growth Rate</div>
+                    <div class="eq-formula">Ga = Gw + ε</div>
+                    <div class="eq-desc">The growth rate actually observed in the economy. It deviates from Gw whenever actual investment differs from warranted investment — due to demand shocks, government spending, or animal spirits (Keynes's term for autonomous investment).</div>
+                </div>
+                <div class="eq-card">
+                    <div class="eq-name">Natural Growth Rate</div>
+                    <div class="eq-formula">Gn = n + g</div>
+                    <div class="eq-desc">The maximum sustainable growth rate set by the economy's supply-side capacity. n = population growth rate, g = rate of technical progress. This is the ceiling beyond which full employment cannot be maintained long-term.</div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <strong>Key relationship:</strong> For full employment equilibrium, we need Ga = Gw = Gn simultaneously. Harrod showed this is an extraordinary coincidence — the three rates are each determined by different forces and have no natural tendency to converge.
+            </div>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">The Knife-Edge Instability Problem</span>
+            <p class="theory-p">This is Harrod's most important and disturbing insight. Suppose Ga rises above Gw — actual growth exceeds the warranted rate. In a neoclassical model, this would trigger price adjustment that restores equilibrium. But in Harrod's world, the opposite happens:</p>
+            <ul class="theory-ul">
+                <li>If <strong>Ga > Gw</strong>: entrepreneurs discover that their capital is being used more intensively than expected. This encourages them to invest even more. But more investment raises Ga further above Gw — the economy accelerates into a boom that becomes increasingly unsustainable.</li>
+                <li>If <strong>Ga &lt; Gw</strong>: entrepreneurs find they have excess capacity. They cut investment. But less investment reduces Ga further below Gw — the economy spirals into recession.</li>
+            </ul>
+            <div class="warn-box">
+                <strong>The knife-edge:</strong> Any deviation from the warranted path is self-reinforcing rather than self-correcting. The economy is balanced on a knife-edge — any disturbance causes it to fall off and diverge cumulatively. This is why Harrod believed sustained growth required active government policy intervention.
+            </div>
+            <p class="theory-p">The Demand Shock (ε) slider in this simulator lets you see this directly: even a small positive or negative deviation causes the actual path to diverge progressively from the warranted path over time.</p>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">The Poverty Trap Mechanism</span>
+            <p class="theory-p">In low-income countries, the model identifies a self-reinforcing cycle that prevents growth from taking off:</p>
+            <ul class="theory-ul">
+                <li><strong>Low income</strong> → households consume most of income to survive → <strong>low savings rate (s)</strong></li>
+                <li>Low s → insufficient investment to maintain/expand capital stock → <strong>low growth</strong></li>
+                <li>Low growth → income stays low → cycle repeats</li>
+            </ul>
+            <p class="theory-p">Simultaneously, many developing countries face high depreciation rates (δ) due to poor maintenance, harsh climates, and capital scarcity. A high capital-output ratio (v) may reflect technological inefficiency or the use of capital-intensive techniques ill-suited to labour-abundant economies.</p>
+            <div class="insight-box">
+                <strong>Big Push theory</strong> (Rosenstein-Rodan, 1943): A coordinated large-scale injection of investment — by foreign aid or the state — could break the poverty trap by raising growth above the minimum needed to sustain a higher savings rate. This is sometimes called "Rostow's takeoff" — the transition from a stagnant equilibrium to self-sustaining growth.
+            </div>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">The Financing Gap / Three-Gap Framework</span>
+            <p class="theory-p">The Harrod-Domar model formed the basis for the "financing gap" approach to foreign aid, which argued that poor countries face three structural gaps that foreign capital could fill:</p>
+            <ul class="theory-ul">
+                <li><strong>Savings gap:</strong> Gw = s/v, so if domestic savings are insufficient to finance the investment needed for target growth, foreign aid supplements s. The aid finances investment directly.</li>
+                <li><strong>Foreign exchange gap:</strong> Many developing countries can't import the capital goods needed for investment because they lack hard currency. Aid provides foreign exchange to close this gap.</li>
+                <li><strong>Fiscal gap:</strong> Governments may lack the tax revenue to finance public investment in infrastructure and education — a prerequisite for productive private investment. Aid fills this.</li>
+            </ul>
+            <p class="theory-p">This framework was highly influential at the World Bank and OECD in the 1960s–80s, and explicitly drove the calculation of official development assistance (ODA) targets (e.g., the 0.7% of GNI aid target adopted by the UN in 1970).</p>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">The Solow Critique & Model Limitations</span>
+            <p class="theory-p">Robert Solow (1956) challenged the Harrod-Domar model's rigid assumptions and showed that its instability result depends on treating v (the capital-output ratio) as fixed. If capital and labour can be substituted for each other, v adjusts to bring Gw in line with Gn, restoring long-run stability. This became the foundation of the Solow growth model.</p>
+            <ul class="theory-ul">
+                <li><strong>Fixed v assumption:</strong> Harrod assumed no substitution between capital and labour. Solow showed this is unrealistic — firms can choose more or less capital-intensive techniques.</li>
+                <li><strong>No technological change:</strong> In the basic model, technical progress (g) is exogenous and unexplained. Endogenous growth theory (Romer, 1990) later tried to explain why g differs across countries.</li>
+                <li><strong>Empirical failure:</strong> The model implies countries with higher savings rates should always grow faster — but the evidence is mixed. Countries like Japan (high s, high growth) fit; others don't.</li>
+                <li><strong>Aid effectiveness:</strong> The financing gap approach assumed aid would directly raise investment rates. But Easterly (2001) showed most aid-recipient countries failed to grow as predicted — suggesting s and v may not be the binding constraints.</li>
+            </ul>
+            <div class="warn-box">
+                <strong>Exam evaluation point:</strong> Despite its limitations, Harrod-Domar remains useful as a framework for understanding the savings-investment link and why poor countries may find it structurally difficult to self-finance growth. The model is wrong in its rigidity but directionally correct in identifying savings and capital efficiency as key determinants of growth.
+            </div>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">Policy Implications & Evaluation</span>
+            <ul class="theory-ul">
+                <li><strong>Raise s (savings rate):</strong> Encourage domestic saving through tax incentives, pension systems, financial inclusion. But in very poor countries, people may have no margin to save — the poverty trap limits this.</li>
+                <li><strong>Reduce v (capital-output ratio):</strong> Improve technology and efficiency, use appropriate technology, reduce capital waste. Technology transfer from aid/FDI can help. But this requires absorptive capacity.</li>
+                <li><strong>Foreign aid and FDI:</strong> Fill the savings gap externally. Aid can work if used for productive investment rather than consumption, but conditionality and governance failures often prevent this.</li>
+                <li><strong>Reduce δ (depreciation):</strong> Invest in maintenance infrastructure, protect capital from deterioration. Often neglected but highly cost-effective.</li>
+                <li><strong>Active stabilisation policy:</strong> Given the knife-edge problem, Harrod himself believed government fiscal policy was essential to keep Ga close to Gw — anticipating what we now call automatic stabilisers and counter-cyclical policy.</li>
+            </ul>
+        </div>
+
+        <div class="theory-section">
+            <span class="theory-h">Exam Evaluation Points</span>
+            <div class="insight-box">
+                <strong>Strengths:</strong> Identifies the savings-investment-growth link clearly. Explains the poverty trap. Provides theoretical justification for foreign aid. The knife-edge problem generates testable predictions about business cycle instability. Links Keynesian demand management to long-run growth.
+            </div>
+            <div class="warn-box">
+                <strong>Weaknesses:</strong> Fixed v assumption means no factor substitution — Solow's critique is devastating. Ignores institutions, governance, property rights. Financing gap approach has poor empirical record. Technology treated as exogenous. Doesn't explain cross-country growth differences well. Aid effectiveness contested by Easterly, Moyo, and others.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sim-layout">
+    <!-- CONTROLS -->
+    <div class="controls-panel">
+        <span class="ctrl-h">Model Parameters</span>
+
+        <div class="ctrl-group">
+            <div class="slider-hd">
+                <span class="slider-lbl">Savings Rate (s)</span>
+                <span class="slider-val" id="val-s">20%</span>
+            </div>
+            <input type="range" id="sl-s" min="0" max="50" value="20" step="0.5" oninput="update()">
+            <div class="slider-hint">Share of national income saved — drives investment</div>
+        </div>
+
+        <div class="ctrl-group">
+            <div class="slider-hd">
+                <span class="slider-lbl">Capital-Output Ratio (v)</span>
+                <span class="slider-val" id="val-v">3.0</span>
+            </div>
+            <input type="range" id="sl-v" min="1" max="10" value="3" step="0.1" oninput="update()">
+            <div class="slider-hint">Units of capital needed per unit of output</div>
+        </div>
+
+        <div class="ctrl-group">
+            <div class="slider-hd">
+                <span class="slider-lbl">Depreciation Rate (δ)</span>
+                <span class="slider-val" id="val-d">5%</span>
+            </div>
+            <input type="range" id="sl-d" min="0" max="20" value="5" step="0.5" oninput="update()">
+            <div class="slider-hint">Annual rate at which capital wears out</div>
+        </div>
+
+        <div class="ctrl-group">
+            <div class="slider-hd">
+                <span class="slider-lbl">Demand Shock (ε)</span>
+                <span class="slider-val" id="val-e">0%</span>
+            </div>
+            <input type="range" id="sl-e" min="-5" max="5" value="0" step="0.1" oninput="update()">
+            <div class="slider-hint">Deviation of Ga from Gw — triggers knife-edge</div>
+        </div>
+
+        <div class="ctrl-group">
+            <div class="slider-hd">
+                <span class="slider-lbl">Time Horizon</span>
+                <span class="slider-val" id="val-t">30 yrs</span>
+            </div>
+            <input type="range" id="sl-t" min="10" max="80" value="30" step="5" oninput="update()">
+        </div>
+
+        <div class="sep"></div>
+        <span class="ctrl-h">Natural Growth Rate</span>
+
+        <div class="toggle-row" id="pop-toggle" onclick="togglePop()">
+            <div class="toggle-pill" id="pop-pill"></div>
+            <span class="toggle-lbl">Include Population Growth</span>
+        </div>
+        <div class="num-inputs" id="nat-inputs" style="opacity:0.35;pointer-events:none;">
+            <div class="num-item">
+                <label>Pop. growth (n) %</label>
+                <input type="number" id="inp-n" value="1.5" min="0" max="5" step="0.1" onchange="update()">
+            </div>
+            <div class="num-item">
+                <label>Tech progress (g) %</label>
+                <input type="number" id="inp-g" value="0.5" min="0" max="5" step="0.1" onchange="update()">
+            </div>
+        </div>
+
+        <div class="sep"></div>
+        <span class="ctrl-h">Scenarios</span>
+        <div class="scenario-btns">
+            <button class="s-btn" id="sc-rapid" onclick="setScenario('rapid')">Rapid Growth</button>
+            <button class="s-btn" id="sc-trap" onclick="setScenario('trap')">Poverty Trap</button>
+            <button class="s-btn" id="sc-knife" onclick="setScenario('knife')">Knife-Edge</button>
+            <button class="s-btn" id="sc-aid" onclick="setScenario('aid')">Aid Injection</button>
+        </div>
+
+        <span class="ctrl-h" style="margin-top:0.75rem">Economic Shocks</span>
+        <div class="shock-btns">
+            <button class="shock-btn" onclick="applyShock('crisis')">💥 Financial Crisis</button>
+            <button class="shock-btn" onclick="applyShock('tech')">🔬 Tech Transfer</button>
+            <button class="shock-btn" onclick="applyShock('aid')">💰 Foreign Aid</button>
+            <button class="shock-btn" onclick="applyShock('reform')">📋 Policy Reform</button>
+        </div>
+        <button class="btn-reset" onclick="resetAll()">↩ Reset to baseline</button>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+        <div class="alert-bar stable" id="alert-bar">Economy on balanced growth path</div>
+
+        <!-- Metrics -->
+        <div class="panel">
+            <span class="mono-label">Growth Rates</span>
+            <div class="metrics-grid">
+                <div class="metric-card gw">
+                    <div class="metric-val gw-col" id="m-gw">0.0%</div>
+                    <div class="metric-lbl">Warranted (Gw)</div>
+                    <div class="metric-sub">Full-capacity equilibrium</div>
+                </div>
+                <div class="metric-card ga">
+                    <div class="metric-val ga-col" id="m-ga">0.0%</div>
+                    <div class="metric-lbl">Actual (Ga)</div>
+                    <div class="metric-sub">Observed growth</div>
+                </div>
+                <div class="metric-card gn">
+                    <div class="metric-val" id="m-gn">2.0%</div>
+                    <div class="metric-lbl">Natural (Gn)</div>
+                    <div class="metric-sub">Supply-side ceiling</div>
+                </div>
+                <div class="metric-card gap">
+                    <div class="metric-val" id="m-gap">0.0%</div>
+                    <div class="metric-lbl">Ga − Gw Gap</div>
+                    <div class="metric-sub">Instability measure</div>
+                </div>
+            </div>
+            <div style="margin-top:0.85rem;">
+                <div class="gap-row">
+                    <span class="gap-lbl">Instability gap (Ga − Gw):</span>
+                    <span class="gap-val" id="gap-inst">0.0%</span>
+                </div>
+                <div class="gap-row">
+                    <span class="gap-lbl">Feasibility gap (Gw − Gn):</span>
+                    <span class="gap-val" id="gap-feas">0.0%</span>
+                </div>
+                <div class="consequence" id="consequence">Economy is on the warranted path. No instability.</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="panel">
+            <span class="mono-label">GDP Growth Trajectories over Time</span>
+            <canvas id="chart" height="260"></canvas>
+            <div class="legend-row">
+                <div class="leg-item"><div class="leg-dot" style="background:var(--gw)"></div><span>Warranted path (Gw)</span></div>
+                <div class="leg-item"><div class="leg-dot" style="background:var(--ga)"></div><span>Actual path (Ga)</span></div>
+                <div class="leg-item"><div class="leg-dot" style="background:var(--gn)"></div><span>Natural path (Gn)</span></div>
+            </div>
+        </div>
+
+        <!-- Live Narrative -->
+        <div class="narrative-panel">
+            <h3>Live Economic Analysis</h3>
+            <div id="narrative"><p>Adjust the sliders to begin the simulation.</p></div>
+        </div>
+
+        <!-- Country Examples -->
+        <div class="panel">
+            <span class="mono-label">Real-World Case Studies</span>
+            <div class="country-grid">
+                <button class="c-btn" id="cc-china" onclick="loadCase('china')"><span class="flag">🇨🇳</span>China 1980s<br><small>High growth</small></button>
+                <button class="c-btn" id="cc-africa" onclick="loadCase('africa')"><span class="flag">🌍</span>Sub-Saharan<br><small>Poverty trap</small></button>
+                <button class="c-btn" id="cc-tigers" onclick="loadCase('tigers')"><span class="flag">🐯</span>Asian Tigers<br><small>Optimal</small></button>
+                <button class="c-btn" id="cc-india" onclick="loadCase('india')"><span class="flag">🇮🇳</span>India 1990s<br><small>Reform era</small></button>
+                <button class="c-btn" id="cc-japan" onclick="loadCase('japan')"><span class="flag">🇯🇵</span>Japan 1960s<br><small>Miracle</small></button>
+                <button class="c-btn" id="cc-uk" onclick="loadCase('uk')"><span class="flag">🇬🇧</span>UK 2020s<br><small>Stagnation</small></button>
+            </div>
+            <div class="case-info" id="case-info"></div>
+        </div>
+    </div>
+</div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; Free Sample &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── Theme ── */
+(function(){var t=localStorage.getItem('biz-omics-theme')||'dark';document.documentElement.setAttribute('data-theme',t);document.getElementById('theme-btn').textContent=t==='light'?'🌙':'☀';})();
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme')||'dark',n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('biz-omics-theme',n);document.getElementById('theme-btn').textContent=n==='light'?'🌙':'☀';drawChart();}
+
+/* ── Theory ── */
+function toggleTheory(){const b=document.getElementById('theory-body'),i=document.getElementById('theory-icon'),o=b.classList.toggle('show');i.textContent=o?'−':'+';i.classList.toggle('open',o);}
+
+/* ── State ── */
+let s=20,v=3,d=5,eps=0,popOn=false,popN=1.5,techG=0.5,years=30;
+let gw=0,ga=0,gn=2;
+
+/* ── Pop toggle ── */
+function togglePop(){popOn=!popOn;document.getElementById('pop-pill').classList.toggle('on',popOn);const ni=document.getElementById('nat-inputs');ni.style.opacity=popOn?'1':'0.35';ni.style.pointerEvents=popOn?'auto':'none';update();}
+
+/* ── Main update ── */
+function update(){
+    s=parseFloat(document.getElementById('sl-s').value);
+    v=parseFloat(document.getElementById('sl-v').value);
+    d=parseFloat(document.getElementById('sl-d').value);
+    eps=parseFloat(document.getElementById('sl-e').value);
+    years=parseInt(document.getElementById('sl-t').value);
+    popN=parseFloat(document.getElementById('inp-n').value||1.5);
+    techG=parseFloat(document.getElementById('inp-g').value||0.5);
+
+    document.getElementById('val-s').textContent=s.toFixed(1)+'%';
+    document.getElementById('val-v').textContent=v.toFixed(1);
+    document.getElementById('val-d').textContent=d.toFixed(1)+'%';
+    document.getElementById('val-e').textContent=(eps>=0?'+':'')+eps.toFixed(1)+'%';
+    document.getElementById('val-t').textContent=years+' yrs';
+
+    gw=(s/v)-d;
+    const instMult=1.5;
+    ga=gw+(eps*instMult);
+    gn=popOn?(popN+techG):2.0;
+
+    const instGap=ga-gw;
+    const feasGap=gw-gn;
+
+    document.getElementById('m-gw').textContent=gw.toFixed(2)+'%';
+    document.getElementById('m-ga').textContent=ga.toFixed(2)+'%';
+    document.getElementById('m-gn').textContent=gn.toFixed(2)+'%';
+    document.getElementById('m-gap').textContent=(instGap>=0?'+':'')+instGap.toFixed(2)+'%';
+
+    const instEl=document.getElementById('gap-inst');
+    instEl.textContent=(instGap>=0?'+':'')+instGap.toFixed(2)+'%';
+    instEl.className='gap-val '+(Math.abs(instGap)>0.5?'pos':'');
+
+    const feasEl=document.getElementById('gap-feas');
+    feasEl.textContent=(feasGap>=0?'+':'')+feasGap.toFixed(2)+'%';
+    feasEl.className='gap-val '+(feasGap>1?'pos':feasGap<-1?'neg':'');
+
+    // Alert bar
+    const bar=document.getElementById('alert-bar');
+    if(Math.abs(instGap)<0.3&&Math.abs(feasGap)<0.5){bar.className='alert-bar stable';bar.textContent='Economy on balanced growth path — Ga ≈ Gw ≈ Gn';}
+    else if(instGap>0.5){bar.className='alert-bar unstable';bar.textContent='Ga > Gw — Boom divergence: excess demand, rising inflation pressure';}
+    else if(instGap<-0.5){bar.className='alert-bar unstable';bar.textContent='Ga < Gw — Recession divergence: excess capacity, falling investment';}
+    else if(feasGap>1){bar.className='alert-bar knife';bar.textContent='Gw > Gn — Warranted rate exceeds supply ceiling: inflationary pressure';}
+    else if(feasGap<-1){bar.className='alert-bar knife';bar.textContent='Gw < Gn — Persistent unemployment: economy below natural capacity';}
+    else{bar.className='alert-bar knife';bar.textContent='Near knife-edge: small deviations will cause divergence';}
+
+    // Consequence text
+    let cons='';
+    if(gw<0)cons='Negative warranted growth rate — capital is deprecating faster than investment can replace it. The economy is contracting even without any demand shock. This reflects the poverty trap: low savings combined with high depreciation prevents capital accumulation.';
+    else if(Math.abs(instGap)<0.3)cons='Economy is close to the warranted path. Entrepreneurs find capital is used as expected — investment intentions are being fulfilled. However, any disturbance (shock) will cause self-reinforcing divergence.';
+    else if(instGap>2)cons='Severe boom divergence. Entrepreneurs find capital is heavily over-utilised — this encourages rapid further investment, but the economy risks overheating, supply bottlenecks, and inflation. Without correction, a bust becomes increasingly likely.';
+    else if(instGap>0.5)cons='Boom conditions: Ga > Gw. Excess demand signals to entrepreneurs to invest more, pushing Ga further above Gw. The knife-edge is working against stability — the deviation will compound over time.';
+    else if(instGap<-2)cons='Severe recession divergence. Excess capacity signals to firms to cut investment, driving Ga further below Gw. Without external stimulus, the economy spirals downward. Foreign aid or government expenditure is required to break the cycle.';
+    else if(instGap<-0.5)cons='Recession conditions: Ga < Gw. Excess capacity discourages investment, pushing Ga further below Gw. Self-reinforcing instability is taking hold — this is the knife-edge problem in action.';
+    if(feasGap>0.5)cons+=' Additionally, Gw > Gn: the warranted rate exceeds the natural (supply-side) ceiling — demand will persistently outrun supply capacity, generating inflationary pressure.';
+    if(feasGap<-0.5)cons+=' Additionally, Gw < Gn: the economy has spare supply-side capacity — structural unemployment is likely as the labour force grows faster than demand for it.';
+    document.getElementById('consequence').textContent=cons||'Economy near equilibrium.';
+
+    drawChart();
+    updateNarrative();
+}
+
+/* ── Chart ── */
+function drawChart(){
+    const canvas=document.getElementById('chart');
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const ctx=canvas.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=canvas.offsetWidth||680; const H=260;
+    canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+
+    const pad={t:25,r:20,b:35,l:50};
+    const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+    const bg=isDark?'#111827':'#ffffff';
+    const gridC=isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)';
+    const textC=isDark?'#64748b':'#94a3b8';
+    const axC=isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.15)';
+
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    // Build paths
+    const pts=years; const gdpW=[100],gdpA=[100],gdpN=[100];
+    for(let i=1;i<=pts;i++){gdpW.push(gdpW[i-1]*(1+(gw/100)));gdpA.push(gdpA[i-1]*(1+(ga/100)));gdpN.push(gdpN[i-1]*(1+(gn/100)));}
+
+    const all=[...gdpW,...gdpA,...gdpN];
+    const minV=Math.min(...all)*0.97, maxV=Math.max(...all)*1.03;
+    const norm=(v)=>pad.t+ch-((v-minV)/(maxV-minV))*ch;
+
+    // Grid
+    ctx.strokeStyle=gridC; ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){const y=pad.t+(ch/4)*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();
+    ctx.fillStyle=textC;ctx.font='10px monospace';ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText((maxV-(maxV-minV)/4*i).toFixed(0),pad.l-8,y);}
+    for(let i=0;i<=5;i++){const x=pad.l+(cw/5)*i;ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ch);ctx.stroke();
+    ctx.fillStyle=textC;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(Math.round(pts/5*i),x,pad.t+ch+5);}
+
+    // Axes
+    ctx.strokeStyle=axC; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ch);ctx.lineTo(pad.l+cw,pad.t+ch);ctx.stroke();
+
+    // Axis label
+    ctx.fillStyle=textC;ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText('Years',pad.l+cw/2,H-2);
+    ctx.save();ctx.translate(13,pad.t+ch/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText('GDP Index',0,0);ctx.restore();
+
+    function drawPath(data,color,lw){
+        ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.lineJoin='round'; ctx.lineCap='round';
+        ctx.beginPath();
+        data.forEach((v,i)=>{const x=pad.l+(cw*(i/pts));const y=norm(v);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+        ctx.stroke();
+    }
+
+    drawPath(gdpN,'#94a3b8',1.5);
+    drawPath(gdpW,'#10b981',2.5);
+    drawPath(gdpA,'#3b82f6',2.5);
+
+    // Label on chart
+    ctx.fillStyle='#10b981';ctx.font='bold 11px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('Gw='+gw.toFixed(1)+'%',pad.l+4,pad.t+4);
+    ctx.fillStyle='#3b82f6';
+    ctx.fillText('Ga='+ga.toFixed(1)+'%',pad.l+4,pad.t+18);
+}
+
+/* ── Narrative ── */
+function updateNarrative(){
+    const el=document.getElementById('narrative');
+    const gwF=gw.toFixed(2), gaF=ga.toFixed(2), gnF=gn.toFixed(2);
+    const instGap=(ga-gw).toFixed(2);
+    let html='';
+
+    if(gw<0){
+        html+=`<p>With a savings rate of <strong>${s}%</strong> and capital-output ratio of <strong>${v}</strong>, the warranted growth rate is <strong>${gwF}%</strong> — negative. Depreciation at <strong>${d}%</strong> is destroying capital faster than investment can replace it. The economy is in structural decline: this is the poverty trap in its most severe form.</p>`;
+    } else {
+        html+=`<p>Using Gw = s/v − δ, the warranted growth rate is <strong>${gwF}%</strong>. With a savings rate of <strong>${s}%</strong>, a capital-output ratio of <strong>${v}</strong>, and depreciation at <strong>${d}%</strong>, entrepreneurs are satisfied only if the economy grows at exactly this rate — keeping capital fully employed.</p>`;
+    }
+
+    if(Math.abs(parseFloat(instGap))<0.3){
+        html+=`<p>The actual growth rate (<strong>${gaF}%</strong>) is very close to the warranted rate — the economy is near the knife-edge equilibrium. But even here, any autonomous shift in investment (the ε slider) will set off self-reinforcing divergence in one direction or the other.</p>`;
+    } else if(parseFloat(instGap)>0){
+        html+=`<p>The actual growth rate (<strong>${gaF}%</strong>) exceeds Gw (<strong>${gwF}%</strong>) by <strong>${instGap}pp</strong>. Entrepreneurs discover their capital is more intensively used than expected — signalling them to invest further. This pushes Ga even higher above Gw. The knife-edge instability is self-reinforcing: the boom accelerates.</p>`;
+    } else {
+        html+=`<p>The actual growth rate (<strong>${gaF}%</strong>) falls below Gw (<strong>${gwF}%</strong>) by <strong>${Math.abs(parseFloat(instGap)).toFixed(2)}pp</strong>. Entrepreneurs find excess capacity — this discourages investment, driving Ga further below Gw. The recession compounds: this is the Harrodian instability mechanism, and it will intensify over the ${years}-year horizon shown on the chart.</p>`;
+    }
+
+    if(gw>gnF){
+        html+=`<p>The warranted rate (<strong>${gwF}%</strong>) exceeds the natural rate (<strong>${gnF}%</strong>). The economy is attempting to grow faster than its supply-side permits — the labour force and technology cannot keep pace. This generates persistent inflationary pressure as demand outstrips productive capacity.</p>`;
+    } else if(gn>gw+0.5){
+        html+=`<p>The natural rate (<strong>${gnF}%</strong>) significantly exceeds the warranted rate (<strong>${gwF}%</strong>). The economy's productive capacity is growing faster than the savings-driven investment can sustain demand for it. The result is structural unemployment — labour force growth (${popOn?popN+'%':'assumed 2%'} p.a.) exceeds what warranted investment can absorb.</p>`;
+    }
+
+    // Exam tip
+    let tip='';
+    if(gw<0&&s<10)tip='<strong>Exam tip:</strong> This is the poverty trap. In a 25-mark answer: define Gw = s/v − δ, explain that low s and high δ make Gw negative, then evaluate whether foreign aid (supplementing s) or technology transfer (reducing v) provides a more sustainable escape route. Consider the Solow critique — if v is variable, the trap may be less rigid.';
+    else if(Math.abs(ga-gw)<0.2&&Math.abs(gw-gn)<0.3)tip='<strong>Exam tip:</strong> This is the rarely-achieved balanced growth equilibrium (Ga = Gw = Gn). Evaluate why Harrod believed this was the exception rather than the rule, and why active government stabilisation policy (counter-cyclical fiscal policy) is necessary to maintain it.';
+    else if(Math.abs(ga-gw)>1)tip='<strong>Exam tip:</strong> This demonstrates the knife-edge instability problem. In evaluation, contrast with Solow\'s critique: if v can adjust, markets may self-correct without policy intervention. Harrod insisted v was rigid in the short run — this is the key theoretical disagreement.';
+    if(tip)html+=`<div class="exam-tip">${tip}</div>`;
+
+    el.innerHTML=html;
+}
+
+/* ── Scenarios ── */
+function setScenario(id){
+    document.querySelectorAll('.s-btn').forEach(b=>b.classList.remove('active-s'));
+    document.getElementById('sc-'+id).classList.add('active-s');
+    const cfg={
+        rapid:{s:40,v:2,d:3,e:0},
+        trap:{s:5,v:8,d:10,e:0},
+        knife:{s:18,v:3.5,d:3,e:0.5},
+        aid:{s:28,v:3,d:5,e:1.2}
+    }[id];
+    document.getElementById('sl-s').value=cfg.s;
+    document.getElementById('sl-v').value=cfg.v;
+    document.getElementById('sl-d').value=cfg.d;
+    document.getElementById('sl-e').value=cfg.e;
+    update();
+}
+
+/* ── Shocks ── */
+function applyShock(type){
+    const cfg={
+        crisis:{ds:-8,dv:1.5,de:-3},
+        tech:{ds:0,dv:-1.5,de:1},
+        aid:{ds:10,dv:0,de:1.5},
+        reform:{ds:5,dv:-0.5,de:0}
+    }[type];
+    document.getElementById('sl-s').value=Math.max(0,Math.min(50,s+cfg.ds));
+    document.getElementById('sl-v').value=Math.max(1,Math.min(10,v+cfg.dv));
+    document.getElementById('sl-e').value=Math.max(-5,Math.min(5,eps+cfg.de));
+    update();
+}
+
+/* ── Case studies ── */
+const cases={
+    china:{s:38,v:2.5,d:4,n:1.2,g:2.0,pop:true,
+        title:'🇨🇳 China 1980s — High Savings-Led Growth',
+        text:'China\'s economic miracle was built on an extraordinarily high savings rate (~38%) — partly forced through financial repression (interest rates held below inflation). Combined with a low capital-output ratio (efficient use of relatively simple capital), this generated warranted growth of over 10%. The Harrod-Domar model fits China\'s experience well: raising s was the central policy mechanism. However, critics note this eventually created massive capital misallocation and unsustainable debt growth.'},
+    africa:{s:8,v:6,d:12,n:2.8,g:0.3,pop:true,
+        title:'🌍 Sub-Saharan Africa — Development Constraints',
+        text:'Many Sub-Saharan economies exhibit a classic Harrodian poverty trap: low savings rates, capital-intensive (inefficient) production, rapid population growth, and high depreciation (poor infrastructure, harsh climate, lack of maintenance). The warranted rate is near zero or negative, while the natural rate (driven by population growth) is high — generating structural unemployment. The financing gap approach argued foreign aid could supplement s, but Easterly (2001) showed this rarely translated into the predicted growth acceleration.'},
+    tigers:{s:32,v:2.8,d:3.5,n:1.5,g:1.5,pop:true,
+        title:'🐯 East Asian Tigers — Optimal Balance',
+        text:'Singapore, South Korea, Taiwan and Hong Kong achieved exceptional growth by simultaneously raising savings rates to 30%+ (through compulsory pension schemes and financial repression) and reducing capital-output ratios through rapid technology adoption and industrial policy. The Harrod-Domar framework fits well: they moved right on all dimensions simultaneously, generating warranted growth of 7–10% that was close to their natural rates.'},
+    india:{s:22,v:4,d:5,n:1.8,g:1.0,pop:true,
+        title:'🇮🇳 India 1990s — Reform Era',
+        text:'India\'s post-1991 liberalisation raised savings rates and improved capital efficiency as state controls were removed. The Harrod-Domar model captures the improvement: as v fell and s rose, the warranted rate increased. However, India\'s growth remained below the Asian Tigers because institutional constraints (land acquisition, labour laws, infrastructure gaps) kept v relatively high and limited the efficiency of investment.'},
+    japan:{s:35,v:2.2,d:3,n:1.0,g:2.5,pop:true,
+        title:'🇯🇵 Japan 1960s — Economic Miracle',
+        text:'Japan\'s high-growth era (1955-1973) combined exceptionally high household savings (partly cultural), extremely efficient capital deployment (guided by MITI), and rapid technology absorption from the West. The Harrod-Domar model fits well: very high s, very low v, and low depreciation generated warranted growth of 9-12%. Solow\'s model later complemented this by explaining TFP growth through technology transfer — something the basic H-D model treats as exogenous.'},
+    uk:{s:18,v:4.5,d:5,n:0.3,g:0.5,pop:true,
+        title:'🇬🇧 UK 2020s — Productivity Stagnation',
+        text:'The UK\'s post-2008 growth malaise reflects weak investment and a high effective capital-output ratio (low productivity of capital). Savings rates have been below the EU average, while depreciation of ageing infrastructure and human capital is high. The warranted rate has fallen below the natural rate — explaining structural unemployment and underemployment. OBR forecasts of ~1.5% growth align with this Harrodian assessment: the fundamental constraint is insufficient productive investment, not demand.'}
+};
+
+function loadCase(id){
+    document.querySelectorAll('.c-btn').forEach(b=>b.classList.remove('active-c'));
+    document.getElementById('cc-'+id).classList.add('active-c');
+    const c=cases[id];
+    document.getElementById('sl-s').value=c.s;
+    document.getElementById('sl-v').value=c.v;
+    document.getElementById('sl-d').value=c.d;
+    document.getElementById('sl-e').value=0;
+    popOn=c.pop;
+    document.getElementById('pop-pill').classList.toggle('on',popOn);
+    const ni=document.getElementById('nat-inputs');ni.style.opacity='1';ni.style.pointerEvents='auto';
+    document.getElementById('inp-n').value=c.n;
+    document.getElementById('inp-g').value=c.g;
+    update();
+    const info=document.getElementById('case-info');
+    info.innerHTML=`<h4>${c.title}</h4><p>${c.text}</p>`;
+    info.classList.add('show');
+}
+
+function resetAll(){
+    document.querySelectorAll('.s-btn,.c-btn').forEach(b=>b.classList.remove('active-s','active-c'));
+    document.getElementById('sl-s').value=20;
+    document.getElementById('sl-v').value=3;
+    document.getElementById('sl-d').value=5;
+    document.getElementById('sl-e').value=0;
+    document.getElementById('sl-t').value=30;
+    document.getElementById('inp-n').value=1.5;
+    document.getElementById('inp-g').value=0.5;
+    popOn=false;
+    document.getElementById('pop-pill').classList.remove('on');
+    const ni=document.getElementById('nat-inputs');ni.style.opacity='0.35';ni.style.pointerEvents='none';
+    document.getElementById('case-info').classList.remove('show');
+    update();
+}
+
+window.addEventListener('resize',drawChart);
+update();
+</script>
+</body>
+</html>
