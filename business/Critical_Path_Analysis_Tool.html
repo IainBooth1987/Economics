@@ -801,36 +801,44 @@ function drawNode(ctx, x, y, r, num, est, lft, isCritical) {
   }
 }
 
-function drawArrow(ctx, x1, y1, x2, y2, label, dur, isCritical, offsetY) {
+function drawArrow(ctx, x1, y1, x2, y2, label, dur, isCritical, offsetY, isDummy, nodeR) {
+  const r = nodeR || 32;
   const isLight = document.body.classList.contains('light');
   const accent = isLight ? '#0a9e6e' : '#10b981';
   const norm   = isLight ? 'rgba(14,26,20,0.45)' : 'rgba(238,245,242,0.55)';
+  const dimCol = isLight ? 'rgba(14,26,20,0.22)' : 'rgba(238,245,242,0.22)';
   const labelCol = isLight ? '#0e1a14' : '#eef5f2';
   const durCol   = isLight ? 'rgba(14,26,20,0.45)' : 'rgba(238,245,242,0.45)';
-  const col = isCritical ? accent : norm;
-  const r = 32;
-  // shorten line to node edges
+  const col = isDummy ? dimCol : (isCritical ? accent : norm);
   const dx = x2-x1, dy = y2-y1, dist = Math.sqrt(dx*dx+dy*dy);
   const ux = dx/dist, uy = dy/dist;
   const sx = x1+ux*r, sy = y1+uy*r, ex = x2-ux*r, ey = y2-uy*r;
 
   ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey);
-  ctx.strokeStyle = col; ctx.lineWidth = isCritical ? 2.5 : 1.5;
+  ctx.strokeStyle = col; ctx.lineWidth = isDummy ? 1 : (isCritical ? 2.5 : 1.5);
+  if (isDummy) ctx.setLineDash([5,4]); else ctx.setLineDash([]);
   ctx.stroke();
+  ctx.setLineDash([]);
+
   // arrowhead
   const angle = Math.atan2(ey-sy, ex-sx);
   ctx.beginPath();
   ctx.moveTo(ex, ey);
-  ctx.lineTo(ex - 12*Math.cos(angle-0.4), ey - 12*Math.sin(angle-0.4));
-  ctx.lineTo(ex - 12*Math.cos(angle+0.4), ey - 12*Math.sin(angle+0.4));
+  ctx.lineTo(ex - 11*Math.cos(angle-0.4), ey - 11*Math.sin(angle-0.4));
+  ctx.lineTo(ex - 11*Math.cos(angle+0.4), ey - 11*Math.sin(angle+0.4));
   ctx.closePath(); ctx.fillStyle = col; ctx.fill();
-  // label
-  const mx = (sx+ex)/2, my = (sy+ey)/2;
-  const off = offsetY || -18;
-  ctx.fillStyle = labelCol; ctx.font = 'bold 13px DM Sans, sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText(label, mx, my + off);
-  ctx.fillStyle = durCol; ctx.font = '11px DM Sans, sans-serif';
-  ctx.fillText(dur + 'w', mx, my + off + 14);
+
+  // label + duration (skip for dummy)
+  if (!isDummy && label) {
+    const mx = (sx+ex)/2, my = (sy+ey)/2;
+    const off = offsetY || -18;
+    ctx.fillStyle = labelCol; ctx.font = 'bold 13px DM Sans, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, mx, my + off);
+    if (dur !== null && dur !== undefined) {
+      ctx.fillStyle = durCol; ctx.font = '11px DM Sans, sans-serif';
+      ctx.fillText(dur + 'w', mx, my + off + 14);
+    }
+  }
 }
 
 // Exemplar network layout:
@@ -873,7 +881,7 @@ function drawExemplarBase(ctx, nodes, arrows, showEST, showLFT, cpHighlight) {
   arrows.forEach(a => {
     const fn = nodes.find(n=>n.id===a.from), tn = nodes.find(n=>n.id===a.to);
     const isCp = cpHighlight && a.cp;
-    drawArrow(ctx, fn.x, fn.y, tn.x, tn.y, a.label, a.dur, isCp, a.offY||0);
+    drawArrow(ctx, fn.x, fn.y, tn.x, tn.y, a.label||'', a.dur, isCp, a.offY||0, a.isDummy||false, 32);
   });
   nodes.forEach(n => {
     const est = showEST ? n.est : null;
@@ -989,39 +997,40 @@ function checkDependencies() {
 const SCENARIOS = [
 
   // ── SCENARIO 1: Retail store opening ──
-  // Nodes: 1->A->2, 2->B->3, 2->C->4, 2->D->4, 3->E->5, 4->F->5, 5->G->6
-  // Critical paths: 1-2-3-5-6 (A+B+E+G=13) AND 1-2-4-5-6 (A+C+F+G=13)
-  // Only D has float (4 weeks)
+  // Each activity has a unique from→to node pair. No dummies needed.
+  // A:1->2(3), B:2->3(7), C:2->4(4), D:3->5(3), E:4->5(5), F:5->6(2)
+  // Node5 EST = max(3+7+3, 3+4+5) = max(13,12) = 13  →  B path is binding
+  // Critical path: A+B+D+F = 3+7+3+2 = 15 weeks
+  // Float(C) = LFT(4) - EST(2) - dur(C) = 8 - 3 - 4 = 1 week
+  // Float(E) = LFT(5) - EST(4) - dur(E) = 13 - 7 - 5 = 1 week
   {
     context: "A retailer is opening a new store. The project manager has identified the following activities:",
     activities: [
-      {id:'A', desc:'Sign lease agreement',    dur:2, pre:'-'},
-      {id:'B', desc:'Recruit and hire staff',  dur:6, pre:'A'},
-      {id:'C', desc:'Fit out the store',       dur:8, pre:'A'},
-      {id:'D', desc:'Order and receive stock', dur:4, pre:'A'},
-      {id:'E', desc:'Staff training',          dur:3, pre:'B'},
-      {id:'F', desc:'Stock shelves',           dur:1, pre:'C, D'},
-      {id:'G', desc:'Soft launch',             dur:2, pre:'E, F'},
+      {id:'A', desc:'Sign lease agreement',   dur:3, pre:'-'},
+      {id:'B', desc:'Recruit and hire staff', dur:7, pre:'A'},
+      {id:'C', desc:'Fit out the store',      dur:4, pre:'A'},
+      {id:'D', desc:'Staff training',         dur:3, pre:'B'},
+      {id:'E', desc:'Stock the shelves',      dur:5, pre:'C'},
+      {id:'F', desc:'Soft launch',            dur:2, pre:'D, E'},
     ],
     nodes:[
-      {id:1, x:65,  y:160, est:0,  lft:0},
-      {id:2, x:210, y:160, est:2,  lft:2},
-      {id:3, x:380, y:80,  est:8,  lft:8},
-      {id:4, x:380, y:240, est:10, lft:10},
-      {id:5, x:560, y:160, est:11, lft:11},
-      {id:6, x:720, y:160, est:13, lft:13},
+      {id:1, x:70,  y:160, est:0,  lft:0},
+      {id:2, x:240, y:160, est:3,  lft:3},
+      {id:3, x:440, y:75,  est:10, lft:10},
+      {id:4, x:440, y:245, est:7,  lft:8},
+      {id:5, x:630, y:160, est:13, lft:13},
+      {id:6, x:790, y:160, est:15, lft:15},
     ],
     arrows:[
-      {from:1,to:2,label:'A',dur:2, cp:true},
-      {from:2,to:3,label:'B',dur:6, cp:true,  offY:-16},
-      {from:2,to:4,label:'C',dur:8, cp:true,  offY:-14},
-      {from:2,to:4,label:'D',dur:4, cp:false, offY:14},
-      {from:3,to:5,label:'E',dur:3, cp:true,  offY:-16},
-      {from:4,to:5,label:'F',dur:1, cp:true,  offY:16},
-      {from:5,to:6,label:'G',dur:2, cp:true},
+      {from:1,to:2,label:'A',dur:3, cp:true},
+      {from:2,to:3,label:'B',dur:7, cp:true,  offY:-16},
+      {from:2,to:4,label:'C',dur:4, cp:false, offY:16},
+      {from:3,to:5,label:'D',dur:3, cp:true,  offY:-16},
+      {from:4,to:5,label:'E',dur:5, cp:false, offY:16},
+      {from:5,to:6,label:'F',dur:2, cp:true},
     ],
-    cp:'1 → 2 → 3 → 5 → 6  or  1 → 2 → 4 → 5 → 6  (both valid)',
-    cpSimple:[['1','2','3','5','6'],['1','2','4','5','6']],
+    cp:'A → B → D → F  (15 weeks)',
+    cpSimple:[['1','2','3','5','6']],
   },
 
   // ── SCENARIO 2: Product development ──
@@ -1062,40 +1071,43 @@ const SCENARIOS = [
   },
 
   // ── SCENARIO 3: Office renovation ──
-  // Nodes: 1->A->2, 2->B->3, 2->C->3, 2->D->3, 3->E->4, 4->F->5, 5->G->6
-  // B, C, D all start at node 2 and end at node 3
-  // Critical path: 1-2-3-4-5-6 (A+B+E+F+G=22)
-  // C has float=3, D has float=4
+  // Each activity has a unique from→to node pair. No dummies needed.
+  // A:1->2(4), B:2->3(6), C:2->4(3), D:3->5(5), E:4->5(7), F:5->6(4), G:6->7(3)
+  // Node5 EST = max(4+6+5, 4+3+7) = max(15,14) = 15  →  B path is binding
+  // Critical path: A+B+D+F+G = 4+6+5+4+3 = 22 weeks
+  // Float(C) = LFT(4) - EST(2) - dur(C) = 8 - 4 - 3 = 1 week
+  // Float(E) = LFT(5) - EST(4) - dur(E) = 15 - 7 - 7 = 1 week
   {
     context: "A business is undertaking a full office renovation. The operations manager has listed the following activities:",
     activities: [
-      {id:'A', desc:'Obtain permits and sign off',  dur:4, pre:'-'},
-      {id:'B', desc:'Strip out existing fixtures',  dur:6, pre:'A'},
-      {id:'C', desc:'Order new furniture',          dur:3, pre:'A'},
-      {id:'D', desc:'Arrange contractor schedules', dur:2, pre:'A'},
-      {id:'E', desc:'Complete structural work',     dur:5, pre:'B, C, D'},
-      {id:'F', desc:'Install fixtures and fittings',dur:4, pre:'E'},
-      {id:'G', desc:'Final inspection and handover',dur:3, pre:'F'},
+      {id:'A', desc:'Obtain permits and approvals',  dur:4, pre:'-'},
+      {id:'B', desc:'Strip out existing fixtures',   dur:6, pre:'A'},
+      {id:'C', desc:'Order materials and fittings',  dur:3, pre:'A'},
+      {id:'D', desc:'Complete structural work',      dur:5, pre:'B'},
+      {id:'E', desc:'Install electrics and plumbing',dur:7, pre:'C'},
+      {id:'F', desc:'Install fixtures and fittings', dur:4, pre:'D, E'},
+      {id:'G', desc:'Final inspection and handover', dur:3, pre:'F'},
     ],
     nodes:[
       {id:1, x:65,  y:160, est:0,  lft:0},
-      {id:2, x:210, y:160, est:4,  lft:4},
-      {id:3, x:400, y:160, est:10, lft:10},
-      {id:4, x:560, y:160, est:15, lft:15},
-      {id:5, x:710, y:160, est:19, lft:19},
-      {id:6, x:850, y:160, est:22, lft:22},
+      {id:2, x:230, y:160, est:4,  lft:4},
+      {id:3, x:430, y:75,  est:10, lft:10},
+      {id:4, x:430, y:245, est:7,  lft:8},
+      {id:5, x:630, y:160, est:15, lft:15},
+      {id:6, x:790, y:160, est:19, lft:19},
+      {id:7, x:940, y:160, est:22, lft:22},
     ],
     arrows:[
       {from:1,to:2,label:'A',dur:4, cp:true},
-      {from:2,to:3,label:'B',dur:6, cp:true,  offY:-20},
-      {from:2,to:3,label:'C',dur:3, cp:false, offY:0},
-      {from:2,to:3,label:'D',dur:2, cp:false, offY:20},
-      {from:3,to:4,label:'E',dur:5, cp:true},
-      {from:4,to:5,label:'F',dur:4, cp:true},
-      {from:5,to:6,label:'G',dur:3, cp:true},
+      {from:2,to:3,label:'B',dur:6, cp:true,  offY:-16},
+      {from:2,to:4,label:'C',dur:3, cp:false, offY:16},
+      {from:3,to:5,label:'D',dur:5, cp:true,  offY:-16},
+      {from:4,to:5,label:'E',dur:7, cp:false, offY:16},
+      {from:5,to:6,label:'F',dur:4, cp:true},
+      {from:6,to:7,label:'G',dur:3, cp:true},
     ],
-    cp:'1 → 2 → 3 → 4 → 5 → 6',
-    cpSimple:[['1','2','3','4','5','6']],
+    cp:'A → B → D → F → G  (22 weeks)',
+    cpSimple:[['1','2','3','5','6','7']],
   },
 
 ]
@@ -1268,7 +1280,8 @@ function drawPracticeCanvas() {
   const sc = currentScenario;
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.offsetWidth || 860;
-  const h = 320;
+  const maxY = Math.max(...sc.nodes.map(n => n.y));
+  const h = Math.max(340, maxY + 70);
   canvas.width = w * dpr; canvas.height = h * dpr;
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   const ctx = canvas.getContext('2d');
@@ -1276,14 +1289,15 @@ function drawPracticeCanvas() {
   ctx.clearRect(0, 0, w, h);
 
   // Scale nodes to canvas width
-  const scaleX = (w - 40) / 860;
+  const maxX = Math.max(...sc.nodes.map(n => n.x));
+  const scaleX = (w - 40) / Math.max(maxX + 60, 860);
   const scaledNodes = sc.nodes.map(n => ({...n, x: 20 + n.x * scaleX}));
 
   sc.arrows.forEach(a => {
-    if (!a.label || !a.dur) return;
     const fn = scaledNodes.find(n=>n.id===a.from);
     const tn = scaledNodes.find(n=>n.id===a.to);
-    drawArrow(ctx, fn.x, fn.y, tn.x, tn.y, a.label, a.dur, a.cp, a.offY||0);
+    if (!fn || !tn) return;
+    drawArrow(ctx, fn.x, fn.y, tn.x, tn.y, a.label||'', a.dur, a.cp, a.offY||0, a.isDummy||false, 28);
   });
   scaledNodes.forEach(n => {
     drawNode(ctx, n.x, n.y, 28, n.id, n.est, n.lft, n.est===n.lft);
