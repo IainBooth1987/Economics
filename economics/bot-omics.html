@@ -2012,6 +2012,11 @@ const TERMS = {
   'productive efficiency':    'perfectcomp',
   'dynamic efficiency':       'monopoly',
   'schumpeter':               'monopoly',
+  'price discrimination':      'monopoly',
+  'first degree price discrimination': 'monopoly',
+  'second degree price discrimination':'monopoly',
+  'third degree price discrimination': 'monopoly',
+  'price discriminate':        'monopoly',
 
   // ── Labour Markets ───────────────────────────────────────
   'derived demand':           'labour',
@@ -2191,6 +2196,112 @@ const TERMS = {
   'ao4':                      'examtech',
   'mark scheme':              'examtech',
   'aqa economics':            'examtech',
+
+  // ── Additional glossary-term routing ────────────────────────
+  'deadweight loss':               'externalities',
+  'deadweight welfare loss':       'externalities',
+  'dwl':                           'externalities',
+  'net welfare loss':              'externalities',
+  'welfare loss':                  'externalities',
+  'cost-push inflation':           'inflation',
+  'demand-pull inflation':         'inflation',
+  'wage-price spiral':             'inflation',
+  'shoe-leather costs':            'inflation',
+  'status quo bias':               'behavioural',
+  'herd behaviour':                'behavioural',
+  'herding':                       'behavioural',
+  'framing':                       'behavioural',
+  'collective bargaining':         'labour',
+  'trade union power':             'labour',
+  'closed shop':                   'labour',
+  'wage elasticity of demand':     'labour',
+  'wage elasticity of supply':     'labour',
+  'non-wage factors':              'labour',
+  'compensating differentials':    'labour',
+  'efficiency wage theory':        'labour',
+  'backward-bending supply curve': 'labour',
+  'dominant strategy':             'marketstructures',
+  'limit pricing':                 'marketstructures',
+  'entry-limit pricing':           'marketstructures',
+  'homogeneous products':          'marketstructures',
+  'differentiated products':       'marketstructures',
+  'savings gap':                   'development',
+  'capital flight':                'development',
+  'automatic stabiliser':          'fiscal',
+  'discretionary fiscal policy':   'fiscal',
+  'expenditure-switching':         'bopdetail',
+  'expenditure-reducing':          'bopdetail',
+  'expenditure-switching policy':  'bopdetail',
+  'expenditure-reducing policy':   'bopdetail',
+  'normal profit':                 'perfectcomp',
+  'subnormal profit':              'costs',
+  'supernormal profit':            'monopoly',
+  'opportunity cost':              'trade',
+  'substitution effect':           'pricemechanism',
+  'income effect':                 'pricemechanism',
+  'movement along demand':         'pricemechanism',
+  'movement along supply':         'pricemechanism',
+  'shift in demand':               'pricemechanism',
+  'shift in supply':               'pricemechanism',
+  'division of labour':            'costs',
+  'non-excludable':                'externalities',
+  'non-rival':                     'externalities',
+  'free-rider problem':            'externalities',
+  'pollution permits':             'externalities',
+  'carbon offsetting':             'externalities',
+  'property rights solution':      'externalities',
+  'negative externality in production':  'externalities',
+  'negative externality in consumption': 'externalities',
+  'positive externality in production':  'externalities',
+  'positive externality in consumption': 'externalities',
+  'price elastic':                 'ped',
+  'price inelastic':               'ped',
+  'positive yed':                  'ped',
+  'negative yed':                  'ped',
+  'positive xed':                  'ped',
+  'negative xed':                  'ped',
+  'rational expectations':         'phillips',
+  'demand shock':                  'adshifts',
+  'adverse supply shock':          'lras',
+  'favourable supply shock':       'lras',
+  'supply-side improvements':      'supplyside',
+  'free-market supply-side':       'supplyside',
+  'interventionist supply-side':   'supplyside',
+  'marshall-lerner condition':     'exchangerates',
+  'destabilising speculation':     'exchangerates',
+  'managed float':                 'exchangerates',
+  'narrow money (m0/m1)':          'financial',
+  'broad money (m2/m3/m4)':        'financial',
+  'liquidity ratios':              'financial',
+  'reserve requirements':          'financial',
+  'macroprudential regulation':    'financial',
+  'solvency failure':              'financial',
+  'liquidity failure':             'financial',
+  'money supply':                  'financial',
+  'quantitative tightening (qt)':  'monetary',
+  'long and variable lags':        'monetary',
+  'unintended consequences':       'govfailure',
+  'harrod-domar model':            'growth',
+  'living standards':              'growth',
+  'increasing returns to scale':   'costs',
+  'internal economies of scale':   'costs',
+  'law of diminishing (marginal) returns': 'costs',
+  'variable costs':                'costs',
+  'fixed costs':                   'costs',
+  'transfer pricing':              'trade',
+  'trade-off':                     'phillips',
+  'line of perfect equality':      'inequality',
+  'means-tested transfers':        'inequality',
+  'progressive income tax':        'inequality',
+  'human development index':       'nationalincome',
+  'trade in goods (visibles)':     'bopdetail',
+  'trade in services (invisibles)':'bopdetail',
+  'fractional reserve banking':    'financial',
+  'fractional reserve':            'financial',
+  'income elasticity of demand':   'ped',
+  'cross elasticity of demand':    'ped',
+  'backwards bending supply curve':'labour',
+  'sunk costs':                    'marketstructures',
 };
 
 // ── EXAM TECHNIQUE topic (added to KB) ─────────────────────
@@ -2257,8 +2368,11 @@ function matchTopic(input){
   }
 
   // ── Step 2: Pattern scoring — real student question fragments ──
+  // Skip object-style entries (entry-point records) — only process [fragment, id, weight] arrays
   const scores = {};
-  for(const [fragment, topicId, weight] of PATTERNS){
+  for(const entry of PATTERNS){
+    if(!Array.isArray(entry)) continue;
+    const [fragment, topicId, weight] = entry;
     if(q.includes(fragment)){
       scores[topicId] = (scores[topicId] || 0) + weight;
     }
@@ -5457,13 +5571,8 @@ function isDiagramQuestion(input) {
 function respond(input){
   showThinking();
   setTimeout(()=>{
+    try{
     rmThinking();
-
-    // ── DEBUG (remove before deploy) ─────────────────────────
-    if(window._botomicsDebug){
-      const dbg=`topic=${S.topic?S.topic.id:'null'} hint=${S.hint} await=${S.awaitingAnswer} | isClar=${isClarificationRequest(input)} isDef=${isDefinitionRequest(input)}`;
-      addMsg('bot',`<p style="font-size:0.7rem;color:#888;font-family:monospace;">[DEBUG] ${dbg}</p>`,'neutral','Debug');
-    }
 
     // ── STEP 0: CLARIFICATION CHECK ──────────────────────────
     // Always fires first — if the student is asking the BOT a
@@ -5632,9 +5741,22 @@ function respond(input){
         }
         if(defEntry){
           const displayTerm=defTerm.charAt(0).toUpperCase()+defTerm.slice(1);
+          // Route follow-ups: if this glossary term maps to a KB topic via TERMS, set it
+          // so the student can immediately ask follow-up questions without being told to rephrase.
+          // Find related KB topic for follow-up routing.
+          // Try TERMS first (direct mapping), then matchTopic on the subject itself.
+          const relatedTopicId = TERMS[defTerm] || TERMS[subjectNorm] || null;
+          let relatedTopic = relatedTopicId ? [...KB,EXAM_TOPIC].find(t=>t.id===relatedTopicId) : null;
+          if(!relatedTopic){
+            const subjectMatch = matchTopic(defTerm) || matchTopic(subjectNorm);
+            if(subjectMatch && subjectMatch.score >= 6) relatedTopic = subjectMatch.topic;
+          }
+          if(relatedTopic){
+            S.topic=relatedTopic; S.hint=0; S.awaitingAnswer=false;
+          }
           addMsg('bot',
             `<p><strong>${displayTerm}</strong>: ${defEntry}.</p>
-             <p style="margin-top:0.5rem;font-size:0.8rem;color:var(--muted);">If you want to explore this concept further, ask a follow-up question or pick a related topic.</p>`,
+             <p style="margin-top:0.5rem;font-size:0.8rem;color:var(--muted);">If you want to explore this further, ask a follow-up — or I can guide you through the full concept step by step.</p>`,
             'neutral', 'Definition');
           return;
         }
@@ -5768,6 +5890,11 @@ function respond(input){
       `<p>I want to guide you properly — but I need to know which concept this is about. Rephrase your question and include at least one economics term: a model, curve, market structure, or policy name.</p>
       <p style="font-size:0.79rem;color:var(--muted);margin-top:0.4rem;">If you are not sure what it is called, check your notes then come back. Naming the concept is often the first step.</p>`,
       'neutral',"Let's be more precise");
+  } catch(err){
+    rmThinking();
+    addMsg('bot',`<p style="color:#ef4444;font-size:0.8rem;">Something went wrong: ${err.message}. Please refresh and try again.</p>`,"neutral","Error");
+    console.error("BOT-OMICS respond() error:",err);
+  }
   },500+Math.random()*300);
 }
 
