@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Principal–Agent Problem | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a2744;
+  --navy-light: #243156;
+  --gold: #c9a227;
+  --gold-light: #e8c547;
+  --red: #c0392b;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --amber: #e67e22;
+  --bg: #f4f5f8;
+  --white: #ffffff;
+  --text: #1e2430;
+  --muted: #6b7280;
+  --border: #dde1ea;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+.biz-header {
+  background: var(--navy);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.biz-logo {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold);
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+.biz-logo span { color: var(--white); }
+.biz-header-title {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ── MAIN WRAPPER ───────────────────────────── */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+/* ── PAGE TITLE ─────────────────────────────── */
+.page-title {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.page-title h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.1rem;
+  color: var(--navy);
+  line-height: 1.2;
+}
+.page-title p {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 1rem;
+}
+
+/* ── MODEL BANNER ───────────────────────────── */
+.model-banner {
+  background: var(--navy);
+  color: white;
+  border-left: 5px solid var(--gold);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+.model-banner strong { color: var(--gold-light); }
+
+/* ── PROGRESS BAR ───────────────────────────── */
+.progress-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 30px;
+}
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.progress-circle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  transition: all 0.35s;
+}
+.progress-step.active .progress-circle {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(26,39,68,0.18);
+  transform: scale(1.12);
+}
+.progress-step.done .progress-circle {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.progress-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.progress-step.active .progress-label { color: var(--navy); }
+.progress-connector {
+  width: 60px;
+  height: 3px;
+  background: var(--border);
+  margin-bottom: 20px;
+  transition: background 0.35s;
+}
+.progress-connector.done { background: var(--green); }
+
+/* ── STEP PANELS ────────────────────────────── */
+.step { display: none; }
+.step.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.step-header {
+  background: var(--navy);
+  color: white;
+  padding: 18px 24px;
+  border-radius: 10px 10px 0 0;
+  margin-bottom: 0;
+}
+.step-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  margin-bottom: 3px;
+}
+.step-header p { opacity: 0.75; font-size: 0.9rem; }
+
+.step-body {
+  background: white;
+  border: 2px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+/* ── THEORY / INFO BOXES ────────────────────── */
+.theory-box {
+  background: #eef3fb;
+  border-left: 4px solid var(--navy);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.theory-box h3 { color: var(--navy); font-size: 1rem; margin-bottom: 8px; }
+.theory-box p, .theory-box li { font-size: 0.92rem; line-height: 1.6; color: var(--text); }
+.theory-box ul { padding-left: 20px; margin-top: 6px; }
+.theory-box li { margin-bottom: 4px; }
+
+.warn-box {
+  background: #fff8e6;
+  border-left: 4px solid var(--gold);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.warn-box h3 { color: #8a6200; margin-bottom: 6px; font-size: 0.95rem; }
+
+.success-box {
+  background: #eafaf1;
+  border-left: 4px solid var(--green);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.success-box h3 { color: #1a7a45; font-size: 1rem; margin-bottom: 8px; }
+.success-box p, .success-box li { font-size: 0.92rem; line-height: 1.6; }
+.success-box ul { padding-left: 20px; margin-top: 6px; }
+.success-box li { margin-bottom: 4px; }
+
+/* ── GLOSSARY TOOLTIPS ──────────────────────── */
+.gloss {
+  border-bottom: 2px dashed var(--gold);
+  color: var(--navy);
+  font-weight: 600;
+  cursor: help;
+  position: relative;
+  display: inline;
+}
+.gloss-tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+  padding: 10px 13px;
+  border-radius: 7px;
+  width: 230px;
+  z-index: 200;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.gloss-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--navy);
+}
+.gloss:hover .gloss-tip,
+.gloss:focus .gloss-tip { display: block; }
+.gloss-label {
+  color: var(--gold-light);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* ── SELECTION GRIDS ────────────────────────── */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.scenario-card {
+  border: 2.5px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: white;
+}
+.scenario-card:hover {
+  border-color: var(--navy);
+  box-shadow: 0 4px 14px rgba(26,39,68,0.12);
+  transform: translateY(-2px);
+}
+.scenario-card.selected {
+  border-color: var(--gold);
+  background: #fdf8ec;
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.25);
+}
+.scenario-card:focus { outline: 3px solid var(--blue); outline-offset: 2px; }
+.card-icon { font-size: 2rem; margin-bottom: 10px; }
+.card-title { font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 5px; }
+.card-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+
+.decision-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 16px 0 20px;
+}
+.decision-card {
+  border: 2.5px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: white;
+}
+.decision-card:hover { border-color: var(--navy); box-shadow: 0 4px 14px rgba(26,39,68,0.1); }
+.decision-card.selected {
+  border-color: var(--gold);
+  background: #fdf8ec;
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.2);
+}
+.decision-card h4 { color: var(--navy); font-size: 0.98rem; margin-bottom: 6px; }
+.decision-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.45; margin-bottom: 10px; }
+.risk-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.risk-high { background: #fdecea; color: var(--red); border: 1px solid #f1998a; }
+.risk-med { background: #fff3cd; color: #856404; border: 1px solid #f0c842; }
+.risk-low { background: #eafaf1; color: #1a7a45; border: 1px solid #82d8a8; }
+
+/* ── SCENARIO VIGNETTE ──────────────────────── */
+.vignette {
+  background: #f9f6ee;
+  border-left: 5px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.vignette-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.vignette p { font-size: 0.93rem; line-height: 1.6; color: var(--text); }
+
+/* ── CONTRACT SLIDERS ───────────────────────── */
+.slider-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+@media (max-width: 680px) { .slider-area { grid-template-columns: 1fr; } }
+
+.slider-card {
+  background: #f8f9fc;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.slider-card label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.slider-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--gold);
+  font-weight: 900;
+}
+.slider-hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
+input[type=range] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 3px solid white;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+}
+input[type=range]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 3px solid white;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+}
+input[type=range]:focus { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+.slider-sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+
+/* ── LIVE CONTRACT PREVIEW ──────────────────── */
+.contract-preview {
+  background: var(--navy);
+  color: white;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.contract-preview h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--gold-light);
+  margin-bottom: 12px;
+}
+.cp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.88rem;
+}
+.cp-row:last-child { border-bottom: none; }
+.cp-label { color: rgba(255,255,255,0.65); }
+.cp-val { font-weight: 700; color: white; }
+.cp-signal {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+.sig-good { background: rgba(39,174,96,0.25); color: #6ee5a0; }
+.sig-warn { background: rgba(230,126,34,0.25); color: #f5b67a; }
+.sig-bad { background: rgba(192,57,43,0.25); color: #f08080; }
+.cp-narrative {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.55;
+  font-style: italic;
+}
+
+/* ── RESULTS LAYOUT ─────────────────────────── */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+@media (max-width: 680px) { .results-grid { grid-template-columns: 1fr; } }
+
+.results-panel {
+  background: #f8f9fc;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.results-panel h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  font-size: 1rem;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.metric-row:last-child { border-bottom: none; }
+.metric-label { color: var(--muted); font-weight: 500; }
+.metric-val { font-weight: 700; color: var(--navy); }
+.metric-val.pos { color: var(--green); }
+.metric-val.neg { color: var(--red); }
+
+.bar-group { margin-bottom: 12px; }
+.bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.bar-track {
+  height: 16px;
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+.bar-effort { background: linear-gradient(90deg, #2980b9, #1a2744); }
+.bar-align  { background: linear-gradient(90deg, #27ae60, #1a7a45); }
+.bar-satis  { background: linear-gradient(90deg, #e67e22, #c9a227); }
+.bar-hazard { background: linear-gradient(90deg, #c9a227, #c0392b); }
+
+/* ── EQUILIBRIUM ────────────────────────────── */
+.equil-section {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.equil-section h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+.equil-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 8px 0 14px;
+  border: 2px solid;
+}
+.equil-sep   { background: #eafaf1; border-color: var(--green); color: #1a7a45; }
+.equil-pool  { background: #fff8e6; border-color: var(--gold); color: #7a5c00; }
+.equil-part  { background: #e8f4fd; border-color: var(--blue); color: #1a5276; }
+.equil-unstable { background: #fdecea; border-color: var(--red); color: #7b1e14; }
+
+.equil-explainer {
+  background: #f4f5f8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.equil-what-means {
+  border-left: 3px solid var(--gold);
+  background: #fdf8ec;
+  border-radius: 0 6px 6px 0;
+  padding: 12px 14px;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+.equil-what-means strong { color: var(--navy); }
+
+/* ── ANALYSIS SECTIONS ──────────────────────── */
+.analysis-section {
+  border-top: 2px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.analysis-section h4 { color: var(--navy); font-size: 0.95rem; margin-bottom: 6px; }
+.analysis-section p { font-size: 0.88rem; line-height: 1.6; color: var(--text); }
+
+/* ── OPTIMAL COMPARISON ─────────────────────── */
+.comparison-box {
+  background: #eafaf1;
+  border: 2px solid var(--green);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.comparison-box h4 {
+  color: #1a7a45;
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+.cmp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.cmp-cell {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.cmp-cell strong { display: block; color: var(--navy); margin-bottom: 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.cmp-tip {
+  margin-top: 12px;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  color: var(--text);
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* ── WHAT-IF PANEL ──────────────────────────── */
+.whatif-section {
+  background: white;
+  border: 2px solid var(--navy);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.whatif-section h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+.whatif-section p { font-size: 0.88rem; color: var(--muted); margin-bottom: 14px; }
+.whatif-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 680px) { .whatif-grid { grid-template-columns: 1fr 1fr; } }
+.wi-card {
+  background: #f4f5f8;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.wi-card:hover { border-color: var(--navy); background: #eef3fb; }
+.wi-card.active { border-color: var(--gold); background: #fdf8ec; }
+.wi-label { font-weight: 700; color: var(--navy); display: block; margin-bottom: 4px; }
+.wi-change { color: var(--muted); font-size: 0.76rem; }
+
+.whatif-result {
+  background: #f4f5f8;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  min-height: 60px;
+  color: var(--text);
+}
+.delta-pos { color: var(--green); font-weight: 700; }
+.delta-neg { color: var(--red); font-weight: 700; }
+
+/* ── FEEDBACK ───────────────────────────────── */
+.feedback-box {
+  background: white;
+  border: 2px solid var(--blue);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.feedback-box h3 { color: var(--blue); font-size: 0.95rem; margin-bottom: 8px; }
+.feedback-box p { font-size: 0.9rem; line-height: 1.6; font-style: italic; }
+
+/* ── BUTTONS ────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.btn {
+  background: var(--navy);
+  color: white;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.btn:hover:not(:disabled) { background: var(--navy-light); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(26,39,68,0.2); }
+.btn:disabled { background: #adb5bd; cursor: not-allowed; transform: none; }
+.btn:focus { outline: 3px solid var(--blue); outline-offset: 2px; }
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover:not(:disabled) { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--navy); }
+.btn-outline:hover:not(:disabled) { background: var(--navy); color: white; }
+.btn-sm { padding: 7px 14px; font-size: 0.82rem; }
+
+/* ── ASSUMPTIONS ────────────────────────────── */
+.assumptions-wrap {
+  border: 2px solid #9ca3af;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.assumptions-toggle {
+  background: #6b7280;
+  color: white;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+}
+.assumptions-toggle:hover { background: #4b5563; }
+.assumptions-body {
+  display: none;
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  background: #f9fafb;
+}
+.assumptions-body ul { padding-left: 18px; }
+.assumptions-body li { margin-bottom: 6px; }
+.assumptions-body.open { display: block; }
+
+/* ── FOOTER ─────────────────────────────────── */
+.biz-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 30px;
+}
+
+/* ── PRINT ──────────────────────────────────── */
+@media print {
+  .biz-header, .progress-strip, .btn-row, .whatif-section,
+  .slider-area, .contract-preview, .assumptions-wrap,
+  .scenario-grid, .decision-grid, .step:not(.active) { display: none !important; }
+  body { background: white; font-family: Georgia, serif; }
+  .step-header { background: none; color: black; border-bottom: 2px solid black; border-radius: 0; }
+  .main { padding: 0; max-width: 100%; }
+  .results-grid { grid-template-columns: 1fr 1fr; }
+  .results-panel, .equil-section, .comparison-box, .feedback-box { border: 1px solid #ccc; }
+  a::after { content: none; }
+
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid black;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .print-brand { font-family: Georgia, serif; font-size: 1.2rem; font-weight: bold; }
+  .print-topic { font-size: 0.9rem; }
+}
+.print-header { display: none; }
+</style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Principal Agent Problem</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_prinagt_pw';
+  var valid = ['PrinAgt-3Hd!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['PrinAgt-3Hd!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_prinagt_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<!-- BIZ-OMICS HEADER -->
+<header class="biz-header">
+  <a class="biz-logo" href="https://biz-omics.co.uk" target="_blank">BIZ<span>-OMICS</span></a>
+  <span class="biz-header-title">Principal–Agent Problem &amp; Information Failure</span>
+  <button class="btn btn-sm btn-gold" onclick="window.print()" style="padding:6px 12px;font-size:0.78rem;">🖨 Print</button>
+</header>
+
+<div class="main">
+
+  <!-- Print header (visible only in print) -->
+  <div class="print-header">
+    <span class="print-brand">BIZ-OMICS — biz-omics.co.uk</span>
+    <span class="print-topic">Principal–Agent Problem &amp; Information Failure Simulator</span>
+  </div>
+
+  <!-- PAGE TITLE -->
+  <div class="page-title">
+    <h1>Principal–Agent Problem Simulator</h1>
+    <p>Explore information failure, moral hazard, and adverse selection through interactive contract design</p>
+  </div>
+
+  <!-- MODEL BANNER -->
+  <div class="model-banner">
+    <strong>📐 Economic Model:</strong> This simulation models a principal–agent problem where <strong>manager ability is hidden before hiring</strong> (adverse selection) and <strong>effort is unobservable after hiring</strong> (moral hazard). You must design an incentive contract despite asymmetric information — illustrating a core source of <strong>market failure</strong> arising from information problems.
+  </div>
+
+  <!-- PROGRESS INDICATOR -->
+  <div class="progress-strip" role="navigation" aria-label="Simulation progress">
+    <div class="progress-step active" id="dot1">
+      <div class="progress-circle">1</div>
+      <div class="progress-label">Scenario</div>
+    </div>
+    <div class="progress-connector" id="conn1"></div>
+    <div class="progress-step" id="dot2">
+      <div class="progress-circle">2</div>
+      <div class="progress-label">Dilemma</div>
+    </div>
+    <div class="progress-connector" id="conn2"></div>
+    <div class="progress-step" id="dot3">
+      <div class="progress-circle">3</div>
+      <div class="progress-label">Contract</div>
+    </div>
+    <div class="progress-connector" id="conn3"></div>
+    <div class="progress-step" id="dot4">
+      <div class="progress-circle">4</div>
+      <div class="progress-label">Results</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 1: SCENARIO SELECTION ═══════════ -->
+  <div id="step1" class="step active">
+    <div class="step-header">
+      <h2>Step 1: Choose Your Principal–Agent Scenario</h2>
+      <p>Select a real-world context in which information failure creates a problem</p>
+    </div>
+    <div class="step-body">
+
+      <div class="theory-box">
+        <h3>📚 The Principal–Agent Problem as Information Failure</h3>
+        <p>A <span class="gloss" tabindex="0">principal–agent problem<span class="gloss-tip"><span class="gloss-label">Principal–Agent Problem</span>Arises when one party (principal) delegates a task to another (agent) whose actions cannot be perfectly observed. A form of market failure caused by information asymmetry.</span></span> occurs whenever one person delegates decisions to another, but cannot perfectly observe what that person does. It is a direct consequence of <span class="gloss" tabindex="0">asymmetric information<span class="gloss-tip"><span class="gloss-label">Asymmetric Information</span>A situation where one party to a transaction has more or better information than the other. Can cause markets to fail or produce inefficient outcomes.</span></span> — one party knows more than the other.</p>
+        <p style="margin-top:8px;">Two problems arise from this information gap:</p>
+        <ul>
+          <li><span class="gloss" tabindex="0">Adverse selection<span class="gloss-tip"><span class="gloss-label">Adverse Selection</span>Pre-contractual information failure. The uninformed party (principal) cannot distinguish high-quality from low-quality agents before hiring. Bad types are disproportionately attracted. Linked to Akerlof's "Market for Lemons".</span></span> — before hiring: you cannot verify a candidate's true ability</li>
+          <li><span class="gloss" tabindex="0">Moral hazard<span class="gloss-tip"><span class="gloss-label">Moral Hazard</span>Post-contractual information failure. Once hired, the agent may reduce effort or take risks because the principal cannot fully observe their actions. The agent bears less than the full cost of their behaviour.</span></span> — after hiring: you cannot perfectly observe whether they work hard</li>
+        </ul>
+        <p style="margin-top:8px;">The result is a form of <span class="gloss" tabindex="0">market failure<span class="gloss-tip"><span class="gloss-label">Market Failure</span>When free markets allocate resources inefficiently. Information failure is one of four main causes (alongside externalities, public goods, and monopoly power).</span></span> — resources are not allocated efficiently because contracts are <span class="gloss" tabindex="0">incomplete<span class="gloss-tip"><span class="gloss-label">Incomplete Contract</span>A contract that cannot specify every possible action the agent might take or every contingency that might arise. The principal must use incentive mechanisms instead of direct instruction.</span></span>.</p>
+      </div>
+
+      <div class="assumptions-wrap">
+        <button class="assumptions-toggle" onclick="this.nextElementSibling.classList.toggle('open')">
+          🔬 Model Assumptions (click to expand) <span>▼</span>
+        </button>
+        <div class="assumptions-body">
+          <p>This simulation makes several simplifying assumptions to isolate key principles:</p>
+          <ul>
+            <li><strong>Manager quality varies (50–100 scale)</strong> but is unobservable — you can only infer it from signals sent by the contract</li>
+            <li><strong>Effort is unobservable</strong> — you see outcomes but not inputs, the essence of the moral hazard problem</li>
+            <li><strong>Contract design signals expectations</strong> — salary, autonomy, and monitoring all convey information to applicants (signalling theory)</li>
+            <li><strong>Monitoring costs are real and non-linear</strong> — they scale exponentially with intensity</li>
+            <li><strong>Single-period model</strong> — real relationships involve reputation effects over time, not modelled here</li>
+            <li><strong>Risk premium not explicitly priced</strong> — in full models, risk-averse agents demand extra pay for variable income</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom:14px;color:var(--navy);font-family:'Playfair Display',serif;">Select a scenario:</h3>
+      <div class="scenario-grid" role="group" aria-label="Scenario selection">
+        <div class="scenario-card" tabindex="0" role="button" data-scenario="shareholder" aria-pressed="false">
+          <div class="card-icon">🏢</div>
+          <div class="card-title">Shareholder &amp; CEO</div>
+          <div class="card-desc">Shareholders (principals) cannot observe whether the CEO (agent) is maximising firm value or their own salary and status.</div>
+        </div>
+        <div class="scenario-card" tabindex="0" role="button" data-scenario="insurer" aria-pressed="false">
+          <div class="card-icon">🛡️</div>
+          <div class="card-title">Insurer &amp; Policyholder</div>
+          <div class="card-desc">An insurer (principal) cannot observe whether a policyholder (agent) takes reasonable precautions once insured — the classic moral hazard case.</div>
+        </div>
+        <div class="scenario-card" tabindex="0" role="button" data-scenario="employer" aria-pressed="false">
+          <div class="card-icon">🏭</div>
+          <div class="card-title">Employer &amp; Worker</div>
+          <div class="card-desc">A firm (principal) cannot observe the effort level of a worker (agent) on the factory floor, creating shirking incentives.</div>
+        </div>
+        <div class="scenario-card" tabindex="0" role="button" data-scenario="lender" aria-pressed="false">
+          <div class="card-icon">🏦</div>
+          <div class="card-title">Bank &amp; Borrower</div>
+          <div class="card-desc">A bank (principal) cannot observe how a borrower (agent) uses a loan — whether in productive investment or risky speculation.</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button id="next1" class="btn" disabled>Next: See the Dilemma →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 2: DILEMMA ═══════════ -->
+  <div id="step2" class="step">
+    <div class="step-header">
+      <h2>Step 2: The Information Failure in Action</h2>
+      <p>A critical decision reveals why asymmetric information matters</p>
+    </div>
+    <div class="step-body">
+
+      <div class="theory-box">
+        <h3>⚠️ Why This Creates a Problem</h3>
+        <p>As the principal you must make a decision without knowing the agent's true type. The agent has <span class="gloss" tabindex="0">private information<span class="gloss-tip"><span class="gloss-label">Private Information</span>Information known to one party but not the other. When agents have private information about their ability or intentions, they may exploit the principal's ignorance.</span></span> about their own risk appetite, effort, or intentions. This creates an opportunity for opportunistic behaviour — what economists call <span class="gloss" tabindex="0">agency costs<span class="gloss-tip"><span class="gloss-label">Agency Costs</span>The costs borne by the principal as a result of the agent acting in their own interest rather than the principal's. Includes monitoring costs, bonding costs, and residual loss from misaligned decisions.</span></span>.</p>
+      </div>
+
+      <div class="vignette" id="vignette2"></div>
+
+      <h3 style="margin-bottom:12px;color:var(--navy);">How would you structure the agent's contract?</h3>
+      <div class="decision-grid" role="group" aria-label="Decision selection" id="decisionGrid"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="showStep(1)">← Back</button>
+        <button id="next2" class="btn" disabled>Next: Design the Contract →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 3: CONTRACT DESIGN ═══════════ -->
+  <div id="step3" class="step">
+    <div class="step-header">
+      <h2>Step 3: Design the Incentive Contract</h2>
+      <p>Use economic mechanisms to reduce information failure — watch the live preview update</p>
+    </div>
+    <div class="step-body">
+
+      <div class="theory-box">
+        <h3>🎯 Incentive Mechanisms</h3>
+        <p>Because contracts are <span class="gloss" tabindex="0">incomplete<span class="gloss-tip"><span class="gloss-label">Incomplete Contract</span>Cannot specify every contingency. Requires incentive mechanisms to substitute for direct instruction. Source of ongoing agency problems.</span></span>, principals must use indirect tools. Your four levers reflect key economic mechanisms:</p>
+        <ul>
+          <li><strong>Base salary</strong> — reduces <span class="gloss" tabindex="0">adverse selection<span class="gloss-tip"><span class="gloss-label">Adverse Selection</span>Higher wages attract higher-ability workers. Efficiency wage theory argues paying above market rate screens for quality and reduces turnover.</span></span> by attracting better applicants</li>
+          <li><strong>Performance bonus</strong> — tackles <span class="gloss" tabindex="0">moral hazard<span class="gloss-tip"><span class="gloss-label">Moral Hazard</span>Linking pay to outcomes aligns agent interests with principal's. But high bonuses may induce excessive risk-taking (as in the 2008 financial crisis).</span></span> by aligning incentives with outcomes</li>
+          <li><strong>Autonomy</strong> — signals trust and attracts confident, capable agents (<span class="gloss" tabindex="0">signalling<span class="gloss-tip"><span class="gloss-label">Signalling</span>Spence (1973): contracts signal what type of agent the principal wants, affecting who applies. High autonomy + low monitoring signals trust; the opposite signals distrust.</span></span>)</li>
+          <li><strong>Monitoring</strong> — directly reduces shirking but has real costs and reduces <span class="gloss" tabindex="0">intrinsic motivation<span class="gloss-tip"><span class="gloss-label">Intrinsic Motivation</span>Motivation from within — interest, pride, professional identity. Crowded out by excessive monitoring (crowding-out effect). Over-monitoring can reduce total effort.</span></span></li>
+        </ul>
+      </div>
+
+      <!-- LIVE CONTRACT PREVIEW -->
+      <div class="contract-preview" id="contractPreview">
+        <h3>📄 Your Contract — Live Preview</h3>
+        <div class="cp-row">
+          <span class="cp-label">Base Salary</span>
+          <span class="cp-val" id="cp-salary">£80,000</span>
+        </div>
+        <div class="cp-row">
+          <span class="cp-label">Performance Bonus</span>
+          <span class="cp-val" id="cp-bonus">15% of surplus<span class="cp-signal sig-warn" id="sig-bonus">Moderate</span></span>
+        </div>
+        <div class="cp-row">
+          <span class="cp-label">Autonomy</span>
+          <span class="cp-val" id="cp-autonomy">6/10<span class="cp-signal sig-warn" id="sig-auto">Balanced</span></span>
+        </div>
+        <div class="cp-row">
+          <span class="cp-label">Monitoring</span>
+          <span class="cp-val" id="cp-monitoring">5/10<span class="cp-signal sig-warn" id="sig-mon">Moderate</span></span>
+        </div>
+        <div class="cp-row">
+          <span class="cp-label">Total Fixed Cost</span>
+          <span class="cp-val" id="cp-totalcost">£95,000/yr</span>
+        </div>
+        <div class="cp-narrative" id="cp-narrative">
+          Your contract sends mixed signals. A capable agent might accept, but they are uncertain about how much trust and freedom they will have.
+        </div>
+      </div>
+
+      <!-- SLIDERS -->
+      <div class="slider-area">
+        <div class="slider-card">
+          <label for="salary">Base Salary <span class="slider-val">£<span id="salaryVal">80,000</span></span></label>
+          <p class="slider-hint">Attracts higher-ability applicants (reduces adverse selection). Paid regardless of effort — no direct effect on moral hazard.</p>
+          <input type="range" id="salary" min="30000" max="150000" step="5000" value="80000"
+                 aria-label="Base salary" aria-valuemin="30000" aria-valuemax="150000" aria-valuenow="80000">
+          <p class="slider-sub">💰 Fixed annual cost: £<span id="salaryCostSub">80,000</span></p>
+        </div>
+
+        <div class="slider-card">
+          <label for="bonus">Performance Bonus <span class="slider-val"><span id="bonusVal">15</span>%</span></label>
+          <p class="slider-hint">Links pay to observable outcomes — mitigates moral hazard. Very high bonuses can induce excessive risk-taking.</p>
+          <input type="range" id="bonus" min="0" max="50" step="5" value="15"
+                 aria-label="Performance bonus %" aria-valuemin="0" aria-valuemax="50" aria-valuenow="15">
+          <p class="slider-sub">⚡ Variable: shifts financial risk onto agent</p>
+        </div>
+
+        <div class="slider-card">
+          <label for="autonomy">Autonomy Level <span class="slider-val"><span id="autonomyVal">6</span>/10</span></label>
+          <p class="slider-hint">Boosts intrinsic motivation and attracts confident agents. High autonomy + low monitoring signals trust (Spence signalling).</p>
+          <input type="range" id="autonomy" min="1" max="10" step="1" value="6"
+                 aria-label="Autonomy 1-10" aria-valuemin="1" aria-valuemax="10" aria-valuenow="6">
+          <p class="slider-sub">🎯 Affects: effort, satisfaction, adverse selection</p>
+        </div>
+
+        <div class="slider-card">
+          <label for="monitoring">Monitoring Intensity <span class="slider-val"><span id="monitoringVal">5</span>/10</span></label>
+          <p class="slider-hint">Reduces shirking directly but costs money and crowds out intrinsic motivation. High monitoring contradicts high autonomy.</p>
+          <input type="range" id="monitoring" min="1" max="10" step="1" value="5"
+                 aria-label="Monitoring 1-10" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5">
+          <p class="slider-sub">💸 Monitoring cost: £<span id="monCostSub">15,000</span>/yr</p>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="showStep(2)">← Back</button>
+        <button id="calculate" class="btn btn-gold">Calculate Results →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ STEP 4: RESULTS ═══════════ -->
+  <div id="step4" class="step">
+    <div class="step-header">
+      <h2>Step 4: Results &amp; Economic Analysis</h2>
+      <p>Evaluate your contract against key dimensions of information failure theory</p>
+    </div>
+    <div class="step-body">
+
+      <!-- FINANCIAL + BEHAVIOUR RESULTS -->
+      <div class="results-grid">
+        <div class="results-panel">
+          <h3>💷 Financial Outcomes</h3>
+          <div class="metric-row"><span class="metric-label">Revenue Generated</span><span class="metric-val" id="r-revenue">—</span></div>
+          <div class="metric-row"><span class="metric-label">Total Compensation</span><span class="metric-val" id="r-comp">—</span></div>
+          <div class="metric-row"><span class="metric-label">Monitoring Costs</span><span class="metric-val neg" id="r-moncost">—</span></div>
+          <div class="metric-row"><span class="metric-label">Net Profit</span><span class="metric-val" id="r-profit">—</span></div>
+          <div class="metric-row"><span class="metric-label">Profit Margin</span><span class="metric-val" id="r-margin">—</span></div>
+          <div class="metric-row"><span class="metric-label">Goal Achievement</span><span class="metric-val" id="r-achieve">—</span></div>
+        </div>
+
+        <div class="results-panel">
+          <h3>🧠 Agent Behaviour</h3>
+          <div class="bar-group">
+            <div class="bar-header"><span>Effort Level</span><span id="t-effort">—</span></div>
+            <div class="bar-track"><div class="bar-fill bar-effort" id="b-effort" style="width:0%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-header"><span>Goal Alignment</span><span id="t-align">—</span></div>
+            <div class="bar-track"><div class="bar-fill bar-align" id="b-align" style="width:0%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-header"><span>Job Satisfaction</span><span id="t-satis">—</span></div>
+            <div class="bar-track"><div class="bar-fill bar-satis" id="b-satis" style="width:0%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-header"><span>Moral Hazard Risk</span><span id="t-hazard">—</span></div>
+            <div class="bar-track"><div class="bar-fill bar-hazard" id="b-hazard" style="width:0%"></div></div>
+          </div>
+
+          <div style="margin-top:14px;padding-top:12px;border-top:2px solid var(--border);">
+            <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Market Equilibrium</div>
+            <div id="equil-badge"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EQUILIBRIUM ANALYSIS -->
+      <div class="equil-section">
+        <h3>⚖️ Market Equilibrium Analysis</h3>
+        <div id="equil-badge2"></div>
+        <div class="equil-explainer" id="equil-explain"></div>
+        <div class="equil-what-means" id="equil-exam"></div>
+      </div>
+
+      <!-- ECONOMIC ANALYSIS -->
+      <div class="results-panel" style="margin-bottom:20px;">
+        <h3>📊 Economic Analysis</h3>
+        <div class="analysis-section">
+          <h4>Adverse Selection Effects</h4>
+          <p id="a-adverse"></p>
+        </div>
+        <div class="analysis-section">
+          <h4>Moral Hazard Dynamics</h4>
+          <p id="a-hazard"></p>
+        </div>
+        <div class="analysis-section">
+          <h4>Signalling Mechanism</h4>
+          <p id="a-signal"></p>
+        </div>
+        <div class="analysis-section">
+          <h4>Cost–Benefit Trade-off</h4>
+          <p id="a-tradeoff"></p>
+        </div>
+      </div>
+
+      <!-- AGENT FEEDBACK -->
+      <div class="feedback-box">
+        <h3>💬 Agent's Perspective (the person you hired)</h3>
+        <p id="r-feedback"></p>
+      </div>
+
+      <!-- OPTIMAL COMPARISON -->
+      <div class="comparison-box">
+        <h4>🎯 Comparison with Theoretically Optimal Contract</h4>
+        <div class="cmp-grid">
+          <div class="cmp-cell">
+            <strong>Your Contract</strong>
+            <span id="your-contract"></span>
+          </div>
+          <div class="cmp-cell">
+            <strong>Optimal Contract (for your scenario)</strong>
+            <span id="opt-contract"></span>
+          </div>
+        </div>
+        <div class="cmp-tip" id="opt-tip"></div>
+      </div>
+
+      <!-- WHAT-IF COMPARATOR -->
+      <div class="whatif-section">
+        <h3>🔄 What-If Comparator</h3>
+        <p>Select an alternative contract design to compare with your result — how would the outcomes differ?</p>
+        <div class="whatif-grid" id="whatif-grid"></div>
+        <div class="whatif-result" id="whatif-result">Select an alternative above to see the comparison.</div>
+      </div>
+
+      <!-- LEARNING SUMMARY -->
+      <div class="success-box">
+        <h3>✅ Core Economic Theory Covered</h3>
+        <ul>
+          <li><strong>Adverse selection</strong> occurs <em>before</em> the contract — your design signals what type of agent you want and affects who applies</li>
+          <li><strong>Moral hazard</strong> occurs <em>after</em> the contract — because effort is unobservable, agents may shirk or pursue misaligned goals</li>
+          <li><strong>Incomplete contracts</strong> force principals to use indirect incentive mechanisms (bonuses, monitoring) rather than direct instruction</li>
+          <li><strong>Signalling theory</strong> (Spence): contract terms send signals that sort applicant types — the basis of separating vs pooling equilibria</li>
+          <li><strong>Monitoring costs</strong> are real agency costs — resources spent on oversight cannot be used productively elsewhere</li>
+          <li><strong>Market failure</strong> arises because private markets cannot resolve information asymmetries without government intervention or clever mechanism design</li>
+        </ul>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="showStep(3)">← Back to Contract</button>
+        <button class="btn btn-gold" onclick="restart()">🔄 Try Again</button>
+        <button class="btn" onclick="window.print()">🖨 Print Results</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<footer class="biz-footer">
+  © BIZ-OMICS | <a href="https://biz-omics.co.uk" style="color:var(--navy);">biz-omics.co.uk</a> | Principal–Agent Problem &amp; Information Failure Simulator | A-Level Economics
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════ */
+const scenarios = {
+  shareholder: {
+    label: "Shareholder & CEO",
+    vignette: `You are a majority shareholder (principal) who has appointed a CEO (agent) to run your listed company. The CEO earns a fixed salary of £500,000 but controls all day-to-day decisions. You have just learned from a business journalist that the CEO is considering a high-risk acquisition of a rival firm — one that would significantly expand their personal prestige and empire, but which your own analysts believe is overpriced and unlikely to generate returns for shareholders. You cannot observe whether the CEO's true motivation is maximising shareholder value or their own status. You must decide how to restructure the CEO's contract before the board vote next month.`,
+    decisions: [
+      {
+        title: "Performance-linked pay (share options)",
+        desc: "Replace most of the fixed salary with long-dated share options. The CEO only gains if shareholders gain.",
+        risk: "med",
+        impact: "balanced",
+        adv: "Aligns CEO interests with shareholders via outcome-based pay. Reduces moral hazard — the CEO bears more of the financial cost of bad decisions.",
+        mhaz: "Share options focus on short-run share price rather than long-run fundamentals — may encourage earnings manipulation or excessive risk to boost the stock price."
+      },
+      {
+        title: "Intensive board monitoring",
+        desc: "Hire an independent audit committee and require weekly board reporting. Retain fixed salary.",
+        risk: "low",
+        impact: "risky",
+        adv: "Direct oversight reduces shirking and empire-building. Keeps incentives stable — CEO not tempted to game metrics.",
+        mhaz: "Monitoring is costly, may signal distrust, and reduces CEO autonomy. High-ability CEOs may leave for less scrutinised roles — adverse selection in reverse."
+      }
+    ],
+    optimal: {
+      label: "Mixed: moderate share options + independent board",
+      rationale: "Combining outcome-based pay with independent oversight addresses both moral hazard (bonus links effort to reward) and adverse selection (monitoring deters low-quality candidates who cannot perform). Pure monitoring without incentive alignment is expensive; pure bonuses without oversight encourage short-termism."
+    }
+  },
+  insurer: {
+    label: "Insurer & Policyholder",
+    vignette: `You are an insurer (principal) offering home contents insurance. Once a policy is sold, you cannot observe whether the policyholder (agent) continues to take reasonable precautions — locking doors, maintaining smoke alarms, or keeping valuables secure. A market analyst reports that your average claim rate has doubled over the past three years even though crime statistics are unchanged, suggesting policyholders are becoming less careful once insured. This is the textbook moral hazard problem: full insurance eliminates the financial incentive to prevent loss. You must redesign your standard policy terms to tackle this information failure.`,
+    decisions: [
+      {
+        title: "Introduce a significant excess (deductible)",
+        desc: "Policyholders pay the first £500 of every claim. They bear some of the financial cost of their own carelessness.",
+        risk: "low",
+        impact: "balanced",
+        adv: "Classic moral hazard solution: making policyholders bear some residual risk restores their incentive to take precautions. Reduces 'full insurance removes all care' problem.",
+        mhaz: "May disproportionately deter risk-averse low-income households (adverse selection problem — the people most in need may not buy cover)."
+      },
+      {
+        title: "Install smart-home monitoring devices",
+        desc: "Offer a premium discount if policyholders install IoT sensors. You can observe key risk-reducing behaviours.",
+        risk: "high",
+        impact: "risky",
+        adv: "Converts unobservable effort into observable data — directly addresses the asymmetric information problem. Turns a principal–agent problem into a standard observable contract.",
+        mhaz: "High setup costs for the insurer. Privacy concerns may deter uptake. Policyholders may game sensor data. Creates adverse selection — only those who know they are careful will consent."
+      }
+    ],
+    optimal: {
+      label: "Excess + optional monitoring discount",
+      rationale: "A compulsory excess (deductible) restores baseline precaution incentives cheaply. An optional monitoring programme then allows those with strong safety habits to signal their low-risk type — a separating mechanism that improves efficiency for both parties."
+    }
+  },
+  employer: {
+    label: "Employer & Worker",
+    vignette: `You own a distribution warehouse (principal) employing 200 pickers (agents) on the warehouse floor. Output is difficult to measure — a picker's speed varies by order complexity, and sabotaging output records is easy. You have recently installed CCTV but workers have learned to slow down when cameras are visible and speed up when managers walk through. Your operations manager reports that average throughput per worker has fallen 18% compared to three years ago despite no change in product mix. You need to redesign the employment contract to address this effort-visibility problem — a direct instance of the moral hazard arising from information asymmetry.`,
+    decisions: [
+      {
+        title: "Piece-rate pay (pay per unit processed)",
+        desc: "Workers earn per item picked rather than per hour. Earnings directly tied to measurable output.",
+        risk: "med",
+        impact: "balanced",
+        adv: "Strong effort incentives — the worker internalises the productivity benefit. Moral hazard is reduced because pay depends on observable output rather than unobservable effort.",
+        mhaz: "Workers may rush, increasing error rates and injury risk. They avoid complex orders and cherry-pick easy tasks. Quality may fall. Adverse selection: only risk-tolerant workers take piece rates."
+      },
+      {
+        title: "Team-based bonus scheme",
+        desc: "A profit-sharing bonus is paid to all workers if the warehouse hits monthly targets. Peer monitoring emerges naturally.",
+        risk: "high",
+        impact: "risky",
+        adv: "Peer pressure replaces costly managerial monitoring — workers observe each other and have collective incentive to tackle shirkers. Reduces direct monitoring costs.",
+        mhaz: "Free-rider problem within the team — each individual worker still has an incentive to shirk, hoping others carry them. Especially bad in large groups where individual contribution is invisible."
+      }
+    ],
+    optimal: {
+      label: "Blended: piece-rate base + team quality bonus",
+      rationale: "Piece rates address individual moral hazard by making output observable and consequential. A supplementary team quality bonus offsets the incentive to rush, because workers only receive the team bonus if quality standards are also met. The combination targets both the effort dimension and the quality dimension of the agency problem."
+    }
+  },
+  lender: {
+    label: "Bank & Borrower",
+    vignette: `You are a commercial bank (principal) that has issued a £2m business loan to an entrepreneur (agent) to expand their manufacturing firm. The loan terms specify the funds are for capital investment. Three months after drawdown, your relationship manager reports that the company's import records show the entrepreneur has been purchasing a speculative consignment of rare metals — nothing to do with manufacturing expansion. The borrower claims this is "opportunistic working capital deployment" but you suspect it is a violation of the loan purpose. You cannot directly observe how every pound is spent. This is a post-contractual moral hazard: once the loan is issued, the borrower's incentive to take risks increases because they keep the upside but share the downside with the bank.`,
+    decisions: [
+      {
+        title: "Introduce loan covenants and staged drawdown",
+        desc: "Future loan tranches are released only when specific investment milestones are verified. Restricts borrower freedom contractually.",
+        risk: "low",
+        impact: "balanced",
+        adv: "Converts a lump-sum unobservable decision into a series of observable, contractually-bound milestones. Dramatically reduces moral hazard — the borrower cannot divert unspent funds.",
+        mhaz: "Covenants increase administration costs for the bank and reduce borrower flexibility. Borrowers may restructure activities to technically meet milestones while violating their spirit."
+      },
+      {
+        title: "Require equity stake (convertible loan)",
+        desc: "Convert part of the loan to equity. You become a shareholder and gain information rights and board access.",
+        risk: "high",
+        impact: "risky",
+        adv: "As a shareholder the bank now has the same incentive as the borrower to maximise firm value — interests are aligned. You gain information rights that dissolve the asymmetry directly.",
+        mhaz: "Entrepreneurs are often unwilling to dilute ownership — this may deter good borrowers (adverse selection). The bank must now engage in costly governance. Moral hazard shifts from loan to equity management."
+      }
+    ],
+    optimal: {
+      label: "Covenants + collateral requirement",
+      rationale: "Covenants restrict the information problem directly by making loan use observable and verifiable. Collateral requirements ensure the borrower has 'skin in the game' — they bear a personal cost if the venture fails, reducing their incentive to take excessive risks with the bank's money. Together these are the standard toolkit for managing post-contractual moral hazard in credit markets."
+    }
+  }
+};
+
+const whatIfAlternatives = [
+  { label: "Maximum Monitoring", desc: "Monitoring 10, Autonomy 2", salary: null, bonus: null, autonomy: 2, monitoring: 10 },
+  { label: "Pure Trust", desc: "Monitoring 1, Autonomy 10", salary: null, bonus: null, autonomy: 10, monitoring: 1 },
+  { label: "High Bonus Only", desc: "Bonus 45%, Monitoring 3", salary: null, bonus: 45, autonomy: 6, monitoring: 3 },
+  { label: "Efficiency Wage", desc: "Salary £130k, low bonus", salary: 130000, bonus: 5, autonomy: 7, monitoring: 4 }
+];
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let selectedScenario = null;
+let selectedDecision = null;
+let lastResults = null;
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  setupScenarioSelection();
+  setupSliders();
+  document.getElementById('calculate').addEventListener('click', calculateResults);
+});
+
+/* ══════════════════════════════════════════════════════
+   STEP NAVIGATION
+══════════════════════════════════════════════════════ */
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    dot.classList.remove('active', 'done');
+    if (i < n) dot.classList.add('done');
+    else if (i === n) dot.classList.add('active');
+    const conn = document.getElementById('conn' + i);
+    if (conn) conn.classList.toggle('done', i < n);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 1 — SCENARIO SELECTION
+══════════════════════════════════════════════════════ */
+function setupScenarioSelection() {
+  document.querySelectorAll('.scenario-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.scenario-card').forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-pressed', 'false');
+      });
+      card.classList.add('selected');
+      card.setAttribute('aria-pressed', 'true');
+      selectedScenario = card.dataset.scenario;
+      document.getElementById('next1').disabled = false;
+    });
+    card.addEventListener('keypress', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } });
+  });
+
+  document.getElementById('next1').addEventListener('click', () => {
+    buildStep2();
+    showStep(2);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 2 — DILEMMA
+══════════════════════════════════════════════════════ */
+function buildStep2() {
+  const sc = scenarios[selectedScenario];
+
+  document.getElementById('vignette2').innerHTML =
+    `<div class="vignette-label">📋 Scenario — ${sc.label}</div><p>${sc.vignette}</p>`;
+
+  const grid = document.getElementById('decisionGrid');
+  grid.innerHTML = '';
+  selectedDecision = null;
+  document.getElementById('next2').disabled = true;
+
+  sc.decisions.forEach((d, i) => {
+    const riskClass = d.risk === 'high' ? 'risk-high' : d.risk === 'low' ? 'risk-low' : 'risk-med';
+    const riskLabel = d.risk === 'high' ? 'High Information Risk' : d.risk === 'low' ? 'Lower Risk' : 'Medium Risk';
+    const div = document.createElement('div');
+    div.className = 'decision-card';
+    div.tabIndex = 0;
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-pressed', 'false');
+    div.innerHTML = `
+      <h4>${d.title}</h4>
+      <p>${d.desc}</p>
+      <p style="font-size:0.8rem;color:var(--green);margin-bottom:6px;"><strong>↑ Advantage:</strong> ${d.adv}</p>
+      <p style="font-size:0.8rem;color:var(--red);margin-bottom:8px;"><strong>↓ Risk:</strong> ${d.mhaz}</p>
+      <span class="risk-badge ${riskClass}">${riskLabel}</span>`;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.decision-card').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
+      div.classList.add('selected');
+      div.setAttribute('aria-pressed', 'true');
+      selectedDecision = i;
+      document.getElementById('next2').disabled = false;
+    });
+    div.addEventListener('keypress', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); div.click(); } });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('next2').addEventListener('click', () => showStep(3), { once: true });
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 3 — SLIDERS + LIVE PREVIEW
+══════════════════════════════════════════════════════ */
+function calcMonitoringCost(m) {
+  return Math.round(m * 3000 * (1 + m * 0.1));
+}
+
+function setupSliders() {
+  const ids = ['salary', 'bonus', 'autonomy', 'monitoring'];
+  ids.forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+}
+
+function updatePreview() {
+  const salary   = parseInt(document.getElementById('salary').value);
+  const bonus    = parseInt(document.getElementById('bonus').value);
+  const autonomy = parseInt(document.getElementById('autonomy').value);
+  const monitoring = parseInt(document.getElementById('monitoring').value);
+  const mCost    = calcMonitoringCost(monitoring);
+
+  // Update value displays
+  document.getElementById('salaryVal').textContent    = salary.toLocaleString();
+  document.getElementById('bonusVal').textContent     = bonus;
+  document.getElementById('autonomyVal').textContent  = autonomy;
+  document.getElementById('monitoringVal').textContent = monitoring;
+  document.getElementById('salaryCostSub').textContent = salary.toLocaleString();
+  document.getElementById('monCostSub').textContent   = mCost.toLocaleString();
+
+  // Update aria
+  ['salary','bonus','autonomy','monitoring'].forEach(id => {
+    document.getElementById(id).setAttribute('aria-valuenow', document.getElementById(id).value);
+  });
+
+  // CONTRACT PREVIEW
+  document.getElementById('cp-salary').textContent  = `£${salary.toLocaleString()}`;
+  document.getElementById('cp-bonus').innerHTML     = `${bonus}% of surplus<span class="cp-signal ${bonusSig(bonus)}" id="sig-bonus">${bonusSigLabel(bonus)}</span>`;
+  document.getElementById('cp-autonomy').innerHTML  = `${autonomy}/10<span class="cp-signal ${autoSig(autonomy,monitoring)}" id="sig-auto">${autoSigLabel(autonomy,monitoring)}</span>`;
+  document.getElementById('cp-monitoring').innerHTML= `${monitoring}/10<span class="cp-signal ${monSig(monitoring)}" id="sig-mon">${monSigLabel(monitoring)}</span>`;
+  document.getElementById('cp-totalcost').textContent = `£${(salary + mCost).toLocaleString()}/yr`;
+
+  // Narrative
+  document.getElementById('cp-narrative').textContent = buildNarrative(salary, bonus, autonomy, monitoring, mCost);
+}
+
+function bonusSig(b)      { return b < 5 ? 'sig-bad' : b < 20 ? 'sig-warn' : b < 40 ? 'sig-good' : 'sig-bad'; }
+function bonusSigLabel(b) { return b < 5 ? 'Weak incentive' : b < 20 ? 'Moderate' : b < 40 ? 'Strong' : 'Excessive risk'; }
+function autoSig(a,m)     { return a > m+3 ? 'sig-good' : a < m-3 ? 'sig-bad' : 'sig-warn'; }
+function autoSigLabel(a,m){ return a > m+3 ? 'Trust signal' : a < m-3 ? 'Distrust signal' : 'Balanced'; }
+function monSig(m)        { return m < 4 ? 'sig-good' : m < 7 ? 'sig-warn' : 'sig-bad'; }
+function monSigLabel(m)   { return m < 4 ? 'Light' : m < 7 ? 'Moderate' : 'Heavy — costly'; }
+
+function buildNarrative(salary, bonus, autonomy, monitoring, mCost) {
+  const highSalary   = salary >= 90000;
+  const lowSalary    = salary < 50000;
+  const highBonus    = bonus >= 30;
+  const highAuto     = autonomy >= 7;
+  const highMon      = monitoring >= 7;
+  const trustGap     = autonomy - monitoring;
+
+  if (lowSalary && highMon)
+    return `⚠️ Danger zone: a very low salary combined with heavy monitoring signals distrust and desperation. Only agents with no alternatives will accept these terms — severe adverse selection risk.`;
+  if (highSalary && highAuto && !highMon)
+    return `✅ Strong contract: high salary attracts capable agents; high autonomy signals trust and boosts intrinsic motivation. Light monitoring consistent — likely to achieve a separating equilibrium.`;
+  if (highBonus && highMon && !highAuto)
+    return `⚖️ High-powered but controlling: strong bonuses align interests, but heavy monitoring contradicts the autonomy agents expect from a performance-pay contract. May crowd out intrinsic motivation.`;
+  if (highAuto && highMon)
+    return `⚠️ Contradictory signals: granting high autonomy whilst monitoring heavily sends conflicting messages. Capable agents will find this confusing and may not trust the offer.`;
+  if (bonus < 5)
+    return `Note: very low bonus means the agent's pay is almost entirely fixed — little incentive alignment. Moral hazard risk is elevated.`;
+  return `This contract offers a reasonable balance of fixed and variable pay. The ratio of autonomy (${autonomy}) to monitoring (${monitoring}) signals ${trustGap > 0 ? 'some trust' : trustGap < 0 ? 'some distrust' : 'neutral expectations'} to applicants.`;
+}
+
+/* ══════════════════════════════════════════════════════
+   STEP 4 — CALCULATE
+══════════════════════════════════════════════════════ */
+function calculateResults() {
+  const salary     = parseInt(document.getElementById('salary').value);
+  const bonus      = parseInt(document.getElementById('bonus').value);
+  const autonomy   = parseInt(document.getElementById('autonomy').value);
+  const monitoring = parseInt(document.getElementById('monitoring').value);
+
+  const res = runModel(salary, bonus, autonomy, monitoring);
+  lastResults = { salary, bonus, autonomy, monitoring, ...res };
+
+  renderResults(res, salary, bonus, autonomy, monitoring);
+  buildWhatIf(salary, bonus, autonomy, monitoring, res);
+  showStep(4);
+}
+
+function runModel(salary, bonus, autonomy, monitoring) {
+  const isRisky = selectedDecision === 0;
+
+  // Signal quality — how attractive to high-ability agents
+  const salSignal   = (salary - 30000) / 2400;
+  const trustSignal = (autonomy - monitoring) * 5;
+  const bonusSignal = (bonus >= 10 && bonus <= 30) ? 18 : 0;
+  const microPenalty= monitoring > 7 ? -22 : 0;
+  const signalQuality = Math.min(100, Math.max(0, 45 + salSignal + trustSignal + bonusSignal + microPenalty));
+
+  const managerQuality = 50 + signalQuality * 0.5;
+
+  // Effort
+  const intrinsic = autonomy * 5;
+  const extrinsic = bonus * 1.5;
+  const monPressure = monitoring * 3.5;
+  const crowdOut  = monitoring > 6 ? (monitoring - 6) * 2.5 : 0;
+  const effort = Math.min(100, Math.max(0,
+    18 + intrinsic + extrinsic + monPressure - crowdOut + managerQuality * 0.18
+  ));
+
+  // Alignment
+  const alignment = Math.min(100, Math.max(0,
+    28 + bonus * 1.8 + monitoring * 4.5 + (isRisky ? -14 : 12) + managerQuality * 0.28 + (autonomy > 8 ? -8 : 0)
+  ));
+
+  // Satisfaction
+  const salEffect = (salary - 30000) / 1500;
+  const satisfaction = Math.min(100, Math.max(0,
+    8 + salEffect + autonomy * 6 + bonus * 0.7 - monitoring * 4.5 + (autonomy >= monitoring ? 10 : -5)
+  ));
+
+  // Moral hazard
+  const hazard = Math.min(100, Math.max(0,
+    62 - monitoring * 5.5 - bonus * 1.1 - managerQuality * 0.38 +
+    (bonus > 35 ? (bonus - 35) * 2 : 0) +
+    (autonomy > 8 ? (autonomy - 8) * 8 : 0) +
+    (salary < 45000 ? 18 : 0)
+  ));
+
+  // Financial
+  const baseRev = 500000;
+  const effortMult = 1 + (effort / 100) * 0.55;
+  const alignMult  = 1 + (alignment / 100) * 0.35;
+  const qualMult   = 1 + (managerQuality / 100) * 0.28;
+  const decisionMult = isRisky ? (Math.random() > 0.5 ? 1.45 : 0.72) : 1.08;
+
+  const revenue = baseRev * effortMult * alignMult * qualMult * decisionMult;
+  const mCost   = calcMonitoringCost(monitoring);
+  const surplus = Math.max(0, revenue - baseRev - mCost);
+  const bonusAmt= surplus * (bonus / 100);
+  const totalComp = salary + bonusAmt;
+  const profit = revenue - totalComp - mCost;
+  const margin = Math.round((profit / revenue) * 100);
+  const achievement = Math.round((effort + alignment) / 2);
+
+  return { signalQuality, managerQuality, effort, alignment, satisfaction, hazard, revenue, mCost, totalComp, profit, margin, achievement, bonusAmt };
+}
+
+function renderResults(res, salary, bonus, autonomy, monitoring) {
+  // Financial
+  const pEl = document.getElementById('r-profit');
+  pEl.textContent = `£${Math.round(res.profit).toLocaleString()}`;
+  pEl.className = 'metric-val ' + (res.profit > 0 ? 'pos' : 'neg');
+  document.getElementById('r-revenue').textContent  = `£${Math.round(res.revenue).toLocaleString()}`;
+  document.getElementById('r-comp').textContent     = `£${Math.round(res.totalComp).toLocaleString()}`;
+  document.getElementById('r-moncost').textContent  = `£${Math.round(res.mCost).toLocaleString()}`;
+  document.getElementById('r-margin').textContent   = res.margin + '%';
+  document.getElementById('r-achieve').textContent  = res.achievement + '%';
+
+  // Bars
+  setBar('effort',  res.effort);
+  setBar('align',   res.alignment);
+  setBar('satis',   res.satisfaction);
+  setBar('hazard',  res.hazard);
+
+  // Equilibrium badges
+  const { eClass, eLabel, eExplain, eExam } = getEquilibrium(res.signalQuality, res.satisfaction, res.hazard, autonomy, monitoring, salary);
+  ['equil-badge','equil-badge2'].forEach(id => {
+    document.getElementById(id).innerHTML = `<span class="equil-badge ${eClass}">${eLabel}</span>`;
+  });
+  document.getElementById('equil-explain').innerHTML = eExplain;
+  document.getElementById('equil-exam').innerHTML    = eExam;
+
+  // Analysis
+  document.getElementById('a-adverse').textContent  = adverseText(res.signalQuality, salary, monitoring);
+  document.getElementById('a-hazard').textContent   = hazardText(res.hazard, monitoring, bonus);
+  document.getElementById('a-signal').textContent   = signalText(autonomy, monitoring, bonus, salary);
+  document.getElementById('a-tradeoff').textContent = tradeoffText(res.mCost, monitoring, res.satisfaction, res.hazard, bonus, autonomy);
+
+  // Feedback
+  document.getElementById('r-feedback').textContent = agentFeedback(res.satisfaction, monitoring, salary, bonus, autonomy);
+
+  // Optimal
+  const sc = scenarios[selectedScenario];
+  document.getElementById('your-contract').textContent = `Salary £${salary.toLocaleString()}, Bonus ${bonus}%, Autonomy ${autonomy}/10, Monitoring ${monitoring}/10`;
+  document.getElementById('opt-contract').textContent  = sc.optimal.label;
+  document.getElementById('opt-tip').textContent       = sc.optimal.rationale;
+}
+
+function setBar(id, val) {
+  const v = Math.round(val);
+  document.getElementById('t-' + id).textContent = v + '%';
+  const bar = document.getElementById('b-' + id);
+  bar.style.width = v + '%';
+}
+
+/* ══════════════════════════════════════════════════════
+   EQUILIBRIUM ANALYSIS
+══════════════════════════════════════════════════════ */
+function getEquilibrium(sig, satis, hazard, auto, mon, salary) {
+  const isSep     = sig > 75 && auto >= 7 && mon <= 4 && salary >= 80000;
+  const isUnstable= satis < 35 || hazard > 72 || (mon >= 8 && auto >= 8) || salary < 35000;
+  const isPartial = !isSep && !isUnstable && sig > 58;
+  const isPool    = !isSep && !isUnstable && !isPartial;
+
+  if (isUnstable) return {
+    eClass: 'equil-unstable',
+    eLabel: '⚠️ No Sustainable Equilibrium',
+    eExplain: `Your contract cannot be sustained. ${satis < 35 ? 'Agent satisfaction is so low that turnover is near-certain — you will repeatedly face the adverse selection problem as you hire anew. ' : ''}${mon >= 8 && auto >= 8 ? 'Simultaneously offering maximum autonomy and maximum monitoring sends contradictory signals that no rational agent will trust. ' : ''}${salary < 35000 ? 'The salary is too low to attract any but the least able applicants. ' : ''}${hazard > 72 ? 'Moral hazard risk is so high that the agent will almost certainly shirk or act in their own interest at your expense. ' : ''}This is a self-defeating contract.`,
+    eExam: `<strong>What this means for economic theory:</strong> An unstable equilibrium arises when contracts contain self-defeating incentives — they cannot persist because they create incentives that undermine themselves. A principal repeatedly forced to rehire faces compounding adverse selection costs with each round of recruitment under asymmetric information.`
+  };
+
+  if (isSep) return {
+    eClass: 'equil-sep',
+    eLabel: '✅ Separating Equilibrium',
+    eExplain: `Your contract successfully separates high-ability agents from low-ability ones. The combination of a competitive salary (£${salary.toLocaleString()}), meaningful autonomy (${auto}/10), and light monitoring (${mon}/10) creates a contract that only confident, capable agents would accept — those who know they can deliver will value the freedom; those who know they will underperform will self-select out. Signal quality: ${Math.round(sig)}/100.`,
+    eExam: `<strong>What this means for economic theory:</strong> A separating equilibrium (from Spence's signalling model, 1973) occurs when contract terms successfully screen agent types. Agents self-select because the contract is attractive to high-ability types and unattractive to low-ability types. This efficiently resolves the adverse selection problem without requiring the principal to directly observe ability — they observe the revealed preference instead.`
+  };
+
+  if (isPartial) return {
+    eClass: 'equil-part',
+    eLabel: '🔄 Partial Separating Equilibrium',
+    eExplain: `Your contract achieves some separation but not a clean screening outcome. Better-than-average agents are attracted (signal quality: ${Math.round(sig)}/100), but you have not fully resolved the adverse selection problem — some low-ability applicants will still find your contract acceptable. This is the most common real-world outcome, reflecting the difficulty of perfect mechanism design under incomplete information.`,
+    eExam: `<strong>What this means for economic theory:</strong> Partial separation reflects real-world complexity. Contracts rarely achieve perfect sorting of agent types because designing a perfectly separating mechanism requires precise knowledge of the distribution of agent abilities — itself a form of information the principal typically lacks. Partial equilibria represent constrained-efficient solutions to the adverse selection problem.`
+  };
+
+  return {
+    eClass: 'equil-pool',
+    eLabel: '⚖️ Pooling Equilibrium',
+    eExplain: `Your contract creates a pooling equilibrium — both high- and low-ability agents find it acceptable (signal quality: ${Math.round(sig)}/100). You are offering terms that do not discriminate between types, meaning you will hire a mix of good and poor agents. This is inefficient: you may overpay poor performers and underpay strong ones, or apply one-size-fits-all monitoring that wastes resources on capable agents while failing to deter determined shirkers.`,
+    eExam: `<strong>What this means for economic theory:</strong> Pooling equilibria are a key form of market inefficiency generated by adverse selection. When principals cannot distinguish agent types and contracts do not screen effectively, the market settles at an average quality and average wage — which overpays the bad and underpays the good. This is analogous to Akerlof's (1970) market for lemons: the inability to signal quality drives out the high-quality good.`
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPLANATION TEXTS
+══════════════════════════════════════════════════════ */
+function adverseText(sig, salary, monitoring) {
+  if (sig > 75)
+    return `Your contract design sends strong positive signals to high-ability applicants (signal quality: ${Math.round(sig)}/100). A competitive salary (£${salary.toLocaleString()}) indicates the firm values quality, and light monitoring (${monitoring}/10) signals trust rather than distrust. Adverse selection is substantially reduced — the applicant pool will be skewed toward confident, capable agents who thrive under low scrutiny.`;
+  if (sig > 50)
+    return `Mixed signals (quality score: ${Math.round(sig)}/100). Some contract terms are attractive to strong candidates — but others introduce uncertainty. Adverse selection is partially mitigated: you will attract a heterogeneous applicant pool including both strong and opportunistic candidates. Further differentiation of contract terms could improve screening.`;
+  return `Weak contract signals (quality score: ${Math.round(sig)}/100). The combination of ${salary < 50000 ? 'low salary, ' : ''}${monitoring > 7 ? 'heavy monitoring, ' : ''}and current autonomy levels makes this contract unattractive to high-ability applicants with outside options. Adverse selection is a major risk — capable agents will self-select out, leaving primarily low-ability or desperate candidates.`;
+}
+
+function hazardText(hazard, monitoring, bonus) {
+  if (hazard < 30)
+    return `Moral hazard risk is low (${Math.round(hazard)}%). Your contract effectively aligns the agent's interests with yours: performance pay means they internalise the benefit of extra effort, and monitoring ensures observable accountability. The agent has limited ability to shirk or pursue misaligned goals without consequence.`;
+  if (hazard < 60)
+    return `Moderate moral hazard risk (${Math.round(hazard)}%). The agent retains some ability to shirk or act in their own interest without detection. ${monitoring < 4 ? 'Increasing monitoring slightly would reduce unobservable effort gaps. ' : ''}${bonus < 15 ? 'Stronger performance incentives would better align effort with the principal\'s goals. ' : ''}This is manageable but represents a genuine efficiency loss relative to the first-best outcome under full information.`;
+  return `High moral hazard risk (${Math.round(hazard)}%). This is a textbook information failure in action: the agent can significantly reduce effort or take self-serving actions because ${monitoring < 4 ? 'monitoring is too light to detect deviation' : ''}${bonus < 10 ? 'performance pay is too weak to motivate alignment' : ''}. Agency costs (the gap between first-best and second-best outcomes) are large. The principal is bearing significant residual loss from the information asymmetry.`;
+}
+
+function signalText(autonomy, monitoring, bonus, salary) {
+  const gap = autonomy - monitoring;
+  if (gap > 3)
+    return `Your contract sends a strong trust signal (autonomy: ${autonomy}, monitoring: ${monitoring}). High autonomy relative to monitoring indicates you expect capable self-starters — this is attractive to confident, high-ability agents who would be repelled by micromanagement. In Spence's signalling framework, this contract design efficiently screens for the agent type that performs well under low oversight.`;
+  if (gap < -3)
+    return `Your contract signals distrust (autonomy: ${autonomy}, monitoring: ${monitoring}). The heavy monitoring relative to freedom suggests you expect problems — a self-fulfilling prophecy if capable agents read the signal and choose not to apply. High-quality candidates typically have better outside options and will avoid contracts that treat them as potential shirkers from the outset.`;
+  return `Balanced signals (autonomy: ${autonomy}, monitoring: ${monitoring}). Your contract neither strongly attracts nor strongly repels specific agent types. ${bonus >= 15 ? 'The performance bonus partially compensates by creating alignment incentives. ' : ''}This is a moderate, pragmatic contract — but one that may fail to resolve the adverse selection problem as effectively as a more deliberately designed separating contract.`;
+}
+
+function tradeoffText(mCost, monitoring, satis, hazard, bonus, autonomy) {
+  let t = `Your monitoring costs £${mCost.toLocaleString()}/year. `;
+  if (monitoring > 7 && satis < 45)
+    t += `This is doubly costly: you pay directly for monitoring AND indirectly through reduced motivation (satisfaction: ${Math.round(satis)}%). Intensive monitoring crowds out intrinsic motivation — a well-documented result in principal–agent theory. The net effect may be negative if the additional oversight cost exceeds the productivity gains from reduced shirking.`;
+  else if (monitoring < 3 && hazard > 60)
+    t += `Your low monitoring budget appears to be a false economy. The savings (approximately £${(calcMonitoringCost(6) - mCost).toLocaleString()}/yr vs moderate monitoring) are likely outweighed by the agency costs from high moral hazard risk (${Math.round(hazard)}%) — including the residual loss from effort shortfalls and misaligned decisions.`;
+  else
+    t += `The monitoring cost represents a considered trade-off: ${bonus > 25 ? 'your higher bonus structure shifts some of the alignment burden from monitoring to incentive pay, which is potentially more efficient. ' : ''}${autonomy > 7 ? 'High autonomy reduces the marginal return to monitoring — capable, motivated agents don\'t need watching. ' : ''}This is broadly consistent with the principal–agent theory prediction that monitoring and high-powered incentives are partial substitutes.`;
+  return t;
+}
+
+function agentFeedback(satis, monitoring, salary, bonus, autonomy) {
+  if (satis > 78 && monitoring < 5)
+    return `"This is an attractive offer. The salary reflects my value to the firm, and the level of autonomy tells me you trust my judgement. I'm motivated to deliver strong results — partly because the bonus aligns my interests with yours, and partly because I value the professional freedom you're offering. I see this as a long-term relationship worth investing in."`;
+  if (monitoring > 7 && satis < 40)
+    return `"I find this contract uncomfortable. The level of oversight signals that you don't trust me to do my job without constant checking. Frankly, professionals with my track record have better options. I may accept in the short term if I need the income, but I'll be looking for alternatives immediately. Don't expect discretionary effort beyond what the contract requires."`;
+  if (salary < 45000)
+    return `"The compensation doesn't reflect the responsibilities you're asking me to take on. At this salary, you're not attracting the calibre of agent this role needs. I can only assume the firm either doesn't understand the market rate or doesn't value the role highly — neither is reassuring. I'll fulfil the contract minimally and seek better-paid opportunities elsewhere."`;
+  if (bonus > 40)
+    return `"The bonus potential is exciting, but the structure feels risky — I'm being asked to bear significant income uncertainty. I may find myself taking short-term decisions to hit bonus targets rather than pursuing what's genuinely best for the firm long-term. Are you sure this is what you intended? High-powered incentives are a double-edged sword."`;
+  if (satis > 55)
+    return `"This is a reasonable contract. It's not perfect — I'd prefer slightly more autonomy and a clearer bonus structure — but it's workable. I'll perform conscientiously, though the terms don't particularly inspire discretionary effort beyond the contractual minimum. There's room for both of us to benefit from renegotiating in six months if I perform well."`;
+  return `"The contract feels unbalanced. Some elements work for me, others don't. I'll fulfil my obligations, but I won't go beyond them. The current structure doesn't give me strong reasons to align my priorities with the firm's long-term interests — and without that alignment, you're relying on goodwill rather than incentive design."`;
+}
+
+/* ══════════════════════════════════════════════════════
+   WHAT-IF COMPARATOR
+══════════════════════════════════════════════════════ */
+function buildWhatIf(baseSal, baseBonus, baseAuto, baseMon, baseRes) {
+  const grid = document.getElementById('whatif-grid');
+  grid.innerHTML = '';
+  document.getElementById('whatif-result').textContent = 'Select an alternative above to see the comparison.';
+
+  whatIfAlternatives.forEach((alt, i) => {
+    const wiSal = alt.salary    !== null ? alt.salary    : baseSal;
+    const wiBon = alt.bonus     !== null ? alt.bonus     : baseBonus;
+    const wiAut = alt.autonomy  !== null ? alt.autonomy  : baseAuto;
+    const wiMon = alt.monitoring!== null ? alt.monitoring: baseMon;
+
+    const card = document.createElement('div');
+    card.className = 'wi-card';
+    card.innerHTML = `<span class="wi-label">${alt.label}</span><span class="wi-change">${alt.desc}</span>`;
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.wi-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const wiRes = runModel(wiSal, wiBon, wiAut, wiMon);
+      renderWhatIf(baseRes, wiRes, alt.label, baseSal, baseBonus, baseAuto, baseMon, wiSal, wiBon, wiAut, wiMon);
+    });
+    grid.appendChild(card);
+  });
+}
+
+function renderWhatIf(base, alt, altLabel, bSal, bBon, bAut, bMon, wSal, wBon, wAut, wMon) {
+  const dProfit  = Math.round(alt.profit - base.profit);
+  const dEffort  = Math.round(alt.effort - base.effort);
+  const dHazard  = Math.round(alt.hazard - base.hazard);
+  const dSatis   = Math.round(alt.satisfaction - base.satisfaction);
+
+  const fmt = (n, prefix='') => {
+    const cls = n > 0 ? 'delta-pos' : n < 0 ? 'delta-neg' : '';
+    const sign = n > 0 ? '+' : '';
+    return `<span class="${cls}">${sign}${prefix}${Math.abs(n).toLocaleString()}</span>`;
+  };
+  const fmtPts = n => {
+    const cls = n > 0 ? 'delta-pos' : n < 0 ? 'delta-neg' : '';
+    const sign = n > 0 ? '+' : '';
+    return `<span class="${cls}">${sign}${n} pts</span>`;
+  };
+
+  document.getElementById('whatif-result').innerHTML = `
+    <strong>Comparing your contract vs <em>${altLabel}</em>:</strong>
+    <br><br>
+    <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+      <thead><tr style="text-align:left;border-bottom:2px solid var(--border);">
+        <th style="padding:4px 0;width:35%;">Metric</th>
+        <th>Your Contract</th>
+        <th>${altLabel}</th>
+        <th>Change</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Net Profit</td><td>£${Math.round(base.profit).toLocaleString()}</td><td>£${Math.round(alt.profit).toLocaleString()}</td><td>${fmt(dProfit,'£')}</td></tr>
+        <tr><td>Effort Level</td><td>${Math.round(base.effort)}%</td><td>${Math.round(alt.effort)}%</td><td>${fmtPts(dEffort)}</td></tr>
+        <tr><td>Moral Hazard Risk</td><td>${Math.round(base.hazard)}%</td><td>${Math.round(alt.hazard)}%</td><td>${fmtPts(-dHazard)}</td></tr>
+        <tr><td>Agent Satisfaction</td><td>${Math.round(base.satisfaction)}%</td><td>${Math.round(alt.satisfaction)}%</td><td>${fmtPts(dSatis)}</td></tr>
+        <tr><td>Mon. Cost</td><td>£${Math.round(base.mCost).toLocaleString()}</td><td>£${Math.round(calcMonitoringCost(wMon)).toLocaleString()}</td><td>${fmt(Math.round(calcMonitoringCost(wMon) - base.mCost),'£')}</td></tr>
+      </tbody>
+    </table>
+    <br><em style="color:var(--muted);font-size:0.82rem;">Economic interpretation: ${whatIfNarrative(dProfit, dEffort, dHazard, dSatis, altLabel)}</em>
+  `;
+}
+
+function whatIfNarrative(dProfit, dEffort, dHazard, dSatis, label) {
+  if (label === 'Maximum Monitoring')
+    return 'Heavy monitoring reduces moral hazard but crowds out intrinsic motivation. The net profit change reflects the tension between reduced shirking and higher oversight costs plus lower effort quality.';
+  if (label === 'Pure Trust')
+    return 'Extending maximum autonomy with minimal monitoring relies entirely on intrinsic motivation. Highly effective if the agent is genuinely able and aligned; catastrophic if they are not — classic moral hazard vulnerability.';
+  if (label === 'High Bonus Only')
+    return 'High-powered incentives strongly align interests but transfer significant income risk to the agent. This efficiency wage approach may induce excessive risk-taking if the bonus metric is observable but the underlying value driver is not.';
+  if (label === 'Efficiency Wage')
+    return 'Paying significantly above the market rate (efficiency wage, Shapiro-Stiglitz 1984) deters shirking because the agent values the job too much to risk losing it. Effective against moral hazard but expensive as an adverse selection screening tool.';
+  return `The alternative contract "${label}" produces different trade-offs between monitoring cost, effort, and moral hazard.`;
+}
+
+/* ══════════════════════════════════════════════════════
+   RESTART
+══════════════════════════════════════════════════════ */
+function restart() {
+  selectedScenario = null;
+  selectedDecision = null;
+  lastResults = null;
+
+  document.querySelectorAll('.scenario-card').forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+  document.getElementById('next1').disabled = true;
+
+  // Reset sliders
+  document.getElementById('salary').value = 80000;
+  document.getElementById('bonus').value  = 15;
+  document.getElementById('autonomy').value = 6;
+  document.getElementById('monitoring').value = 5;
+  updatePreview();
+
+  showStep(1);
+}
+
+// Initialise preview on load
+document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+</body>
+</html>

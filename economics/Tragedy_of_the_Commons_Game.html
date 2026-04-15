@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tragedy of the Commons: Strategic Fishing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        /* Tutorial/Intro Screen */
+        .tutorial-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .tutorial-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .tutorial-content h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .tutorial-content h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .tutorial-content p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .tutorial-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .case-study {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .case-study h4 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .case-study p {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .theory-highlight {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin: 15px 0;
+        }
+
+        .theory-highlight strong {
+            color: #1976d2;
+        }
+
+        .tutorial-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tutorial-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+
+        .tutorial-tab:hover {
+            color: #2980b9;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tutorial-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tutorial-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Settings Bar */
+        .settings-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .difficulty-selector select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .settings-bar-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-bar-buttons button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-bar-buttons button:hover {
+            background: #2980b9;
+        }
+
+        /* Random Event Banner */
+        .event-banner {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 9999;
+            max-width: 600px;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+
+        .event-banner.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .event-banner h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .event-banner p {
+            margin-bottom: 0;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .tutorial-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .settings-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .tutorial-tabs {
+                flex-wrap: wrap;
+            }
+
+            .tutorial-tab {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+        }
+
+        .ocean-container {
+            background: linear-gradient(to bottom, #4a90e2 0%, #1e3c72 100%);
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            min-height: 500px;
+            overflow: hidden;
+            border: 3px solid #2980b9;
+        }
+
+        .fish-population {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .fish-counter {
+            font-size: 24px;
+            color: #27ae60;
+        }
+
+        .fish {
+            position: absolute;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            user-select: none;
+            animation: swim 3s infinite ease-in-out;
+        }
+
+        @keyframes swim {
+            0%, 100% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(20px) translateY(-10px); }
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .info-box h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .strategy-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .strategy-btn:hover:not(:disabled) {
+            border-color: #3498db;
+            background: #e3f2fd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+
+        .strategy-btn.selected {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .strategy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .strategy-btn strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .strategy-btn small {
+            display: block;
+            opacity: 0.8;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(39, 174, 96, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .action-btn.secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(149, 165, 166, 0.3);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Strategic Analysis Panel */
+        .analysis-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-left: 4px solid #9b59b6;
+        }
+
+        .analysis-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-section {
+            margin: 15px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .analysis-section h4 {
+            color: #8e44ad;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .analysis-section p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+
+        .outcome-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .outcome-box {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .outcome-box.actual {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+
+        .outcome-box.cooperative {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .outcome-box.nash {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+        }
+
+        .outcome-box h5 {
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .outcome-box .value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .outcome-box .subtitle {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        #population-chart {
+            width: 100%;
+            height: 250px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+
+        /* Competitor Panel */
+        .competitor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .competitor-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .competitor-stats {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        /* Scenarios */
+        .scenario-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .scenario-btn {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .scenario-btn:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.2);
+        }
+
+        .scenario-btn.active {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        }
+
+        .scenario-btn h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .scenario-btn p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .scenario-description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .achievement {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .achievement.unlocked {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-color: #ffd700;
+            animation: unlock 0.5s ease;
+        }
+
+        @keyframes unlock {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .achievement-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .achievement-desc {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* Popup/Modal */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        .message-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .message-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .popup-message {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .popup-close {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .popup-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.3);
+        }
+
+        /* History Panel */
+        .history-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .history-panel.show {
+            display: block;
+        }
+
+        .history-panel h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .round-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .round-item strong {
+            color: #2c3e50;
+        }
+
+        /* Phase Indicators */
+        .phase-indicator {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Tragedy of the Commons Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_commons_pw';
+  var valid = ['Commons-4Bq!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['Commons-4Bq!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_commons_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <!-- Event Banner -->
+    <div id="event-banner" class="event-banner">
+        <h3 id="event-title"></h3>
+        <p id="event-description"></p>
+    </div>
+
+    <!-- Tutorial Screen -->
+    <div id="tutorial-screen" class="tutorial-screen">
+        <div class="tutorial-content">
+            <h2>🎣 Tragedy of the Commons: A Strategic Economics Game</h2>
+            
+            <div class="tutorial-tabs">
+                <button class="tutorial-tab active" onclick="switchTutorialTab(event, 'gameplay')">Gameplay</button>
+                <button class="tutorial-tab" onclick="switchTutorialTab(event, 'theory')">Economic Theory</button>
+                <button class="tutorial-tab" onclick="switchTutorialTab(event, 'cases')">Real-World Cases</button>
+            </div>
+
+            <!-- Gameplay Tab -->
+            <div id="gameplay-tab" class="tab-content active">
+                <div class="tutorial-section">
+                    <h3>How to Play</h3>
+                    <p>You are the owner of a fishing company competing with 5 other firms for a shared ocean fishery. Each round, you must decide how aggressively to fish.</p>
+                    <p><strong>Your Goal:</strong> Maximize your profit over 10 rounds while managing the shared resource sustainably.</p>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>Game Mechanics</h3>
+                    <p><strong>Phase 1 - Choose Strategy:</strong> Select your fishing strategy (Conservative to Aggressive)</p>
+                    <p><strong>Phase 2 - Deploy Nets:</strong> Your fishing fleet automatically catches the targeted amount based on your strategy</p>
+                    <p><strong>Phase 3 - Market Results:</strong> See your profit, competitor actions, and ecosystem impact plus strategic analysis</p>
+                    <p><strong>Fish Population:</strong> Regenerates between rounds, but overfishing can lead to collapse!</p>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>Strategic Considerations</h3>
+                    <p>• More aggressive fishing = higher short-term profits but depletes the shared resource</p>
+                    <p>• If population drops too low, the fishery collapses and the game ends</p>
+                    <p>• Competitors react to market conditions and your reputation</p>
+                    <p>• Random events (weather, disease) add uncertainty and risk</p>
+                    <p>• Prices fluctuate based on total market supply</p>
+                </div>
+            </div>
+
+            <!-- Theory Tab -->
+            <div id="theory-tab" class="tab-content">
+                <div class="theory-highlight">
+                    <strong>🎯 Tragedy of the Commons</strong>
+                    <p>Coined by Garrett Hardin (1968), this concept explains how individuals acting independently and rationally according to their self-interest behave contrary to the group's long-term best interests by depleting a shared resource.</p>
+                </div>
+
+                <div class="theory-highlight">
+                    <strong>🔄 Market Failure & Externalities</strong>
+                    <p><strong>Negative Externality:</strong> When your fishing imposes costs on others (resource depletion) that aren't reflected in your private decision-making. This is a classic market failure where the free market produces an inefficient outcome.</p>
+                    <p><strong>Private Cost vs Social Cost:</strong> Your private cost is just your fishing expenses, but the social cost includes the ecosystem damage affecting everyone.</p>
+                </div>
+
+                <div class="theory-highlight">
+                    <strong>🎲 Game Theory: The Prisoner's Dilemma</strong>
+                    <p><strong>Nash Equilibrium:</strong> Each firm's dominant strategy is to overfish (since others will do the same), leading to collective disaster even though mutual cooperation would benefit everyone.</p>
+                    <p><strong>Cooperative Outcome:</strong> If all firms fish conservatively, the ecosystem thrives and provides sustainable profits indefinitely.</p>
+                    <p><strong>The Dilemma:</strong> Individual rationality (maximizing personal catch) conflicts with collective rationality (sustainable fishing).</p>
+                </div>
+
+                <div class="theory-highlight">
+                    <strong>🏛️ Common Pool Resources</strong>
+                    <p>Fish stocks are a <strong>common pool resource</strong> - they are rivalrous (one person's catch reduces availability for others) but non-excludable (hard to prevent access without regulation).</p>
+                    <p>Unlike pure public goods, common pool resources are vulnerable to overuse and depletion, requiring governance mechanisms.</p>
+                </div>
+
+                <div class="theory-highlight">
+                    <strong>💡 Solutions to Tragedy of the Commons</strong>
+                    <p><strong>1. Government Regulation:</strong> Quotas, licenses, protected areas (command-and-control)</p>
+                    <p><strong>2. Property Rights:</strong> Assign individual transferable quotas (ITQs) - market-based solution</p>
+                    <p><strong>3. Community Management:</strong> Local agreements and social pressure (Elinor Ostrom's work)</p>
+                    <p><strong>4. Technology:</strong> Monitoring, enforcement, and information systems</p>
+                </div>
+            </div>
+
+            <!-- Cases Tab -->
+            <div id="cases-tab" class="tab-content">
+                <h3>Real-World Fishery Collapses</h3>
+                
+                <div class="case-study">
+                    <h4>🇨🇦 Grand Banks Cod Fishery (1992)</h4>
+                    <p><strong>Location:</strong> Newfoundland, Canada</p>
+                    <p><strong>History:</strong> For 500 years, the Grand Banks supported one of the world's richest fishing grounds. European and Canadian fleets caught millions of tonnes of Atlantic cod annually.</p>
+                    <p><strong>The Collapse:</strong> In 1992, the Canadian government imposed a complete moratorium after cod populations fell to 1% of historical levels. 40,000 people lost their jobs.</p>
+                    <p><strong>Cause:</strong> Technological improvements (larger boats, better nets, sonar) allowed massive overfishing. Each nation and company had incentives to maximize catch before others did.</p>
+                    <p><strong>Legacy:</strong> 30+ years later, the cod population has still not recovered despite the complete fishing ban. The ecosystem permanently changed.</p>
+                </div>
+
+                <div class="case-study">
+                    <h4>🇵🇪 Peruvian Anchoveta Fishery (1972)</h4>
+                    <p><strong>Location:</strong> Pacific Ocean off Peru</p>
+                    <p><strong>History:</strong> Peru developed the world's largest fishery in the 1960s, catching 12 million tonnes of anchoveta annually for fishmeal production.</p>
+                    <p><strong>The Collapse:</strong> In 1972, catches dropped by 75% due to overfishing combined with El Niño warming. The industry collapsed.</p>
+                    <p><strong>Cause:</strong> Open access and competitive fishing led to overcapacity. When El Niño reduced fish populations naturally, the weakened stocks couldn't recover.</p>
+                    <p><strong>Recovery:</strong> Peru later implemented strict quotas and Individual Vessel Quotas (IVQs), allowing partial recovery. Now managed more sustainably.</p>
+                </div>
+
+                <div class="case-study">
+                    <h4>🇰🇪 Lake Victoria Nile Perch (1990s-2000s)</h4>
+                    <p><strong>Location:</strong> Lake Victoria, East Africa (Kenya, Uganda, Tanzania)</p>
+                    <p><strong>History:</strong> Nile perch was introduced in the 1950s and became a valuable export commodity worth $300 million annually.</p>
+                    <p><strong>The Crisis:</strong> Overfishing decimated perch populations and destroyed native species. Local communities lost food security as fish became too expensive.</p>
+                    <p><strong>Cause:</strong> Lack of coordinated management among three countries. International demand drove intensive fishing. Small-scale fishers were forced to use illegal gear as large fish disappeared.</p>
+                    <p><strong>Economic Impact:</strong> Processing factories closed, thousands lost livelihoods, and local protein sources disappeared while exports continued.</p>
+                </div>
+
+                <div class="theory-highlight">
+                    <strong>📊 Common Patterns</strong>
+                    <p>• <strong>Open Access:</strong> No effective property rights or access controls</p>
+                    <p>• <strong>Technological Improvement:</strong> Better fishing technology increased catch capacity beyond sustainable levels</p>
+                    <p>• <strong>Short-term Incentives:</strong> Economic pressure to maximize current catch rather than preserve future stocks</p>
+                    <p>• <strong>Delayed Recognition:</strong> By the time collapse was evident, it was too late to prevent</p>
+                    <p>• <strong>Slow Recovery:</strong> Ecosystem changes and lost breeding populations make recovery extremely difficult</p>
+                    <p>• <strong>Socioeconomic Impact:</strong> Communities dependent on fishing suffered severe poverty and displacement</p>
+                </div>
+            </div>
+
+            <button class="tutorial-btn" onclick="closeTutorial()">Start Playing</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🎣 Tragedy of the Commons</h1>
+        <p class="subtitle">A Strategic Economics Simulation</p>
+
+        <!-- Settings Bar -->
+        <div class="settings-bar">
+            <div class="difficulty-selector">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty" onchange="changeDifficulty()">
+                    <option value="easy">Easy (Student-Friendly)</option>
+                    <option value="medium" selected>Medium (Balanced)</option>
+                    <option value="hard">Hard (Challenging)</option>
+                </select>
+            </div>
+            <div class="settings-bar-buttons">
+                <button onclick="showTutorial()">📚 View Tutorial</button>
+                <button onclick="resetGame()">🔄 Reset Game</button>
+            </div>
+        </div>
+
+        <!-- Scenario Selection -->
+        <div class="scenario-container">
+            <div class="scenario-btn active" onclick="loadScenario(event, 'competitive')">
+                <h3>🏢 Free Market</h3>
+                <p>Unregulated competition - will the invisible hand work?</p>
+            </div>
+            <div class="scenario-btn" onclick="loadScenario(event, 'cooperative')">
+                <h3>🤝 Industry Cooperation</h3>
+                <p>Voluntary sustainability agreements among firms</p>
+            </div>
+            <div class="scenario-btn" onclick="loadScenario(event, 'regulated')">
+                <h3>⚖️ Government Regulation</h3>
+                <p>Quotas and penalties to prevent overexploitation</p>
+            </div>
+            <div class="scenario-btn" onclick="loadScenario(event, 'crisis')">
+                <h3>🚨 Ecosystem Crisis</h3>
+                <p>Fish disease has weakened the population!</p>
+            </div>
+        </div>
+
+        <div id="scenario-description" class="scenario-description">
+            Free market with competitive firms. Each company makes independent decisions to maximize profit. Will the invisible hand lead to optimal outcomes?
+        </div>
+
+        <!-- Phase Indicator -->
+        <div id="phase-indicator" class="phase-indicator">
+            Round 1 - Choose Your Strategy
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="game-layout">
+            <!-- Ocean/Fishing Area -->
+            <div>
+                <div class="ocean-container" id="ocean">
+                    <div class="fish-population">
+                        <div>🐟 Fish Population</div>
+                        <div class="fish-counter" id="fish-count">1000</div>
+                    </div>
+                </div>
+
+                <!-- Strategic Analysis Panel -->
+                <div id="analysis-panel" class="analysis-panel" style="display: none;">
+                    <h3>📊 Round Strategic Analysis</h3>
+                    
+                    <div class="analysis-section">
+                        <h4>Game Theory Analysis</h4>
+                        <p id="analysis-gametheory"></p>
+                    </div>
+
+                    <div class="outcome-comparison">
+                        <div class="outcome-box actual">
+                            <h5>Your Outcome</h5>
+                            <div class="value" id="outcome-actual">0</div>
+                            <div class="subtitle">Fish caught</div>
+                        </div>
+                        <div class="outcome-box cooperative">
+                            <h5>Optimal Cooperative</h5>
+                            <div class="value" id="outcome-cooperative">0</div>
+                            <div class="subtitle">If all cooperated</div>
+                        </div>
+                        <div class="outcome-box nash">
+                            <h5>Nash Equilibrium</h5>
+                            <div class="value" id="outcome-nash">0</div>
+                            <div class="subtitle">Self-interest outcome</div>
+                        </div>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h4>Market Failure Analysis</h4>
+                        <p id="analysis-externality"></p>
+                    </div>
+
+                    <div class="analysis-section">
+                        <h4>Sustainability Assessment</h4>
+                        <p id="analysis-sustainability"></p>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container">
+                    <h3>📈 Population Over Time</h3>
+                    <canvas id="population-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="side-panel">
+                <!-- Strategy Selection -->
+                <div class="info-box" id="strategy-box">
+                    <h2>🎯 Choose Strategy</h2>
+                    <div class="strategy-grid">
+                        <button class="strategy-btn" onclick="selectStrategy(event, 'conservative')">
+                            <strong>🌱 Conservative</strong>
+                            <small>Low catch (20-30 fish) - Sustainable approach</small>
+                        </button>
+                        <button class="strategy-btn" onclick="selectStrategy(event, 'moderate')">
+                            <strong>⚖️ Moderate</strong>
+                            <small>Medium catch (35-50 fish) - Balanced strategy</small>
+                        </button>
+                        <button class="strategy-btn" onclick="selectStrategy(event, 'aggressive')">
+                            <strong>📈 Aggressive</strong>
+                            <small>High catch (55-70 fish) - Maximum profit</small>
+                        </button>
+                        <button class="strategy-btn" onclick="selectStrategy(event, 'intensive')">
+                            <strong>⚡ Intensive</strong>
+                            <small>Very high (75-90 fish) - Risky exploitation</small>
+                        </button>
+                        <button class="strategy-btn" onclick="selectStrategy(event, 'extreme')">
+                            <strong>🔥 Maximum Exploitation</strong>
+                            <small>Extreme catch (95-120 fish) - Devastating impact</small>
+                        </button>
+                    </div>
+                    <button class="action-btn primary" id="confirm-strategy-btn" onclick="confirmStrategy()" disabled>
+                        Confirm Strategy
+                    </button>
+                </div>
+
+                <!-- Next Round Button (appears after results) -->
+                <div class="info-box" id="next-round-box" style="display: none;">
+                    <h2>📊 Round Complete</h2>
+                    <p style="text-align: center; color: #7f8c8d; margin-bottom: 15px;">
+                        Review the strategic analysis below, then continue to the next round.
+                    </p>
+                    <button class="action-btn primary" onclick="nextRound()">
+                        ➡️ Continue to Round <span id="next-round-number">2</span>
+                    </button>
+                </div>
+
+                <!-- Player Stats -->
+                <div class="info-box">
+                    <h2>💼 Your Company</h2>
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">Round</div>
+                            <div class="stat-value" id="current-round">1</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Fish</div>
+                            <div class="stat-value" id="total-fish">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Profit</div>
+                            <div class="stat-value" id="total-profit">£0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Reputation (→ Price)</div>
+                            <div class="stat-value" id="reputation">100</div>
+                        </div>
+                    </div>
+                    <div class="stat-grid" style="margin-top: 10px;">
+                        <div class="stat-item">
+                            <div class="stat-label">Fish Price</div>
+                            <div class="stat-value" id="fish-price">£50</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Round Profit</div>
+                            <div class="stat-value" id="round-profit">£0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Competitors -->
+                <div class="info-box">
+                    <h2>🏭 Competing Firms</h2>
+                    <div id="competitors-list"></div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="info-box">
+                    <h2>🏆 Achievements</h2>
+                    <div class="achievements-grid" id="achievements-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Round History -->
+        <div id="history-panel" class="history-panel">
+            <h3>📜 Round History</h3>
+            <div id="round-history"></div>
+        </div>
+    </div>
+
+    <!-- Popup Modal -->
+    <div id="overlay" class="overlay" onclick="closePopup()"></div>
+    <div id="message-popup" class="message-popup">
+        <div class="popup-title" id="popup-title"></div>
+        <div class="popup-message" id="popup-message"></div>
+        <button class="popup-close" onclick="closePopup()">Continue</button>
+    </div>
+
+    <script>
+        // Game State
+        let currentRound = 1;
+        const maxRounds = 10;
+        let gamePhase = 'strategy'; // 'strategy', 'fishing', 'results'
+        let fishPopulation = 1000;
+        const maxFishPopulation = 1000;
+        let playerStrategy = null;
+        let playerTotalFish = 0;
+        let playerTotalProfit = 0;
+        let playerReputation = 100;
+        let currentScenario = 'competitive';
+        let difficulty = 'medium';
+
+        // Random Events
+        const randomEvents = [
+            {
+                id: 'storm',
+                name: '🌊 Severe Storm',
+                description: 'A major storm has disrupted fishing operations. Catch efficiency reduced by 30% this round.',
+                effect: { catchMultiplier: 0.7 },
+                probability: 0.15
+            },
+            {
+                id: 'disease',
+                name: '🦠 Fish Disease Outbreak',
+                description: 'A disease has spread through the fish population, reducing stocks by 20%.',
+                effect: { populationMultiplier: 0.8 },
+                probability: 0.12
+            },
+            {
+                id: 'boom',
+                name: '📈 Market Boom',
+                description: 'High demand from international markets! Fish prices increased by 40%.',
+                effect: { priceMultiplier: 1.4 },
+                probability: 0.1
+            },
+            {
+                id: 'regulation_failure',
+                name: '🏛️ Industry Lobbying Success',
+                description: 'Fishing industry lobbying has weakened enforcement this round. Some firms are exceeding quotas. This illustrates how regulatory capture can undermine government intervention.',
+                effect: { competitorAggression: 1.3 },
+                probability: 0.08,
+                suppressInScenarios: ['regulated']
+            },
+            {
+                id: 'cold_water',
+                name: '❄️ Cold Water Influx',
+                description: 'Nutrient-rich cold water has boosted fish breeding! Population growth increased.',
+                effect: { growthBonus: 1.5 },
+                probability: 0.1
+            },
+            {
+                id: 'oil_spill',
+                name: '🛢️ Oil Spill',
+                description: 'A nearby oil spill has contaminated fishing grounds. Population reduced by 15%.',
+                effect: { populationMultiplier: 0.85 },
+                probability: 0.08
+            }
+        ];
+
+        let activeEvent = null;
+
+        // Strategies
+        const strategies = {
+            conservative: { min: 20, max: 30, label: 'Conservative', emoji: '🌱' },
+            moderate: { min: 35, max: 50, label: 'Moderate', emoji: '⚖️' },
+            aggressive: { min: 55, max: 70, label: 'Aggressive', emoji: '📈' },
+            intensive: { min: 75, max: 90, label: 'Intensive', emoji: '⚡' },
+            extreme: { min: 95, max: 120, label: 'Extreme', emoji: '🔥' }
+        };
+
+        // Competitors
+        const competitors = [
+            { name: 'Alpha Fishing Co.', totalFish: 0, strategy: null, catch: 0, breakingRules: false },
+            { name: 'Beta Marine Ltd.', totalFish: 0, strategy: null, catch: 0, breakingRules: false },
+            { name: 'Gamma Seafoods', totalFish: 0, strategy: null, catch: 0, breakingRules: false },
+            { name: 'Delta Fisheries', totalFish: 0, strategy: null, catch: 0, breakingRules: false },
+            { name: 'Epsilon Ocean Inc.', totalFish: 0, strategy: null, catch: 0, breakingRules: false }
+        ];
+
+        // Difficulty Settings
+        const difficultySettings = {
+            easy: {
+                growthRate: 0.25,
+                minPopulation: 100,
+                priceVolatility: 0.8,
+                competitorSkill: 0.7,
+                eventProbability: 0.2
+            },
+            medium: {
+                growthRate: 0.18,
+                minPopulation: 150,
+                priceVolatility: 1.0,
+                competitorSkill: 1.0,
+                eventProbability: 0.35
+            },
+            hard: {
+                growthRate: 0.12,
+                minPopulation: 200,
+                priceVolatility: 1.3,
+                competitorSkill: 1.3,
+                eventProbability: 0.5
+            }
+        };
+
+        // Scenario Settings
+        let scenarioSettings = {
+            competitorReactivity: 1.0,
+            priceVolatility: 1.0,
+            sustainabilityPressure: 1.0,
+            regulationLevel: 0
+        };
+
+        let baseFishPrice = 50;
+        let fishPrice = 50;
+        let roundHistory = [];
+        let populationHistory = [1000];
+        let strategiesUsed = {
+            conservative: 0,
+            moderate: 0,
+            aggressive: 0,
+            intensive: 0,
+            extreme: 0
+        };
+
+        // Chart
+        let chart = null;
+
+        // Achievements
+        const achievements = [
+            { id: 'first-catch', title: 'First Catch', desc: 'Complete your first round', unlocked: false },
+            { id: 'sustainable', title: 'Sustainable Fisher', desc: 'Maintain 80%+ population for 5 rounds', unlocked: false },
+            { id: 'greedy', title: 'Tragedy Realized', desc: 'Cause ecosystem collapse', unlocked: false },
+            { id: 'profitable', title: 'Profit Maximizer', desc: 'Earn £5000+ profit', unlocked: false },
+            { id: 'cooperative', title: 'Team Player', desc: 'Choose conservative strategy 5 times', unlocked: false },
+            { id: 'survivor', title: 'Crisis Survivor', desc: 'Complete crisis scenario', unlocked: false }
+        ];
+
+        // Initialize game
+        function initGame() {
+            generateFish();
+            updateDisplay();
+            updateCompetitorsList();
+            updateAchievementsDisplay();
+            initChart();
+            showTutorial();
+        }
+
+        function showTutorial() {
+            document.getElementById('tutorial-screen').style.display = 'flex';
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorial-screen').style.display = 'none';
+        }
+
+        function switchTutorialTab(evt, tabName) {
+            const tabs = document.querySelectorAll('.tutorial-tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            evt.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function generateFish() {
+            const ocean = document.getElementById('ocean');
+            // Remove existing fish
+            const existingFish = ocean.querySelectorAll('.fish');
+            existingFish.forEach(fish => fish.remove());
+
+            // Generate new fish based on population
+            const numFishToShow = Math.min(50, Math.floor(fishPopulation / 20));
+            for (let i = 0; i < numFishToShow; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'fish';
+                fish.textContent = '🐟';
+                fish.style.left = Math.random() * 90 + '%';
+                fish.style.top = Math.random() * 80 + 20 + '%';
+                fish.style.animationDelay = Math.random() * 3 + 's';
+                
+                ocean.appendChild(fish);
+            }
+        }
+
+        function selectStrategy(evt, strategy) {
+            playerStrategy = strategy;
+            
+            // Update button states
+            document.querySelectorAll('.strategy-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            evt.target.closest('.strategy-btn').classList.add('selected');
+            
+            document.getElementById('confirm-strategy-btn').disabled = false;
+        }
+
+        function confirmStrategy() {
+            if (!playerStrategy) return;
+            
+            strategiesUsed[playerStrategy]++;
+            
+            // Check for random event
+            checkRandomEvent();
+            
+            // Determine competitor strategies
+            determineCompetitorStrategies();
+            
+            setGamePhase('fishing');
+        }
+
+        function checkRandomEvent() {
+            const settings = difficultySettings[difficulty];
+            
+            // Reset previous event
+            activeEvent = null;
+            
+            // Check if event occurs
+            if (Math.random() < settings.eventProbability) {
+                // Select random event weighted by probability
+                const roll = Math.random();
+                let cumulative = 0;
+                
+                for (const event of randomEvents) {
+                    // Skip events suppressed for the current scenario
+                    if (event.suppressInScenarios && event.suppressInScenarios.includes(currentScenario)) {
+                        continue;
+                    }
+                    cumulative += event.probability;
+                    if (roll < cumulative) {
+                        activeEvent = event;
+                        showEvent(event);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function showEvent(event) {
+            const banner = document.getElementById('event-banner');
+            document.getElementById('event-title').textContent = event.name;
+            document.getElementById('event-description').textContent = event.description;
+            banner.classList.add('show');
+            
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 5000);
+        }
+
+        function determineCompetitorStrategies() {
+            const settings = difficultySettings[difficulty];
+            const strategyKeys = Object.keys(strategies);
+            
+            competitors.forEach(competitor => {
+                // Base strategy selection on various factors
+                let strategyIndex = Math.floor(Math.random() * strategyKeys.length);
+                
+                // Adjust based on fish population health
+                const populationHealth = fishPopulation / maxFishPopulation;
+                if (populationHealth < 0.3) {
+                    // More likely to be conservative in crisis
+                    strategyIndex = Math.max(0, strategyIndex - 2);
+                } else if (populationHealth > 0.8) {
+                    // More aggressive when resources abundant
+                    strategyIndex = Math.min(strategyKeys.length - 1, strategyIndex + 1);
+                }
+                
+                // Scenario effects
+                if (currentScenario === 'cooperative') {
+                    strategyIndex = Math.max(0, strategyIndex - 1);
+                } else if (currentScenario === 'competitive') {
+                    strategyIndex = Math.min(strategyKeys.length - 1, strategyIndex + 1);
+                } else if (currentScenario === 'regulated') {
+                    // Regulation caps competitors at 'moderate' (index 1) as the maximum allowed strategy.
+                    // Firms still vary between conservative and moderate, but aggressive/intensive/extreme
+                    // strategies are not viable — they face enforcement action and reduced profits.
+                    strategyIndex = Math.min(1, strategyIndex);
+                    // Small chance (15%) a firm attempts to break the rules
+                    if (Math.random() < 0.15) {
+                        strategyIndex = 2; // aggressive — risks a fine
+                        competitor.breakingRules = true;
+                    } else {
+                        competitor.breakingRules = false;
+                    }
+                }
+                
+                // Random event effects
+                if (activeEvent && activeEvent.effect.competitorAggression) {
+                    strategyIndex = Math.min(strategyKeys.length - 1, 
+                        Math.floor(strategyIndex * activeEvent.effect.competitorAggression));
+                }
+                
+                // Competitor skill adjustment
+                strategyIndex = Math.floor(strategyIndex * settings.competitorSkill);
+                strategyIndex = Math.max(0, Math.min(strategyKeys.length - 1, strategyIndex));
+                
+                competitor.strategy = strategyKeys[strategyIndex];
+            });
+        }
+
+        let playerCatchCount = 0;
+        let targetCatch = 0;
+
+        function setGamePhase(phase) {
+            gamePhase = phase;
+            
+            if (phase === 'strategy') {
+                document.getElementById('phase-indicator').textContent = 
+                    `Round ${currentRound} of ${maxRounds} - Choose Your Strategy`;
+                document.getElementById('strategy-box').style.display = 'block';
+                document.getElementById('next-round-box').style.display = 'none';
+                playerStrategy = null;
+                playerCatchCount = 0;
+                targetCatch = 0;
+                document.querySelectorAll('.strategy-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                document.getElementById('confirm-strategy-btn').disabled = true;
+                document.getElementById('analysis-panel').style.display = 'none';
+                
+            } else if (phase === 'fishing') {
+                const range = strategies[playerStrategy];
+                targetCatch = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                
+                // Apply event effects to catch target
+                if (activeEvent && activeEvent.effect.catchMultiplier) {
+                    targetCatch = Math.floor(targetCatch * activeEvent.effect.catchMultiplier);
+                }
+                
+                document.getElementById('phase-indicator').textContent = 
+                    `🎣 Deploying nets - catching ${targetCatch} fish...`;
+                document.getElementById('strategy-box').style.display = 'none';
+                document.getElementById('next-round-box').style.display = 'none';
+                
+                // Automatically catch fish with animation
+                deployNets();
+                
+            } else if (phase === 'results') {
+                processRound();
+            }
+        }
+
+        function deployNets() {
+            playerCatchCount = targetCatch;
+            
+            // Visual animation of catching fish
+            const ocean = document.getElementById('ocean');
+            const fish = ocean.querySelectorAll('.fish');
+            
+            // Animate fish disappearing in sequence
+            let caught = 0;
+            const catchInterval = setInterval(() => {
+                if (caught < Math.min(targetCatch, fish.length)) {
+                    if (fish[caught]) {
+                        fish[caught].style.transition = 'all 0.3s ease';
+                        fish[caught].style.transform = 'scale(0) rotate(360deg)';
+                        fish[caught].style.opacity = '0';
+                    }
+                    caught++;
+                } else {
+                    clearInterval(catchInterval);
+                    // After animation completes, move to results
+                    setTimeout(() => {
+                        setGamePhase('results');
+                    }, 500);
+                }
+            }, 50); // Fast sequential animation
+        }
+
+        function processRound() {
+            // Calculate competitor catches
+            let totalCatch = playerCatchCount;
+            let regulationViolators = [];
+            
+            competitors.forEach(competitor => {
+                const range = strategies[competitor.strategy];
+                let catchAmount = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+                
+                // Apply event effects
+                if (activeEvent && activeEvent.effect.catchMultiplier) {
+                    catchAmount = Math.floor(catchAmount * activeEvent.effect.catchMultiplier);
+                }
+                
+                // In regulated scenario, fine rule-breaking competitors — reducing their effective catch
+                if (currentScenario === 'regulated' && competitor.breakingRules) {
+                    catchAmount = Math.floor(catchAmount * 0.6); // 40% seized/penalised
+                    regulationViolators.push(competitor.name);
+                }
+                
+                competitor.catch = catchAmount;
+                competitor.totalFish += catchAmount;
+                totalCatch += catchAmount;
+            });
+            
+            // Show enforcement notice if any competitors were fined
+            if (regulationViolators.length > 0) {
+                setTimeout(() => {
+                    showPopup('⚖️ Regulatory Enforcement',
+                        `The Fisheries Authority has penalised ${regulationViolators.join(', ')} for exceeding regulated catch limits. Their catches have been partially seized and they face fines. This demonstrates how effective enforcement reduces the incentive to over-fish.`);
+                }, 200);
+            }
+            
+            // Apply event effects to population
+            if (activeEvent && activeEvent.effect.populationMultiplier) {
+                fishPopulation = Math.floor(fishPopulation * activeEvent.effect.populationMultiplier);
+            }
+            
+            // Update fish population
+            fishPopulation = Math.max(0, fishPopulation - totalCatch);
+            
+            // Calculate market price with supply-demand dynamics
+            const supplyFactor = totalCatch / 400;
+            let basePrice = Math.max(20, baseFishPrice * (1 / supplyFactor));
+            
+            // Reputation affects price: ethical firms attract premium buyers (eco-labels, retailer contracts)
+            const reputationBonus = 1 + (playerReputation - 50) * 0.002; // ±10% at extremes
+            basePrice *= reputationBonus;
+            
+            // Apply true price volatility (random market shocks)
+            const volatilityRange = scenarioSettings.priceVolatility;
+            const volatilityShock = (1 - volatilityRange * 0.15) + (Math.random() * volatilityRange * 0.3);
+            fishPrice = basePrice * volatilityShock;
+            
+            // Apply event price effects
+            if (activeEvent && activeEvent.effect.priceMultiplier) {
+                fishPrice *= activeEvent.effect.priceMultiplier;
+            }
+            
+            // Ensure minimum price
+            fishPrice = Math.max(20, fishPrice);
+            
+            // Calculate profits
+            let playerProfit = playerCatchCount * fishPrice;
+            
+            // Regulation penalties
+            if (currentScenario === 'regulated' && 
+                (playerStrategy === 'intensive' || playerStrategy === 'extreme')) {
+                const penalty = playerProfit * 0.3;
+                playerProfit -= penalty;
+                showPopup('⚖️ Regulation Penalty', 
+                    `You've been fined £${Math.round(penalty)} for exceeding sustainable catch limits!`);
+            }
+            
+            playerTotalFish += playerCatchCount;
+            playerTotalProfit += playerProfit;
+            
+            // Update reputation
+            const sustainabilityScore = fishPopulation / maxFishPopulation;
+            if (playerStrategy === 'extreme' || playerStrategy === 'intensive') {
+                playerReputation = Math.max(0, playerReputation - 10);
+            } else if (playerStrategy === 'conservative') {
+                playerReputation = Math.min(100, playerReputation + 5);
+            }
+            
+            // Record round
+            roundHistory.push({
+                round: currentRound,
+                strategy: playerStrategy,
+                catch: playerCatchCount,
+                profit: playerProfit,
+                population: fishPopulation,
+                price: fishPrice
+            });
+            populationHistory.push(fishPopulation);
+            
+            // Show strategic analysis
+            showStrategicAnalysis();
+            
+            updateDisplay();
+            updateGraph();
+            updateCompetitorsList();
+            checkAchievements();
+            
+            document.getElementById('phase-indicator').textContent = 
+                `Round ${currentRound} Complete - Market Results`;
+            
+            // Show next round button
+            document.getElementById('strategy-box').style.display = 'none';
+            document.getElementById('next-round-box').style.display = 'block';
+            document.getElementById('next-round-number').textContent = currentRound + 1;
+            
+            // Add to history display
+            if (currentRound === 1) {
+                document.getElementById('history-panel').classList.add('show');
+            }
+            
+            const historyDiv = document.getElementById('round-history');
+            const roundItem = document.createElement('div');
+            roundItem.className = 'round-item';
+            roundItem.innerHTML = `
+                <strong>Round ${currentRound}:</strong> 
+                ${strategies[playerStrategy].emoji} ${strategies[playerStrategy].label} | 
+                Caught ${playerCatchCount} fish | 
+                Profit: £${Math.round(playerProfit)} | 
+                Population: ${Math.round(fishPopulation)}
+            `;
+            historyDiv.insertBefore(roundItem, historyDiv.firstChild);
+            
+        }
+
+        function showStrategicAnalysis() {
+            const analysisPanel = document.getElementById('analysis-panel');
+            analysisPanel.style.display = 'block';
+            
+            // Calculate theoretical outcomes
+            const totalPlayers = 6;
+            const avgCooperativeCatch = 30; // Conservative strategy average
+            const avgNashCatch = 70; // Aggressive strategy average (Nash equilibrium)
+            
+            const cooperativeTotalCatch = avgCooperativeCatch * totalPlayers;
+            const nashTotalCatch = avgNashCatch * totalPlayers;
+            
+            const cooperativePopulation = fishPopulation + (cooperativeTotalCatch - (playerCatchCount + competitors.reduce((sum, c) => sum + c.catch, 0)));
+            const nashPopulation = fishPopulation - nashTotalCatch + (playerCatchCount + competitors.reduce((sum, c) => sum + c.catch, 0));
+            
+            // Game Theory Analysis
+            let gameTheoryText = '';
+            if (playerStrategy === 'conservative' || playerStrategy === 'moderate') {
+                gameTheoryText = `You chose a <strong>cooperative strategy</strong>, prioritizing long-term sustainability. However, if competitors exploit the resource aggressively, your restraint may not prevent collapse. This illustrates the <strong>Prisoner's Dilemma</strong>: cooperation is optimal collectively but risky individually.`;
+            } else {
+                gameTheoryText = `You chose an <strong>aggressive strategy</strong>, maximizing short-term gains. This is the <strong>dominant strategy</strong> in the absence of cooperation, leading to Nash Equilibrium where everyone overfishes. This rational individual behavior produces irrational collective outcomes - the Tragedy of the Commons.`;
+            }
+            
+            document.getElementById('analysis-gametheory').innerHTML = gameTheoryText;
+            
+            // Outcome Comparison
+            document.getElementById('outcome-actual').textContent = playerCatchCount;
+            document.getElementById('outcome-cooperative').textContent = avgCooperativeCatch;
+            document.getElementById('outcome-nash').textContent = avgNashCatch;
+            
+            // Market Failure Analysis
+            const totalCatch = playerCatchCount + competitors.reduce((sum, c) => sum + c.catch, 0);
+            const externalityText = `<strong>Negative Externality Present:</strong> Your catch of ${playerCatchCount} fish contributed to total extraction of ${totalCatch} fish. Your private benefit (£${Math.round(playerCatchCount * fishPrice)}) doesn't account for the <strong>social cost</strong> of depleting the shared resource pool by ${Math.round((totalCatch / maxFishPopulation) * 100)}%. The market price (£${Math.round(fishPrice)}) reflects supply-demand but ignores ecosystem degradation - a classic <strong>market failure</strong>.`;
+            
+            document.getElementById('analysis-externality').innerHTML = externalityText;
+            
+            // Sustainability Assessment
+            const currentHealth = (fishPopulation / maxFishPopulation) * 100;
+            let sustainabilityText = '';
+            
+            if (currentHealth < 30) {
+                sustainabilityText = `🚨 <strong>Critical:</strong> Population at ${Math.round(currentHealth)}% - nearing collapse threshold. The <strong>Maximum Sustainable Yield (MSY)</strong> has been exceeded. Immediate intervention needed or the common pool resource will be destroyed.`;
+            } else if (currentHealth < 60) {
+                sustainabilityText = `⚠️ <strong>Stressed:</strong> Population at ${Math.round(currentHealth)}% - below sustainable levels. Overfishing is occurring. Without restraint, you're on a path to the "race to the bottom" where each firm hastens to extract remaining value before collapse.`;
+            } else {
+                sustainabilityText = `✅ <strong>Sustainable:</strong> Population at ${Math.round(currentHealth)}% - within healthy range. Current extraction rates allow natural regeneration. This demonstrates that common pool resources CAN be managed sustainably with appropriate restraint and cooperation.`;
+            }
+            
+            document.getElementById('analysis-sustainability').innerHTML = sustainabilityText;
+        }
+
+        function updateDisplay() {
+            document.getElementById('fish-count').textContent = Math.round(fishPopulation);
+            document.getElementById('current-round').textContent = currentRound;
+            document.getElementById('total-fish').textContent = playerTotalFish;
+            document.getElementById('total-profit').textContent = '£' + Math.round(playerTotalProfit);
+            document.getElementById('reputation').textContent = Math.round(playerReputation);
+            document.getElementById('fish-price').textContent = '£' + Math.round(fishPrice);
+            
+            if (roundHistory.length > 0) {
+                const lastRound = roundHistory[roundHistory.length - 1];
+                document.getElementById('round-profit').textContent = '£' + Math.round(lastRound.profit);
+            }
+            
+            generateFish();
+        }
+
+        function updateCompetitorsList() {
+            const list = document.getElementById('competitors-list');
+            list.innerHTML = '';
+            
+            competitors.forEach(competitor => {
+                const div = document.createElement('div');
+                div.className = 'competitor-item';
+                
+                let strategyDisplay = competitor.strategy ? 
+                    `${strategies[competitor.strategy].emoji} ${strategies[competitor.strategy].label}` : 
+                    '❓ Unknown';
+                
+                let fineTag = '';
+                if (currentScenario === 'regulated' && competitor.breakingRules) {
+                    fineTag = ' <span style="color:#e74c3c;font-size:11px;font-weight:bold;">⚖️ FINED</span>';
+                }
+                
+                div.innerHTML = `
+                    <div class="competitor-name">${competitor.name}</div>
+                    <div class="competitor-stats">
+                        ${strategyDisplay}${fineTag}<br>
+                        Total: ${competitor.totalFish} fish
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateAchievementsDisplay() {
+            const grid = document.getElementById('achievements-grid');
+            grid.innerHTML = '';
+            
+            achievements.forEach(achievement => {
+                const div = document.createElement('div');
+                div.className = 'achievement';
+                div.id = `achievement-${achievement.id}`;
+                if (achievement.unlocked) {
+                    div.classList.add('unlocked');
+                }
+                
+                div.innerHTML = `
+                    <div class="achievement-icon">${achievement.unlocked ? '🏆' : '🔒'}</div>
+                    <div class="achievement-title">${achievement.title}</div>
+                    <div class="achievement-desc">${achievement.desc}</div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function initChart() {
+            const canvas = document.getElementById('population-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // Simple canvas-based chart
+            updateGraph();
+        }
+
+        function updateGraph() {
+            const canvas = document.getElementById('population-chart');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+            
+            // Draw labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText('Fish Population', 10, 20);
+            ctx.fillText('Round', width - 50, height - 10);
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - 2 * padding) * (i / 5);
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+                
+                const value = Math.round(maxFishPopulation * (1 - i / 5));
+                ctx.fillText(value, 5, y + 5);
+            }
+            
+            // Draw critical threshold line
+            const criticalY = padding + (height - 2 * padding) * (1 - 0.15);
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, criticalY);
+            ctx.lineTo(width - padding, criticalY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = '10px Arial';
+            ctx.fillText('Critical Threshold', width - 130, criticalY - 5);
+            
+            // Draw population line
+            if (populationHistory.length > 1) {
+                ctx.strokeStyle = '#3498db';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                
+                const totalPoints = Math.max(populationHistory.length - 1, 1);
+                const xStep = (width - 2 * padding) / Math.max(totalPoints, maxRounds - 1);
+                const yScale = (height - 2 * padding) / maxFishPopulation;
+                
+                populationHistory.forEach((pop, index) => {
+                    const x = padding + index * xStep;
+                    const y = height - padding - pop * yScale;
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // Draw points
+                ctx.fillStyle = '#3498db';
+                populationHistory.forEach((pop, index) => {
+                    const x = padding + index * xStep;
+                    const y = height - padding - pop * yScale;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+
+        function checkAchievements() {
+            // First catch
+            if (currentRound >= 1 && !achievements[0].unlocked) {
+                unlockAchievement('first-catch');
+            }
+            
+            // Sustainable
+            const recentPopulation = populationHistory.slice(-5);
+            if (recentPopulation.length === 5 && 
+                recentPopulation.every(pop => pop >= maxFishPopulation * 0.8)) {
+                unlockAchievement('sustainable');
+            }
+            
+            // Greedy — only triggers on actual ecosystem collapse, not just the warning threshold
+            if (fishPopulation <= 0) {
+                unlockAchievement('greedy');
+            }
+            
+            // Profitable
+            if (playerTotalProfit >= 5000) {
+                unlockAchievement('profitable');
+            }
+            
+            // Cooperative
+            if (strategiesUsed.conservative >= 5) {
+                unlockAchievement('cooperative');
+            }
+            
+            // Survivor
+            if (currentScenario === 'crisis' && currentRound >= maxRounds) {
+                unlockAchievement('survivor');
+            }
+        }
+
+        function unlockAchievement(id) {
+            const achievement = achievements.find(a => a.id === id);
+            if (achievement && !achievement.unlocked) {
+                achievement.unlocked = true;
+                const div = document.getElementById(`achievement-${id}`);
+                div.classList.add('unlocked');
+                
+                
+                // Show notification
+                setTimeout(() => {
+                    showPopup(`🏆 Achievement Unlocked!`, `${achievement.title}\n${achievement.desc}`);
+                }, 500);
+            }
+        }
+
+        function nextRound() {
+            if (currentRound >= maxRounds) {
+                endGame();
+                return;
+            }
+            
+            const settings = difficultySettings[difficulty];
+            
+            if (fishPopulation < settings.minPopulation) {
+                showPopup('🚨 ECOSYSTEM COLLAPSE!', 
+                    `The fish population has collapsed to ${Math.round(fishPopulation)} fish. The tragedy of the commons has occurred - individual rational decisions led to collective disaster.\n\n📚 This demonstrates how the absence of property rights and regulatory mechanisms leads to resource depletion, even when all actors know their collective behavior is unsustainable.\n\nGame over.`);
+                setTimeout(endGame, 3000);
+                return;
+            }
+            
+            currentRound++;
+            
+            // Fish population recovery between rounds
+            if (fishPopulation > 0) {
+                let recovery = Math.floor(fishPopulation * settings.growthRate);
+                
+                // Apply event growth bonus
+                if (activeEvent && activeEvent.effect.growthBonus) {
+                    recovery = Math.floor(recovery * activeEvent.effect.growthBonus);
+                }
+                
+                fishPopulation = Math.min(maxFishPopulation, fishPopulation + recovery);
+            }
+            
+            setGamePhase('strategy');
+            generateFish();
+            updateDisplay();
+            updateGraph();
+        }
+
+        function endGame() {
+            let outcome = '';
+            let sustainabilityScore = (fishPopulation / maxFishPopulation) * 100;
+            
+            // Check final achievements
+            checkAchievements();
+            
+            let title = 'Game Complete - Economic Analysis';
+            
+            if (sustainabilityScore < 10) {
+                outcome = `🚨 COMPLETE ECOSYSTEM COLLAPSE\n\nYou earned £${Math.round(playerTotalProfit)} but destroyed the ecosystem.\n\n📚 ECONOMIC LESSON: This demonstrates the core of the Tragedy of the Commons - individual rationality leads to collective irrationality. Each firm acted "rationally" to maximize profit, but the aggregate effect was catastrophic resource depletion.\n\n💡 In game theory terms, you reached the Nash Equilibrium (everyone overfishes) rather than the Pareto Optimal outcome (sustainable cooperation).`;
+                title = '🚨 Market Failure: Complete Collapse';
+            } else if (sustainabilityScore < 30) {
+                outcome = `⚠️ SEVERE ECOSYSTEM DAMAGE\n\nYou earned £${Math.round(playerTotalProfit)} but ecosystem health is ${Math.round(sustainabilityScore)}%.\n\n📚 ECONOMIC LESSON: Short-term profit maximization created massive <strong>negative externalities</strong> - costs imposed on future generations and other stakeholders that weren't reflected in market prices.\n\n💡 This represents <strong>dynamic inefficiency</strong>: present consumption came at the expense of future welfare, violating intergenerational equity principles.`;
+                title = '⚠️ Market Failure: Severe Damage';
+            } else if (sustainabilityScore < 60) {
+                outcome = `📉 UNSUSTAINABLE PATH\n\nYou earned £${Math.round(playerTotalProfit)}, ecosystem health ${Math.round(sustainabilityScore)}%.\n\n📚 ECONOMIC LESSON: The resource base is weakened. You're experiencing <strong>diminishing returns</strong> - each additional unit of fishing effort yields less output as stocks decline.\n\n💡 Without intervention (property rights, regulation, or cooperation), this path leads to eventual collapse. The market alone cannot solve common pool resource problems.`;
+                title = '📉 Approaching Unsustainability';
+            } else if (sustainabilityScore < 80) {
+                outcome = `⚖️ MODERATE SUCCESS\n\nYou balanced profit (£${Math.round(playerTotalProfit)}) with sustainability (${Math.round(sustainabilityScore)}% health).\n\n📚 ECONOMIC LESSON: You've achieved a reasonable compromise. This demonstrates that <strong>sustainable yield</strong> is possible when extraction rates don't exceed regeneration rates.\n\n💡 However, maintaining this balance requires ongoing cooperation or governance mechanisms to prevent defection to aggressive strategies.`;
+                title = '⚖️ Balanced Outcome';
+            } else {
+                outcome = `🌟 SUSTAINABLE SUCCESS!\n\nExcellent work! You earned £${Math.round(playerTotalProfit)} while maintaining ${Math.round(sustainabilityScore)}% ecosystem health.\n\n📚 ECONOMIC LESSON: You've proven that common pool resources CAN be managed sustainably. This required internalizing externalities through either:\n• Voluntary cooperation (Coasian solution)\n• Institutional governance (Ostrom's principles)\n• Regulatory frameworks (Pigouvian approach)\n\n💡 Your success shows that the Tragedy of the Commons is not inevitable - it can be overcome with proper incentive structures and long-term thinking.`;
+                title = '🌟 Sustainable Victory!';
+            }
+            
+            // Add learning outcomes
+            outcome += `\n\n📊 FINAL STATISTICS:\n`;
+            outcome += `• Total Rounds: ${currentRound}\n`;
+            outcome += `• Total Fish Caught: ${playerTotalFish}\n`;
+            outcome += `• Average Catch/Round: ${Math.round(playerTotalFish / currentRound)}\n`;
+            outcome += `• Total Profit: £${Math.round(playerTotalProfit)}\n`;
+            outcome += `• Average Profit/Round: £${Math.round(playerTotalProfit / currentRound)}\n`;
+            outcome += `• Final Ecosystem Health: ${Math.round(sustainabilityScore)}%\n`;
+            
+            // Count unique strategies used
+            const uniqueStrategies = Object.values(strategiesUsed).filter(count => count > 0).length;
+            outcome += `• Strategies Used: ${uniqueStrategies}/5\n`;
+            outcome += `• Achievements: ${achievements.filter(a => a.unlocked).length}/${achievements.length}`;
+            
+            outcome += `\n\n🎓 KEY ECONOMIC CONCEPTS DEMONSTRATED:\n`;
+            outcome += `• Tragedy of the Commons (Hardin, 1968)\n`;
+            outcome += `• Negative Externalities & Market Failure\n`;
+            outcome += `• Game Theory: Prisoner's Dilemma & Nash Equilibrium\n`;
+            outcome += `• Common Pool Resources (vs Public Goods)\n`;
+            outcome += `• Dynamic Efficiency & Intergenerational Equity\n`;
+            outcome += `• Property Rights & Governance Solutions (Coase & Ostrom)`;
+            
+            showPopup(title, outcome);
+        }
+
+        function loadScenario(evt, scenario) {
+            resetGame();
+            currentScenario = scenario;
+            
+            // Update button states
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            evt.target.closest('.scenario-btn').classList.add('active');
+            
+            const descriptions = {
+                'competitive': 'Free market with competitive firms. Each company makes independent decisions to maximize profit. Will individual rational actors produce optimal social outcomes, or will we see market failure?',
+                'cooperative': 'Companies have agreed to industry-wide sustainability guidelines. Competitors are more likely to choose moderate strategies. This simulates voluntary cooperation as a solution to the commons problem.',
+                'regulated': 'Government regulation limits fishing methods. Maximum catch per round is capped and aggressive strategies are penalized with fines. This demonstrates a Pigouvian regulatory approach to internalizing externalities.',
+                'crisis': 'A marine disease has reduced fish populations by 40%. Catching fish is harder and the ecosystem is more fragile. Can you manage a common pool resource under crisis conditions?'
+            };
+            
+            document.getElementById('scenario-description').textContent = descriptions[scenario];
+            
+            switch(scenario) {
+                case 'competitive':
+                    scenarioSettings = {
+                        competitorReactivity: 1.2,
+                        priceVolatility: 1.0,
+                        sustainabilityPressure: 1.0,
+                        regulationLevel: 0
+                    };
+                    baseFishPrice = 50;
+                    fishPopulation = 1000;
+                    break;
+                    
+                case 'cooperative':
+                    scenarioSettings = {
+                        competitorReactivity: 0.7,
+                        priceVolatility: 0.6,
+                        sustainabilityPressure: 1.3,
+                        regulationLevel: 0
+                    };
+                    baseFishPrice = 45;
+                    fishPopulation = 1000;
+                    break;
+                    
+                case 'regulated':
+                    scenarioSettings = {
+                        competitorReactivity: 0.8,
+                        priceVolatility: 0.8,
+                        sustainabilityPressure: 1.5,
+                        regulationLevel: 1
+                    };
+                    baseFishPrice = 60;
+                    fishPopulation = 1000;
+                    break;
+                    
+                case 'crisis':
+                    scenarioSettings = {
+                        competitorReactivity: 1.5,
+                        priceVolatility: 1.5,
+                        sustainabilityPressure: 2.0,
+                        regulationLevel: 0
+                    };
+                    fishPopulation = 600;
+                    baseFishPrice = 70;
+                    break;
+            }
+            
+            fishPrice = baseFishPrice;
+            populationHistory = [fishPopulation];
+            generateFish();
+            updateDisplay();
+            updateGraph();
+        }
+
+        function resetGame() {
+            currentRound = 1;
+            fishPopulation = 1000;
+            playerStrategy = null;
+            playerTotalFish = 0;
+            playerTotalProfit = 0;
+            playerReputation = 100;
+            roundHistory = [];
+            populationHistory = [1000];
+            strategiesUsed = {
+                conservative: 0,
+                moderate: 0,
+                aggressive: 0,
+                intensive: 0,
+                extreme: 0
+            };
+            activeEvent = null;
+            
+            competitors.forEach(competitor => {
+                competitor.totalFish = 0;
+                competitor.strategy = null;
+                competitor.catch = 0;
+                competitor.breakingRules = false;
+            });
+            
+            baseFishPrice = 50;
+            fishPrice = 50;
+            
+            document.getElementById('round-history').innerHTML = '';
+            document.getElementById('history-panel').classList.remove('show');
+            document.getElementById('analysis-panel').style.display = 'none';
+            document.getElementById('next-round-box').style.display = 'none';
+            
+            setGamePhase('strategy');
+            generateFish();
+            updateDisplay();
+            updateGraph();
+            updateCompetitorsList();
+            closePopup();
+        }
+
+        function changeDifficulty() {
+            difficulty = document.getElementById('difficulty').value;
+            resetGame();
+        }
+
+        function showPopup(title, message) {
+            document.getElementById('popup-title').textContent = title;
+            document.getElementById('popup-message').textContent = message;
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('message-popup').classList.add('show');
+        }
+
+        function closePopup() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('message-popup').classList.remove('show');
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

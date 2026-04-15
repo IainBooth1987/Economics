@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Controls Visualiser | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a2744;
+  --navy-light: #243560;
+  --gold: #c9a227;
+  --gold-light: #e8c547;
+  --cream: #faf8f3;
+  --white: #ffffff;
+  --grey-100: #f4f4f6;
+  --grey-200: #e8e8ee;
+  --grey-500: #8a8aa0;
+  --ceiling-red: #c0392b;
+  --ceiling-light: #fdecea;
+  --floor-blue: #1a6fa8;
+  --floor-light: #e8f4fd;
+  --merit-green: #1a7a4a;
+  --merit-light: #e8f7ee;
+  --demerit-orange: #c65d00;
+  --demerit-light: #fef0e6;
+  --surplus-green: #27ae60;
+  --shortage-red: #e74c3c;
+  --shadow-sm: 0 2px 8px rgba(26,39,68,0.08);
+  --shadow-md: 0 6px 24px rgba(26,39,68,0.12);
+  --shadow-lg: 0 16px 48px rgba(26,39,68,0.16);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--navy);
+  min-height: 100vh;
+}
+
+/* HEADER */
+.header {
+  background: var(--navy);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-md);
+}
+.header-brand {
+  font-family: 'Playfair Display', serif;
+  color: var(--gold);
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+.header-title {
+  font-family: 'DM Sans', sans-serif;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.header-badge {
+  background: var(--gold);
+  color: var(--navy);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* MAIN LAYOUT */
+.page-wrap {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+/* INTRO */
+.intro-bar {
+  background: var(--navy);
+  color: white;
+  border-radius: var(--radius);
+  padding: 24px 32px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.intro-bar h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--gold);
+  line-height: 1.2;
+}
+.intro-bar p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.intro-icon { font-size: 2.5rem; flex-shrink: 0; }
+
+/* TABS */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--grey-500);
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.tab-btn:hover { background: var(--grey-100); color: var(--navy); }
+.tab-btn.active-ceiling { background: var(--ceiling-red); color: white; }
+.tab-btn.active-floor { background: var(--floor-blue); color: white; }
+.tab-btn.active-compare { background: var(--navy); color: white; }
+
+/* CONTEXT SELECTOR */
+.context-selector {
+  margin-bottom: 22px;
+}
+.context-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--grey-500);
+  margin-bottom: 10px;
+}
+.context-cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ctx-card {
+  border: 2px solid var(--grey-200);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--white);
+  flex: 1;
+  min-width: 160px;
+  text-align: center;
+}
+.ctx-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.ctx-card.active { border-color: var(--gold); background: var(--navy); color: white; box-shadow: var(--shadow-md); }
+.ctx-card .ctx-emoji { font-size: 1.6rem; display: block; margin-bottom: 4px; }
+.ctx-card .ctx-name { font-size: 0.78rem; font-weight: 600; display: block; }
+.ctx-card .ctx-type { font-size: 0.68rem; opacity: 0.7; display: block; margin-top: 2px; }
+
+/* MAIN PANEL */
+.main-panel {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+/* DIAGRAM BOX */
+.diagram-box {
+  background: white;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.diagram-box canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.diagram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.diagram-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+
+/* CONTROLS PANEL */
+.controls-panel {
+  background: white;
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ctrl-section-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--grey-500);
+  margin-bottom: 10px;
+}
+
+/* SLIDER */
+.slider-wrap { }
+.slider-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.slider-info label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.slider-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  background: var(--grey-200);
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--navy);
+  cursor: pointer;
+  border: 3px solid var(--gold);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--navy);
+  cursor: pointer;
+  border: 3px solid var(--gold);
+}
+
+/* STATS GRID */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-chip {
+  background: var(--grey-100);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.stat-chip .stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: block;
+}
+.stat-chip .stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--grey-500);
+  display: block;
+  margin-top: 2px;
+}
+.stat-chip.shortage { background: #fdecea; }
+.stat-chip.shortage .stat-num { color: var(--shortage-red); }
+.stat-chip.surplus { background: #edfaf2; }
+.stat-chip.surplus .stat-num { color: var(--surplus-green); }
+.stat-chip.neutral .stat-num { color: var(--navy); }
+
+/* BINDING BADGE */
+.binding-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.binding-badge.binding-yes { background: #fdecea; color: var(--ceiling-red); }
+.binding-badge.binding-no { background: #edfaf2; color: var(--merit-green); }
+.binding-badge.surplus-badge { background: #edfaf2; color: var(--surplus-green); }
+
+/* INFO CARDS */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.info-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.info-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-card ul {
+  list-style: none;
+  padding: 0;
+}
+.info-card ul li {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--grey-100);
+  padding-left: 16px;
+  position: relative;
+  color: #3a3a5a;
+}
+.info-card ul li:last-child { border-bottom: none; }
+.info-card ul li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-size: 0.75rem;
+  top: 6px;
+}
+
+.info-card.rationale { border-top: 3px solid var(--gold); }
+.info-card.effects-card { border-top: 3px solid var(--ceiling-red); }
+.info-card.effects-card.floor { border-top-color: var(--floor-blue); }
+.info-card.evaluation { border-top: 3px solid var(--merit-green); grid-column: 1 / -1; }
+
+/* CONTEXT SPOTLIGHT */
+.spotlight {
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 22px;
+  border-left: 5px solid var(--gold);
+}
+.spotlight.ceiling-spot { background: var(--ceiling-light); border-left-color: var(--ceiling-red); }
+.spotlight.floor-spot { background: var(--floor-light); border-left-color: var(--floor-blue); }
+.spotlight.demerit-spot { background: var(--demerit-light); border-left-color: var(--demerit-orange); }
+.spotlight.merit-spot { background: var(--merit-light); border-left-color: var(--merit-green); }
+
+.spotlight-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.spotlight-emoji { font-size: 2rem; }
+.spotlight-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--navy); }
+.spotlight-subtitle { font-size: 0.78rem; color: var(--grey-500); margin-top: 1px; }
+.spotlight p { font-size: 0.85rem; line-height: 1.65; color: #3a3a5a; }
+.spotlight strong { color: var(--navy); }
+
+/* GOVT FAILURE */
+.govt-failure {
+  background: #fff8e6;
+  border: 1px solid #f5d97a;
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 22px;
+}
+.govt-failure h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  color: #8a6800;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.govt-failure ul { list-style: none; padding: 0; }
+.govt-failure ul li {
+  font-size: 0.82rem;
+  padding: 4px 0 4px 18px;
+  position: relative;
+  color: #5a4800;
+  border-bottom: 1px solid #f5e090;
+  line-height: 1.5;
+}
+.govt-failure ul li:last-child { border-bottom: none; }
+.govt-failure ul li::before { content: '⚠'; position: absolute; left: 0; font-size: 0.7rem; top: 5px; }
+
+/* COMPARE VIEW */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.compare-col {
+  background: white;
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.compare-col.ceil-col { border-top: 4px solid var(--ceiling-red); }
+.compare-col.floor-col { border-top: 4px solid var(--floor-blue); }
+.compare-col h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+.compare-example {
+  background: var(--grey-100);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.compare-example h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.compare-example p { font-size: 0.8rem; line-height: 1.5; color: #3a3a5a; }
+.compare-example .good-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+.good-tag.rationale-tag { background: #edfaf2; color: var(--merit-green); }
+.good-tag.risk-tag { background: #fdecea; color: var(--ceiling-red); }
+
+/* PRINT BTN */
+.print-btn {
+  background: var(--navy);
+  color: var(--gold);
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+.print-btn:hover { background: var(--navy-light); }
+
+/* HIDDEN panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main-panel { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .context-cards { flex-wrap: wrap; }
+  .ctx-card { min-width: 140px; }
+  .header { flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 600px) {
+  .tab-btn { font-size: 0.72rem; padding: 9px 10px; }
+  .intro-bar { flex-direction: column; text-align: center; }
+}
+
+/* PRINT STYLES */
+@media print {
+  .header, .tab-nav, .context-selector, .controls-panel,
+  .print-btn, .tab-btn, .intro-icon { display: none !important; }
+  body { background: white; font-size: 11pt; }
+  .page-wrap { padding: 0; max-width: 100%; }
+  .intro-bar { background: none !important; color: black !important; border: 2px solid #1a2744; break-inside: avoid; }
+  .intro-bar h1 { color: #1a2744 !important; font-size: 16pt; }
+  .intro-bar p { color: black !important; }
+  .main-panel { display: block; }
+  .diagram-box { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+  .info-card, .spotlight, .govt-failure, .compare-col { break-inside: avoid; box-shadow: none; }
+  .info-grid { grid-template-columns: 1fr 1fr; }
+  .tab-panel { display: block !important; }
+
+  /* Print header */
+  body::before {
+    content: "BIZ-OMICS | Price Controls Visualiser";
+    display: block;
+    font-family: serif;
+    font-size: 10pt;
+    color: #1a2744;
+    border-bottom: 2px solid #c9a227;
+    padding-bottom: 6pt;
+    margin-bottom: 16pt;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+}
+</style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Price Control Visualiser</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_pricectrl_pw';
+  var valid = ['PriceCtrl-7Pw2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['PriceCtrl-7Pw2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_pricectrl_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-brand">BIZ-OMICS</div>
+    <div class="header-title">Price Controls Visualiser</div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <span class="header-badge">AQA · Edexcel · OCR</span>
+    <button class="print-btn" onclick="window.print()">🖨 Print</button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page-wrap">
+
+  <!-- INTRO -->
+  <div class="intro-bar">
+    <div class="intro-icon">⚖️</div>
+    <div>
+      <h1>Price Controls</h1>
+      <p>Governments intervene in markets to set <strong>maximum prices (price ceilings)</strong> or <strong>minimum prices (price floors)</strong>. Explore real-world contexts — from Scotland's Minimum Unit Pricing on alcohol to the UK Energy Price Guarantee — and understand both the rationale and the unintended consequences.</p>
+    </div>
+  </div>
+
+  <!-- MAIN TABS -->
+  <div class="tab-nav">
+    <button class="tab-btn active-ceiling" onclick="showTab('ceiling')">🔺 Price Ceilings (Max Price)</button>
+    <button class="tab-btn" onclick="showTab('floor')">🔻 Price Floors (Min Price)</button>
+    <button class="tab-btn" onclick="showTab('compare')">⚖️ Compare & Evaluate</button>
+  </div>
+
+  <!-- ================== CEILING TAB ================== -->
+  <div class="tab-panel active" id="tab-ceiling">
+
+    <div class="context-selector">
+      <div class="context-label">Select a real-world context</div>
+      <div class="context-cards">
+        <div class="ctx-card active" onclick="selectCeilingContext('energy')">
+          <span class="ctx-emoji">⚡</span>
+          <span class="ctx-name">Energy Price Cap</span>
+          <span class="ctx-type">UK, 2022–present</span>
+        </div>
+        <div class="ctx-card" onclick="selectCeilingContext('rent')">
+          <span class="ctx-emoji">🏠</span>
+          <span class="ctx-name">Rent Controls</span>
+          <span class="ctx-type">Scotland / London</span>
+        </div>
+        <div class="ctx-card" onclick="selectCeilingContext('nhs')">
+          <span class="ctx-emoji">💊</span>
+          <span class="ctx-name">NHS Drug Pricing</span>
+          <span class="ctx-type">Merit good access</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPOTLIGHT -->
+    <div id="ceiling-spotlight" class="spotlight ceiling-spot">
+      <!-- injected by JS -->
+    </div>
+
+    <div class="main-panel">
+      <div class="diagram-box">
+        <div class="diagram-header">
+          <div class="diagram-title" id="ceiling-diagram-title">Price Ceiling Diagram</div>
+          <span id="ceiling-binding-badge" class="binding-badge binding-yes">Binding ✓</span>
+        </div>
+        <canvas id="ceilingCanvas" width="700" height="480"></canvas>
+      </div>
+
+      <div class="controls-panel">
+        <div>
+          <div class="ctrl-section-title">Fixed Equilibrium</div>
+          <div style="background:var(--grey-100);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.82rem;color:var(--grey-500);">Market equilibrium price (P*)</span>
+            <span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);font-weight:700;" id="ceiling-eq-display">50</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--grey-500);margin-top:6px;line-height:1.4;">Determined by supply &amp; demand — fixed for this market context. Only the price control level can be adjusted.</p>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Price Ceiling Level</div>
+          <div class="slider-wrap">
+            <div class="slider-info">
+              <label>Maximum Price (Pc)</label>
+              <span class="slider-val">Pc = <span id="ceiling-price-val">30</span></span>
+            </div>
+            <input type="range" id="ceiling-slider" min="1" max="100" value="30" oninput="updateCeiling(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--grey-500);margin-top:4px;">
+              <span>← Binding (shortage)</span>
+              <span>P* (no effect) →</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Market Outcomes</div>
+          <div class="stats-grid" id="ceiling-stats">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Key Insight</div>
+          <p id="ceiling-insight" style="font-size:0.83rem;line-height:1.6;color:#3a3a5a;">A binding price ceiling set <strong>below</strong> equilibrium creates a <strong>shortage</strong> — quantity demanded exceeds quantity supplied.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid" id="ceiling-info-grid">
+      <!-- injected by JS -->
+    </div>
+
+    <div class="govt-failure" id="ceiling-govt-failure">
+      <!-- injected by JS -->
+    </div>
+
+  </div>
+  <!-- end ceiling tab -->
+
+  <!-- ================== FLOOR TAB ================== -->
+  <div class="tab-panel" id="tab-floor">
+
+    <div class="context-selector">
+      <div class="context-label">Select a real-world context</div>
+      <div class="context-cards">
+        <div class="ctx-card active" onclick="selectFloorContext('alcohol')">
+          <span class="ctx-emoji">🥃</span>
+          <span class="ctx-name">Minimum Unit Price</span>
+          <span class="ctx-type">Scotland — Alcohol</span>
+        </div>
+        <div class="ctx-card" onclick="selectFloorContext('wage')">
+          <span class="ctx-emoji">💷</span>
+          <span class="ctx-name">National Living Wage</span>
+          <span class="ctx-type">UK Labour Market</span>
+        </div>
+        <div class="ctx-card" onclick="selectFloorContext('agriculture')">
+          <span class="ctx-emoji">🌾</span>
+          <span class="ctx-name">Agricultural Supports</span>
+          <span class="ctx-type">CAP / UK Post-Brexit</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="floor-spotlight" class="spotlight floor-spot">
+      <!-- injected -->
+    </div>
+
+    <div class="main-panel">
+      <div class="diagram-box">
+        <div class="diagram-header">
+          <div class="diagram-title" id="floor-diagram-title">Price Floor Diagram</div>
+          <span id="floor-binding-badge" class="binding-badge surplus-badge">Binding ✓</span>
+        </div>
+        <canvas id="floorCanvas" width="700" height="480"></canvas>
+      </div>
+
+      <div class="controls-panel">
+        <div>
+          <div class="ctrl-section-title">Fixed Equilibrium</div>
+          <div style="background:var(--grey-100);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.82rem;color:var(--grey-500);">Market equilibrium price (P*)</span>
+            <span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);font-weight:700;" id="floor-eq-display">40</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--grey-500);margin-top:6px;line-height:1.4;">Determined by supply &amp; demand — fixed for this market context. Only the price control level can be adjusted.</p>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Price Floor Level</div>
+          <div class="slider-wrap">
+            <div class="slider-info">
+              <label>Minimum Price (Pf)</label>
+              <span class="slider-val">Pf = <span id="floor-price-val">60</span></span>
+            </div>
+            <input type="range" id="floor-slider" min="1" max="100" value="60" oninput="updateFloor(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--grey-500);margin-top:4px;">
+              <span>← P* (no effect)</span>
+              <span>Binding (surplus) →</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Market Outcomes</div>
+          <div class="stats-grid" id="floor-stats">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div>
+          <div class="ctrl-section-title">Key Insight</div>
+          <p id="floor-insight" style="font-size:0.83rem;line-height:1.6;color:#3a3a5a;">A binding price floor set <strong>above</strong> equilibrium creates a <strong>surplus</strong> — quantity supplied exceeds quantity demanded.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid" id="floor-info-grid">
+      <!-- injected -->
+    </div>
+
+    <div class="govt-failure" id="floor-govt-failure">
+      <!-- injected -->
+    </div>
+
+  </div>
+  <!-- end floor tab -->
+
+  <!-- ================== COMPARE TAB ================== -->
+  <div class="tab-panel" id="tab-compare">
+    <div class="compare-grid">
+      <div class="compare-col ceil-col">
+        <h2 style="color:var(--ceiling-red);">🔺 Price Ceilings — Maximum Prices</h2>
+
+        <div class="compare-example">
+          <span class="good-tag rationale-tag">Rationale</span>
+          <h4>⚡ UK Energy Price Guarantee (2022)</h4>
+          <p>During the energy crisis, Ofgem's price cap was raised sharply. The government introduced an EPG limiting what households paid per unit. <strong>Rationale:</strong> energy is a near-necessity; rising prices disproportionately affected low-income households (equity failure). <strong>Result:</strong> reduced consumer bills but cost the Treasury ~£25bn in supplier subsidies.</p>
+        </div>
+
+        <div class="compare-example">
+          <span class="good-tag rationale-tag">Rationale</span>
+          <h4>🏠 Rent Controls (Scotland 2022–2024)</h4>
+          <p>Scotland introduced rent freeze powers for social and private tenants during the cost-of-living crisis. <strong>Rationale:</strong> housing is a merit good; market rents had risen 14–25% in cities. <strong>Risk:</strong> landlords exiting the market, reducing long-run supply.</p>
+        </div>
+
+        <div class="compare-example">
+          <span class="good-tag risk-tag">Unintended Consequences</span>
+          <h4>🇻🇪 Venezuela Food Price Caps</h4>
+          <p>Caps on staple food prices led to chronic shortages, empty shelves, and black markets. A textbook example of government failure where price signals were suppressed entirely.</p>
+        </div>
+
+        <div style="background:var(--ceiling-light);border-radius:8px;padding:14px;margin-top:10px;">
+          <p style="font-size:0.82rem;line-height:1.6;color:#5a1a1a;"><strong>Evaluative point:</strong> Price ceilings may achieve short-run equity goals but risk long-run supply reductions and misallocation. The degree of elasticity matters: inelastic supply (e.g. housing) worsens shortages more severely.</p>
+        </div>
+      </div>
+
+      <div class="compare-col floor-col">
+        <h2 style="color:var(--floor-blue);">🔻 Price Floors — Minimum Prices</h2>
+
+        <div class="compare-example">
+          <span class="good-tag rationale-tag">Rationale</span>
+          <h4>🥃 MUP on Alcohol — Scotland (2018)</h4>
+          <p>Scotland set a minimum price of 50p per unit of alcohol — the first such policy in the UK. <strong>Rationale:</strong> alcohol is a demerit good (negative externalities, information failure). Market prices for cheap own-brand spirits/cider were well below social cost. Evidence shows alcohol-specific deaths fell 13.4% in the two years following implementation.</p>
+        </div>
+
+        <div class="compare-example">
+          <span class="good-tag rationale-tag">Rationale</span>
+          <h4>💷 National Living Wage (UK, 2016–present)</h4>
+          <p>The NLW is a price floor in the labour market. <strong>Rationale:</strong> monopsonistic employers (esp. in care, retail) pay below the competitive wage. The NLW corrects this. Research (Resolution Foundation) shows limited negative employment effects at current levels, though controversy continues at higher rates.</p>
+        </div>
+
+        <div class="compare-example">
+          <span class="good-tag risk-tag">Unintended Consequences</span>
+          <h4>🌾 EU Common Agricultural Policy (CAP)</h4>
+          <p>Guaranteed prices above equilibrium generated massive overproduction: "grain mountains" and "butter mountains". EU taxpayers funded costly storage and disposal. Also distorted global trade, harming developing-country farmers.</p>
+        </div>
+
+        <div style="background:var(--floor-light);border-radius:8px;padding:14px;margin-top:10px;">
+          <p style="font-size:0.82rem;line-height:1.6;color:#0a3a5a;"><strong>Evaluative point:</strong> Price floors work best where there is a clear market failure rationale (externality, monopsony, demerit good). Setting the floor too far above equilibrium amplifies surplus and government failure. Context determines whether intervention improves or worsens welfare.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-sm);margin-top:22px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--navy);margin-bottom:16px;">📊 Summary: Market Failure Justifications</h2>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+          <thead>
+            <tr style="background:var(--navy);color:white;">
+              <th style="padding:10px 14px;text-align:left;border-radius:6px 0 0 6px;">Context</th>
+              <th style="padding:10px 14px;text-align:left;">Type</th>
+              <th style="padding:10px 14px;text-align:left;">Market Failure Rationale</th>
+              <th style="padding:10px 14px;text-align:left;">Good/Demerit/Merit</th>
+              <th style="padding:10px 14px;text-align:left;border-radius:0 6px 6px 0;">Key Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--grey-200);">
+              <td style="padding:9px 14px;font-weight:600;">⚡ Energy Price Cap</td>
+              <td style="padding:9px 14px;"><span style="background:var(--ceiling-light);color:var(--ceiling-red);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">CEILING</span></td>
+              <td style="padding:9px 14px;">Equity; near-necessity; oligopoly power</td>
+              <td style="padding:9px 14px;">Merit good</td>
+              <td style="padding:9px 14px;">Under-investment in energy infrastructure</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--grey-200);background:#fafafa;">
+              <td style="padding:9px 14px;font-weight:600;">🏠 Rent Controls</td>
+              <td style="padding:9px 14px;"><span style="background:var(--ceiling-light);color:var(--ceiling-red);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">CEILING</span></td>
+              <td style="padding:9px 14px;">Equity; housing as near-merit good</td>
+              <td style="padding:9px 14px;">Merit good</td>
+              <td style="padding:9px 14px;">Reduced housing supply long-run</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--grey-200);">
+              <td style="padding:9px 14px;font-weight:600;">💊 NHS Drug Pricing</td>
+              <td style="padding:9px 14px;"><span style="background:var(--ceiling-light);color:var(--ceiling-red);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">CEILING</span></td>
+              <td style="padding:9px 14px;">Merit good; information asymmetry; monopoly pricing</td>
+              <td style="padding:9px 14px;">Merit good</td>
+              <td style="padding:9px 14px;">R&D disincentive; drug shortages</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--grey-200);background:#fafafa;">
+              <td style="padding:9px 14px;font-weight:600;">🥃 MUP Alcohol (Scotland)</td>
+              <td style="padding:9px 14px;"><span style="background:var(--floor-light);color:var(--floor-blue);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">FLOOR</span></td>
+              <td style="padding:9px 14px;">Negative externality; information failure; addiction</td>
+              <td style="padding:9px 14px;color:var(--demerit-orange);font-weight:600;">Demerit good</td>
+              <td style="padding:9px 14px;">Cross-border purchasing; regressive effect on poor drinkers</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--grey-200);">
+              <td style="padding:9px 14px;font-weight:600;">💷 National Living Wage</td>
+              <td style="padding:9px 14px;"><span style="background:var(--floor-light);color:var(--floor-blue);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">FLOOR</span></td>
+              <td style="padding:9px 14px;">Monopsony power; equity; poverty</td>
+              <td style="padding:9px 14px;">Labour market</td>
+              <td style="padding:9px 14px;">Unemployment if set too high</td>
+            </tr>
+            <tr style="background:#fafafa;">
+              <td style="padding:9px 14px;font-weight:600;">🌾 Agricultural Supports</td>
+              <td style="padding:9px 14px;"><span style="background:var(--floor-light);color:var(--floor-blue);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700;">FLOOR</span></td>
+              <td style="padding:9px 14px;">Income support; food security</td>
+              <td style="padding:9px 14px;">Merit / strategic good</td>
+              <td style="padding:9px 14px;">Overproduction; trade distortion</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- end compare tab -->
+
+</div>
+<!-- end page-wrap -->
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const CEILING_CONTEXTS = {
+  energy: {
+    title: '⚡ UK Energy Price Guarantee',
+    subtitle: 'Price ceiling on domestic energy unit rates, 2022–present',
+    spotClass: 'ceiling-spot',
+    desc: `In response to the 2021–22 global energy crisis, wholesale gas prices surged over 400%. The UK government introduced the <strong>Energy Price Guarantee (EPG)</strong>, capping what consumers paid per unit of gas and electricity. The regulator Ofgem retained a separate "price cap" framework, but the EPG acted as an effective ceiling below the cap for most of 2022–23.<br><br>The <strong>market failure rationale</strong> rests on: (1) energy is a near-necessity with very inelastic demand, meaning price rises fall disproportionately on low-income households; (2) the UK wholesale energy market exhibited oligopolistic characteristics during the crisis; (3) significant equity concerns justified intervention. The Treasury spent approximately £25bn subsidising the gap between market rates and the ceiling.`,
+    diagramTitle: 'Energy Market — Price Ceiling (EPG)',
+    rationale: ['Energy is a near-necessity: PED ≈ -0.1 to -0.3, so consumers cannot easily reduce consumption', 'Oligopolistic energy market — limited competitive pressure to bring prices down', 'Severe equity concerns: low-income households spend a higher proportion of income on energy (regressive impact)', 'Risk of fuel poverty affecting health outcomes — potential merit good dimension'],
+    effects: ['Short-run: household bills reduced; fuel poverty alleviated for millions', 'Government (Treasury) subsidised the gap between market price and ceiling — fiscal cost ~£25bn', 'Surplus demand: some households increased consumption beyond what they would under market pricing', 'Suppliers received government transfers, partially protecting profitability and supply security', 'Long-run: questions about whether low prices slow transition to energy efficiency and renewables'],
+    evaluation: ['The EPG was time-limited and conditional — this limited long-run market distortion', 'PED is very inelastic: shortage effects were modest, as consumers cannot easily substitute', 'Without intervention: fuel poverty estimated to affect 10m+ UK households at peak prices', 'Counter-argument: targeted subsidies to vulnerable households (rather than a blanket ceiling) may be more economically efficient', 'Wider context: the energy price crisis was a supply-side shock — price controls do not resolve underlying supply shortages'],
+    govtFailures: ['Treasury cost of ~£25bn creates fiscal pressure and crowding out of other public services', 'Energy companies benefited from government transfers — questions of distributional justice', 'Reduced price signals may slow household investment in insulation and energy efficiency', 'Moral hazard: expectation of future ceilings may reduce consumer incentive to switch providers or contracts', 'Ceiling removed some investment incentive for new energy supply infrastructure'],
+    eqPrice: 70, ceilPrice: 35
+  },
+  rent: {
+    title: '🏠 Rent Controls — Scotland & London',
+    subtitle: 'Rent freeze/cap legislation; private rental markets',
+    spotClass: 'ceiling-spot',
+    desc: `Scotland introduced emergency rent freeze powers under the <strong>Cost of Living (Tenant Protection) Scotland Act 2022</strong>, halting private rent increases for most tenants. London's rental market, while not subject to formal rent control, has seen sustained calls for regulation as average rents rose over 25% in 2022–23.<br><br><strong>Market failure rationale:</strong> Housing is widely regarded as a quasi-merit good — access to decent affordable housing generates positive externalities (health, education outcomes, social stability). Information asymmetries between landlords and tenants, and inelastic urban housing supply, mean the free market persistently under-provides affordable housing for lower-income groups.`,
+    diagramTitle: 'Rental Market — Rent Ceiling',
+    rationale: ['Housing as a merit good: positive externalities from housing security (health, education, wellbeing)', 'Inelastic short-run supply of rental property — new supply takes years to build', 'Rapid rent inflation disproportionately burdens low-income workers in cities', 'Asymmetric information: tenants often unaware of comparable market rents or legal rights'],
+    effects: ['Existing tenants benefit from rent stability — especially low-income households', 'New tenants may find fewer properties available as landlords exit or convert to short-let (Airbnb)', 'Scotland: reports of landlords selling properties to avoid controls — shrinking rental stock', 'Properties may receive less maintenance if landlord returns are squeezed', 'Waiting lists and queues emerge as informal rationing mechanism'],
+    evaluation: ['Short-run equity gains are real but may be at the cost of long-run supply', 'The magnitude of the shortage depends on PES of housing — very inelastic in major cities', 'Scotland evidence: early post-freeze data showed some landlord exit but less than critics predicted', 'Alternative: build-to-rent supply subsidies (demand-side solution) may address root cause more effectively', 'International evidence is mixed: Sweden\'s rent controls created dual markets; New York\'s show persistent shortages alongside protected tenants'],
+    govtFailures: ['Landlord exit reduces overall rental supply, harming those seeking new tenancies', 'Parallel uncontrolled market: short-let platforms allow landlords to bypass controls', 'Quality deterioration: landlords cut maintenance spending to restore margin', 'Geographic misallocation: rent-controlled properties often occupied by non-poorest households over time', 'Political difficulty of removing controls once established — policy "lock-in"'],
+    eqPrice: 60, ceilPrice: 35
+  },
+  nhs: {
+    title: '💊 NHS Drug Pricing — NICE & VPAS',
+    subtitle: 'Maximum price controls on branded medicines supplied to the NHS',
+    spotClass: 'merit-spot',
+    desc: `The NHS uses a combination of mechanisms — the <strong>Voluntary Scheme for Branded Medicines Pricing and Access (VPAS)</strong> and <strong>NICE cost-effectiveness thresholds</strong> — to cap the prices it pays pharmaceutical companies. NICE will not routinely recommend treatments costing more than approximately £20,000–30,000 per QALY (quality-adjusted life year), effectively setting a ceiling on what the NHS will pay.<br><br><strong>Market failure rationale:</strong> Pharmaceuticals involve high R&D sunk costs, patent monopoly power, and severe information asymmetry (patients rely entirely on doctors and manufacturers). As a merit good, healthcare is under-consumed at free-market prices relative to the social optimum.`,
+    diagramTitle: 'Pharmaceutical Market — NHS Price Ceiling',
+    rationale: ['Medicines as merit goods: significant positive externalities (productivity, reduced disease transmission)', 'Monopoly pricing from patents: without regulation, pharmaceutical companies charge far above marginal cost', 'Information asymmetry: patients cannot assess value or compare prices — rely on clinical guidance', 'Inelastic demand for essential medicines: unregulated pricing exploits necessity'],
+    effects: ['NHS can access medicines at controlled prices, improving equity of healthcare access', 'Drug companies may refuse to supply the NHS at NICE-approved prices (e.g. cancer drugs)', 'Some innovative drugs unavailable on NHS — patients pay out of pocket or travel abroad', 'Lower prices reduce incentive for pharmaceutical R&D in the UK', 'Government negotiates bulk purchasing at below-list prices'],
+    evaluation: ['NICE threshold reflects societal willingness-to-pay — defensible rationing mechanism', 'Risk: UK becomes lower priority market for pharmaceutical launches, reducing early access to new drugs', 'Cancer Drug Fund provides supplementary mechanism for conditional approvals — mitigates blanket denial', 'Global free-rider problem: NHS lower prices subsidised by US market (US pays 3–5x NHS prices)', 'Trade-off between current patient access and long-run innovation incentives'],
+    govtFailures: ['Some life-saving drugs not available on NHS — patients face access inequality by wealth', 'Pharmaceutical companies launch products in higher-price markets first — UK access delays', 'Price ceiling may not reflect true social value of breakthrough therapies', 'Administration and negotiation costs of NICE appraisal process are substantial', 'Risk of gaming by pharmaceutical companies (e.g. launching at artificially high list prices before negotiation)'],
+    eqPrice: 75, ceilPrice: 30
+  }
+};
+
+const FLOOR_CONTEXTS = {
+  alcohol: {
+    title: '🥃 Minimum Unit Pricing — Scotland (2018)',
+    subtitle: 'Price floor of 50p per unit of alcohol — demerit good intervention',
+    spotClass: 'demerit-spot',
+    desc: `Scotland became the first country in the world to introduce a <strong>Minimum Unit Price (MUP) for alcohol</strong> in May 2018, set at 50p per unit. A can of high-strength lager (9% ABV, 500ml) contains approximately 4.5 units, so the minimum price for that can became £2.25 — significantly above its typical off-licence price of around 50p–80p.<br><br><strong>Market failure rationale:</strong> Alcohol is a classic <strong>demerit good</strong>. At free-market prices, consumption is excessive relative to the social optimum because: (1) consumers underestimate long-run health risks (<em>information failure</em>); (2) alcohol generates large negative externalities (NHS costs, crime, domestic violence, lost productivity). Evidence showed the cheapest alcohol was consumed disproportionately by hazardous drinkers. A University of Sheffield evaluation found alcohol-specific deaths fell 13.4% in the two years post-MUP.`,
+    diagramTitle: 'Alcohol Market — Minimum Unit Price',
+    rationale: ['Demerit good: private costs of cheap alcohol are below full social cost (externalities)', 'Information failure: consumers underestimate long-run health damage from heavy alcohol use', 'Market fails to price in negative externalities: NHS treatment costs ~£3.5bn/year in England alone', 'Cheap own-brand/value alcohol (cider, spirits) consumed disproportionately by hazardous drinkers', 'Regular taxation (excise duty) had already been tried — MUP more precisely targets cheapest, strongest products'],
+    effects: ['Price of cheapest, strongest products (own-brand cider, white spirits) rose most sharply', 'Sales of alcohol fell, particularly strong/cheap variants — volume effect', 'Revenue benefit to retailers/producers (not Treasury) — unlike taxation', 'Moderate drinkers largely unaffected: their preferred products were already above the floor price', 'Some cross-border purchasing to England (where no MUP) — partial displacement effect'],
+    evaluation: ['Strong evidence base: Sheffield Alcohol Research Group modelling predicted 2,000 fewer alcohol-related deaths in 20 years', 'University of Sheffield post-implementation review: alcohol-specific deaths fell 13.4% (2018–2020)', 'However: difficult to isolate from broader trends; COVID confounds post-2020 data', 'Regressive concern: low-income moderate drinkers face higher costs; but heavy drinkers at low income gain most health benefit', 'Transferability: England has not adopted MUP — natural experiment ongoing'],
+    govtFailures: ['Revenue from higher prices goes to industry (producers/retailers) not to public services', 'Cross-border shopping to England reduces effectiveness — leakage problem', 'Determined heavy drinkers may substitute to cheaper drugs or illicit alcohol', 'Regressive distributional impact on moderate low-income drinkers', 'Risk of normalising intervention in consumer markets — precedent effects'],
+    eqPrice: 30, floorPrice: 60
+  },
+  wage: {
+    title: '💷 National Living Wage — UK',
+    subtitle: 'Price floor in the labour market; minimum hourly rate for workers aged 21+',
+    spotClass: 'floor-spot',
+    desc: `The <strong>National Living Wage (NLW)</strong> was introduced in April 2016 at £7.20/hour for workers aged 25+, replacing the minimum wage at that level. By April 2025, it stands at £12.21/hour for workers aged 21+. It is set by the government based on Low Pay Commission recommendations, with a target of two-thirds of median earnings.<br><br><strong>Market failure rationale:</strong> Labour markets, especially in care, retail, cleaning, and hospitality, exhibit characteristics of <strong>monopsony</strong> — employers have buyer power over wages, allowing them to pay below the competitive wage. Additionally, there are strong equity and poverty justifications: wages at the very bottom of the distribution generate serious in-work poverty, which has welfare and social externality dimensions.`,
+    diagramTitle: 'Labour Market — National Living Wage',
+    rationale: ['Monopsony in low-wage sectors (care, retail, hospitality) — employers pay below competitive wage', 'In-work poverty: millions of full-time workers earning below a living income', 'Positive externality from reducing poverty: lower welfare spending, better health and education outcomes', 'Workers in low-wage sectors face information asymmetry and limited bargaining power', 'Equity: minimum wages redistribute income toward lowest earners'],
+    effects: ['Wages rise for workers earning at/below the floor — direct income gain', 'Some employers may reduce hours, headcount, or automation investment (substitution effect)', 'Consumer spending rises among low-income households (high marginal propensity to consume)', 'Small firms face higher costs than large firms — competitive disadvantage', 'Evidence: Bank of England and Resolution Foundation research shows modest or near-zero negative employment effects at current UK NLW levels'],
+    evaluation: ['Empirical evidence broadly reassuring: employment has not fallen sharply despite large NLW increases 2016–2024', 'Monopsony model predicts employment can rise with minimum wage — consistent with UK evidence', 'Effect depends on where floor is set: small gap above equilibrium = modest surplus; large gap = significant unemployment risk', 'Sectoral variation matters: care sector (dominant employer) is publicly funded — NLW costs passed to government not market', 'Future increases toward 2/3 median earnings may encounter more resistance from employment effects'],
+    govtFailures: ['Public sector and care sector face higher wage bills — fiscal cost to government', 'Automation incentive: firms invest in labour-saving technology (long-run employment risk)', 'Youth rates and exemptions create complexity and potential exploitation', 'Regional variation: £12.21 goes much further outside London — national floor may be too low in some areas and too high in others', 'Compliance and enforcement: HMRC estimates significant underpayment, particularly in small firms'],
+    eqPrice: 40, floorPrice: 65
+  },
+  agriculture: {
+    title: '🌾 Agricultural Price Supports — CAP & Post-Brexit UK',
+    subtitle: 'Price floors to support farm incomes; food security and market correction',
+    spotClass: 'floor-spot',
+    desc: `The EU's <strong>Common Agricultural Policy (CAP)</strong> has historically used guaranteed minimum prices (intervention prices) above market equilibrium to support farm incomes. When market prices fall below the intervention price, the EU buys surplus production — creating the infamous "grain mountains" and "butter mountains" of the 1980s. Post-Brexit, the UK's <strong>Agriculture Act 2020</strong> replaced area-based payments with an <strong>Environmental Land Management (ELM)</strong> scheme, shifting from price support toward public goods payments.<br><br><strong>Rationale:</strong> Food security, income support for farmers facing volatile commodity markets, and the public good dimension of maintaining domestic food production capacity.`,
+    diagramTitle: 'Agricultural Market — Guaranteed Price Floor',
+    rationale: ['Food security: dependence on food imports creates strategic vulnerability', 'Volatile commodity markets: agricultural prices fluctuate dramatically with weather, creating income instability', 'Income support: farmers often face very low margins; price guarantees provide income stability', 'Market failure in countryside externalities: farming provides landscape, biodiversity, and flood management — underpaid at market prices', 'Long-run supply: without support, farmland may be abandoned or converted, reducing future food capacity'],
+    effects: ['Farmers receive higher, guaranteed prices — income stabilisation', 'Overproduction results: supply curve crosses floor, generating surplus', 'EU/government must buy, store, or destroy surplus — fiscal burden', 'Consumer prices higher than free-market equilibrium', 'Trade distortion: artificially low export prices undercut developing-country farmers'],
+    evaluation: ['Original CAP overproduction was dramatic: EU\'s grain/butter mountains represent massive deadweight loss', 'Reformed CAP moved toward direct income payments (decoupled) — reduces production incentive, less market distortion', 'UK ELM scheme shifts toward payment for "public goods" (biodiversity, carbon sequestration) — more efficient', 'Food security argument has renewed relevance post-COVID/Ukraine war — supply chain fragility highlighted', 'Equity concern: large landowners receive the majority of support payments — regressive distributional effect'],
+    govtFailures: ['Massive fiscal cost: CAP consumed ~40% of EU budget at peak', 'Overproduction creates disposal problems (dumping, waste)', 'Trade distortions harm developing-country agricultural exporters — global equity issue', 'Large farm bias: price support benefits largest producers most', 'Environmental damage from incentivised overproduction (soil degradation, biodiversity loss)'],
+    eqPrice: 35, floorPrice: 62
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let activeCeilingCtx = 'energy';
+let activeFloorCtx = 'alcohol';
+let ceilingEq = 70;
+let ceilingPrice = 35;
+let floorEq = 30;
+let floorPrice = 60;
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function showTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.className = 'tab-btn'; });
+  document.getElementById('tab-' + tab).classList.add('active');
+  const tabBtnMap = { ceiling: 0, floor: 1, compare: 2 };
+  const btns = document.querySelectorAll('.tab-btn');
+  btns[tabBtnMap[tab]].classList.add('active-' + tab);
+  if (tab === 'ceiling') { renderCeilingTab(); }
+  if (tab === 'floor') { renderFloorTab(); }
+}
+
+// ============================================================
+// CONTEXT SELECTION
+// ============================================================
+function selectCeilingContext(key) {
+  activeCeilingCtx = key;
+  document.querySelectorAll('#tab-ceiling .ctx-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#tab-ceiling .ctx-card')[Object.keys(CEILING_CONTEXTS).indexOf(key)].classList.add('active');
+  const ctx = CEILING_CONTEXTS[key];
+  ceilingEq = ctx.eqPrice;
+  ceilingPrice = ctx.ceilPrice;
+  document.getElementById('ceiling-slider').value = ceilingPrice;
+  document.getElementById('ceiling-price-val').textContent = ceilingPrice;
+  renderCeilingTab();
+}
+
+function selectFloorContext(key) {
+  activeFloorCtx = key;
+  document.querySelectorAll('#tab-floor .ctx-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#tab-floor .ctx-card')[Object.keys(FLOOR_CONTEXTS).indexOf(key)].classList.add('active');
+  const ctx = FLOOR_CONTEXTS[key];
+  floorEq = ctx.eqPrice;
+  floorPrice = ctx.floorPrice;
+  document.getElementById('floor-slider').value = floorPrice;
+  document.getElementById('floor-price-val').textContent = floorPrice;
+  renderFloorTab();
+}
+
+// ============================================================
+// SLIDER UPDATES
+// ============================================================
+function updateCeiling(v) {
+  ceilingPrice = parseInt(v);
+  document.getElementById('ceiling-price-val').textContent = v;
+  renderCeilingTab();
+}
+function updateFloor(v) {
+  floorPrice = parseInt(v);
+  document.getElementById('floor-price-val').textContent = v;
+  renderFloorTab();
+}
+
+// ============================================================
+// RENDER CEILING TAB
+// ============================================================
+function renderCeilingTab() {
+  const ctx = CEILING_CONTEXTS[activeCeilingCtx];
+  // Spotlight
+  document.getElementById('ceiling-spotlight').className = 'spotlight ' + ctx.spotClass;
+  document.getElementById('ceiling-spotlight').innerHTML = `
+    <div class="spotlight-top">
+      <span class="spotlight-emoji">${ctx.title.split(' ')[0]}</span>
+      <div>
+        <div class="spotlight-title">${ctx.title.substring(ctx.title.indexOf(' ')+1)}</div>
+        <div class="spotlight-subtitle">${ctx.subtitle}</div>
+      </div>
+    </div>
+    <p>${ctx.desc}</p>`;
+
+  // Diagram title
+  document.getElementById('ceiling-diagram-title').textContent = ctx.diagramTitle;
+  document.getElementById('ceiling-eq-display').textContent = ceilingEq;
+
+  // Draw
+  drawCeilingDiagram();
+
+  // Stats — use correct curve equations: Qs = Pc, Qd = 2E - Pc
+  const E = ceilingEq;
+  const Pc = ceilingPrice;
+  const binding = Pc < E;
+  const qSup = Math.round(Pc);           // Supply: P = Q → Qs = Pc
+  const qDem = Math.round(2*E - Pc);     // Demand: P = 2E - Q → Qd = 2E - Pc
+  const shortage = binding ? Math.max(0, qDem - qSup) : 0;
+  const qTrans = binding ? qSup : E;     // actual quantity transacted
+
+  document.getElementById('ceiling-binding-badge').textContent = binding ? 'Binding — Shortage' : (Pc === E ? 'At Equilibrium' : 'Non-Binding');
+  document.getElementById('ceiling-binding-badge').className = 'binding-badge ' + (binding ? 'binding-yes' : 'binding-no');
+
+  document.getElementById('ceiling-stats').innerHTML = `
+    <div class="stat-chip neutral"><span class="stat-num">${E}</span><span class="stat-label">Eq. Price (P*)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${Pc}</span><span class="stat-label">Ceiling (Pc)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${qSup}</span><span class="stat-label">Qty Supplied (Qs)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${qDem}</span><span class="stat-label">Qty Demanded (Qd)</span></div>
+    <div class="stat-chip neutral" style="grid-column:1/-1"><span class="stat-num">${qTrans}</span><span class="stat-label">Qty Transacted (min of Qs, Q*)</span></div>
+    ${binding ? `<div class="stat-chip shortage" style="grid-column:1/-1"><span class="stat-num">${shortage} units</span><span class="stat-label">Shortage (Qd − Qs)</span></div>` : `<div class="stat-chip" style="grid-column:1/-1;background:#edfaf2"><span class="stat-num" style="color:var(--merit-green)">No Effect</span><span class="stat-label">Ceiling at or above P* — market unaffected</span></div>`}`;
+
+  // Dynamic insight text
+  let insightHTML;
+  if (!binding && Pc > E) {
+    insightHTML = `The ceiling is set <strong>above P* (${E})</strong>, so it is <strong>non-binding</strong>. The market clears naturally at the equilibrium — the ceiling has no effect on price or quantity. As you drag the slider <em>down</em> toward P*, the control approaches the point where it would start to bite.`;
+  } else if (Pc === E) {
+    insightHTML = `The ceiling is set <strong>exactly at P* (${E})</strong>. It is still non-binding — the market would reach this price anyway. No shortage, no distortion.`;
+  } else {
+    insightHTML = `The ceiling is <strong>binding</strong> at Pc = ${Pc}, below P* (${E}). At this price:<br>
+    • Producers supply only <strong>Qs = ${qSup}</strong> units (read from supply curve)<br>
+    • Consumers demand <strong>Qd = ${qDem}</strong> units (read from demand curve)<br>
+    • A <strong>shortage of ${shortage} units</strong> results — Qd &gt; Qs<br>
+    • Quantity transacted is determined by the <em>short side</em>: <strong>${qTrans} units</strong> (supply constrains the market)<br>
+    The further Pc falls below P*, the larger the shortage. Price signals are suppressed — the market cannot self-correct.`;
+  }
+  document.getElementById('ceiling-insight').innerHTML = insightHTML;  // Info grid
+  document.getElementById('ceiling-info-grid').innerHTML = `
+    <div class="info-card rationale">
+      <h3>🎯 Market Failure Rationale</h3>
+      <ul>${ctx.rationale.map(r=>`<li>${r}</li>`).join('')}</ul>
+    </div>
+    <div class="info-card effects-card">
+      <h3>📉 Market Effects</h3>
+      <ul>${ctx.effects.map(e=>`<li>${e}</li>`).join('')}</ul>
+    </div>
+    <div class="info-card evaluation">
+      <h3>⚖️ Evaluation Points</h3>
+      <ul>${ctx.evaluation.map(e=>`<li>${e}</li>`).join('')}</ul>
+    </div>`;
+
+  // Govt failure
+  document.getElementById('ceiling-govt-failure').innerHTML = `
+    <h3>⚠️ Government Failure Risks</h3>
+    <ul>${ctx.govtFailures.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+}
+
+// ============================================================
+// RENDER FLOOR TAB
+// ============================================================
+function renderFloorTab() {
+  const ctx = FLOOR_CONTEXTS[activeFloorCtx];
+  // Spotlight
+  document.getElementById('floor-spotlight').className = 'spotlight ' + ctx.spotClass;
+  document.getElementById('floor-spotlight').innerHTML = `
+    <div class="spotlight-top">
+      <span class="spotlight-emoji">${ctx.title.split(' ')[0]}</span>
+      <div>
+        <div class="spotlight-title">${ctx.title.substring(ctx.title.indexOf(' ')+1)}</div>
+        <div class="spotlight-subtitle">${ctx.subtitle}</div>
+      </div>
+    </div>
+    <p>${ctx.desc}</p>`;
+
+  document.getElementById('floor-diagram-title').textContent = ctx.diagramTitle;
+  document.getElementById('floor-eq-display').textContent = floorEq;
+
+  drawFloorDiagram();
+
+  // Correct curve maths: Qs = Pf, Qd = 2E - Pf
+  const Ef = floorEq;
+  const Pf = floorPrice;
+  const bindingF = Pf > Ef;
+  const qSupF = Math.round(Pf);
+  const qDemF = Math.round(2*Ef - Pf);
+  const surplus = bindingF ? Math.max(0, qSupF - Math.max(0,qDemF)) : 0;
+  const qTransF = bindingF ? Math.max(0, qDemF) : Ef;
+
+  document.getElementById('floor-binding-badge').textContent = bindingF ? 'Binding — Surplus' : (Pf === Ef ? 'At Equilibrium' : 'Non-Binding');
+  document.getElementById('floor-binding-badge').className = 'binding-badge ' + (bindingF ? 'surplus-badge' : 'binding-no');
+
+  document.getElementById('floor-stats').innerHTML = `
+    <div class="stat-chip neutral"><span class="stat-num">${Ef}</span><span class="stat-label">Eq. Price (P*)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${Pf}</span><span class="stat-label">Floor (Pf)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${Math.max(0,qDemF)}</span><span class="stat-label">Qty Demanded (Qd)</span></div>
+    <div class="stat-chip neutral"><span class="stat-num">${qSupF}</span><span class="stat-label">Qty Supplied (Qs)</span></div>
+    <div class="stat-chip neutral" style="grid-column:1/-1"><span class="stat-num">${qTransF}</span><span class="stat-label">Qty Transacted (min of Qd, Q*)</span></div>
+    ${bindingF ? `<div class="stat-chip surplus" style="grid-column:1/-1"><span class="stat-num">${surplus} units</span><span class="stat-label">Surplus (Qs − Qd)</span></div>` : `<div class="stat-chip" style="grid-column:1/-1;background:#edfaf2"><span class="stat-num" style="color:var(--merit-green)">No Effect</span><span class="stat-label">Floor at or below P* — market unaffected</span></div>`}`;
+
+  let insightF;
+  if (!bindingF && Pf < Ef) {
+    insightF = `The floor is set <strong>below P* (${Ef})</strong>, so it is <strong>non-binding</strong>. The market clears at the equilibrium — the floor has no effect. Drag the slider <em>up</em> past P* to see it become binding.`;
+  } else if (Pf === Ef) {
+    insightF = `The floor is set <strong>exactly at P* (${Ef})</strong>. Still non-binding — no surplus, no distortion.`;
+  } else {
+    insightF = `The floor is <strong>binding</strong> at Pf = ${Pf}, above P* (${Ef}). At this price:<br>
+    • Producers wish to supply <strong>Qs = ${qSupF}</strong> units (read from supply curve)<br>
+    • Consumers only demand <strong>Qd = ${Math.max(0,qDemF)}</strong> units (read from demand curve)<br>
+    • A <strong>surplus of ${surplus} units</strong> results — Qs &gt; Qd<br>
+    • Quantity transacted is the <em>short side</em>: <strong>${qTransF} units</strong> (demand constrains the market)<br>
+    The further Pf rises above P*, the larger the surplus. Unsold output must be stored, subsidised or destroyed.`;
+  }
+  document.getElementById('floor-insight').innerHTML = insightF;
+
+  document.getElementById('floor-info-grid').innerHTML = `
+    <div class="info-card rationale">
+      <h3>🎯 Market Failure Rationale</h3>
+      <ul>${ctx.rationale.map(r=>`<li>${r}</li>`).join('')}</ul>
+    </div>
+    <div class="info-card effects-card floor">
+      <h3>📈 Market Effects</h3>
+      <ul>${ctx.effects.map(e=>`<li>${e}</li>`).join('')}</ul>
+    </div>
+    <div class="info-card evaluation">
+      <h3>⚖️ Evaluation Points</h3>
+      <ul>${ctx.evaluation.map(e=>`<li>${e}</li>`).join('')}</ul>
+    </div>`;
+
+  document.getElementById('floor-govt-failure').innerHTML = `
+    <h3>⚠️ Government Failure Risks</h3>
+    <ul>${ctx.govtFailures.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+}
+
+// ============================================================
+// CANVAS DIAGRAMS
+// ============================================================
+// ============================================================
+// CURVE MATHS
+// Demand: P = (2·Pe) - Q·(2·Pe/Qe)   → passes through (0, 2Pe) and (Qe, Pe) and (2Qe, 0)
+// Supply: P = Q·(Pe/Qe)               → passes through (0, 0) and (Qe, Pe)
+// Both curves meet at equilibrium (Qe, Pe)
+// Qe = Pe so that S and D intersect — we set Qe = Pe for simplicity.
+// Given eqPrice E: Qe = E, Pe = E
+//   Demand: P = 2E - Q           → Qd at price P = 2E - P
+//   Supply: P = Q                → Qs at price P = P
+// ============================================================
+
+function curvesForEq(E) {
+  // Returns functions for Qs and Qd at any price P
+  // Demand: P = 2E - Q  →  Q = 2E - P
+  // Supply: P = Q       →  Q = P
+  // Equilibrium at Q=E, P=E ✓
+  return {
+    Qs: P => Math.max(0, Math.min(2*E, P)),
+    Qd: P => Math.max(0, Math.min(2*E, 2*E - P)),
+    maxQ: 2*E
+  };
+}
+
+function drawBaseAxes(c, W, H, m, maxQ, maxP) {
+  const cw = W - m.l - m.r, ch = H - m.t - m.b;
+  const xS = q => m.l + (q/maxQ)*cw;
+  const yS = p => m.t + (1 - p/maxP)*ch;
+
+  // Grid
+  c.strokeStyle = '#e8e8ee'; c.lineWidth = 1;
+  const pStep = Math.round(maxP/5);
+  const qStep = Math.round(maxQ/5);
+  for (let p = 0; p <= maxP; p += pStep) {
+    c.beginPath(); c.moveTo(m.l, yS(p)); c.lineTo(m.l+cw, yS(p)); c.stroke();
+  }
+  for (let q = 0; q <= maxQ; q += qStep) {
+    c.beginPath(); c.moveTo(xS(q), m.t); c.lineTo(xS(q), m.t+ch); c.stroke();
+  }
+
+  // Axes
+  c.strokeStyle = '#1a2744'; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(m.l, m.t); c.lineTo(m.l, m.t+ch); c.stroke();
+  c.beginPath(); c.moveTo(m.l, m.t+ch); c.lineTo(m.l+cw, m.t+ch); c.stroke();
+
+  // Axis labels
+  c.fillStyle = '#1a2744'; c.font = 'bold 13px DM Sans, sans-serif';
+  c.textAlign = 'center'; c.fillText('Quantity', m.l+cw/2, H-8);
+  c.save(); c.translate(16, m.t+ch/2); c.rotate(-Math.PI/2);
+  c.fillText('Price', 0, 0); c.restore();
+
+  // Ticks — price axis
+  c.font = '11px DM Sans, sans-serif'; c.fillStyle = '#8a8aa0';
+  for (let p = 0; p <= maxP; p += pStep) {
+    c.textAlign = 'right'; c.fillText(p, m.l-6, yS(p)+4);
+    c.strokeStyle='#ccc'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(m.l-3, yS(p)); c.lineTo(m.l, yS(p)); c.stroke();
+  }
+  // Ticks — quantity axis
+  for (let q = 0; q <= maxQ; q += qStep) {
+    c.strokeStyle='#ccc'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(xS(q), m.t+ch); c.lineTo(xS(q), m.t+ch+3); c.stroke();
+    c.fillStyle='#8a8aa0'; c.textAlign='center';
+    c.fillText(q, xS(q), m.t+ch+18);
+  }
+
+  return { xS, yS, cw, ch };
+}
+
+function drawCeilingDiagram() {
+  const canvas = document.getElementById('ceilingCanvas');
+  const c = canvas.getContext('2d');
+  const W = 700, H = 480;
+  const m = { t: 48, r: 36, b: 56, l: 68 };
+  c.clearRect(0, 0, W, H);
+
+  const E = ceilingEq;
+  const maxP = Math.round(E * 2);
+  const maxQ = Math.round(E * 2);
+  const { Qs, Qd } = curvesForEq(E);
+
+  const { xS, yS, cw, ch } = drawBaseAxes(c, W, H, m, maxQ, maxP);
+
+  // Demand curve: from (0, 2E) to (2E, 0)
+  c.strokeStyle = '#c0392b'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(xS(0), yS(2*E)); c.lineTo(xS(2*E), yS(0)); c.stroke();
+  c.fillStyle = '#c0392b'; c.font = 'bold 14px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText('D', xS(2*E) - 20, yS(4) - 6);
+
+  // Supply curve: from (0, 0) to (2E, 2E)
+  c.strokeStyle = '#1a6fa8'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(xS(0), yS(0)); c.lineTo(xS(2*E), yS(2*E)); c.stroke();
+  c.fillStyle = '#1a6fa8'; c.textAlign = 'left';
+  c.fillText('S', xS(2*E) - 16, yS(2*E) + 18);
+
+  // Equilibrium point + dotted reference lines to axes
+  const eX = xS(E), eY = yS(E);
+  c.strokeStyle = '#c9a227'; c.lineWidth = 1.5; c.setLineDash([5,4]);
+  c.beginPath(); c.moveTo(m.l, eY); c.lineTo(eX, eY); c.stroke();
+  c.beginPath(); c.moveTo(eX, m.t+ch); c.lineTo(eX, eY); c.stroke();
+  c.setLineDash([]);
+
+  c.fillStyle = '#1a2744';
+  c.beginPath(); c.arc(eX, eY, 7, 0, 2*Math.PI); c.fill();
+  c.strokeStyle = 'white'; c.lineWidth = 2.5;
+  c.beginPath(); c.arc(eX, eY, 7, 0, 2*Math.PI); c.stroke();
+  c.fillStyle = '#1a2744'; c.font = 'bold 12px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText(`P* = ${E}  (Q* = ${E})`, eX+12, eY-8);
+
+  // ── Price ceiling line ──
+  const Pc = ceilingPrice;
+  const pcY = yS(Pc);
+  const binding = Pc < E;
+
+  // The ceiling line — bold dashed red
+  c.strokeStyle = '#c0392b'; c.lineWidth = 2.5; c.setLineDash([14, 7]);
+  c.beginPath(); c.moveTo(m.l, pcY); c.lineTo(m.l+cw, pcY); c.stroke();
+  c.setLineDash([]);
+
+  // Ceiling label — positioned to avoid overlap with curves
+  const labelX = m.l + 10;
+  const labelY = pcY > eY + 30 ? pcY - 10 : pcY + 20; // below if near top
+  c.fillStyle = '#c0392b'; c.font = 'bold 12px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText(`Pc = ${Pc}`, labelX, labelY);
+
+  if (binding) {
+    const qSup = Qs(Pc);   // P=Q → Qs = Pc
+    const qDem = Qd(Pc);   // P=2E-Q → Qd = 2E - Pc
+    const qSx = xS(qSup), qDx = xS(qDem);
+
+    // Shortage shading between Qs and Qd along the ceiling line
+    c.fillStyle = 'rgba(192,57,43,0.12)';
+    c.fillRect(qSx, pcY, qDx - qSx, m.t+ch - pcY);
+
+    // Dotted verticals from axis to ceiling line
+    c.strokeStyle = '#27ae60'; c.lineWidth = 1.2; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(qSx, m.t+ch); c.lineTo(qSx, pcY); c.stroke();
+    c.strokeStyle = '#e74c3c';
+    c.beginPath(); c.moveTo(qDx, m.t+ch); c.lineTo(qDx, pcY); c.stroke();
+    c.setLineDash([]);
+
+    // Qs dot on supply curve at ceiling price
+    c.fillStyle = '#27ae60';
+    c.beginPath(); c.arc(qSx, pcY, 7, 0, 2*Math.PI); c.fill();
+    c.strokeStyle = 'white'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#27ae60'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText(`Qs = ${Math.round(qSup)}`, qSx, pcY - 14);
+
+    // Qd dot on demand curve at ceiling price
+    c.fillStyle = '#e74c3c';
+    c.beginPath(); c.arc(qDx, pcY, 7, 0, 2*Math.PI); c.fill();
+    c.strokeStyle = 'white'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#e74c3c'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText(`Qd = ${Math.round(qDem)}`, qDx, pcY - 14);
+
+    // Shortage bracket label
+    const shortage = Math.round(qDem - qSup);
+    c.fillStyle = '#c0392b'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    const midX = (qSx + qDx) / 2;
+    const midY = pcY + (m.t+ch - pcY)/2;
+    c.fillText(`SHORTAGE`, midX, midY);
+    c.font = '10px DM Sans, sans-serif';
+    c.fillText(`${shortage} units`, midX, midY + 16);
+
+  } else if (Pc === E) {
+    // Exactly at equilibrium — label it
+    c.fillStyle = '#1a7a4a'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText('Ceiling = P*  →  No effect', xS(E) + 60, pcY - 12);
+  } else {
+    // Non-binding: ceiling above P*
+    // Show a faint "no effect" band
+    c.fillStyle = 'rgba(26,122,74,0.07)';
+    c.fillRect(m.l, m.t, cw, pcY - m.t);
+    c.fillStyle = '#1a7a4a'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText('Ceiling above P*  →  Non-binding, no effect on market', m.l + cw/2, pcY - 10);
+  }
+}
+
+function drawFloorDiagram() {
+  const canvas = document.getElementById('floorCanvas');
+  const c = canvas.getContext('2d');
+  const W = 700, H = 480;
+  const m = { t: 48, r: 36, b: 56, l: 68 };
+  c.clearRect(0, 0, W, H);
+
+  const E = floorEq;
+  const maxP = Math.round(E * 2);
+  const maxQ = Math.round(E * 2);
+  const { Qs, Qd } = curvesForEq(E);
+
+  const { xS, yS, cw, ch } = drawBaseAxes(c, W, H, m, maxQ, maxP);
+
+  // Demand curve
+  c.strokeStyle = '#c0392b'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(xS(0), yS(2*E)); c.lineTo(xS(2*E), yS(0)); c.stroke();
+  c.fillStyle = '#c0392b'; c.font = 'bold 14px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText('D', xS(2*E) - 20, yS(4) - 6);
+
+  // Supply curve
+  c.strokeStyle = '#1a6fa8'; c.lineWidth = 3;
+  c.beginPath(); c.moveTo(xS(0), yS(0)); c.lineTo(xS(2*E), yS(2*E)); c.stroke();
+  c.fillStyle = '#1a6fa8'; c.textAlign = 'left';
+  c.fillText('S', xS(2*E) - 16, yS(2*E) + 18);
+
+  // Equilibrium
+  const eX = xS(E), eY = yS(E);
+  c.strokeStyle = '#c9a227'; c.lineWidth = 1.5; c.setLineDash([5,4]);
+  c.beginPath(); c.moveTo(m.l, eY); c.lineTo(eX, eY); c.stroke();
+  c.beginPath(); c.moveTo(eX, m.t+ch); c.lineTo(eX, eY); c.stroke();
+  c.setLineDash([]);
+
+  c.fillStyle = '#1a2744';
+  c.beginPath(); c.arc(eX, eY, 7, 0, 2*Math.PI); c.fill();
+  c.strokeStyle = 'white'; c.lineWidth = 2.5;
+  c.beginPath(); c.arc(eX, eY, 7, 0, 2*Math.PI); c.stroke();
+  c.fillStyle = '#1a2744'; c.font = 'bold 12px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText(`P* = ${E}  (Q* = ${E})`, eX+12, eY-8);
+
+  // ── Price floor line ──
+  const Pf = floorPrice;
+  const pfY = yS(Pf);
+  const binding = Pf > E;
+
+  c.strokeStyle = '#1a6fa8'; c.lineWidth = 2.5; c.setLineDash([14, 7]);
+  c.beginPath(); c.moveTo(m.l, pfY); c.lineTo(m.l+cw, pfY); c.stroke();
+  c.setLineDash([]);
+
+  const labelX = m.l + 10;
+  const labelY = pfY < eY - 30 ? pfY + 20 : pfY - 10;
+  c.fillStyle = '#1a6fa8'; c.font = 'bold 12px DM Sans, sans-serif'; c.textAlign = 'left';
+  c.fillText(`Pf = ${Pf}`, labelX, labelY);
+
+  if (binding) {
+    const qSup = Qs(Pf);   // Qs = Pf
+    const qDem = Qd(Pf);   // Qd = 2E - Pf
+    const qSx = xS(qSup), qDx = xS(qDem);
+
+    // Surplus shading between Qd and Qs
+    c.fillStyle = 'rgba(26,111,168,0.1)';
+    c.fillRect(qDx, m.t, qSx - qDx, pfY - m.t);
+
+    // Dotted verticals
+    c.strokeStyle = '#e74c3c'; c.lineWidth = 1.2; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(qDx, m.t+ch); c.lineTo(qDx, pfY); c.stroke();
+    c.strokeStyle = '#27ae60';
+    c.beginPath(); c.moveTo(qSx, m.t+ch); c.lineTo(qSx, pfY); c.stroke();
+    c.setLineDash([]);
+
+    // Qd dot on demand curve
+    c.fillStyle = '#e74c3c';
+    c.beginPath(); c.arc(qDx, pfY, 7, 0, 2*Math.PI); c.fill();
+    c.strokeStyle = 'white'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#e74c3c'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText(`Qd = ${Math.round(qDem)}`, qDx, pfY + 22);
+
+    // Qs dot on supply curve
+    c.fillStyle = '#27ae60';
+    c.beginPath(); c.arc(qSx, pfY, 7, 0, 2*Math.PI); c.fill();
+    c.strokeStyle = 'white'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = '#27ae60'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText(`Qs = ${Math.round(qSup)}`, qSx, pfY + 22);
+
+    // Surplus label inside shaded region
+    const surplus = Math.round(qSup - qDem);
+    c.fillStyle = '#1a6fa8'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    const midX = (qDx + qSx) / 2;
+    const midY = m.t + (pfY - m.t)/2;
+    c.fillText(`SURPLUS`, midX, midY);
+    c.font = '10px DM Sans, sans-serif';
+    c.fillText(`${surplus} units`, midX, midY + 16);
+
+  } else if (Pf === E) {
+    c.fillStyle = '#1a7a4a'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText('Floor = P*  →  No effect', xS(E) + 60, pfY + 18);
+  } else {
+    // Non-binding
+    c.fillStyle = 'rgba(26,122,74,0.07)';
+    c.fillRect(m.l, pfY, cw, m.t+ch - pfY);
+    c.fillStyle = '#1a7a4a'; c.font = 'bold 11px DM Sans, sans-serif'; c.textAlign = 'center';
+    c.fillText('Floor below P*  →  Non-binding, no effect on market', m.l + cw/2, pfY + 18);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  renderCeilingTab();
+  // Pre-load floor data so it renders when switched
+};
+</script>
+</body>
+</html>

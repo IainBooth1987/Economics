@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioural Insights Suite | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #1a2744;
+            --navy-mid: #243460;
+            --navy-light: #2e4080;
+            --gold: #c9a227;
+            --gold-light: #e0b93a;
+            --gold-pale: #f5e9c0;
+            --cream: #faf8f3;
+            --white: #ffffff;
+            --text: #1a2744;
+            --text-mid: #3a4a6a;
+            --text-light: #6b7a9a;
+            --success: #2a7a4e;
+            --success-bg: #e8f5ee;
+            --warn: #a05a10;
+            --warn-bg: #fef3e2;
+            --border: #dde2ee;
+            --shadow: 0 4px 24px rgba(26,39,68,0.10);
+            --shadow-lg: 0 8px 40px rgba(26,39,68,0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            line-height: 1.65;
+        }
+
+        /* ── PRINT STYLES ── */
+        @media print {
+            .no-print, .section-nav, .hero-actions, .ai-panel, .sim-controls,
+            .scenario-tabs, .meter-bar, .experiment-grid, .nudge-builder,
+            .back-btn, .submit-btn, .sim-btn, button { display: none !important; }
+            body { background: white; color: black; font-family: Georgia, serif; }
+            .print-header { display: block !important; }
+            .section-card { page-break-before: always; box-shadow: none; border: 1px solid #ccc; }
+            .section-card:first-child { page-break-before: avoid; }
+            h1, h2, h3 { color: black; }
+            .bias-card, .example-card, .east-item { border: 1px solid #ccc; break-inside: avoid; }
+        }
+
+        .print-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #1a2744;
+        }
+        .print-header h1 { font-size: 18pt; }
+        .print-header p { font-size: 10pt; color: #555; }
+
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .topbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-brand span { color: white; font-weight: 300; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; }
+        .topbar-nav { display: flex; gap: 6px; }
+        .topbar-nav a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .topbar-nav a:hover { color: var(--gold); background: rgba(201,162,39,0.12); }
+        .print-btn {
+            background: transparent;
+            border: 1px solid rgba(201,162,39,0.5);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .print-btn:hover { background: var(--gold); color: var(--navy); }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+            padding: 64px 32px 56px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 70% 50%, rgba(201,162,39,0.08) 0%, transparent 70%);
+        }
+        .hero-eyebrow {
+            display: inline-block;
+            background: rgba(201,162,39,0.18);
+            color: var(--gold-light);
+            border: 1px solid rgba(201,162,39,0.3);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            color: white;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        .hero h1 em { color: var(--gold); font-style: normal; }
+        .hero-subtitle {
+            color: rgba(255,255,255,0.72);
+            font-size: 1.05rem;
+            max-width: 620px;
+            margin: 0 auto 32px;
+        }
+        .hero-pills { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .hero-pill {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.85);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main { max-width: 1160px; margin: 0 auto; padding: 40px 20px 80px; }
+
+        /* ── SECTION CARDS ── */
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: var(--navy);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .section-header-icon {
+            width: 44px; height: 44px;
+            background: rgba(201,162,39,0.18);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            color: white;
+            font-size: 1.35rem;
+        }
+        .section-header p { color: rgba(255,255,255,0.6); font-size: 0.82rem; margin-top: 2px; }
+        .section-body { padding: 32px; }
+
+        /* ── BIAS EXPERIMENT GRID ── */
+        .bias-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+        .bias-card {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.22s;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .bias-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--navy), var(--gold));
+            opacity: 0;
+            transition: opacity 0.22s;
+        }
+        .bias-card:hover {
+            border-color: var(--navy);
+            box-shadow: var(--shadow);
+            transform: translateY(-3px);
+        }
+        .bias-card:hover::before { opacity: 1; }
+        .bias-icon { font-size: 1.6rem; margin-bottom: 10px; }
+        .bias-card h3 { font-size: 0.95rem; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+        .bias-card .bias-tag {
+            display: inline-block;
+            background: var(--gold-pale);
+            color: var(--warn);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .bias-card p { font-size: 0.82rem; color: var(--text-light); line-height: 1.5; }
+        .bias-card.completed { border-color: var(--success); background: var(--success-bg); }
+        .bias-card.completed::before { opacity: 1; background: var(--success); }
+
+        /* ── EXPERIMENT OVERLAY ── */
+        .experiment-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10,16,35,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .experiment-overlay.active { display: flex; }
+        .experiment-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 680px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            background: var(--navy);
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .modal-header h3 { color: white; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+        .close-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.25); }
+        .modal-body { padding: 28px; }
+
+        .experiment-question { font-size: 1.05rem; color: var(--text); margin-bottom: 20px; line-height: 1.6; }
+        .exp-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .exp-option {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.18s;
+            font-size: 0.92rem;
+        }
+        .exp-option:hover { border-color: var(--navy); background: #f0f3fa; }
+        .exp-option.selected { border-color: var(--navy); background: var(--navy); color: white; }
+        .anchor-display {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--navy);
+            text-align: center;
+            padding: 24px;
+            background: var(--gold-pale);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px dashed var(--gold);
+        }
+        .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .plan-card {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .plan-card:hover { border-color: var(--navy); }
+        .plan-card.selected { border-color: var(--gold); background: var(--gold-pale); }
+        .plan-price { font-size: 1.8rem; font-weight: 700; color: var(--navy); margin: 8px 0; }
+        .plan-name { font-weight: 600; font-size: 0.85rem; }
+        .plan-detail { font-size: 0.78rem; color: var(--text-light); }
+        .confidence-block { background: #f5f7fc; border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+        .confidence-block label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 12px; }
+        .conf-slider { width: 100%; accent-color: var(--navy); }
+        .conf-value { text-align: center; font-weight: 700; color: var(--navy); margin-top: 8px; font-size: 1rem; }
+        .checkbox-row { display: flex; align-items: center; gap: 14px; padding: 16px; background: #f5f7fc; border-radius: 10px; margin-bottom: 20px; }
+        .checkbox-row input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--navy); flex-shrink: 0; }
+        .submit-btn {
+            background: var(--navy);
+            color: white;
+            border: none;
+            padding: 13px 32px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;
+            margin: 0 auto;
+        }
+        .submit-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+        .submit-btn:disabled { background: #b0b8cc; cursor: not-allowed; transform: none; }
+        .result-box {
+            background: linear-gradient(135deg, #f0f4ff 0%, #faf8f3 100%);
+            border-left: 4px solid var(--navy);
+            border-radius: 0 12px 12px 0;
+            padding: 22px;
+            margin-top: 24px;
+        }
+        .result-box h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 12px;
+        }
+        .result-box p { font-size: 0.88rem; color: var(--text-mid); margin-bottom: 8px; line-height: 1.6; }
+        .result-highlight {
+            display: inline-block;
+            background: var(--navy);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .policy-link-box {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: var(--gold-pale);
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+        }
+        .policy-link-box h5 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--warn);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+        .policy-link-box p { font-size: 0.84rem; color: var(--text-mid); margin: 0; }
+
+        /* AQA prompt */
+        .aqa-prompt {
+            margin-top: 14px;
+            padding: 14px 16px;
+            background: #eef1fa;
+            border: 1px solid #c0cae8;
+            border-radius: 10px;
+        }
+        .aqa-prompt h5 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--navy);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+        .aqa-prompt p { font-size: 0.83rem; color: var(--text-mid); margin: 0; font-style: italic; }
+
+        /* Progress bar */
+        .progress-strip {
+            background: #f0f3fa;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .progress-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--gold)); border-radius: 4px; transition: width 0.5s ease; }
+        .progress-label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; white-space: nowrap; }
+
+        /* ── NUDGE BUILDER ── */
+        .nudge-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .ctrl-group label { font-size: 0.82rem; font-weight: 600; color: var(--navy); display: block; margin-bottom: 6px; }
+        .ctrl-group select, .ctrl-group input[type=range] {
+            width: 100%;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text);
+            background: white;
+        }
+        .ctrl-group select:focus { outline: none; border-color: var(--navy); }
+        .nudge-preview {
+            background: var(--navy);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+        .effectiveness-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f5f7fc;
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+        .effectiveness-row span:first-child { font-size: 0.85rem; font-weight: 600; flex-shrink: 0; }
+        .eff-track { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+        .eff-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--success), var(--gold)); transition: width 0.4s ease; }
+        .eff-score { font-weight: 700; color: var(--navy); font-size: 0.9rem; width: 40px; text-align: right; }
+
+        /* AI panel */
+        .ai-panel {
+            background: linear-gradient(135deg, #0e1628 0%, #1a2744 100%);
+            border-radius: 14px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+        .ai-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .ai-badge {
+            background: var(--gold);
+            color: var(--navy);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .ai-panel-header h4 { color: white; font-size: 0.95rem; }
+        .ai-output {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 16px;
+            color: rgba(255,255,255,0.88);
+            font-size: 0.88rem;
+            line-height: 1.7;
+            min-height: 80px;
+        }
+        .ai-output.loading { color: rgba(255,255,255,0.45); font-style: italic; }
+        .ai-generate-btn {
+            background: var(--gold);
+            color: var(--navy);
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: all 0.2s;
+        }
+        .ai-generate-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+        .ai-generate-btn:disabled { background: #8a7a40; cursor: not-allowed; transform: none; }
+
+        /* ── SCENARIO SIMULATOR ── */
+        .scenario-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .scen-tab {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--text-mid);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.18s;
+        }
+        .scen-tab.active, .scen-tab:hover { background: var(--navy); border-color: var(--navy); color: white; }
+        .scen-panel { display: none; }
+        .scen-panel.active { display: block; }
+        .sim-controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+        .sim-btn {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--text);
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.18s;
+        }
+        .sim-btn:hover { border-color: var(--gold); color: var(--navy); }
+        .sim-result { background: #f5f7fc; border-radius: 10px; padding: 16px; margin-top: 14px; display: none; }
+        .sim-result.visible { display: block; }
+        .result-stat { font-size: 2rem; font-weight: 700; color: var(--navy); font-family: 'Playfair Display', serif; }
+        .result-delta { color: var(--success); font-weight: 600; font-size: 0.9rem; }
+
+        /* ── EAST FRAMEWORK ── */
+        .east-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .east-card {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.22s;
+            background: white;
+        }
+        .east-card:hover { border-color: var(--navy); box-shadow: var(--shadow); transform: translateY(-3px); }
+        .east-letter {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--gold);
+            display: block;
+            margin-bottom: 6px;
+        }
+        .east-card h3 { font-size: 1rem; color: var(--navy); margin-bottom: 6px; }
+        .east-card p { font-size: 0.82rem; color: var(--text-light); }
+        .east-detail {
+            background: var(--navy);
+            color: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 16px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .east-detail.visible { display: block; }
+        .east-detail h4 { color: var(--gold); margin-bottom: 10px; font-family: 'Playfair Display', serif; }
+        .east-detail ul { padding-left: 18px; }
+        .east-detail li { font-size: 0.88rem; margin-bottom: 6px; color: rgba(255,255,255,0.85); }
+
+        /* ── TIMELINE ── */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px; top: 0; bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--navy), var(--gold));
+        }
+        .timeline-item { position: relative; margin-bottom: 24px; }
+        .timeline-dot {
+            position: absolute;
+            left: -23px;
+            top: 4px;
+            width: 12px; height: 12px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--navy);
+        }
+        .timeline-year { font-weight: 700; color: var(--navy); font-size: 0.85rem; margin-bottom: 4px; }
+        .timeline-content { font-size: 0.88rem; color: var(--text-mid); }
+
+        /* ── EXAMPLES GRID ── */
+        .examples-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .example-card {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            transition: all 0.2s;
+        }
+        .example-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
+        .example-card .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .card-icon { font-size: 1.4rem; }
+        .example-card h3 { font-size: 0.92rem; color: var(--navy); font-weight: 600; }
+        .example-card p { font-size: 0.82rem; color: var(--text-mid); line-height: 1.6; margin-bottom: 10px; }
+        .result-chip {
+            display: inline-block;
+            background: var(--success-bg);
+            color: var(--success);
+            border: 1px solid #a8d8bd;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* ── IMPACT CALCULATOR ── */
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 640px) { .calc-grid { grid-template-columns: 1fr; } }
+        .calc-sliders { display: flex; flex-direction: column; gap: 18px; }
+        .slider-group label { font-size: 0.85rem; font-weight: 600; color: var(--navy); display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .slider-group label span { color: var(--gold); }
+        input[type=range] { width: 100%; accent-color: var(--navy); }
+        .calc-stats { display: flex; flex-direction: column; gap: 12px; }
+        .calc-stat {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .calc-stat h5 { font-size: 0.78rem; color: var(--text-light); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .calc-stat .big-num { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--navy); font-weight: 700; }
+        .calc-stat.highlight { border-color: var(--gold); background: var(--gold-pale); }
+        .calc-stat.highlight .big-num { color: var(--warn); }
+
+        /* ── GLOBAL STATS ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .stat-card {
+            background: var(--navy);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+        }
+        .stat-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem;
+            color: var(--gold);
+            display: block;
+            margin-bottom: 6px;
+        }
+        .stat-card p { color: rgba(255,255,255,0.7); font-size: 0.82rem; }
+
+        /* ── MISC ── */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .divider { height: 1px; background: var(--border); margin: 24px 0; }
+        h3.subsection { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--navy); margin-bottom: 16px; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .tag { display: inline-block; background: #eef1fa; color: var(--navy-mid); font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 8px; }
+
+        @media (max-width: 600px) {
+            .topbar-nav { display: none; }
+            .nudge-controls { grid-template-columns: 1fr; }
+            .plan-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Behavioural Insights Suite</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_behvsuite_pw';
+  var valid = ['BehvSuite-4Fp!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['BehvSuite-4Fp!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_behvsuite_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<!-- PRINT HEADER -->
+<div class="print-header">
+    <h1>BIZ-OMICS | Behavioural Insights Suite</h1>
+    <p>biz-omics.co.uk — AQA A-Level Economics & Business Studies</p>
+</div>
+
+<!-- TOP BAR -->
+<nav class="topbar no-print">
+    <div class="topbar-brand">
+        BIZ-OMICS <span>| Behavioural Insights Suite</span>
+    </div>
+    <div class="topbar-nav">
+        <a href="#lab">Bias Lab</a>
+        <a href="#nudge">Nudge Builder</a>
+        <a href="#scenarios">Scenarios</a>
+        <a href="#east">EAST</a>
+        <a href="#policy">Policy</a>
+        <a href="#calculator">Calculator</a>
+    </div>
+    <button class="print-btn no-print" onclick="window.print()">⎙ Print</button>
+</nav>
+
+<!-- HERO -->
+<header class="hero no-print">
+    <div class="hero-eyebrow">AQA A-Level Economics &amp; Business Studies</div>
+    <h1>Behavioural <em>Insights</em> Suite</h1>
+    <p class="hero-subtitle">Experience 12 cognitive biases, design AI-powered nudges, and explore how the UK government uses behavioural economics to shape policy.</p>
+    <div class="hero-pills">
+        <span class="hero-pill">🧠 12 Bias Experiments</span>
+        <span class="hero-pill">🤖 AI Nudge Generator</span>
+        <span class="hero-pill">🏛️ UK Nudge Unit</span>
+        <span class="hero-pill">📊 Impact Calculator</span>
+    </div>
+</header>
+
+<main class="main">
+
+    <!-- ══════════════════════════════════════
+         SECTION 1 — BEHAVIOURAL ECONOMICS LAB
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="lab">
+        <div class="section-header">
+            <div class="section-header-icon">🧠</div>
+            <div>
+                <h2>Behavioural Economics Lab</h2>
+                <p>Complete experiments to discover your own cognitive biases</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="progress-strip no-print">
+                <div class="progress-track">
+                    <div class="progress-fill" id="labProgress" style="width:0%"></div>
+                </div>
+                <span class="progress-label" id="labProgressLabel">0 / 12 completed</span>
+            </div>
+            <div class="bias-grid" id="biasGrid">
+                <!-- Cards injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION 2 — NUDGE BUILDER (AI-powered)
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="nudge">
+        <div class="section-header">
+            <div class="section-header-icon">🎯</div>
+            <div>
+                <h2>AI-Powered Nudge Builder</h2>
+                <p>Design nudges — then let AI critique and improve them in real time</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="nudge-controls no-print">
+                <div class="ctrl-group">
+                    <label>Target Behaviour</label>
+                    <select id="nudgeBehaviour" onchange="updateNudge()">
+                        <option value="exercise">Exercise &amp; Physical Activity</option>
+                        <option value="savings">Pension &amp; Savings</option>
+                        <option value="recycling">Recycling &amp; Sustainability</option>
+                        <option value="voting">Civic Participation (Voting)</option>
+                        <option value="healthy-eating">Healthy Eating</option>
+                        <option value="tax">Tax Compliance</option>
+                        <option value="organs">Organ Donation</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label>Nudge Type (EAST Principle)</label>
+                    <select id="nudgeType" onchange="updateNudge()">
+                        <option value="social">Social Norms</option>
+                        <option value="default">Default / Opt-out</option>
+                        <option value="loss">Loss Framing</option>
+                        <option value="reciprocity">Reciprocity</option>
+                        <option value="timing">Perfect Timing</option>
+                        <option value="simplicity">Simplicity / Friction Reduction</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label>Target Audience</label>
+                    <select id="nudgeAudience" onchange="updateNudge()">
+                        <option value="young-adults">Young Adults (18–25)</option>
+                        <option value="families">Families with children</option>
+                        <option value="seniors">Seniors (65+)</option>
+                        <option value="professionals">Working professionals</option>
+                        <option value="students">Students</option>
+                    </select>
+                </div>
+                <div class="ctrl-group">
+                    <label>Intensity: <span id="intensityVal">5</span>/10</label>
+                    <input type="range" id="nudgeIntensity" min="1" max="10" value="5" oninput="document.getElementById('intensityVal').textContent=this.value; updateNudge()">
+                </div>
+            </div>
+
+            <div class="nudge-preview" id="nudgePreview">Select your options above to generate a nudge message</div>
+
+            <div class="effectiveness-row no-print">
+                <span>📈 Predicted effectiveness</span>
+                <div class="eff-track"><div class="eff-fill" id="effFill" style="width:0%"></div></div>
+                <span class="eff-score" id="effScore">0%</span>
+            </div>
+
+            <div class="ai-panel no-print">
+                <div class="ai-panel-header">
+                    <span class="ai-badge">AI Analysis</span>
+                    <h4>Get Claude's critique of your nudge</h4>
+                </div>
+                <div class="ai-output loading" id="aiOutput">Click "Analyse Nudge" to receive an AI-powered critique linking your nudge to behavioural economics theory and AQA mark schemes.</div>
+                <button class="ai-generate-btn" id="aiBtn" onclick="analyseNudge()">🤖 Analyse Nudge</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION 3 — SCENARIO SIMULATOR
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="scenarios">
+        <div class="section-header">
+            <div class="section-header-icon">🧪</div>
+            <div>
+                <h2>Nudge Scenario Simulator</h2>
+                <p>Test different nudge strategies across real-world settings</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="scenario-tabs no-print" id="scenTabs">
+                <button class="scen-tab active" onclick="switchScenario('restaurant', this)">🍽️ Restaurant</button>
+                <button class="scen-tab" onclick="switchScenario('app', this)">📱 Mobile App</button>
+                <button class="scen-tab" onclick="switchScenario('workplace', this)">🏢 Workplace</button>
+                <button class="scen-tab" onclick="switchScenario('ecommerce', this)">💻 E-commerce</button>
+            </div>
+
+            <div class="scen-panel active" id="scen-restaurant">
+                <h3 class="subsection">Restaurant Healthy Choice Nudge</h3>
+                <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:12px;">You're designing a menu to encourage healthier food choices. Test different approaches:</p>
+                <div class="sim-controls">
+                    <button class="sim-btn" onclick="runSim('restaurant','highlight',this)">Highlight Healthy Options</button>
+                    <button class="sim-btn" onclick="runSim('restaurant','position',this)">Position Healthy Items First</button>
+                    <button class="sim-btn" onclick="runSim('restaurant','default',this)">Make Salad the Default Side</button>
+                    <button class="sim-btn" onclick="runSim('restaurant','social',this)">Show Popular Choices</button>
+                </div>
+                <div class="sim-result" id="sim-restaurant"></div>
+            </div>
+
+            <div class="scen-panel" id="scen-app">
+                <h3 class="subsection">Mobile App Engagement Nudge</h3>
+                <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:12px;">Increase daily app usage and user retention:</p>
+                <div class="sim-controls">
+                    <button class="sim-btn" onclick="runSim('app','streaks',this)">Daily Streak Counter</button>
+                    <button class="sim-btn" onclick="runSim('app','notifications',this)">Smart Notifications</button>
+                    <button class="sim-btn" onclick="runSim('app','social',this)">Friend Activity Feed</button>
+                    <button class="sim-btn" onclick="runSim('app','progress',this)">Progress Visualisation</button>
+                </div>
+                <div class="sim-result" id="sim-app"></div>
+            </div>
+
+            <div class="scen-panel" id="scen-workplace">
+                <h3 class="subsection">Workplace Wellness Nudge</h3>
+                <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:12px;">Encourage employees to take more breaks and be healthier:</p>
+                <div class="sim-controls">
+                    <button class="sim-btn" onclick="runSim('workplace','reminders',this)">Break Reminders</button>
+                    <button class="sim-btn" onclick="runSim('workplace','stairs',this)">Stair Usage Campaign</button>
+                    <button class="sim-btn" onclick="runSim('workplace','team',this)">Team Challenges</button>
+                    <button class="sim-btn" onclick="runSim('workplace','defaults',this)">Healthy Meeting Defaults</button>
+                </div>
+                <div class="sim-result" id="sim-workplace"></div>
+            </div>
+
+            <div class="scen-panel" id="scen-ecommerce">
+                <h3 class="subsection">E-commerce Conversion Nudge</h3>
+                <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:12px;">Increase online purchases and reduce cart abandonment:</p>
+                <div class="sim-controls">
+                    <button class="sim-btn" onclick="runSim('ecommerce','scarcity',this)">Limited Stock Alerts</button>
+                    <button class="sim-btn" onclick="runSim('ecommerce','social',this)">Recent Purchase Notifications</button>
+                    <button class="sim-btn" onclick="runSim('ecommerce','urgency',this)">Time-Limited Offers</button>
+                    <button class="sim-btn" onclick="runSim('ecommerce','personal',this)">Personalised Recommendations</button>
+                </div>
+                <div class="sim-result" id="sim-ecommerce"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION 4 — EAST FRAMEWORK
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="east">
+        <div class="section-header">
+            <div class="section-header-icon">⬡</div>
+            <div>
+                <h2>The EAST Framework</h2>
+                <p>The Behavioural Insights Team's guide to effective nudge design</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <p style="font-size:0.9rem;color:var(--text-mid);margin-bottom:20px;">Developed by the UK's Behavioural Insights Team (BIT), EAST provides a four-part checklist for designing effective nudges. Click each principle to explore.</p>
+            <div class="east-grid">
+                <div class="east-card" onclick="showEast('easy')">
+                    <span class="east-letter">E</span>
+                    <h3>Easy</h3>
+                    <p>Remove friction and reduce the effort required to make the desired choice</p>
+                </div>
+                <div class="east-card" onclick="showEast('attractive')">
+                    <span class="east-letter">A</span>
+                    <h3>Attractive</h3>
+                    <p>Use salience, personalisation and incentives to capture attention</p>
+                </div>
+                <div class="east-card" onclick="showEast('social')">
+                    <span class="east-letter">S</span>
+                    <h3>Social</h3>
+                    <p>Harness the power of social norms and peer influence</p>
+                </div>
+                <div class="east-card" onclick="showEast('timely')">
+                    <span class="east-letter">T</span>
+                    <h3>Timely</h3>
+                    <p>Intervene at the right moment — ideally at a decision point</p>
+                </div>
+            </div>
+            <div class="east-detail" id="east-detail"></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION 5 — UK NUDGE UNIT & REAL POLICY
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="policy">
+        <div class="section-header">
+            <div class="section-header-icon">🏛️</div>
+            <div>
+                <h2>UK Nudge Unit — Real-World Policy</h2>
+                <p>How the Behavioural Insights Team changed public policy</p>
+            </div>
+        </div>
+        <div class="section-body">
+
+            <h3 class="subsection">BIT Timeline</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2010</div>
+                    <div class="timeline-content"><strong>Founded within 10 Downing Street (Cabinet Office)</strong> — nicknamed the "Nudge Unit", initially led by David Halpern. Inspired by Thaler &amp; Sunstein's <em>Nudge</em> (2008).</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2012</div>
+                    <div class="timeline-content"><strong>First major policy successes</strong> — HMRC social norm letters increased tax compliance by up to 15 percentage points. Organ donor registration wording change drove 96,000 additional sign-ups.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2014</div>
+                    <div class="timeline-content"><strong>Became a social purpose company</strong> — part-privatised, with government, Nesta and employees as shareholders. Global expansion begins.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2017</div>
+                    <div class="timeline-content"><strong>Richard Thaler wins Nobel Prize in Economics</strong> for his foundational work on nudge theory and behavioural economics.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-year">2024</div>
+                    <div class="timeline-content"><strong>Global influence</strong> — BIT has inspired 200+ nudge units worldwide in 50+ countries. Operating in health, education, finance, energy and climate policy.</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 class="subsection">Success Stories — Bias → Policy Links</h3>
+            <div class="examples-grid">
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">💰</span><h3>HMRC Tax Compliance</h3></div>
+                    <div class="tag-row"><span class="tag">Social Norms</span><span class="tag">Loss Aversion</span></div>
+                    <p>Letters to late taxpayers included messages such as "9 in 10 people in your town pay on time." The social norm framing exploited conformity bias and mild loss aversion.</p>
+                    <span class="result-chip">↑ 15 percentage point increase in compliance</span>
+                </div>
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">🫀</span><h3>NHS Organ Donation</h3></div>
+                    <div class="tag-row"><span class="tag">Default Bias</span><span class="tag">Framing</span></div>
+                    <p>Registration page changed from opt-in to a reciprocity frame: "If you needed an organ, would you take one?" Exploiting social reciprocity norms and default bias.</p>
+                    <span class="result-chip">↑ 96,000 additional registrations (+100%)</span>
+                </div>
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">💉</span><h3>NHS Flu Vaccination</h3></div>
+                    <div class="tag-row"><span class="tag">Ownership (Endowment)</span><span class="tag">Timing</span></div>
+                    <p>SMS messages framed the appointment as already reserved: "Your flu jab is booked for you — confirm now." Created endowment effect; timely nudge at booking point.</p>
+                    <span class="result-chip">↑ Significant uptake increase among NHS staff</span>
+                </div>
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">💼</span><h3>Job Centre Action Plans</h3></div>
+                    <div class="tag-row"><span class="tag">Status Quo Bias</span><span class="tag">Implementation Intentions</span></div>
+                    <p>Generic "seek work" advice replaced with specific plans: "Apply to 3 jobs on Tuesday morning." Breaking default inertia using implementation intentions.</p>
+                    <span class="result-chip">↑ Faster re-employment with greater confidence</span>
+                </div>
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">⚡</span><h3>Household Energy Use</h3></div>
+                    <div class="tag-row"><span class="tag">Social Norms</span><span class="tag">Anchoring</span></div>
+                    <p>Opower reports showed households their energy use versus neighbours. Anchoring on peer average and social norm comparison reduced consumption.</p>
+                    <span class="result-chip">↑ 2–3% reduction in household energy use</span>
+                </div>
+                <div class="example-card">
+                    <div class="card-top"><span class="card-icon">🎓</span><h3>University Applications</h3></div>
+                    <div class="tag-row"><span class="tag">Availability Heuristic</span><span class="tag">Loss Framing</span></div>
+                    <p>Letters to disadvantaged students reframed university costs using loss framing and made student finance information more salient and easy to access.</p>
+                    <span class="result-chip">↑ Increased applications from low-income groups</span>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h3 class="subsection">Global Expansion</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><span class="stat-num">200+</span><p>Nudge units worldwide</p></div>
+                <div class="stat-card"><span class="stat-num">50+</span><p>Countries involved</p></div>
+                <div class="stat-card"><span class="stat-num">100+</span><p>Policy areas improved</p></div>
+                <div class="stat-card"><span class="stat-num">2008</span><p>Thaler &amp; Sunstein's Nudge published</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         SECTION 6 — IMPACT CALCULATOR
+    ══════════════════════════════════════ -->
+    <div class="section-card" id="calculator">
+        <div class="section-header">
+            <div class="section-header-icon">📊</div>
+            <div>
+                <h2>Population Impact Calculator</h2>
+                <p>See how nudges could affect real populations at scale</p>
+            </div>
+        </div>
+        <div class="section-body">
+            <div class="calc-grid">
+                <div class="calc-sliders">
+                    <div class="slider-group">
+                        <label>Population size <span id="popVal">100,000</span></label>
+                        <input type="range" id="popSlider" min="10000" max="10000000" value="100000" oninput="updateCalc()">
+                    </div>
+                    <div class="slider-group">
+                        <label>Baseline behaviour rate <span id="baseVal">25%</span></label>
+                        <input type="range" id="baseSlider" min="5" max="95" value="25" oninput="updateCalc()">
+                    </div>
+                    <div class="slider-group">
+                        <label>Nudge effectiveness boost <span id="effVal">+15%</span></label>
+                        <input type="range" id="effSlider" min="2" max="50" value="15" oninput="updateCalc()">
+                    </div>
+                    <div style="background:#f5f7fc;border-radius:10px;padding:16px;font-size:0.84rem;color:var(--text-mid);line-height:1.6;" id="calcContext">
+                        If this were a <strong>tax compliance nudge</strong> like HMRC's social norm letters, an additional <strong id="calcExtra">3,750</strong> people would pay on time — potentially generating millions in additional public revenue.
+                    </div>
+                </div>
+                <div class="calc-stats">
+                    <div class="calc-stat">
+                        <h5>Before Nudge</h5>
+                        <div class="big-num" id="beforeNum">25,000</div>
+                        <p style="font-size:0.78rem;color:var(--text-light);">people engaging</p>
+                    </div>
+                    <div class="calc-stat">
+                        <h5>After Nudge</h5>
+                        <div class="big-num" id="afterNum">28,750</div>
+                        <p style="font-size:0.78rem;color:var(--text-light);">people engaging</p>
+                    </div>
+                    <div class="calc-stat highlight">
+                        <h5>Additional Impact</h5>
+                        <div class="big-num" id="deltaNum">+3,750</div>
+                        <p style="font-size:0.78rem;color:var(--warn);">more people helped</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- EXPERIMENT OVERLAY -->
+<div class="experiment-overlay no-print" id="expOverlay">
+    <div class="experiment-modal" id="expModal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Experiment</h3>
+            <button class="close-btn" onclick="closeExp()">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   BIAS EXPERIMENT DATA
+═══════════════════════════════════════ */
+const biasData = [
+    { id: 'anchoring',     icon: '🎯', name: 'Anchoring Bias',        tag: 'Heuristics',     desc: 'An expert estimate influences how much you bid at an art auction.' },
+    { id: 'decoy',         icon: '☕', name: 'Decoy Effect',           tag: 'Pricing',        desc: 'Strategic pricing makes certain coffee sizes seem like far better value.' },
+    { id: 'default',       icon: '⚙️', name: 'Default Bias',           tag: 'Status Quo',     desc: 'Opt-in vs opt-out dramatically changes organ donation rates.' },
+    { id: 'overconfidence',icon: '🎲', name: 'Overconfidence Bias',    tag: 'Calibration',    desc: 'Test your knowledge — and whether your confidence is well-calibrated.' },
+    { id: 'availability',  icon: '📰', name: 'Availability Heuristic', tag: 'Risk Perception',desc: 'Media coverage distorts our perception of real-world risk.' },
+    { id: 'loss',          icon: '💔', name: 'Loss Aversion',          tag: 'Prospect Theory',desc: 'Losses feel twice as powerful as equivalent gains.' },
+    { id: 'sunk',          icon: '💸', name: 'Sunk Cost Fallacy',      tag: 'Decision-making',desc: 'Should you keep investing in a failing project?' },
+    { id: 'status',        icon: '📱', name: 'Status Quo Bias',        tag: 'Inertia',        desc: 'Inertia keeps us from switching to better phone plans.' },
+    { id: 'framing',       icon: '🖼️', name: 'Framing Effect',         tag: 'Kahneman',       desc: 'Identical outcomes described differently change your decision.' },
+    { id: 'gambler',       icon: '🎰', name: "Gambler's Fallacy",      tag: 'Probability',    desc: 'Do random streaks create false expectations of reversal?' },
+    { id: 'endowment',     icon: '🏆', name: 'Endowment Effect',       tag: 'Ownership',      desc: 'Owning something instantly inflates its perceived value.' },
+    { id: 'confirmation',  icon: '🔍', name: 'Confirmation Bias',      tag: 'Information',    desc: 'We seek information that confirms what we already believe.' },
+];
+
+const policyLinks = {
+    anchoring:     { headline: 'Policy Link: HMRC Tax Letters', text: 'BIT used anchoring in tax compliance letters by prominently displaying the amount owed alongside social norm comparisons, making the sum feel more salient and urgent.' },
+    decoy:         { headline: 'Policy Link: Energy Tariff Design', text: 'Ofgem used decoy-adjacent pricing architecture to make standard variable tariffs appear less attractive, nudging consumers toward fixed-rate green energy options.' },
+    default:       { headline: 'Policy Link: Auto-enrolment Pensions (2012)', text: 'Default bias is the cornerstone of the UK\'s auto-enrolment pension policy. Opt-out defaults increased workplace pension participation from ~55% to over 87% by 2020.' },
+    overconfidence:{ headline: 'Policy Link: Financial Literacy Campaigns', text: 'The FCA uses overconfidence research to design warnings on investment products, reminding consumers that past performance does not guarantee future results.' },
+    availability:  { headline: 'Policy Link: Road Safety Messaging', text: 'DfT shifted road safety campaigns from dramatic crash imagery (availability heuristic exploitation) to statistical framing, improving rational risk assessment.' },
+    loss:          { headline: 'Policy Link: NHS Smoking Cessation', text: 'NHS stop-smoking campaigns reframed messages around losses ("Every cigarette is doing you damage") rather than gains, exploiting loss aversion to increase quit attempts.' },
+    sunk:          { headline: 'Policy Link: HS2 Budget Decisions', text: 'Government sunk cost debates around HS2 illustrate how prior spending commitments can irrationally influence continuation decisions — a real cost of the fallacy at policy level.' },
+    status:        { headline: 'Policy Link: Auto-enrolment & Green Energy Defaults', text: 'Status quo bias underlies both pension auto-enrolment and green energy defaults. The UK\'s proposed opt-out green energy tariff exploits inertia to drive sustainable behaviour.' },
+    framing:       { headline: 'Policy Link: COVID Vaccine Messaging', text: 'BIT tested vaccine messaging frames during COVID-19. "Protect your community" (positive) versus "Don\'t leave your community vulnerable" (loss frame) had measurably different uptake effects.' },
+    gambler:       { headline: 'Policy Link: Gambling Regulation (GambleAware)', text: 'GambleAware campaigns target the gambler\'s fallacy directly, educating consumers that each spin/hand is independent — combating irrational "it\'s due" beliefs.' },
+    endowment:     { headline: 'Policy Link: Free Trial Regulation (FCA)', text: 'The FCA\'s Consumer Duty rules now require clear opt-out reminders from free trials, recognising that endowment effect locks consumers into products they didn\'t actively choose.' },
+    confirmation:  { headline: 'Policy Link: Social Media Algorithm Regulation (OFCOM)', text: 'OFCOM\'s Online Safety Act targets confirmation bias amplification by social media algorithms, which create echo chambers reinforcing existing beliefs and political polarisation.' },
+};
+
+const aqaPrompts = {
+    anchoring:     'Evaluate the view that behavioural market failures are best corrected through information provision. [25 marks]',
+    decoy:         'Assess the use of behavioural economics to explain why consumers do not always act rationally. [25 marks]',
+    default:       '"Nudge theory is the most effective government intervention to change consumer behaviour." Evaluate this view. [25 marks]',
+    overconfidence:'Explain, using behavioural economics, why individuals may make decisions that are not in their best interests. [15 marks]',
+    availability:  'Assess the view that government failure is likely when policy is based on behavioural economic insights. [25 marks]',
+    loss:          'Evaluate the importance of loss aversion in explaining consumer behaviour. [25 marks]',
+    sunk:          'Explain why firms may continue to invest in loss-making projects. [15 marks]',
+    status:        '"Default settings are the most powerful nudge governments have." Assess this claim. [25 marks]',
+    framing:       'Explain how framing effects can lead to irrational consumer choices. [15 marks]',
+    gambler:       'Assess the view that consumers are irrational, using examples from behavioural economics. [25 marks]',
+    endowment:     'Evaluate the use of behavioural economics as an explanation for market failure. [25 marks]',
+    confirmation:  'Assess the view that information failure is the most important form of market failure. [25 marks]',
+};
+
+let completedBiases = new Set();
+let currentBias = null;
+let expData = {};
+
+/* ── Render bias grid ── */
+function renderGrid() {
+    const grid = document.getElementById('biasGrid');
+    grid.innerHTML = biasData.map(b => `
+        <div class="bias-card ${completedBiases.has(b.id) ? 'completed' : ''}" id="card-${b.id}" onclick="openExp('${b.id}')">
+            <div class="bias-icon">${b.icon}</div>
+            <h3>${b.name}</h3>
+            <span class="bias-tag">${b.tag}</span>
+            <p>${b.desc}</p>
+        </div>
+    `).join('');
+    const pct = Math.round(completedBiases.size / biasData.length * 100);
+    document.getElementById('labProgress').style.width = pct + '%';
+    document.getElementById('labProgressLabel').textContent = `${completedBiases.size} / ${biasData.length} completed`;
+}
+
+function openExp(id) {
+    currentBias = id;
+    expData = {};
+    const b = biasData.find(x => x.id === id);
+    document.getElementById('modalTitle').textContent = b.icon + ' ' + b.name;
+    document.getElementById('expOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    buildExp(id);
+}
+
+function closeExp() {
+    document.getElementById('expOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+document.getElementById('expOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeExp();
+});
+
+function markComplete(id) {
+    completedBiases.add(id);
+    renderGrid();
+}
+
+/* ── Build experiment content ── */
+function buildExp(id) {
+    const body = document.getElementById('modalBody');
+    const builders = {
+        anchoring, decoy, default_bias, overconfidence,
+        availability, loss, sunk, status, framing, gambler, endowment, confirmation
+    };
+    const map = {
+        anchoring, decoy, default: default_bias, overconfidence,
+        availability, loss, sunk, status, framing, gambler, endowment, confirmation
+    };
+    (map[id] || (() => body.innerHTML = '<p>Coming soon</p>'))();
+}
+
+function selectOpt(el, val) {
+    document.querySelectorAll('.exp-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    expData.choice = val;
+    const btn = document.querySelector('#modalBody .submit-btn');
+    if (btn) btn.disabled = false;
+}
+
+function selectPlan(el, val) {
+    document.querySelectorAll('.plan-card').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    expData.choice = val;
+    const btn = document.querySelector('#modalBody .submit-btn');
+    if (btn) btn.disabled = false;
+}
+
+function showResult(html) {
+    markComplete(currentBias);
+    const policy = policyLinks[currentBias];
+    const aqa = aqaPrompts[currentBias];
+    const box = document.createElement('div');
+    box.innerHTML = `
+        <div class="result-box">
+            <h4>🔬 Analysis</h4>
+            ${html}
+            <div class="policy-link-box">
+                <h5>🏛️ ${policy.headline}</h5>
+                <p>${policy.text}</p>
+            </div>
+            <div class="aqa-prompt">
+                <h5>📝 AQA Practice Question</h5>
+                <p>${aqa}</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('modalBody').appendChild(box);
+}
+
+/* ══════════════ INDIVIDUAL EXPERIMENTS ══════════════ */
+
+function anchoring() {
+    const anchors = [2500, 7500, 15000];
+    const anchor = anchors[Math.floor(Math.random() * anchors.length)];
+    expData.anchor = anchor;
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">You're at an exclusive art auction. An art expert whispers their estimate:</p>
+        <div class="anchor-display">£${anchor.toLocaleString()}</div>
+        <p class="experiment-question">What would you personally bid for this abstract painting?</p>
+        <div class="exp-options">
+            ${[250,750,1500,3000,6000,12000].map(v=>`<div class="exp-option" onclick="selectOpt(this,${v})">£${v.toLocaleString()}</div>`).join('')}
+        </div>
+        <button class="submit-btn" onclick="submitAnchoring()" disabled>Place Bid</button>
+    `;
+}
+function submitAnchoring() {
+    const anchors = { 2500: 'low', 7500: 'medium', 15000: 'high' };
+    const influence = expData.choice >= expData.anchor * 0.3 ? 'likely influenced' : 'possibly independent';
+    showResult(`
+        <p>Your bid: <span class="result-highlight">£${expData.choice.toLocaleString()}</span> with anchor: <span class="result-highlight">£${expData.anchor.toLocaleString()}</span></p>
+        <p><strong>Psychology:</strong> Anchoring occurs when an initial piece of information (the expert's estimate) disproportionately influences subsequent judgements. Even arbitrary numbers shift bids significantly.</p>
+        <p><strong>Verdict:</strong> Your bid appears <span class="result-highlight">${influence}</span> by the anchor price.</p>
+    `);
+}
+
+function decoy() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">Choose your coffee size at the campus café:</p>
+        <div class="plan-grid">
+            <div class="plan-card" onclick="selectPlan(this,'small')"><div class="plan-name">Small</div><div class="plan-price">£2.50</div><div class="plan-detail">8oz · Quick fix</div></div>
+            <div class="plan-card" onclick="selectPlan(this,'medium')"><div class="plan-name">Medium</div><div class="plan-price">£4.80</div><div class="plan-detail">12oz · Reasonable</div></div>
+            <div class="plan-card" onclick="selectPlan(this,'large')"><div class="plan-name">Large</div><div class="plan-price">£5.00</div><div class="plan-detail">16oz · Best value!</div></div>
+        </div>
+        <button class="submit-btn" onclick="submitDecoy()" disabled>Choose Coffee</button>
+    `;
+}
+function submitDecoy() {
+    const r = {small:"You weren't swayed by the decoy — rational price-per-oz thinking prevailed.",medium:"The medium was the decoy! It made the large look like extraordinary value.",large:"Classic decoy effect! The medium was deliberately priced to make the large irresistible."};
+    showResult(`<p>Your choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Psychology:</strong> The medium option is a deliberate "decoy" — priced close to the large but offering much less value per ounce. It doesn't need to sell; it just needs to make the large look cheap.</p><p>${r[expData.choice]}</p><p><strong>Real world:</strong> Popcorn at cinemas, magazine subscriptions, and software pricing tiers all use this strategy.</p>`);
+}
+
+function default_bias() {
+    const isOptOut = Math.random() > 0.5;
+    expData.isOptOut = isOptOut;
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">Complete the NHS registration form — organ donation section:</p>
+        <div style="background:#f5f7fc;border-radius:10px;padding:18px;margin-bottom:16px;font-size:0.85rem;color:var(--text-mid);">
+            <p><strong>Patient Details:</strong> All information verified.</p>
+            <p><strong>Emergency Contact:</strong> Two contacts registered.</p>
+            <p><strong>Medical History:</strong> No known conditions.</p>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" id="donationBox" ${isOptOut ? 'checked' : ''}>
+            <label for="donationBox" style="font-size:0.9rem;">${isOptOut ? 'I would like to <strong>OPT OUT</strong> of organ donation' : 'I would like to <strong>OPT IN</strong> to organ donation'}</label>
+        </div>
+        <button class="submit-btn" onclick="submitDefault()">Complete Registration</button>
+    `;
+}
+function submitDefault() {
+    const checkbox = document.getElementById('donationBox');
+    const willDonate = expData.isOptOut ? !checkbox.checked : checkbox.checked;
+    showResult(`<p>Form type: <span class="result-highlight">${expData.isOptOut ? 'Opt-out (donated by default)' : 'Opt-in (not donated by default)'}</span></p><p>Your outcome: <span class="result-highlight">${willDonate ? '✅ Will donate' : '❌ Will not donate'}</span></p><p><strong>Psychology:</strong> Default bias (or "status quo bias") means people rarely change default settings. Opt-out countries achieve 90%+ donation rates vs ~20% in opt-in systems — same population, same preferences, radically different outcomes.</p>`);
+}
+
+function overconfidence() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">What percentage of Earth's surface is covered by water?</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'61%')">61%</div>
+            <div class="exp-option" onclick="selectOpt(this,'71%')">71%</div>
+            <div class="exp-option" onclick="selectOpt(this,'81%')">81%</div>
+            <div class="exp-option" onclick="selectOpt(this,'91%')">91%</div>
+        </div>
+        <div class="confidence-block">
+            <label>How confident are you in your answer?</label>
+            <input type="range" class="conf-slider" min="0" max="100" value="50" oninput="expData.confidence=parseInt(this.value);document.getElementById('confVal').textContent=this.value+'%'">
+            <div class="conf-value" id="confVal">50%</div>
+        </div>
+        <button class="submit-btn" onclick="submitOverconfidence()" disabled>Submit</button>
+    `;
+    expData.confidence = 50;
+}
+function submitOverconfidence() {
+    const correct = expData.choice === '71%';
+    const overconf = !correct && expData.confidence > 70;
+    showResult(`<p>Your answer: <span class="result-highlight">${expData.choice}</span> | Correct: <span class="result-highlight">71%</span> | Confidence: <span class="result-highlight">${expData.confidence}%</span></p><p><strong>Result:</strong> ${correct ? '✅ Correct!' : '❌ Incorrect'} ${overconf ? '— and you were <strong>overconfident</strong>.' : ''}</p><p><strong>Psychology:</strong> Overconfidence bias leads people to overestimate the accuracy of their beliefs. Studies show most people are poorly calibrated — we claim 90% confidence on facts we only get right ~70% of the time.</p>`);
+}
+
+function availability() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">Which causes more deaths annually in the United States?</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'shark')">🦈 Shark attacks</div>
+            <div class="exp-option" onclick="selectOpt(this,'falling')">🛏️ Falling out of bed</div>
+        </div>
+        <button class="submit-btn" onclick="submitAvailability()" disabled>Submit Answer</button>
+    `;
+}
+function submitAvailability() {
+    const correct = expData.choice === 'falling';
+    showResult(`<p>Your answer: <span class="result-highlight">${expData.choice === 'shark' ? 'Shark attacks' : 'Falling out of bed'}</span></p><p><strong>Correct answer:</strong> Falling out of bed kills ~450 Americans annually. Shark attacks kill fewer than 2.</p><p>${correct ? '✅ Correct! You avoided the availability heuristic.' : '❌ You were influenced by the availability heuristic.'}</p><p><strong>Psychology:</strong> We judge probability by how easily examples come to mind. Sharks dominate news coverage, making them feel far more dangerous than the statistics suggest. This is the availability heuristic — a mental shortcut that systematically distorts risk perception.</p>`);
+}
+
+function loss() {
+    const isLoss = Math.random() > 0.5;
+    expData.frame = isLoss ? 'loss' : 'gain';
+    document.getElementById('modalBody').innerHTML = isLoss ? `
+        <p class="experiment-question">You have £100. Choose between:</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'certain')">Lose £50 for certain (keep £50)</div>
+            <div class="exp-option" onclick="selectOpt(this,'gamble')">50% chance lose nothing · 50% chance lose everything</div>
+        </div>
+        <button class="submit-btn" onclick="submitLoss()" disabled>Choose</button>
+    ` : `
+        <p class="experiment-question">Choose between:</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'certain')">Receive £50 for certain</div>
+            <div class="exp-option" onclick="selectOpt(this,'gamble')">50% chance of £100 · 50% chance of nothing</div>
+        </div>
+        <button class="submit-btn" onclick="submitLoss()" disabled>Choose</button>
+    `;
+}
+function submitLoss() {
+    showResult(`<p>Frame: <span class="result-highlight">${expData.frame === 'loss' ? 'Loss frame' : 'Gain frame'}</span> | Choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Psychology:</strong> Kahneman & Tversky's Prospect Theory shows both options are mathematically identical. Yet people tend to be risk-averse in the gain frame (take the certain £50) and risk-seeking in the loss frame (gamble to avoid the loss). Losses feel approximately twice as powerful as equivalent gains — this is loss aversion.</p>`);
+}
+
+function sunk() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">You've been developing an app for 8 months and spent £15,000. New market research shows similar apps are failing. What do you do?</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'continue')">Continue — you've invested too much to stop</div>
+            <div class="exp-option" onclick="selectOpt(this,'pivot')">Pivot to a different direction</div>
+            <div class="exp-option" onclick="selectOpt(this,'stop')">Cut your losses and stop entirely</div>
+        </div>
+        <button class="submit-btn" onclick="submitSunk()" disabled>Make Decision</button>
+    `;
+}
+function submitSunk() {
+    const r = {continue:"You fell for the sunk cost fallacy. The £15,000 is gone regardless — future decisions should only weigh future costs and benefits.",pivot:"Good rational thinking! You acknowledged the evidence without abandoning all your work.",stop:"Economically rational — sunk costs are irrelevant to future decisions."};
+    showResult(`<p>Your choice: <span class="result-highlight">${expData.choice}</span></p><p>${r[expData.choice]}</p><p><strong>Psychology:</strong> The sunk cost fallacy occurs when past investments irrationally influence future decisions. In economics, sunk costs are irretrievable and should be ignored in rational cost-benefit analysis.</p>`);
+}
+
+function status() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">Your current mobile plan: £40/month for 5GB. Better options exist:</p>
+        <div class="plan-grid">
+            <div class="plan-card" onclick="selectPlan(this,'current')"><div class="plan-name">Current Plan</div><div class="plan-price">£40</div><div class="plan-detail">5GB data</div></div>
+            <div class="plan-card" onclick="selectPlan(this,'better')"><div class="plan-name">Better Deal</div><div class="plan-price">£35</div><div class="plan-detail">10GB data</div></div>
+            <div class="plan-card" onclick="selectPlan(this,'best')"><div class="plan-name">Best Value</div><div class="plan-price">£30</div><div class="plan-detail">15GB data</div></div>
+        </div>
+        <button class="submit-btn" onclick="submitStatus()" disabled>Choose Plan</button>
+    `;
+}
+function submitStatus() {
+    const stuck = expData.choice === 'current';
+    showResult(`<p>Your choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Status quo bias ${stuck ? 'DETECTED' : 'not detected'}.</strong> ${stuck ? 'Despite objectively better and cheaper alternatives, you chose the familiar option.' : 'You overcame status quo bias and chose a rationally superior option.'}</p><p><strong>Psychology:</strong> Status quo bias reflects our tendency to prefer the current state of affairs. Combined with loss aversion (potential for something to go wrong with switching), inertia is a powerful force — which is why auto-enrolment works so effectively.</p>`);
+}
+
+function framing() {
+    const pos = Math.random() > 0.5;
+    expData.frame = pos ? 'positive' : 'negative';
+    document.getElementById('modalBody').innerHTML = pos ? `
+        <p class="experiment-question">A disease will kill 600 people. Two treatment programmes are proposed:</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'certain')">Programme A: 200 lives will be saved</div>
+            <div class="exp-option" onclick="selectOpt(this,'gamble')">Programme B: 1/3 chance all 600 saved · 2/3 chance none saved</div>
+        </div>
+        <button class="submit-btn" onclick="submitFraming()" disabled>Choose Programme</button>
+    ` : `
+        <p class="experiment-question">A disease will kill 600 people. Two treatment programmes are proposed:</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'certain')">Programme C: 400 people will die</div>
+            <div class="exp-option" onclick="selectOpt(this,'gamble')">Programme D: 1/3 chance no one dies · 2/3 chance 600 die</div>
+        </div>
+        <button class="submit-btn" onclick="submitFraming()" disabled>Choose Programme</button>
+    `;
+}
+function submitFraming() {
+    showResult(`<p>Frame: <span class="result-highlight">${expData.frame === 'positive' ? 'Gains (lives saved)' : 'Losses (deaths)'}</span> | Choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Psychology:</strong> Programmes A and C are identical (200 saved = 400 die from 600). Programmes B and D are identical. Yet in the gains frame, ~72% choose the certain option; in the loss frame, ~78% choose the gamble. Same facts, different words, opposite decisions. This is the Kahneman-Tversky framing effect.</p>`);
+}
+
+function gambler() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">A fair coin has been flipped 5 times: H–H–H–H–H. What will the next flip be?</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'heads')">Heads — it's on a streak!</div>
+            <div class="exp-option" onclick="selectOpt(this,'tails')">Tails — it must be due!</div>
+            <div class="exp-option" onclick="selectOpt(this,'equal')">Exactly 50/50 — each flip is independent</div>
+        </div>
+        <button class="submit-btn" onclick="submitGambler()" disabled>Predict</button>
+    `;
+}
+function submitGambler() {
+    const correct = expData.choice === 'equal';
+    showResult(`<p>Your prediction: <span class="result-highlight">${expData.choice}</span></p><p><strong>${correct ? '✅ Correct!' : '❌ Gambler\'s fallacy detected.'}</strong></p><p><strong>Psychology:</strong> Each coin flip is an independent event with exactly 50% probability, regardless of previous outcomes. The gambler's fallacy is the erroneous belief that random sequences must self-correct. It drives irrational lottery number choices, casino behaviour, and even investment timing decisions.</p>`);
+}
+
+function endowment() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">Congratulations! You've just received a free coffee mug as a welcome gift.</p>
+        <div style="text-align:center;font-size:3.5rem;margin:16px 0;">☕</div>
+        <p class="experiment-question">Someone immediately offers to trade it for:</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'keep')">Keep my mug — I like it</div>
+            <div class="exp-option" onclick="selectOpt(this,'chocolate')">Chocolate bar (worth ~£2)</div>
+            <div class="exp-option" onclick="selectOpt(this,'pen')">Nice pen (worth ~£3)</div>
+            <div class="exp-option" onclick="selectOpt(this,'gift')">£5 gift card</div>
+        </div>
+        <button class="submit-btn" onclick="submitEndowment()" disabled>Decide</button>
+    `;
+}
+function submitEndowment() {
+    showResult(`<p>Your choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Endowment effect ${expData.choice === 'keep' ? 'DETECTED' : 'not detected'}.</strong></p><p><strong>Psychology:</strong> Simply owning an object — even for seconds — inflates its perceived value. Kahneman found people demand ~2x more to sell an object than they'd willingly pay to buy the same item. This asymmetry is driven by loss aversion: giving up the mug feels like a loss.</p>`);
+}
+
+function confirmation() {
+    document.getElementById('modalBody').innerHTML = `
+        <p class="experiment-question">You want to learn more about climate change policy. Which article do you click first?</p>
+        <div class="exp-options">
+            <div class="exp-option" onclick="selectOpt(this,'alarm')">Scientists Sound Urgent Climate Emergency Warning</div>
+            <div class="exp-option" onclick="selectOpt(this,'neutral')">New Research Shows Mixed Picture on Climate Action</div>
+            <div class="exp-option" onclick="selectOpt(this,'costs')">Economic Costs of Climate Policies Questioned by Experts</div>
+        </div>
+        <button class="submit-btn" onclick="submitConfirmation()" disabled>Read Article</button>
+    `;
+}
+function submitConfirmation() {
+    showResult(`<p>Your choice: <span class="result-highlight">${expData.choice}</span></p><p><strong>Psychology:</strong> Confirmation bias leads us to seek, favour, and remember information that aligns with our existing beliefs. Social media algorithms amplify this by feeding us content that matches our engagement patterns, creating "filter bubbles" — a key concern for democratic information ecosystems.</p><p><strong>Note:</strong> The "correct" answer here is the mixed-results article — seeking disconfirming evidence is genuinely harder and rarer than it sounds.</p>`);
+}
+
+/* ══════════════════════════════════════
+   NUDGE BUILDER
+══════════════════════════════════════ */
+const nudgeTemplates = {
+    exercise: {
+        social: "73% of people your age in your area exercise at least 3 times a week. Join them.",
+        default: "Your calendar already includes a 30-minute walk each morning. Tap to keep or adjust.",
+        loss: "Without regular exercise, you risk losing 2.5 years from your expected lifespan.",
+        reciprocity: "Your family is counting on you to stay healthy — start with just 10 minutes today.",
+        timing: "It's 7:15am — the weather is ideal and your energy levels are at their daily peak.",
+        simplicity: "One step: put on your trainers. That's it. Everything else will follow."
+    },
+    savings: {
+        social: "People in your income bracket typically save £2,400 more per year than you currently do.",
+        default: "We've set up automatic savings of £50 per payday. You can change this at any time.",
+        loss: "Without saving now, you'll need to work an estimated 3 extra years before you can retire.",
+        reciprocity: "Your future self will thank you — saving just £25 more a month builds £9,000 over 30 years.",
+        timing: "Payday is tomorrow — the perfect moment to adjust your standing order.",
+        simplicity: "One click to save £50 this month. No forms. No calls. Just one tap."
+    },
+    recycling: {
+        social: "85% of households on your street already recycle correctly. Don't be the exception.",
+        default: "Your recycling collection is already scheduled. Bins are ready — just fill them.",
+        loss: "Each item you throw in general waste contributes to the 2.12 billion tonnes of annual landfill.",
+        reciprocity: "Help preserve the environment your grandchildren will inherit — recycle today.",
+        timing: "Collection is tomorrow morning — now is the perfect time to sort your recycling.",
+        simplicity: "Three bins. Blue for paper, green for glass, grey for everything else. That's all."
+    },
+    voting: {
+        social: "94% of people in your profession voted in the last general election.",
+        default: "Your polling card has already been posted. Your station opens at 7am.",
+        loss: "People who don't vote lose their say over decisions that affect their daily lives.",
+        reciprocity: "Honor those who fought for universal suffrage — your vote is their legacy.",
+        timing: "Polls close at 10pm. You have 3 hours left — your polling station is 8 minutes away.",
+        simplicity: "One piece of paper. One mark. Ten minutes. Your polling station is [address]."
+    },
+    "healthy-eating": {
+        social: "8 in 10 people your age choose the healthier option when it's positioned first on the menu.",
+        default: "We've pre-selected a balanced meal plan for this week. Tap to review or change.",
+        loss: "Poor dietary choices cost the average person £3,000 annually in long-term health expenses.",
+        reciprocity: "Set the example your children will follow — choose nutritious foods today.",
+        timing: "You're most likely to make a healthy food choice in the first 10 minutes after a workout.",
+        simplicity: "Half your plate: vegetables. A quarter: protein. A quarter: wholegrains. Done."
+    },
+    tax: {
+        social: "9 in 10 people in your postcode paid their tax bill on time this year.",
+        default: "Your payment schedule is already set up. Your next payment will be made automatically.",
+        loss: "Late payment incurs a 5% surcharge — currently £[amount] on your outstanding balance.",
+        reciprocity: "Your taxes fund the NHS, schools and roads that you and your family use every day.",
+        timing: "Your payment deadline is in 3 days. Setting up a direct debit takes under 2 minutes.",
+        simplicity: "Pay online in 90 seconds at gov.uk/paytax using your reference: [XXXX]."
+    },
+    organs: {
+        social: "Over 50,000 people on your street are already registered organ donors.",
+        default: "In England, you are now registered as a donor by default. You can opt out at any time.",
+        loss: "Every year, 400 people die in the UK while waiting for an organ that could save their life.",
+        reciprocity: "If you needed an organ, would you accept one? If so, please consider giving.",
+        timing: "You're updating your medical records today — it takes 30 seconds to register as a donor.",
+        simplicity: "Register in 30 seconds at organdonation.nhs.uk — no forms, just your NHS number."
+    }
+};
+
+const effectiveness = {
+    social: 72, default: 85, loss: 68, reciprocity: 64, timing: 78, simplicity: 80
+};
+
+function updateNudge() {
+    const beh = document.getElementById('nudgeBehaviour').value;
+    const type = document.getElementById('nudgeType').value;
+    const intensity = parseInt(document.getElementById('nudgeIntensity').value);
+    const msg = nudgeTemplates[beh]?.[type] || 'Select options above to see your nudge.';
+    document.getElementById('nudgePreview').textContent = msg;
+    const base = effectiveness[type] || 60;
+    const eff = Math.min(98, Math.round(base * (0.6 + intensity * 0.05)));
+    document.getElementById('effFill').style.width = eff + '%';
+    document.getElementById('effScore').textContent = eff + '%';
+    document.getElementById('aiOutput').textContent = 'Click "Analyse Nudge" to receive an AI-powered critique.';
+    document.getElementById('aiOutput').className = 'ai-output loading';
+}
+
+async function analyseNudge() {
+    const beh = document.getElementById('nudgeBehaviour').value;
+    const type = document.getElementById('nudgeType').value;
+    const audience = document.getElementById('nudgeAudience').value;
+    const intensity = document.getElementById('nudgeIntensity').value;
+    const msg = document.getElementById('nudgePreview').textContent;
+    const btn = document.getElementById('aiBtn');
+    const out = document.getElementById('aiOutput');
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Analysing…';
+    out.textContent = 'Claude is analysing your nudge…';
+    out.className = 'ai-output loading';
+    
+    const prompt = `You are an expert in behavioural economics and UK public policy. A student has designed the following nudge for an A-Level Economics class:
+
+TARGET BEHAVIOUR: ${beh}
+NUDGE TYPE: ${type} 
+TARGET AUDIENCE: ${audience}
+INTENSITY: ${intensity}/10
+NUDGE MESSAGE: "${msg}"
+
+Provide a concise critique (max 180 words) covering:
+1. Which EAST principle(s) this applies and how effectively
+2. Which cognitive bias it exploits (name the bias precisely)
+3. One strength and one limitation of this approach
+4. A brief improvement suggestion
+
+Write in clear, precise language appropriate for A-Level Economics. Do not use headers — write in flowing prose.`;
+
+    try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1000,
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+        const data = await resp.json();
+        const text = data.content?.[0]?.text || 'Unable to generate analysis.';
+        out.textContent = text;
+        out.className = 'ai-output';
+    } catch (e) {
+        out.textContent = 'Unable to connect to AI analysis. Check your connection and try again.';
+        out.className = 'ai-output';
+    }
+    
+    btn.disabled = false;
+    btn.textContent = '🤖 Analyse Nudge';
+}
+
+/* ══════════════════════════════════════
+   SCENARIO SIMULATOR
+══════════════════════════════════════ */
+const simData = {
+    restaurant: {
+        highlight: { before: 23, after: 38, delta: '+15%', label: 'healthy choices per 100 customers', note: 'Salience nudge — making healthy options visually distinctive increases selection.' },
+        position:  { before: 23, after: 34, delta: '+11%', label: 'healthy choices per 100 customers', note: 'Primacy effect — items listed first receive disproportionate attention and selection.' },
+        default:   { before: 23, after: 54, delta: '+31%', label: 'customers choosing salad side',     note: 'Default bias — switching to opt-out for salads exploits status quo bias powerfully.' },
+        social:    { before: 23, after: 31, delta: '+8%',  label: 'healthy choices per 100 customers', note: 'Social norms — "popular choice" badges create conformity pressure.' }
+    },
+    app: {
+        streaks:       { before: 31, after: 52, delta: '+21%', label: 'daily active users (%)', note: 'Loss aversion applied to streaks — breaking a streak feels like a loss, motivating continued engagement.' },
+        notifications: { before: 31, after: 44, delta: '+13%', label: 'daily active users (%)', note: 'Timely nudges at peak receptivity windows exploit implementation intentions.' },
+        social:        { before: 31, after: 41, delta: '+10%', label: 'daily active users (%)', note: 'Social norms — friend activity creates FOMO and conformity pressure.' },
+        progress:      { before: 31, after: 49, delta: '+18%', label: 'daily active users (%)', note: 'Goal gradient effect — progress visualisation accelerates engagement as completion nears.' }
+    },
+    workplace: {
+        reminders: { before: 18, after: 29, delta: '+11%', label: 'employees taking regular breaks (%)', note: 'Timely nudges at decision points override habitual overworking behaviour.' },
+        stairs:    { before: 12, after: 23, delta: '+11%', label: 'stair usage (%)', note: 'Environmental defaults — placing artwork and prompts near stairs reduces lift usage.' },
+        team:      { before: 18, after: 36, delta: '+18%', label: 'employees meeting wellness targets (%)', note: 'Social norms and reciprocity within teams drive collective behaviour change.' },
+        defaults:  { before: 24, after: 55, delta: '+31%', label: 'meetings with healthy refreshments (%)', note: 'Default choice architecture — healthy snacks as default exploits status quo bias.' }
+    },
+    ecommerce: {
+        scarcity: { before: 2.8, after: 4.1, delta: '+46%', label: 'conversion rate (%)', note: 'Scarcity bias — "Only 2 left" exploits loss aversion and urgency.' },
+        social:   { before: 2.8, after: 3.7, delta: '+32%', label: 'conversion rate (%)', note: 'Social proof — "47 people bought this today" triggers social norm conformity.' },
+        urgency:  { before: 2.8, after: 4.3, delta: '+54%', label: 'conversion rate (%)', note: 'Time-limited framing exploits hyperbolic discounting and loss aversion simultaneously.' },
+        personal: { before: 2.8, after: 3.4, delta: '+21%', label: 'conversion rate (%)', note: 'Personalisation increases salience and reduces choice overload.' }
+    }
+};
+
+let currentScenario = 'restaurant';
+
+function switchScenario(id, btn) {
+    document.querySelectorAll('.scen-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.scen-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('scen-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    currentScenario = id;
+}
+
+function runSim(scenario, type, btn) {
+    const d = simData[scenario]?.[type];
+    if (!d) return;
+    const el = document.getElementById('sim-' + scenario);
+    el.innerHTML = `
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:white;border-radius:8px;border:2px solid var(--border);">
+                <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Before</div>
+                <div class="result-stat">${d.before}%</div>
+            </div>
+            <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--success-bg);border-radius:8px;border:2px solid #a8d8bd;">
+                <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">After</div>
+                <div class="result-stat" style="color:var(--success)">${d.after}%</div>
+            </div>
+            <div style="flex:1;min-width:100px;text-align:center;padding:14px;background:var(--gold-pale);border-radius:8px;border:2px solid var(--gold);">
+                <div style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Change</div>
+                <div class="result-stat" style="color:var(--warn)">${d.delta}</div>
+            </div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">${d.label}</p>
+        <p style="font-size:0.86rem;color:var(--text-mid);line-height:1.6;">${d.note}</p>
+    `;
+    el.classList.add('visible');
+}
+
+/* ══════════════════════════════════════
+   EAST FRAMEWORK
+══════════════════════════════════════ */
+const eastContent = {
+    easy: {
+        title: 'Easy — Reduce Friction',
+        points: [
+            'Simplify messaging: "One form, two minutes, done."',
+            'Use defaults to remove the need for active decisions',
+            'Automate desirable behaviours where possible (auto-enrolment)',
+            'Reduce the number of steps required to take action',
+            'UK Example: Auto-enrolment pensions — employers opt workers in automatically'
+        ]
+    },
+    attractive: {
+        title: 'Attractive — Capture Attention',
+        points: [
+            'Use personalisation to make messages feel relevant',
+            'Salience: make the desired option visually prominent',
+            'Offer incentives where appropriate (but beware crowding out intrinsic motivation)',
+            'Use design to direct attention: colour, size, position',
+            'UK Example: HMRC personalised tax letters with named recipient data'
+        ]
+    },
+    social: {
+        title: 'Social — Harness Peer Influence',
+        points: [
+            'Communicate social norms: "X in 10 people in your area already do this"',
+            'Use messenger effects: who delivers the message matters as much as what it says',
+            'Leverage commitment devices and social accountability',
+            'Network effects: make visible what others are doing',
+            'UK Example: HMRC "9 in 10 people in your town pay on time" tax compliance letters'
+        ]
+    },
+    timely: {
+        title: 'Timely — Intervene at the Right Moment',
+        points: [
+            'Intervene at transition points (new job, new home, after illness)',
+            'Align nudges with decision points — when the choice is actually being made',
+            'Use prompts and reminders close to the desired behaviour',
+            'Match mood and receptivity: post-workout for exercise nudges',
+            'UK Example: Flu vaccination SMS reminders sent in September, before flu season begins'
+        ]
+    }
+};
+
+function showEast(key) {
+    const content = eastContent[key];
+    const detail = document.getElementById('east-detail');
+    detail.innerHTML = `
+        <h4>${content.title}</h4>
+        <ul>${content.points.map(p => `<li>${p}</li>`).join('')}</ul>
+    `;
+    detail.classList.add('visible');
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ══════════════════════════════════════
+   IMPACT CALCULATOR
+══════════════════════════════════════ */
+function updateCalc() {
+    const pop = parseInt(document.getElementById('popSlider').value);
+    const base = parseInt(document.getElementById('baseSlider').value);
+    const eff = parseInt(document.getElementById('effSlider').value);
+    
+    document.getElementById('popVal').textContent = pop.toLocaleString();
+    document.getElementById('baseVal').textContent = base + '%';
+    document.getElementById('effVal').textContent = '+' + eff + '%';
+    
+    const before = Math.round(pop * base / 100);
+    const newRate = Math.min(98, base + eff);
+    const after = Math.round(pop * newRate / 100);
+    const delta = after - before;
+    
+    document.getElementById('beforeNum').textContent = before.toLocaleString();
+    document.getElementById('afterNum').textContent = after.toLocaleString();
+    document.getElementById('deltaNum').textContent = '+' + delta.toLocaleString();
+    document.getElementById('calcExtra').textContent = delta.toLocaleString();
+}
+
+/* ── INIT ── */
+renderGrid();
+updateNudge();
+updateCalc();
+</script>
+</body>
+</html>

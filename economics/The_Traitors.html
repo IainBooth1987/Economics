@@ -1,0 +1,2608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Traitors: Student Play Mode | BIZ-OMICS Game Theory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --crimson: #8b1a1a;
+            --crimson-bright: #c0392b;
+            --crimson-glow: rgba(192,57,43,0.35);
+            --gold: #c9a227;
+            --gold-light: #e8c547;
+            --gold-dim: rgba(201,162,39,0.15);
+            --faithful: #2e7d6b;
+            --faithful-bright: #3aaf91;
+            --faithful-glow: rgba(58,175,145,0.3);
+            --midnight: #0d0f1a;
+            --dark: #121520;
+            --panel: #171b2e;
+            --panel-light: #1d2238;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8e4d8;
+            --text-dim: #9e9a8e;
+            --theory-bg: rgba(33,97,158,0.15);
+            --theory-border: rgba(52,152,219,0.4);
+            --theory-text: #74b9e8;
+            --warning: #e67e22;
+            --navy: #1a2744;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Crimson Pro', Georgia, serif;
+            background: var(--midnight);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 17px;
+            line-height: 1.6;
+        }
+
+        /* Atmospheric background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(139,26,26,0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 80% 80%, rgba(201,162,39,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ═══ HEADER ═══ */
+        header {
+            text-align: center;
+            padding: 30px 20px 24px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(201,162,39,0.2);
+            position: relative;
+        }
+
+        .brand-tag {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7em;
+            letter-spacing: 0.25em;
+            color: var(--gold);
+            opacity: 0.7;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.4em;
+            font-weight: 900;
+            color: var(--text);
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+        }
+
+        h1 span {
+            color: var(--crimson-bright);
+            display: block;
+            font-size: 0.5em;
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            color: var(--gold);
+            margin-top: 4px;
+        }
+
+        /* ═══ SCREENS ═══ */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* ═══ ROLE SELECTION ═══ */
+        .role-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 28px 0;
+        }
+
+        .role-card {
+            background: var(--panel);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .role-card.traitor-card::before {
+            background: radial-gradient(ellipse at 30% 30%, rgba(139,26,26,0.4), transparent 70%);
+        }
+
+        .role-card.faithful-card::before {
+            background: radial-gradient(ellipse at 30% 30%, rgba(46,125,107,0.3), transparent 70%);
+        }
+
+        .role-card:hover { transform: translateY(-3px); }
+        .role-card:hover::before { opacity: 1; }
+
+        .role-card.traitor-card:hover { border-color: var(--crimson-bright); box-shadow: 0 8px 32px var(--crimson-glow); }
+        .role-card.faithful-card:hover { border-color: var(--faithful-bright); box-shadow: 0 8px 32px var(--faithful-glow); }
+
+        .role-card.selected.traitor-card { border-color: var(--crimson-bright); box-shadow: 0 0 40px var(--crimson-glow); }
+        .role-card.selected.faithful-card { border-color: var(--faithful-bright); box-shadow: 0 0 40px var(--faithful-glow); }
+
+        .role-icon { font-size: 3em; margin-bottom: 12px; }
+        .role-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .traitor-card .role-title { color: var(--crimson-bright); }
+        .faithful-card .role-title { color: var(--faithful-bright); }
+
+        .role-desc {
+            font-size: 0.9em;
+            color: var(--text-dim);
+            line-height: 1.5;
+            position: relative;
+            z-index: 1;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .traitor-card .role-badge { background: rgba(192,57,43,0.2); color: var(--crimson-bright); border: 1px solid rgba(192,57,43,0.4); }
+        .faithful-card .role-badge { background: rgba(58,175,145,0.15); color: var(--faithful-bright); border: 1px solid rgba(58,175,145,0.3); }
+
+        /* ═══ CONFIG PANEL ═══ */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .config-item label {
+            display: block;
+            font-size: 0.8em;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.1em;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .config-item select, .config-item input {
+            width: 100%;
+            padding: 8px 10px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'Crimson Pro', serif;
+            font-size: 0.95em;
+        }
+
+        .config-item select:focus, .config-item input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        /* ═══ THEORY CONCEPTS on setup ═══ */
+        .theory-intro-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .theory-intro-card {
+            background: var(--theory-bg);
+            border: 1px solid var(--theory-border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .theory-intro-card h4 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85em;
+            color: var(--theory-text);
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .theory-intro-card p {
+            font-size: 0.88em;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* ═══ GAME LAYOUT ═══ */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* ═══ PANELS ═══ */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85em;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
+            border-bottom: 1px solid rgba(201,162,39,0.2);
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        /* ═══ STATUS BAR ═══ */
+        .status-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pill .label { color: var(--text-dim); }
+        .status-pill .value { font-weight: 600; color: var(--text); }
+        .status-pill.round .value { color: var(--gold); }
+        .status-pill.faithful-count .value { color: var(--faithful-bright); }
+        .status-pill.traitor-count .value { color: var(--crimson-bright); }
+        .status-pill.phase-pill { border-color: var(--gold); }
+        .status-pill.phase-pill .value { color: var(--gold); font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+
+        /* ═══ YOUR ROLE BADGE ═══ */
+        .your-role-banner {
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .your-role-banner.traitor {
+            background: linear-gradient(135deg, rgba(139,26,26,0.3), rgba(192,57,43,0.15));
+            border: 1px solid rgba(192,57,43,0.4);
+        }
+
+        .your-role-banner.faithful {
+            background: linear-gradient(135deg, rgba(46,125,107,0.3), rgba(58,175,145,0.1));
+            border: 1px solid rgba(58,175,145,0.35);
+        }
+
+        .your-role-banner .role-label {
+            font-size: 0.72em;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .your-role-banner .role-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .traitor .role-name { color: var(--crimson-bright); }
+        .faithful .role-name { color: var(--faithful-bright); }
+
+        /* ═══ PLAYER CARDS ═══ */
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+        }
+
+        .player-card {
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            font-size: 0.85em;
+        }
+
+        .player-card:hover:not(.dead) {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .player-card.is-you {
+            border-color: var(--gold);
+            background: rgba(201,162,39,0.08);
+        }
+
+        .player-card.is-traitor-known {
+            border-color: rgba(192,57,43,0.5);
+            background: rgba(139,26,26,0.15);
+        }
+
+        .player-card.selected-target {
+            border-color: var(--gold-light) !important;
+            box-shadow: 0 0 18px rgba(232,197,71,0.4);
+        }
+
+        .player-card.dead {
+            opacity: 0.35;
+            filter: grayscale(0.6);
+            cursor: default;
+        }
+
+        .player-card.clickable-target:hover {
+            border-color: var(--crimson-bright);
+            box-shadow: 0 0 12px var(--crimson-glow);
+        }
+
+        .player-card.clickable-vote:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 12px rgba(201,162,39,0.3);
+        }
+
+        .player-name { font-weight: 600; margin-bottom: 4px; color: var(--text); }
+        .player-you-tag { font-size: 0.72em; color: var(--gold); }
+        .player-traitor-tag { font-size: 0.72em; color: var(--crimson-bright); }
+        .player-status-tag { font-size: 0.72em; color: var(--text-dim); }
+
+        .suspicion-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .suspicion-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .suspicion-pct { font-size: 0.72em; color: var(--text-dim); margin-top: 3px; }
+
+        /* Economist tooltip */
+        .player-card { position: relative; }
+        .econ-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0d0f1a;
+            border: 1px solid var(--gold);
+            border-radius: 7px;
+            padding: 10px 12px;
+            font-size: 0.8em;
+            line-height: 1.45;
+            color: var(--text);
+            width: 220px;
+            text-align: left;
+            z-index: 100;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+            pointer-events: none;
+        }
+        .econ-tooltip strong { color: var(--gold); display: block; margin-bottom: 4px; }
+        .econ-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--gold);
+        }
+        .player-card:hover .econ-tooltip { display: block; }
+
+        /* ═══ THEORY SPOTLIGHT ═══ */
+        .theory-spotlight {
+            background: var(--theory-bg);
+            border: 1px solid var(--theory-border);
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+        }
+
+        .theory-spotlight .spotlight-tag {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7em;
+            letter-spacing: 0.2em;
+            color: var(--theory-text);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theory-spotlight .spotlight-concept {
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--theory-text);
+            margin-bottom: 6px;
+        }
+
+        .theory-spotlight .spotlight-body {
+            font-size: 0.9em;
+            color: var(--text-dim);
+            line-height: 1.55;
+        }
+
+        .theory-spotlight .spotlight-exam {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(74,144,226,0.2);
+            font-size: 0.82em;
+            color: rgba(116,185,232,0.7);
+            font-style: italic;
+        }
+
+        /* ═══ DECISION PANEL ═══ */
+        .decision-panel {
+            background: var(--panel-light);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .decision-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .traitor-decision .decision-title { color: var(--crimson-bright); }
+        .faithful-decision .decision-title { color: var(--faithful-bright); }
+        .neutral-decision .decision-title { color: var(--gold); }
+
+        .decision-prompt {
+            font-size: 0.92em;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        /* ═══ PAYOFF MATRIX ═══ */
+        .payoff-section {
+            margin-top: 14px;
+        }
+
+        .payoff-label {
+            font-size: 0.78em;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .payoff-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82em;
+            margin-bottom: 8px;
+        }
+
+        .payoff-matrix th {
+            padding: 6px 8px;
+            background: rgba(0,0,0,0.3);
+            color: var(--text-dim);
+            font-family: 'Cinzel', serif;
+            font-size: 0.8em;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+        }
+
+        .payoff-matrix td {
+            padding: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .payoff-matrix td.highlight-cell {
+            background: rgba(201,162,39,0.12);
+            border-color: rgba(201,162,39,0.3);
+        }
+
+        .payoff-matrix .p1 { color: var(--crimson-bright); font-size: 1.1em; }
+        .payoff-matrix .p2 { color: var(--faithful-bright); font-size: 1.1em; }
+        .payoff-nash { font-size: 0.75em; color: var(--gold); }
+
+        /* ═══ SPEECH BUBBLES ═══ */
+        .speech-bubble {
+            background: rgba(255,255,255,0.04);
+            border-left: 3px solid var(--gold);
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .speech-bubble.traitor-speech { border-left-color: var(--crimson-bright); }
+        .speech-bubble.faithful-speech { border-left-color: var(--faithful-bright); }
+
+        .speech-speaker {
+            font-family: 'Cinzel', serif;
+            font-size: 0.82em;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .speech-text {
+            font-style: italic;
+            color: var(--text);
+            font-size: 0.92em;
+            line-height: 1.5;
+        }
+
+        .speech-theory {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8em;
+            color: var(--theory-text);
+        }
+
+        /* ═══ YOUR TURN PROMPT ═══ */
+        .your-turn {
+            background: linear-gradient(135deg, rgba(201,162,39,0.15), rgba(201,162,39,0.06));
+            border: 1px solid rgba(201,162,39,0.4);
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin: 14px 0;
+        }
+
+        .your-turn-header {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            letter-spacing: 0.1em;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        /* ═══ VOTE OPTION BUTTONS ═══ */
+        .vote-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .vote-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .vote-option:hover { border-color: rgba(201,162,39,0.4); background: rgba(201,162,39,0.06); }
+        .vote-option.selected-vote { border-color: var(--gold); background: rgba(201,162,39,0.12); }
+
+        .vote-option-name { font-weight: 600; font-size: 0.92em; }
+        .vote-option-suspicion { font-size: 0.8em; color: var(--text-dim); }
+
+        /* ═══ SPEECH CHOICE ═══ */
+        .speech-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .speech-option {
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .speech-option:hover { border-color: rgba(116,185,232,0.4); background: rgba(116,185,232,0.07); }
+        .speech-option.selected-speech { border-color: var(--theory-text); background: var(--theory-bg); }
+
+        .speech-option-label { font-weight: 600; color: var(--text); }
+        .speech-option-desc { font-size: 0.78em; color: var(--text-dim); margin-top: 3px; }
+
+        /* ═══ BAYESIAN CALC ═══ */
+        .bayes-calc {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.88em;
+        }
+
+        .bayes-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bayes-row:last-child { border-bottom: none; }
+        .bayes-label { color: var(--text-dim); }
+        .bayes-value { font-weight: 600; font-family: monospace; }
+        .bayes-update { color: var(--gold); }
+        .bayes-posterior { color: var(--crimson-bright); font-size: 1.1em; }
+
+        /* ═══ BUTTONS ═══ */
+        .btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 7px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--crimson-bright), var(--crimson));
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(192,57,43,0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(192,57,43,0.45);
+        }
+
+        .btn-faithful {
+            background: linear-gradient(135deg, var(--faithful), var(--faithful-bright));
+            color: #fff;
+            box-shadow: 0 4px 18px var(--faithful-glow);
+        }
+
+        .btn-faithful:hover:not(:disabled) { transform: translateY(-2px); }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #b8922a, var(--gold));
+            color: #0d0f1a;
+            box-shadow: 0 4px 16px rgba(201,162,39,0.3);
+        }
+
+        .btn-gold:hover:not(:disabled) { transform: translateY(-2px); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover:not(:disabled) { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+        .btn-block { width: 100%; justify-content: center; margin-top: 10px; }
+
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+        /* ═══ ANNOUNCEMENT ═══ */
+        .announcement {
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 14px 0;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .announcement.murder-reveal {
+            background: linear-gradient(135deg, rgba(139,26,26,0.35), rgba(192,57,43,0.15));
+            border: 1px solid rgba(192,57,43,0.5);
+        }
+
+        .announcement.banish-reveal {
+            background: linear-gradient(135deg, rgba(201,162,39,0.2), rgba(201,162,39,0.08));
+            border: 1px solid rgba(201,162,39,0.4);
+        }
+
+        .announcement.victory {
+            background: linear-gradient(135deg, rgba(46,125,107,0.3), rgba(58,175,145,0.1));
+            border: 2px solid var(--faithful-bright);
+        }
+
+        .announcement.defeat {
+            background: linear-gradient(135deg, rgba(139,26,26,0.4), rgba(192,57,43,0.2));
+            border: 2px solid var(--crimson-bright);
+        }
+
+        .announcement-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .announcement-body { font-size: 0.95em; color: var(--text-dim); line-height: 1.5; }
+
+        /* ═══ LOG ═══ */
+        .game-log {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.82em;
+            color: var(--text-dim);
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            line-height: 1.4;
+        }
+
+        .log-entry .log-round { color: var(--gold); font-weight: 600; }
+        .log-entry.murder-log { color: rgba(192,57,43,0.8); }
+        .log-entry.banish-log { color: rgba(201,162,39,0.9); }
+
+        /* ═══ END GAME DEBRIEF ═══ */
+        .debrief-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 20px 0;
+        }
+
+        .debrief-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+        }
+
+        .debrief-card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .debrief-card.theory-card { border-color: var(--theory-border); }
+        .debrief-card.theory-card h3 { color: var(--theory-text); }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-dim); }
+        .stat-value { font-weight: 600; }
+
+        .exam-q {
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--gold);
+            padding: 10px 12px;
+            margin: 8px 0;
+            border-radius: 4px;
+            font-size: 0.88em;
+        }
+
+        .exam-q .mark { font-size: 0.8em; color: var(--text-dim); float: right; }
+
+        .timeline-bar {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0;
+            align-items: center;
+        }
+
+        .timeline-pip {
+            flex: 1;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72em;
+            font-weight: 600;
+        }
+
+        .pip-traitor { background: rgba(192,57,43,0.35); border: 1px solid rgba(192,57,43,0.5); color: var(--crimson-bright); }
+        .pip-faithful { background: rgba(46,125,107,0.3); border: 1px solid rgba(58,175,145,0.4); color: var(--faithful-bright); }
+        .pip-none { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-dim); }
+
+        /* ═══ PRINT STYLES ═══ */
+        @media print {
+            body { background: white; color: black; font-family: Georgia, serif; }
+            body::before { display: none; }
+            .no-print, .btn, .config-grid, header { display: none !important; }
+            .panel, .debrief-card { border: 1px solid #ccc; background: white; }
+            .panel-title, .debrief-card h3 { color: #1a2744; }
+            .theory-spotlight { background: #f0f4ff; border: 1px solid #ccc; }
+            .theory-spotlight .spotlight-concept,
+            .theory-spotlight .spotlight-tag { color: #1a4a8a; }
+            .theory-spotlight .spotlight-body { color: #333; }
+            .stat-value { color: #1a2744; }
+            .game-log { max-height: none; overflow: visible; }
+            .print-header { display: block !important; }
+        }
+
+        .print-header {
+            display: none;
+            text-align: center;
+            border-bottom: 2px solid #1a2744;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+        @media (max-width: 900px) {
+            .game-layout { grid-template-columns: 1fr; }
+            .config-grid { grid-template-columns: repeat(2, 1fr); }
+            .role-selection { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.6em; }
+            .config-grid { grid-template-columns: 1fr; }
+            .debrief-grid { grid-template-columns: 1fr; }
+            .speech-options { grid-template-columns: 1fr; }
+        }
+
+        /* ═══ UTIL ═══ */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .text-dim { color: var(--text-dim); }
+        .text-gold { color: var(--gold); }
+        .text-crimson { color: var(--crimson-bright); }
+        .text-faithful { color: var(--faithful-bright); }
+        .mt-8 { margin-top: 8px; }
+        .mt-14 { margin-top: 14px; }
+        .italic { font-style: italic; }
+        .small { font-size: 0.85em; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 14px 0;
+        }
+
+        /* Pulse on player's turn */
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201,162,39,0.5); }
+            50% { box-shadow: 0 0 0 5px rgba(201,162,39,0); }
+        }
+
+        .pulse-gold { animation: pulse-border 2s ease-in-out infinite; }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">The Traitors</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_traitors_pw';
+  var valid = ['Traitors-9Xf2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['Traitors-9Xf2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_traitors_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<div class="print-header">
+    <strong>BIZ-OMICS</strong> · The Traitors: Game Theory Edition · Student Play Mode
+</div>
+
+<div class="container">
+
+    <header>
+        <div class="brand-tag">BIZ-OMICS · Game Theory</div>
+        <h1>The Traitors
+            <span>A-Level Student Play Mode</span>
+        </h1>
+    </header>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 1: SETUP
+    ═══════════════════════════════════════════ -->
+    <div id="screen-setup" class="screen active">
+
+        <div class="panel">
+            <div class="panel-title">Choose Your Role</div>
+            <p class="text-dim small" style="margin-bottom: 16px;">Your strategic position determines what information you hold and what decisions you face each round.</p>
+
+            <div class="role-selection">
+                <div class="role-card traitor-card" id="roleCardTraitor" onclick="selectRole('traitor')">
+                    <div class="role-badge">High Information</div>
+                    <div class="role-icon">🗡️</div>
+                    <div class="role-title">TRAITOR</div>
+                    <p class="role-desc">You know who all the traitors are. Each round you must secretly select a Faithful to murder, and vote strategically at the Round Table to avoid detection. Your goal: reach parity with the Faithfuls.</p>
+                    <p class="role-desc mt-8"><strong style="color: var(--crimson-bright)">Game theory concepts:</strong> Coordination games, coalition maintenance, cheap talk, strategic deception.</p>
+                </div>
+                <div class="role-card faithful-card" id="roleCardFaithful" onclick="selectRole('faithful')">
+                    <div class="role-badge">Incomplete Information</div>
+                    <div class="role-icon">🛡️</div>
+                    <div class="role-title">FAITHFUL</div>
+                    <p class="role-desc">You don't know who the traitors are. You must use Bayesian reasoning to update your beliefs about each player and coordinate with other Faithfuls to banish the traitors.</p>
+                    <p class="role-desc mt-8"><strong style="color: var(--faithful-bright)">Game theory concepts:</strong> Incomplete information, Bayesian updating, signalling, collective action problems.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Game Configuration</div>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label>Total Players</label>
+                    <input type="number" id="cfgPlayers" min="6" max="16" value="10">
+                </div>
+                <div class="config-item">
+                    <label>Traitors</label>
+                    <input type="number" id="cfgTraitors" min="2" max="5" value="3">
+                </div>
+                <div class="config-item">
+                    <label>Voting Rule</label>
+                    <select id="cfgVoting">
+                        <option value="plurality">Plurality (most votes)</option>
+                        <option value="majority">Majority (50%+1)</option>
+                        <option value="supermajority">Supermajority (66%+)</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Signal Cost</label>
+                    <select id="cfgSignal">
+                        <option value="none">None — Cheap Talk</option>
+                        <option value="low" selected>Low — Reputation Risk</option>
+                        <option value="high">High — Vote Penalty</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Recruitment</label>
+                    <select id="cfgRecruit">
+                        <option value="false" selected>Disabled</option>
+                        <option value="true">Enabled</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Win Condition</label>
+                    <select id="cfgWin">
+                        <option value="parity">Parity (traitors ≥ faithfuls)</option>
+                        <option value="majority">Majority (traitors > faithfuls)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Game Theory Concepts In This Simulation</div>
+            <div class="theory-intro-grid">
+                <div class="theory-intro-card">
+                    <h4>Incomplete Information</h4>
+                    <p>Faithfuls cannot observe traitor types. They must infer from observable actions — the core challenge of this game.</p>
+                </div>
+                <div class="theory-intro-card">
+                    <h4>Bayesian Updating</h4>
+                    <p>Each event (murder, vote, speech) provides evidence. Rational players update P(Traitor|Evidence) using Bayes' rule.</p>
+                </div>
+                <div class="theory-intro-card">
+                    <h4>Signalling Theory</h4>
+                    <p>Accusations and defences are signals. Without cost, they are cheap talk. Costly signals are more credible — harder to fake.</p>
+                </div>
+                <div class="theory-intro-card">
+                    <h4>Mechanism Design</h4>
+                    <p>Voting rules shape equilibrium behaviour. Plurality vs. majority vs. supermajority create different incentives for coordination and defection.</p>
+                </div>
+                <div class="theory-intro-card">
+                    <h4>Prisoner's Dilemma</h4>
+                    <p>At the Round Table, each Faithful must decide whether to cooperate (coordinate on a target) or defect (protect allies). Individual rationality can undermine collective goals.</p>
+                </div>
+                <div class="theory-intro-card">
+                    <h4>Repeated Games</h4>
+                    <p>Because the game runs for multiple rounds, reputation matters. Consistent voting patterns accumulate as evidence — a key insight from Folk Theorem.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center" style="margin: 24px 0 40px;">
+            <button class="btn btn-gold" id="startBtn" onclick="startGame()" disabled>
+                🎭 Begin Game
+            </button>
+            <p class="text-dim small mt-8">Select a role above to begin</p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 2: MAIN GAME
+    ═══════════════════════════════════════════ -->
+    <div id="screen-game" class="screen">
+
+        <div class="status-bar" id="statusBar">
+            <div class="status-pill round"><span class="label">Round</span><span class="value" id="statRound">1</span></div>
+            <div class="status-pill faithful-count"><span class="label">Faithfuls</span><span class="value" id="statFaithful">—</span></div>
+            <div class="status-pill traitor-count"><span class="label">Traitors</span><span class="value" id="statTraitors">—</span></div>
+            <div class="status-pill phase-pill"><span class="label">Phase</span><span class="value" id="statPhase">—</span></div>
+            <div style="margin-left: auto;">
+                <button class="btn btn-ghost small no-print" onclick="resetGame()" style="padding: 6px 12px; font-size: 0.75em;">↩ New Game</button>
+            </div>
+        </div>
+
+        <div class="game-layout">
+
+            <!-- ──── LEFT COLUMN ──── -->
+            <div id="leftCol">
+
+                <!-- Your role banner -->
+                <div id="yourRoleBanner" class="your-role-banner">
+                    <div class="role-label">You are playing as</div>
+                    <div class="role-name" id="yourRoleLabel">—</div>
+                    <div class="small text-dim mt-8" id="yourRoleDesc">—</div>
+                </div>
+
+                <!-- Theory Spotlight -->
+                <div class="theory-spotlight" id="theorySpotlight">
+                    <div class="spotlight-tag">🎓 Theory Spotlight</div>
+                    <div class="spotlight-concept" id="spotlightConcept">—</div>
+                    <div class="spotlight-body" id="spotlightBody">—</div>
+                    <div class="spotlight-exam hidden" id="spotlightExam">—</div>
+                </div>
+
+                <!-- Players -->
+                <div class="panel">
+                    <div class="panel-title">Players</div>
+                    <div class="player-grid" id="playerGrid"></div>
+                </div>
+
+                <!-- Suspicion Tracker (Faithfuls only) -->
+                <div class="panel" id="suspicionPanel">
+                    <div class="panel-title">Suspicion Tracker</div>
+                    <div id="suspicionList"></div>
+                    <p class="text-dim small mt-8 italic">Updated each round using Bayesian inference from voting and speech patterns.</p>
+                </div>
+
+                <!-- Game Log -->
+                <div class="panel">
+                    <div class="panel-title">Round Log</div>
+                    <div class="game-log" id="gameLog"></div>
+                </div>
+
+            </div>
+
+            <!-- ──── RIGHT COLUMN ──── -->
+            <div id="rightCol">
+
+                <!-- Phase content rendered here -->
+                <div id="phaseContent"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SCREEN 3: DEBRIEF
+    ═══════════════════════════════════════════ -->
+    <div id="screen-debrief" class="screen">
+
+        <div id="debriefContent"></div>
+
+        <div class="text-center" style="margin: 28px 0;">
+            <button class="btn btn-gold" onclick="resetGame()">🔄 Play Again</button>
+            <button class="btn btn-ghost no-print" onclick="window.print()" style="margin-left: 10px;">🖨️ Print Debrief</button>
+        </div>
+
+    </div>
+
+</div><!-- /container -->
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA: NAMES, PERSONALITIES, SPEECH TEMPLATES
+// ══════════════════════════════════════════════════
+
+const ECONOMISTS = [
+    { name: 'Adam S',       full: 'Adam Smith',              info: 'The Wealth of Nations (1776). Coined the "invisible hand" — markets self-regulate via price signals without central coordination.' },
+    { name: 'Karl M',       full: 'Karl Marx',               info: 'Das Kapital (1867). Analysed capitalism, surplus value, and class conflict. Predicted systemic contradictions would lead to crisis.' },
+    { name: 'David R',      full: 'David Ricardo',           info: 'Theory of comparative advantage: nations gain from specialisation even if one produces everything more efficiently.' },
+    { name: 'John MK',      full: 'John Maynard Keynes',     info: 'General Theory (1936). Argued government spending can boost aggregate demand and end recessions — the foundation of modern macroeconomics.' },
+    { name: 'Elinor O',     full: 'Elinor Ostrom',           info: 'Nobel 2009. Showed communities can manage common-pool resources without privatisation or government — overturning the "tragedy of the commons".' },
+    { name: 'Amartya S',    full: 'Amartya Sen',             info: 'Nobel 1998. Capability approach: development means expanding real freedoms, not just GDP. Also showed famines are caused by entitlement failure, not food shortage.' },
+    { name: 'Dambisa M',    full: 'Dambisa Moyo',            info: 'Dead Aid (2009). Argued foreign aid undermines African development by creating dependency and suppressing local institutions.' },
+    { name: 'Esther D',     full: 'Esther Duflo',            info: 'Nobel 2019. Pioneered RCTs (randomised control trials) to test what poverty interventions actually work — bringing scientific rigour to development economics.' },
+    { name: 'Ibn K',        full: 'Ibn Khaldun',             info: '14th-century pioneer. Described labour value theory, trade cycles, and the rise and fall of civilisations — centuries before Western economics.' },
+    { name: 'Abhijit B',    full: 'Abhijit Banerjee',        info: 'Nobel 2019. Co-developed the RCT approach to poverty research; showed many common assumptions about the poor are empirically wrong.' },
+    { name: 'Joseph S',     full: 'Joseph Stiglitz',         info: 'Nobel 2001. Information asymmetry in markets leads to inefficiency. Classic example: adverse selection in insurance and credit markets.' },
+    { name: 'Mariana M',    full: 'Mariana Mazzucato',       info: 'The Entrepreneurial State (2013). Argues the state — not private firms — takes the biggest risks in innovation (e.g. the internet, GPS, touchscreen).' },
+    { name: 'Angus D',      full: 'Angus Deaton',            info: 'Nobel 2015. Research on consumption, poverty, and wellbeing. The Great Escape examines why some nations prospered and others did not.' },
+    { name: 'Claudia G',    full: 'Claudia Goldin',          info: 'Nobel 2023. Lifetime research on the gender pay gap — showed it persists not from discrimination alone but from "greedy jobs" that reward long continuous hours.' },
+    { name: 'Ha-Joon C',    full: 'Ha-Joon Chang',           info: 'Kicking Away the Ladder (2002). Argues rich countries used protectionism to develop, then told poor countries to adopt free trade — hypocrisy in economic policy.' },
+    { name: 'Janet Y',      full: 'Janet Yellen',            info: 'Former Fed Chair and US Treasury Secretary. Known for efficiency wage theory — paying workers above market rate raises productivity and reduces turnover.' },
+    { name: 'Partha D',     full: 'Partha Dasgupta',         info: 'Environmental economics. The Dasgupta Review (2021) argued biodiversity loss is an economic crisis — natural capital must be included in national accounts.' },
+    { name: 'Douglass N',   full: 'Douglass North',          info: 'Nobel 1993. Institutions — laws, norms, property rights — are the key determinant of long-run economic performance, not just factor endowments.' },
+    { name: 'Hernando DS',  full: 'Hernando de Soto',        info: 'The Mystery of Capital (2000). In developing nations, billions hold assets informally. Without legal property rights, dead capital cannot fuel growth.' },
+    { name: 'Milton F',     full: 'Milton Friedman',         info: 'Nobel 1976. Monetarism: inflation is always a monetary phenomenon. Free to Choose argued markets outperform government intervention in almost every domain.' },
+    { name: 'Friedrich H',  full: 'Friedrich Hayek',         info: 'Nobel 1974. The Price System as knowledge aggregator: no central planner can match the dispersed, local information encoded in market prices.' },
+    { name: 'Paul K',       full: 'Paul Krugman',            info: 'Nobel 2008. New trade theory: economies of scale and increasing returns explain trade patterns better than comparative advantage alone.' },
+    { name: 'John NN',      full: 'John Nash',               info: 'Nash Equilibrium: a strategy profile where no player can improve their outcome by unilaterally changing strategy. The foundation of modern game theory.' },
+    { name: 'Thomas P',     full: 'Thomas Piketty',          info: 'Capital in the 21st Century (2013). r > g: when the return on capital exceeds economic growth, wealth inequality rises — a structural tendency of capitalism.' },
+];
+
+const NAMES = ECONOMISTS.map(e => e.name);
+
+const PERSONALITIES = ['analytical','aggressive','defensive','strategic','loyal','emotional'];
+
+const SPEECH_TEMPLATES = {
+    accusation: [
+        "{target}'s voting pattern doesn't add up. In statistical terms, the correlation between their votes and traitor-friendly outcomes is too high to be chance.",
+        "I've been watching {target} carefully. They survived when others who accused them were murdered. Draw your own conclusions.",
+        "Look at who {target} has protected across every discussion. There's a pattern — and it points to coordination.",
+        "Under Bayesian reasoning, {target} has the highest posterior probability of being a traitor based on observable actions."
+    ],
+    defense: [
+        "I understand the suspicion, but consider my voting record. I correctly identified {last_traitor} — that's evidence in my favour.",
+        "If I were a traitor, wouldn't I blend in more? The rational strategy is to stay quiet, not to make myself visible.",
+        "This is classic confirmation bias. You've flagged me, so everything I do looks suspicious. But the data doesn't support it.",
+        "Think about who benefits if I'm banished. The traitors want discord — turning on trusted faithfuls is exactly what they need."
+    ],
+    support: [
+        "I've tracked {target}'s votes and they're consistent with a faithful trying to identify traitors — not someone protecting allies.",
+        "Let's apply Bayesian reasoning here. {target}'s behaviour pattern matches what we'd expect from an uninformed player. Their suspicion score should be lower.",
+        "{target} has been vocal and coordinated. A traitor would avoid that exposure."
+    ],
+    strategy: [
+        "We have a collective action problem. Even if we each know the optimal target, we'll fail if we don't coordinate our votes.",
+        "With the {voting} rule, we need concentrated votes. Splitting across multiple targets plays straight into the traitors' hands.",
+        "This is a repeated game — reputation matters. Who has been consistently honest across rounds? That's our signal.",
+        "Think about information structure. The traitors have common knowledge of their coalition. We need to replicate that coordination."
+    ]
+};
+
+const THEORY_SPOTLIGHTS = {
+    murder: {
+        concept: 'Coalitional Coordination Under Secrecy',
+        body: 'Traitors must coordinate their murder target without being observed by faithfuls. This is a coordination game: there is a Nash equilibrium where all traitors agree on the most threatening target, but communication is constrained by the need for secrecy.',
+        exam: '📝 Exam link: "Explain why incomplete information creates strategic advantages for the informed party." (AQA A-Level Economics, Oligopoly & Game Theory)'
+    },
+    breakfast: {
+        concept: 'Signalling via Observable Actions',
+        body: 'The identity of the murdered player is public information — an observable signal from the traitors. Rational faithfuls should update their beliefs: which traitor targets would the traitors want eliminated? High-credibility coordinators are the most threatening.',
+        exam: '📝 Exam link: "Distinguish between cheap talk and costly signalling in the context of market behaviour." (AQA Paper 3 Synoptic)'
+    },
+    roundtable: {
+        concept: 'The Signalling Game & Cheap Talk',
+        body: 'At the Round Table, players make speeches — but are these credible signals or cheap talk? Without signal costs, any player (traitor or faithful) can make any claim. Costly signalling theory predicts that only signals which are genuinely costly to fake carry information.',
+        exam: '📝 Exam link: "Using game theory, analyse how information asymmetry affects strategic behaviour in oligopolistic markets." (AQA Paper 3)'
+    },
+    vote: {
+        concept: 'Mechanism Design & Voting Rules',
+        body: 'The voting rule determines whether collective action succeeds. Plurality voting risks fragmented votes. Majority rules create a high coordination bar. Each rule changes the Nash equilibrium strategies for both coalitions. Traitors will attempt to exploit vote-splitting.',
+        exam: '📝 Exam link: "Assess how mechanism design can be used to correct for market failure." (AQA Micro, Information Failures)'
+    },
+    recruit: {
+        concept: 'Endogenous Type Changes',
+        body: 'Recruitment allows traitors to change a faithful\'s \'type\' mid-game. The strategic trade-off: gain voting power, but reveal coalition information to the recruit. Game theory predicts traitors will target the most trusted (lowest suspicion) faithful to maximise cover.',
+        exam: '📝 Exam link: Connects to "entry deterrence" strategies — changing the structure of a game through strategic action.'
+    },
+    your_murder: {
+        concept: 'Your Decision: Target Selection',
+        body: 'As a Traitor, you face a target selection problem. Remove the most analytically capable faithful (highest threat to your coalition) or the most trusted one (hardest for faithfuls to replace)? Pure strategy Nash equilibrium: target the player who poses the greatest expected threat to traitor survival.',
+        exam: '📝 Think: How does this connect to "limit pricing" in oligopoly — acting pre-emptively to reduce competitive threat?'
+    },
+    your_vote: {
+        concept: 'Your Vote: Strategic vs. Sincere',
+        body: 'You face a binary choice. A sincere vote targets the player you genuinely believe is a traitor. A strategic vote targets whoever helps your coalition most — even if you know they\'re innocent. Rational agents under self-interest will vote strategically, undermining the collective mechanism.',
+        exam: '📝 This mirrors the free-rider problem: individual incentives diverge from collective optimal behaviour.'
+    },
+    your_speech: {
+        concept: 'Signalling: What Does Your Speech Reveal?',
+        body: 'Your speech type is a signal. Accusations shift the focal point of suspicion. Defences can look like guilty behaviour. Support for a player creates observable coalitions. Under low signal costs, opponents know your signals may be strategic rather than truthful — reducing their informational value.',
+        exam: '📝 "The credibility of a signal depends on whether it is incentive-compatible" — i.e. would a rational agent of each type send this signal?'
+    }
+};
+
+// ══════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════
+
+let G = {};  // Game state
+
+function initGameState(role, numPlayers, numTraitors, cfg) {
+    const shuffledNames = [...NAMES].sort(() => Math.random() - 0.5).slice(0, numPlayers);
+    const personalities = {};
+    const players = [];
+
+    for (let i = 0; i < numPlayers; i++) {
+        personalities[i] = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)];
+        players.push({
+            id: i,
+            name: shuffledNames[i],
+            isYou: false,
+            role: i < numTraitors ? 'traitor' : 'faithful',
+            alive: true,
+            status: 'active', // active | murdered | banished
+            personality: personalities[i]
+        });
+    }
+
+    // Shuffle, then assign player to one slot matching their chosen role
+    players.sort(() => Math.random() - 0.5);
+
+    // Assign YOU to a player
+    const eligibleSlots = players.filter(p => p.role === role);
+    const you = eligibleSlots[0];
+    you.isYou = true;
+    you.name = 'You';
+
+    // Initialise suspicion at base rate
+    const baseRate = (numTraitors / numPlayers) * 100;
+    const suspicion = {};
+    players.forEach(p => { suspicion[p.id] = Math.min(99, Math.max(1, baseRate)); });
+
+    G = {
+        players,
+        you: you.id,
+        yourRole: role,
+        round: 1,
+        phase: 'murder', // murder | breakfast | roundtable | vote | recruit | end
+        cfg,
+        suspicion,
+        personalities,
+        log: [],
+        history: [], // { round, action, targetName, targetRole }
+        speeches: [],
+        votes: {},
+        murderTarget: null,
+        playerVote: null,       // player's own vote choice
+        playerSpeech: null,     // player's own speech type
+        playerMurderTarget: null, // player's murder target (if traitor)
+        recruitCooldown: 0,
+        roundCount: 0,
+        decisionsMade: [],      // track student decisions for debrief
+    };
+
+    return G;
+}
+
+// ══════════════════════════════════════════════════
+//  SETUP SCREEN LOGIC
+// ══════════════════════════════════════════════════
+
+let selectedRole = null;
+
+function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('roleCardTraitor').classList.toggle('selected', role === 'traitor');
+    document.getElementById('roleCardFaithful').classList.toggle('selected', role === 'faithful');
+    document.getElementById('startBtn').disabled = false;
+}
+
+function getConfig() {
+    return {
+        numPlayers: parseInt(document.getElementById('cfgPlayers').value) || 10,
+        numTraitors: parseInt(document.getElementById('cfgTraitors').value) || 3,
+        voting: document.getElementById('cfgVoting').value,
+        signalCost: document.getElementById('cfgSignal').value,
+        recruitment: document.getElementById('cfgRecruit').value === 'true',
+        winCondition: document.getElementById('cfgWin').value,
+    };
+}
+
+function startGame() {
+    if (!selectedRole) return;
+    const cfg = getConfig();
+    initGameState(selectedRole, cfg.numPlayers, cfg.numTraitors, cfg);
+
+    showScreen('game');
+    renderStatusBar();
+    renderPlayers();
+    renderSuspicionPanel();
+    setRoleBanner();
+    beginPhase('murder');
+}
+
+// ══════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════
+
+function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+//  STATUS BAR & ROLE BANNER
+// ══════════════════════════════════════════════════
+
+function renderStatusBar() {
+    document.getElementById('statRound').textContent = G.round;
+    const faithful = G.players.filter(p => p.alive && p.role === 'faithful').length;
+    const traitors = G.players.filter(p => p.alive && p.role === 'traitor').length;
+    document.getElementById('statFaithful').textContent = faithful;
+    document.getElementById('statTraitors').textContent = traitors;
+    const phaseLabels = { murder: 'Murder Night', breakfast: 'Breakfast', roundtable: 'Round Table', vote: 'The Vote', recruit: 'Recruitment', end: 'Game Over' };
+    document.getElementById('statPhase').textContent = phaseLabels[G.phase] || G.phase;
+}
+
+function setRoleBanner() {
+    const banner = document.getElementById('yourRoleBanner');
+    banner.className = 'your-role-banner ' + G.yourRole;
+    document.getElementById('yourRoleLabel').textContent = G.yourRole === 'traitor' ? '🗡️ TRAITOR' : '🛡️ FAITHFUL';
+    document.getElementById('yourRoleDesc').textContent = G.yourRole === 'traitor'
+        ? 'You have complete information about the coalition. Use it wisely.'
+        : 'You must infer traitor identities through Bayesian reasoning.';
+}
+
+// ══════════════════════════════════════════════════
+//  PLAYER GRID
+// ══════════════════════════════════════════════════
+
+function renderPlayers(mode = 'default') {
+    const grid = document.getElementById('playerGrid');
+    grid.innerHTML = '';
+
+    G.players.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        if (p.isYou) card.classList.add('is-you');
+        if (!p.alive) card.classList.add('dead');
+
+        // Traitors see other traitors
+        const isKnownTraitor = G.yourRole === 'traitor' && p.role === 'traitor' && !p.isYou && p.alive;
+        if (isKnownTraitor) card.classList.add('is-traitor-known');
+
+        if (mode === 'select-murder' && p.alive && p.role === 'faithful' && !p.isYou) {
+            card.classList.add('clickable-target', 'pulse-gold');
+            card.onclick = () => selectMurderTarget(p.id);
+        }
+        if (mode === 'select-vote' && p.alive && !p.isYou) {
+            card.classList.add('clickable-vote');
+            card.onclick = () => selectVoteTarget(p.id);
+        }
+
+        if (G.playerMurderTarget === p.id || G.playerVote === p.id) {
+            card.classList.add('selected-target');
+        }
+
+        const susp = G.suspicion[p.id] || 25;
+        const suspColor = susp > 66 ? '#c0392b' : susp > 40 ? '#e67e22' : '#3aaf91';
+
+        const deadLabel = p.status === 'murdered' ? '☠️ Murdered' : p.status === 'banished' ? '⚖️ Banished' : '';
+        const youTag = p.isYou ? '<div class="player-you-tag">YOU</div>' : '';
+        const traitorTag = isKnownTraitor ? '<div class="player-traitor-tag">🗡️ Traitor</div>' : '';
+
+        const economist = ECONOMISTS.find(e => e.name === p.name);
+        const tooltipHTML = economist && !p.isYou
+            ? `<div class="econ-tooltip"><strong>${economist.full}</strong><br>${economist.info}</div>`
+            : '';
+
+        card.innerHTML = `
+            ${tooltipHTML}
+            <div class="player-name">${p.name}</div>
+            ${youTag}${traitorTag}
+            ${!p.alive
+                ? `<div class="player-status-tag">${deadLabel}</div>`
+                : `<div class="suspicion-bar"><div class="suspicion-fill" style="width:${susp}%;background:${suspColor}"></div></div>
+                   <div class="suspicion-pct">${susp.toFixed(0)}% susp.</div>`
+            }
+        `;
+
+        grid.appendChild(card);
+    });
+}
+
+// ══════════════════════════════════════════════════
+//  SUSPICION PANEL
+// ══════════════════════════════════════════════════
+
+function renderSuspicionPanel() {
+    const panel = document.getElementById('suspicionPanel');
+    const list = document.getElementById('suspicionList');
+
+    if (G.yourRole === 'traitor') {
+        panel.classList.add('hidden');
+        return;
+    }
+
+    const alive = G.players.filter(p => p.alive && !p.isYou)
+        .sort((a, b) => G.suspicion[b.id] - G.suspicion[a.id]);
+
+    list.innerHTML = alive.map(p => {
+        const s = G.suspicion[p.id];
+        const col = s > 66 ? '#c0392b' : s > 45 ? '#e67e22' : '#3aaf91';
+        return `<div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.88em;margin-bottom:3px;">
+                <span>${p.name} <span style="color:var(--text-dim);font-size:0.85em;">(${p.personality})</span></span>
+                <span style="color:${col};font-weight:600;">${s.toFixed(0)}%</span>
+            </div>
+            <div class="suspicion-bar" style="height:6px;">
+                <div class="suspicion-fill" style="width:${s}%;background:${col}"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  THEORY SPOTLIGHT
+// ══════════════════════════════════════════════════
+
+function setSpotlight(key) {
+    const data = THEORY_SPOTLIGHTS[key] || THEORY_SPOTLIGHTS['vote'];
+    document.getElementById('spotlightConcept').textContent = data.concept;
+    document.getElementById('spotlightBody').textContent = data.body;
+    const examEl = document.getElementById('spotlightExam');
+    if (data.exam) {
+        examEl.textContent = data.exam;
+        examEl.classList.remove('hidden');
+    } else {
+        examEl.classList.add('hidden');
+    }
+}
+
+// ══════════════════════════════════════════════════
+//  PHASE ENGINE
+// ══════════════════════════════════════════════════
+
+function beginPhase(phase) {
+    G.phase = phase;
+    G.playerMurderTarget = null;
+    G.playerVote = null;
+    G.playerSpeech = null;
+
+    renderStatusBar();
+    renderPlayers();
+    renderSuspicionPanel();
+
+    const handlers = {
+        murder: phaseMurder,
+        breakfast: phaseBreakfast,
+        roundtable: phaseRoundTable,
+        vote: phaseVote,
+        recruit: phaseRecruit,
+    };
+
+    if (handlers[phase]) handlers[phase]();
+}
+
+// ─────────────────────────────────────────────────
+//  PHASE: MURDER NIGHT
+// ─────────────────────────────────────────────────
+
+function phaseMurder() {
+    const spotlightKey = G.yourRole === 'traitor' ? 'your_murder' : 'murder';
+    setSpotlight(spotlightKey);
+
+    const you = G.players.find(p => p.isYou);
+    const traitors = G.players.filter(p => p.alive && p.role === 'traitor');
+    const faithfuls = G.players.filter(p => p.alive && p.role === 'faithful');
+
+    if (G.yourRole === 'traitor') {
+        // ── TRAITOR: Player chooses murder target ──
+        const recs = getMurderRecommendations(faithfuls);
+
+        document.getElementById('phaseContent').innerHTML = `
+            <div class="decision-panel traitor-decision">
+                <div class="decision-title">🌙 Murder Night — Your Decision</div>
+                <div class="decision-prompt">
+                    You and the other traitors must choose which Faithful to eliminate tonight.
+                    Select your target from the player grid on the left, or use the recommendations below.
+                </div>
+
+                <div style="margin:14px 0;">
+                    <div class="payoff-label">Strategic Recommendations</div>
+                    ${recs.map((r, i) => `
+                        <div class="vote-option" style="margin-bottom:8px;cursor:pointer;" onclick="selectMurderTarget(${r.player.id})">
+                            <div>
+                                <div class="vote-option-name">${i+1}. ${r.player.name}</div>
+                                <div class="vote-option-suspicion">${r.reason}</div>
+                            </div>
+                            <div style="font-size:0.85em;color:var(--text-dim)">${r.player.personality}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="your-turn" id="murderConfirmBox" style="display:none">
+                    <div class="your-turn-header">✓ Target Selected</div>
+                    <p id="murderConfirmText" class="text-dim small"></p>
+                    <button class="btn btn-primary btn-block" onclick="executeMurderDecision()">Confirm Murder</button>
+                </div>
+            </div>
+
+            ${buildPayoffMatrix('traitor_murder')}
+        `;
+
+        renderPlayers('select-murder');
+
+    } else {
+        // ── FAITHFUL: Watch and wait ──
+        const murderVictim = aiChooseMurderTarget();
+        G.murderTarget = murderVictim.id;
+
+        document.getElementById('phaseContent').innerHTML = `
+            <div class="decision-panel faithful-decision">
+                <div class="decision-title">🌙 Murder Night</div>
+                <div class="decision-prompt">
+                    The traitors are meeting in secret right now. They are choosing which Faithful to eliminate.
+                    You must wait — but use this time to recall today's discussion and think about who the traitors
+                    might target next.
+                </div>
+
+                <div class="theory-spotlight" style="margin-top:14px;">
+                    <div class="spotlight-tag">🤔 Think About This</div>
+                    <div class="spotlight-concept">What information does a murder reveal?</div>
+                    <div class="spotlight-body">
+                        The identity of the murdered player is itself a signal. Traitors eliminate players who
+                        threaten them most — those coordinating faithfuls, those close to identifying them, or
+                        those with low suspicion scores who provide strong counter-signals. Update your beliefs
+                        accordingly.
+                    </div>
+                </div>
+
+                <button class="btn btn-faithful btn-block" onclick="resolveFaithfulMurderNight()">
+                    ☀️ Morning — See What Happened
+                </button>
+            </div>
+        `;
+    }
+}
+
+function selectMurderTarget(playerId) {
+    G.playerMurderTarget = playerId;
+    renderPlayers('select-murder');
+
+    const target = G.players.find(p => p.id === playerId);
+    document.getElementById('murderConfirmBox').style.display = 'block';
+    document.getElementById('murderConfirmText').textContent =
+        `You have selected ${target.name} as your murder target.`;
+}
+
+function executeMurderDecision() {
+    if (G.playerMurderTarget === null) return;
+    G.murderTarget = G.playerMurderTarget;
+    G.decisionsMade.push({ round: G.round, phase: 'murder', choice: G.players.find(p=>p.id===G.playerMurderTarget).name });
+    commitMurder();
+}
+
+function resolveFaithfulMurderNight() {
+    commitMurder();
+}
+
+function aiChooseMurderTarget() {
+    const faithfuls = G.players.filter(p => p.alive && p.role === 'faithful' && !p.isYou);
+    if (faithfuls.length === 0) return G.players.find(p=>p.alive && p.role==='faithful');
+
+    // Target least suspicious faithful (most trusted = most dangerous to traitors)
+    return faithfuls.sort((a, b) => G.suspicion[a.id] - G.suspicion[b.id])[0];
+}
+
+function getMurderRecommendations(faithfuls) {
+    return faithfuls
+        .filter(f => !f.isYou)
+        .map(f => {
+            const susp = G.suspicion[f.id];
+            let reason = '';
+            if (susp < 30) reason = `Suspicion only ${susp.toFixed(0)}% — highly trusted by faithfuls. Removing them fractures coordination.`;
+            else if (f.personality === 'analytical' || f.personality === 'strategic') reason = `${f.personality} personality — likely building accurate belief model.`;
+            else reason = `Moderate risk (${susp.toFixed(0)}% suspicion). Useful removal if other targets protected.`;
+            return { player: f, reason, susp };
+        })
+        .sort((a, b) => a.susp - b.susp)
+        .slice(0, 3);
+}
+
+function commitMurder() {
+    const victim = G.players.find(p => p.id === G.murderTarget);
+    if (!victim) return;
+
+    victim.alive = false;
+    victim.status = 'murdered';
+    addLog(`☠️ ${victim.name} was murdered by the traitors.`, 'murder-log');
+    G.history.push({ round: G.round, action: 'murder', targetName: victim.name, targetRole: victim.role });
+
+    beginPhase('breakfast');
+}
+
+// ─────────────────────────────────────────────────
+//  PHASE: BREAKFAST
+// ─────────────────────────────────────────────────
+
+function phaseBreakfast() {
+    setSpotlight('breakfast');
+
+    const victim = G.players.find(p => p.status === 'murdered' && G.history.find(h => h.round === G.round && h.action === 'murder' && h.targetName === p.name));
+    const victimName = victim ? victim.name : '(unknown)';
+    const victimRole = victim ? victim.role : '?';
+
+    // Generate AI reactions
+    const reactors = G.players.filter(p => p.alive && !p.isYou).sort(() => Math.random() - 0.5).slice(0, 3);
+    const reactionTemplates = [
+        p => `"I can't believe it's ${victimName}. We need to think about who benefits from this."`,
+        p => `"${victimName} was getting close to the truth. That's why they were targeted."`,
+        p => `"Look who seems unsurprised this morning..."`,
+        p => `"We're losing our most vocal players. The traitors are picking us off strategically."`,
+    ];
+
+    const reactions = reactors.map((p, i) => ({
+        speaker: p,
+        text: reactionTemplates[i % reactionTemplates.length](p),
+        theory: i === 0
+            ? 'Information revelation: Does this reaction look genuine or strategic?'
+            : i === 1
+            ? 'Prior updating: This speech provides information about who the speaker thinks is a traitor.'
+            : 'Cheap talk: Without signal costs, these claims carry limited information.'
+    }));
+
+    // Bayesian update from murder
+    updateSuspicionFromMurder(victim);
+
+    document.getElementById('phaseContent').innerHTML = `
+        <div class="decision-panel neutral-decision">
+            <div class="decision-title">☀️ Breakfast at the Castle</div>
+            <div class="decision-prompt">The group gathers. <strong>${victimName}</strong> is absent. The traitors murdered them in the night.</div>
+
+            ${victim && !victim.isYou ? `
+            <div class="announcement murder-reveal">
+                <div class="announcement-title">☠️ ${victimName} has been murdered</div>
+                <div class="announcement-body">
+                    They were a <strong>${victimRole === 'faithful' ? '🛡️ Faithful' : '🗡️ Traitor'}</strong>.
+                    ${G.yourRole === 'faithful' ? '<br>Update your suspicion scores accordingly.' : ''}
+                </div>
+            </div>
+            ` : victim && victim.isYou ? `
+            <div class="announcement defeat">
+                <div class="announcement-title">You were murdered.</div>
+                <div class="announcement-body">Your game is over. But the simulation continues — watch how it unfolds.</div>
+            </div>
+            ` : ''}
+
+            <div style="margin:14px 0;">
+                <div class="payoff-label">Morning Reactions</div>
+                ${reactions.map(r => `
+                    <div class="speech-bubble" style="border-left-color:var(--text-dim)">
+                        <div class="speech-speaker" style="color:var(--text-dim)">${r.speaker.name}</div>
+                        <div class="speech-text">${r.text}</div>
+                        <div class="speech-theory">🎓 ${r.theory}</div>
+                    </div>
+                `).join('')}
+            </div>
+
+            ${G.yourRole === 'faithful' ? `
+            <div class="bayes-calc" style="margin-bottom:14px;">
+                <div style="font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:0.1em;color:var(--gold);margin-bottom:8px;text-transform:uppercase;">Bayesian Update from Murder</div>
+                <div class="bayes-row">
+                    <span class="bayes-label">Prior base rate</span>
+                    <span class="bayes-value">${((G.players.filter(p=>p.role==='traitor').length/G.players.length)*100).toFixed(0)}%</span>
+                </div>
+                <div class="bayes-row">
+                    <span class="bayes-label">Evidence</span>
+                    <span class="bayes-value bayes-update">Victim was ${victimRole}. Survivor list updated.</span>
+                </div>
+                <div class="bayes-row">
+                    <span class="bayes-label">Implication</span>
+                    <span class="bayes-value bayes-posterior">Traitors target trusted faithfuls → low-suspicion survivors become more suspect.</span>
+                </div>
+            </div>
+            ` : ''}
+
+            <button class="btn btn-gold btn-block" onclick="beginPhase('roundtable')">
+                → Proceed to Round Table
+            </button>
+        </div>
+    `;
+
+    renderPlayers();
+    renderSuspicionPanel();
+}
+
+function updateSuspicionFromMurder(victim) {
+    if (!victim) return;
+    // Faithfuls: surviving low-suspicion players become slightly more suspect
+    // (traitors avoid murdering their own, so survivors with low suspicion update upward)
+    G.players.filter(p => p.alive && !p.isYou).forEach(p => {
+        const s = G.suspicion[p.id];
+        if (s < 30) {
+            G.suspicion[p.id] = Math.min(99, s * 1.12);
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────
+//  PHASE: ROUND TABLE
+// ─────────────────────────────────────────────────
+
+function phaseRoundTable() {
+    setSpotlight(G.yourRole === 'traitor' ? 'your_speech' : 'roundtable');
+
+    // Generate AI speeches
+    const alivePlayers = G.players.filter(p => p.alive && !p.isYou);
+    const numSpeeches = Math.min(4, alivePlayers.length);
+    const types = ['accusation', 'defense', 'support', 'strategy'];
+    const speeches = [];
+
+    const suspicious = [...alivePlayers].sort((a, b) => G.suspicion[b.id] - G.suspicion[a.id]);
+
+    for (let i = 0; i < numSpeeches; i++) {
+        const type = types[i % types.length];
+        let speaker;
+        if (type === 'defense' && suspicious.length > 0) {
+            speaker = suspicious[0];
+        } else {
+            speaker = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+        }
+
+        const tpls = SPEECH_TEMPLATES[type] || SPEECH_TEMPLATES.strategy;
+        let text = tpls[Math.floor(Math.random() * tpls.length)];
+        const highSusp = suspicious[0];
+        const lastBanish = G.history.filter(h=>h.action==='banishment').pop();
+        text = text
+            .replace('{target}', highSusp?.name || 'someone')
+            .replace('{last_traitor}', lastBanish?.targetName || 'the last traitor')
+            .replace('{voting}', G.cfg.voting);
+
+        speeches.push({ speaker, type, text });
+        updateSuspicionFromSpeech(speaker, type);
+    }
+
+    G.speeches = speeches;
+
+    document.getElementById('phaseContent').innerHTML = `
+        <div class="decision-panel ${G.yourRole === 'traitor' ? 'traitor' : 'faithful'}-decision">
+            <div class="decision-title">🗣️ Round Table Discussion</div>
+            <div class="decision-prompt">Players debate who to banish. Each speech is a signal — but is it credible?</div>
+
+            <div style="margin:12px 0;" id="speechesContainer">
+                ${speeches.map(s => `
+                    <div class="speech-bubble ${s.speaker.role === 'traitor' && G.yourRole==='traitor' ? 'traitor-speech' : 'faithful-speech'}">
+                        <div class="speech-speaker" style="color:${s.speaker.role==='traitor'&&G.yourRole==='traitor'?'var(--crimson-bright)':'var(--faithful-bright)'}">
+                            ${s.speaker.name} <span style="color:var(--text-dim);font-size:0.85em;">(${s.type})</span>
+                        </div>
+                        <div class="speech-text">"${s.text}"</div>
+                        <div class="speech-theory">🎓 ${getSpeechTheory(s.type)}</div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="your-turn">
+                <div class="your-turn-header">📣 Your Turn to Speak</div>
+                <p class="text-dim small" style="margin-bottom:10px;">Choose the type of speech you make. Each choice is a signal — think about what information it reveals.</p>
+                <div class="speech-options" id="speechOptions">
+                    ${['accusation','defense','support','strategy'].map(t => `
+                        <div class="speech-option" onclick="selectSpeech('${t}')" id="speechOpt_${t}">
+                            <div class="speech-option-label">${t.charAt(0).toUpperCase()+t.slice(1)}</div>
+                            <div class="speech-option-desc">${getSpeechDesc(t)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div id="speechFeedback" class="theory-spotlight hidden" style="margin-top:12px;"></div>
+            </div>
+
+            <button class="btn btn-gold btn-block" id="proceedVoteBtn" disabled onclick="beginPhase('vote')">
+                → Proceed to Vote
+            </button>
+        </div>
+
+        ${buildPayoffMatrix('roundtable')}
+    `;
+
+    renderPlayers();
+    renderSuspicionPanel();
+}
+
+function getSpeechDesc(type) {
+    return {
+        accusation: 'Target a specific player as suspicious',
+        defense: 'Explain why you are not a traitor',
+        support: 'Vouch for another player',
+        strategy: 'Discuss voting coordination'
+    }[type] || '';
+}
+
+function getSpeechTheory(type) {
+    return {
+        accusation: 'Costly signalling: public accusations carry reputational risk if wrong — which adds credibility.',
+        defense: 'Cheap talk alert: defences are low-cost and expected from both types, reducing informational value.',
+        support: 'Coalition signal: supporting another player creates a publicly observable alliance.',
+        strategy: 'Common knowledge: making strategy explicit helps faithfuls coordinate — but also reveals intent to traitors.'
+    }[type] || '';
+}
+
+function selectSpeech(type) {
+    G.playerSpeech = type;
+    document.querySelectorAll('.speech-option').forEach(el => el.classList.remove('selected-speech'));
+    document.getElementById('speechOpt_' + type).classList.add('selected-speech');
+
+    // Show feedback
+    const fb = document.getElementById('speechFeedback');
+    fb.classList.remove('hidden');
+    fb.innerHTML = `
+        <div class="spotlight-tag">🎓 What Your ${type} Signals</div>
+        <div class="spotlight-concept">${type.charAt(0).toUpperCase()+type.slice(1)}</div>
+        <div class="spotlight-body">${getSpeechTheory(type)}</div>
+        ${G.cfg.signalCost !== 'none'
+            ? `<div class="spotlight-exam">Signal cost: <strong>${G.cfg.signalCost}</strong> — this speech carries a credibility cost. Opponents will weight it accordingly.</div>`
+            : `<div class="spotlight-exam">Signal cost: None (cheap talk) — your opponents know this signal is free, reducing its credibility.</div>`
+        }
+    `;
+
+    document.getElementById('proceedVoteBtn').disabled = false;
+    G.decisionsMade.push({ round: G.round, phase: 'speech', choice: type });
+
+    updateSuspicionFromSpeech(G.players.find(p=>p.isYou), type);
+}
+
+function updateSuspicionFromSpeech(player, type) {
+    if (!player || !player.alive) return;
+    const costMult = G.cfg.signalCost === 'none' ? 0.3 : G.cfg.signalCost === 'low' ? 0.7 : 1.0;
+    const lrMap = { accusation: 1.12, defense: 1.25, support: 0.85, strategy: 1.04 };
+    const lr = 1 + (lrMap[type] - 1) * costMult;
+
+    const s = G.suspicion[player.id];
+    const odds = s / (100 - s);
+    const newOdds = odds * lr;
+    G.suspicion[player.id] = Math.min(99, Math.max(1, (newOdds / (1 + newOdds)) * 100));
+}
+
+// ─────────────────────────────────────────────────
+//  PHASE: VOTE
+// ─────────────────────────────────────────────────
+
+function phaseVote() {
+    setSpotlight(G.yourRole === 'faithful' ? 'your_vote' : 'vote');
+
+    const alive = G.players.filter(p => p.alive && !p.isYou);
+
+    document.getElementById('phaseContent').innerHTML = `
+        <div class="decision-panel ${G.yourRole==='traitor'?'traitor':'faithful'}-decision">
+            <div class="decision-title">⚖️ The Vote — Who Do You Banish?</div>
+            <div class="decision-prompt">
+                ${G.yourRole === 'faithful'
+                    ? 'You must vote to banish who you believe is a traitor. Vote sincerely — or strategically?'
+                    : 'As a traitor, vote to protect your coalition. Vote against a faithful, even if it draws suspicion.'}
+            </div>
+
+            <div class="your-turn">
+                <div class="your-turn-header">🗳️ Cast Your Vote</div>
+                <p class="text-dim small" style="margin-bottom:10px;">Select who you vote to banish:</p>
+                <div class="vote-options" id="voteOptions">
+                    ${alive.map(p => `
+                        <div class="vote-option" onclick="castVote(${p.id})" id="voteOpt_${p.id}">
+                            <div>
+                                <div class="vote-option-name">${p.name}</div>
+                                <div class="vote-option-suspicion">Suspicion: ${G.suspicion[p.id].toFixed(0)}% | ${p.personality}</div>
+                            </div>
+                            ${G.yourRole==='traitor' && p.role==='traitor' ? '<span style="color:var(--crimson-bright);font-size:0.8em">🗡️ Ally</span>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div id="voteReasoning" class="theory-spotlight hidden" style="margin-top:12px;"></div>
+
+            <button class="btn btn-gold btn-block" id="submitVoteBtn" disabled onclick="resolveVote()">
+                ⚖️ Submit Vote & Resolve
+            </button>
+        </div>
+
+        ${buildPayoffMatrix('vote')}
+    `;
+
+    renderPlayers('select-vote');
+}
+
+function castVote(playerId) {
+    G.playerVote = playerId;
+    document.querySelectorAll('.vote-option').forEach(el => el.classList.remove('selected-vote'));
+    document.getElementById('voteOpt_' + playerId).classList.add('selected-vote');
+    document.getElementById('submitVoteBtn').disabled = false;
+
+    const target = G.players.find(p => p.id === playerId);
+    const isTraitorTarget = target.role === 'traitor';
+    const isStrategic = G.yourRole === 'traitor' && target.role === 'faithful';
+
+    const fb = document.getElementById('voteReasoning');
+    fb.classList.remove('hidden');
+    fb.innerHTML = `
+        <div class="spotlight-tag">🎓 Vote Analysis</div>
+        <div class="spotlight-concept">You voted for ${target.name}</div>
+        <div class="spotlight-body">
+            ${G.yourRole === 'faithful'
+                ? isTraitorTarget
+                    ? `This is a <em>sincere vote</em> — your suspicion score of ${G.suspicion[playerId].toFixed(0)}% for ${target.name} reflects your posterior belief. This is optimal Bayesian play.`
+                    : `Your suspicion model shows ${G.suspicion[playerId].toFixed(0)}% for ${target.name}. Is this vote sincere or strategic? Consider whether you're trying to coordinate others or protect someone.`
+                : isStrategic
+                    ? `Strategic vote: you're voting against a faithful to maintain cover. Your personal cost: potential exposure if voting patterns are observed. Expected benefit: coalition protected.`
+                    : `You voted for an ally (${target.name}). This may be a cover vote — but it costs your coalition a vote.`
+            }
+        </div>
+    `;
+
+    G.decisionsMade.push({ round: G.round, phase: 'vote', choice: target.name, votedCorrectly: isTraitorTarget });
+    renderPlayers('select-vote');
+}
+
+function resolveVote() {
+    // Collect AI votes
+    const aiVotes = {};
+    G.players.filter(p => p.alive && !p.isYou).forEach(p => {
+        const target = aiChooseVote(p);
+        if (target) {
+            aiVotes[target.id] = (aiVotes[target.id] || 0) + 1;
+        }
+    });
+
+    // Add player vote
+    if (G.playerVote !== null) {
+        aiVotes[G.playerVote] = (aiVotes[G.playerVote] || 0) + 1;
+    }
+
+    G.votes = aiVotes;
+
+    // Determine banishment
+    const totalVoters = G.players.filter(p => p.alive).length;
+    const sorted = Object.entries(aiVotes)
+        .map(([id, count]) => ({ id: parseInt(id), count }))
+        .sort((a, b) => b.count - a.count);
+
+    let banishedId = null;
+    if (sorted.length > 0) {
+        const top = sorted[0];
+        if (G.cfg.voting === 'plurality') {
+            const tied = sorted.filter(v => v.count === top.count);
+            banishedId = tied[Math.floor(Math.random() * tied.length)].id;
+        } else if (G.cfg.voting === 'majority' && top.count > totalVoters / 2) {
+            banishedId = top.id;
+        } else if (G.cfg.voting === 'supermajority' && top.count >= totalVoters * 0.66) {
+            banishedId = top.id;
+        }
+    }
+
+    // Show results
+    const voteBreakdown = sorted.slice(0, 4).map(v => {
+        const p = G.players.find(pl => pl.id === v.id);
+        return `${p?.name || '?'}: ${v.count} vote${v.count !== 1 ? 's' : ''}`;
+    }).join(' | ');
+
+    let banished = null;
+    let announcementHTML = '';
+
+    if (banishedId !== null) {
+        banished = G.players.find(p => p.id === banishedId);
+        banished.alive = false;
+        banished.status = 'banished';
+        G.history.push({ round: G.round, action: 'banishment', targetName: banished.name, targetRole: banished.role });
+        addLog(`⚖️ ${banished.name} was banished. They were a ${banished.role.toUpperCase()}.`, 'banish-log');
+
+        updateSuspicionAfterBanishment(banished);
+
+        const wasTraitor = banished.role === 'traitor';
+        announcementHTML = `
+            <div class="announcement banish-reveal">
+                <div class="announcement-title">${banished.name} is BANISHED</div>
+                <div class="announcement-body">
+                    They were a <strong>${wasTraitor ? '🗡️ Traitor' : '🛡️ Faithful'}</strong>.
+                    ${wasTraitor ? '✅ Correct banishment — faithfuls gain one vote.' : '❌ Faithfuls banished one of their own — traitors benefit.'}
+                </div>
+            </div>
+        `;
+    } else {
+        addLog(`⚖️ No player banished — vote threshold not met.`, 'banish-log');
+        announcementHTML = `
+            <div class="announcement" style="border:1px solid var(--border);background:rgba(255,255,255,0.03)">
+                <div class="announcement-title">No Banishment</div>
+                <div class="announcement-body">
+                    The ${G.cfg.voting} voting rule was not met. No player is banished this round.
+                    <br><span class="text-dim small">Mechanism design insight: this outcome benefits traitors — the status quo continues.</span>
+                </div>
+            </div>
+        `;
+    }
+
+    const mechInsight = getVoteMechanismInsight(sorted, banishedId, totalVoters);
+
+    // Append to phase content
+    document.getElementById('phaseContent').innerHTML = `
+        <div class="decision-panel neutral-decision">
+            <div class="decision-title">⚖️ Vote Results</div>
+            <div class="decision-prompt" style="color:var(--text-dim);font-size:0.88em;margin-bottom:12px;">
+                ${voteBreakdown}
+            </div>
+            ${announcementHTML}
+            <div class="theory-spotlight" style="margin-top:14px;">
+                <div class="spotlight-tag">🎓 Mechanism Design</div>
+                <div class="spotlight-concept">${G.cfg.voting.charAt(0).toUpperCase()+G.cfg.voting.slice(1)} Voting — Outcome Analysis</div>
+                <div class="spotlight-body">${mechInsight}</div>
+            </div>
+            <button class="btn btn-gold btn-block" onclick="afterVote()" style="margin-top:14px;">
+                → Continue to Next Round
+            </button>
+        </div>
+    `;
+
+    renderPlayers();
+    renderSuspicionPanel();
+}
+
+function getVoteMechanismInsight(sorted, banishedId, total) {
+    const topVotes = sorted[0]?.count || 0;
+    if (G.cfg.voting === 'plurality') {
+        if (sorted.length > 1 && sorted[0].count === sorted[1].count) {
+            return `Vote-splitting occurred — two players received equal votes. Under plurality rules, this leads to a random tie-break, which traitors can exploit by spreading faithful votes across multiple targets.`;
+        }
+        return `The plurality winner received ${topVotes} of ${total} votes (${(topVotes/total*100).toFixed(0)}%). Note: they could be banished with a minority of votes — this is a known weakness of plurality voting.`;
+    }
+    if (G.cfg.voting === 'majority') {
+        if (!banishedId) {
+            return `No majority was achieved. This is a classic collective action failure — even if most faithfuls wanted to banish the same person, dispersed votes prevent action. Traitors benefit from institutional inertia.`;
+        }
+        return `Majority achieved: ${topVotes}/${total} votes = ${(topVotes/total*100).toFixed(0)}%. Strong consensus signal — this level of agreement typically indicates credible evidence accumulation.`;
+    }
+    if (G.cfg.voting === 'supermajority') {
+        if (!banishedId) {
+            return `The 66%+ supermajority threshold was not met. This rule strongly protects against false positives but creates a high coordination bar. Under this rule, traitors can survive longer even as evidence accumulates.`;
+        }
+        return `Supermajority achieved — this is a very strong signal of collective consensus. Such a threshold minimises false banishments but requires exceptional coordination from faithfuls.`;
+    }
+    return '';
+}
+
+function updateSuspicionAfterBanishment(banished) {
+    // Update others' suspicion based on revealed type
+    const lr = banished.role === 'traitor' ? 0.85 : 1.1;
+    G.players.filter(p => p.alive).forEach(p => {
+        const s = G.suspicion[p.id];
+        const odds = s / (100 - s + 0.001);
+        G.suspicion[p.id] = Math.min(99, Math.max(1, (odds * lr / (1 + odds * lr)) * 100));
+    });
+}
+
+function aiChooseVote(voter) {
+    const targets = G.players.filter(p => p.alive && p.id !== voter.id);
+    if (targets.length === 0) return null;
+
+    if (voter.role === 'traitor') {
+        // Traitors vote against faithfuls
+        const faithfuls = targets.filter(p => p.role === 'faithful');
+        if (faithfuls.length === 0) return targets[0];
+        // Vote for least suspicious faithful (looks most credible as a vote)
+        return faithfuls.sort((a, b) => G.suspicion[b.id] - G.suspicion[a.id])[0];
+    } else {
+        // Faithfuls vote for most suspicious
+        return targets.sort((a, b) => G.suspicion[b.id] - G.suspicion[a.id])[0];
+    }
+}
+
+function afterVote() {
+    if (checkGameEnd()) return;
+
+    if (G.cfg.recruitment && G.recruitCooldown === 0 && G.round % 2 === 0 && G.yourRole === 'traitor') {
+        G.recruitCooldown = 3;
+        beginPhase('recruit');
+    } else {
+        if (G.recruitCooldown > 0) G.recruitCooldown--;
+        G.round++;
+        renderPlayers();
+        renderSuspicionPanel();
+        beginPhase('murder');
+    }
+}
+
+// ─────────────────────────────────────────────────
+//  PHASE: RECRUIT
+// ─────────────────────────────────────────────────
+
+function phaseRecruit() {
+    setSpotlight('recruit');
+
+    const faithfuls = G.players.filter(p => p.alive && p.role === 'faithful' && !p.isYou)
+        .sort((a, b) => G.suspicion[a.id] - G.suspicion[b.id]);
+
+    document.getElementById('phaseContent').innerHTML = `
+        <div class="decision-panel traitor-decision">
+            <div class="decision-title">🎭 Recruitment Opportunity</div>
+            <div class="decision-prompt">
+                The traitors may recruit one Faithful this round. Choose wisely — they will learn all traitor identities.
+                Low suspicion targets provide the most cover but also the most intelligence risk.
+            </div>
+
+            ${faithfuls.slice(0, 3).map(p => `
+                <div class="vote-option" onclick="executeRecruit(${p.id})">
+                    <div>
+                        <div class="vote-option-name">${p.name}</div>
+                        <div class="vote-option-suspicion">Suspicion: ${G.suspicion[p.id].toFixed(0)}% | ${p.personality}</div>
+                    </div>
+                    <span style="font-size:0.8em;color:${G.suspicion[p.id]<30?'var(--faithful-bright)':'var(--text-dim)'}">
+                        ${G.suspicion[p.id] < 30 ? '★ Ideal' : G.suspicion[p.id] < 50 ? '◎ Good' : '△ Risky'}
+                    </span>
+                </div>
+            `).join('')}
+
+            <button class="btn btn-ghost btn-block" onclick="skipRecruit()">Skip Recruitment</button>
+
+            ${buildPayoffMatrix('recruit')}
+        </div>
+    `;
+}
+
+function executeRecruit(playerId) {
+    const recruit = G.players.find(p => p.id === playerId);
+    if (!recruit) return;
+    recruit.role = 'traitor';
+    addLog(`🎭 ${recruit.name} was recruited by the traitors!`, 'banish-log');
+    G.decisionsMade.push({ round: G.round, phase: 'recruit', choice: recruit.name });
+    G.round++;
+    beginPhase('murder');
+}
+
+function skipRecruit() {
+    addLog(`⏭️ Traitors did not recruit this round.`, '');
+    G.round++;
+    beginPhase('murder');
+}
+
+// ─────────────────────────────────────────────────
+//  PAYOFF MATRIX
+// ─────────────────────────────────────────────────
+
+function buildPayoffMatrix(context) {
+    const faithful = G.players.filter(p => p.alive && p.role === 'faithful').length;
+    const traitors = G.players.filter(p => p.alive && p.role === 'traitor').length;
+
+    if (context === 'vote' || context === 'roundtable') {
+        // Prisoner's Dilemma: Faithful vs Faithful — cooperate (coordinate vote) vs defect (protect ally)
+        return `
+        <div class="payoff-section" style="margin-top:18px;">
+            <div class="payoff-label">📊 Payoff Matrix: Faithful Coordination Problem</div>
+            <table class="payoff-matrix">
+                <tr>
+                    <th></th>
+                    <th>Faithful B: Coordinate</th>
+                    <th>Faithful B: Defect (protect ally)</th>
+                </tr>
+                <tr>
+                    <td style="background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:0.82em;">Faithful A:<br>Coordinate</td>
+                    <td class="highlight-cell">
+                        <div class="p1">+2, +2</div>
+                        <div class="payoff-nash">★ Nash if repeated</div>
+                        <div style="font-size:0.75em;color:var(--text-dim)">Traitor banished</div>
+                    </td>
+                    <td>
+                        <div class="p1">−1</div><div class="p2">+1</div>
+                        <div style="font-size:0.75em;color:var(--text-dim)">Vote split; traitor survives</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:0.82em;">Faithful A:<br>Defect</td>
+                    <td>
+                        <div class="p1">+1</div><div class="p2">−1</div>
+                        <div style="font-size:0.75em;color:var(--text-dim)">B bears coordination cost</div>
+                    </td>
+                    <td style="background:rgba(139,26,26,0.12)">
+                        <div class="p1">−2, −2</div>
+                        <div style="font-size:0.75em;color:var(--crimson-bright)">Both defect → no banishment → traitors win</div>
+                    </td>
+                </tr>
+            </table>
+            <p class="text-dim small italic" style="margin-top:6px;">
+                🎓 This mirrors the oligopoly coordination problem: individual rationality can produce collectively irrational outcomes.
+                Under a one-shot game, defection dominates. Repeated play enables cooperation through reputation and punishment strategies.
+            </p>
+        </div>`;
+    }
+
+    if (context === 'traitor_murder') {
+        return `
+        <div class="payoff-section" style="margin-top:18px;">
+            <div class="payoff-label">📊 Payoff Matrix: Traitor Murder Decision</div>
+            <table class="payoff-matrix">
+                <tr>
+                    <th></th>
+                    <th>Target: High-threat faithful</th>
+                    <th>Target: Low-suspicion faithful</th>
+                </tr>
+                <tr>
+                    <td style="background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:0.82em;">Traitors<br>coordinate</td>
+                    <td class="highlight-cell">
+                        <div class="p1">+3</div>
+                        <div style="font-size:0.75em;color:var(--text-dim)">Remove coordination threat; riskier reveal</div>
+                    </td>
+                    <td>
+                        <div class="p1">+2</div>
+                        <div style="font-size:0.75em;color:var(--text-dim)">Remove trusted voice; less obvious signal</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background:rgba(0,0,0,0.2);color:var(--text-dim);font-size:0.82em;">Traitors<br>disagree</td>
+                    <td>
+                        <div class="p1">0</div>
+                        <div style="font-size:0.75em;color:var(--crimson-bright)">Coordination failure — signal wasted</div>
+                    </td>
+                    <td>
+                        <div class="p1">0</div>
+                        <div style="font-size:0.75em;color:var(--crimson-bright)">No murder; coalition exposed</div>
+                    </td>
+                </tr>
+            </table>
+        </div>`;
+    }
+
+    if (context === 'recruit') {
+        return `
+        <div class="payoff-section" style="margin-top:14px;">
+            <div class="payoff-label">📊 Trade-off: Recruitment Decision</div>
+            <table class="payoff-matrix">
+                <tr><th>Recruit</th><th>Expected Gain</th><th>Expected Cost</th></tr>
+                <tr>
+                    <td>Low-suspicion player</td>
+                    <td><span class="p2">+1 vote; +cover</span></td>
+                    <td><span class="p1">Full info disclosure; risk if they defect</span></td>
+                </tr>
+                <tr>
+                    <td>High-suspicion player</td>
+                    <td><span class="p2">+1 vote</span></td>
+                    <td><span class="p1">Already suspected; may confirm faithful beliefs</span></td>
+                </tr>
+                <tr>
+                    <td>Skip recruitment</td>
+                    <td><span style="color:var(--text-dim)">Info preserved</span></td>
+                    <td><span style="color:var(--text-dim)">No vote gain this round</span></td>
+                </tr>
+            </table>
+        </div>`;
+    }
+
+    return '';
+}
+
+// ══════════════════════════════════════════════════
+//  GAME END
+// ══════════════════════════════════════════════════
+
+function checkGameEnd() {
+    const faithfulAlive = G.players.filter(p => p.alive && p.role === 'faithful').length;
+    const traitorAlive = G.players.filter(p => p.alive && p.role === 'traitor').length;
+
+    let winner = null;
+
+    if (traitorAlive === 0) winner = 'faithful';
+    else if (G.cfg.winCondition === 'parity' && traitorAlive >= faithfulAlive) winner = 'traitor';
+    else if (G.cfg.winCondition === 'majority' && traitorAlive > faithfulAlive) winner = 'traitor';
+
+    if (winner) {
+        endGame(winner);
+        return true;
+    }
+    return false;
+}
+
+function endGame(winner) {
+    const didYouWin = (winner === G.yourRole) || (winner === 'faithful' && G.yourRole === 'faithful');
+    addLog(winner === 'faithful' ? '🎉 Faithfuls win! All traitors eliminated.' : '😈 Traitors win!', '');
+
+    setTimeout(() => showDebrief(winner, didYouWin), 800);
+}
+
+// ══════════════════════════════════════════════════
+//  DEBRIEF SCREEN
+// ══════════════════════════════════════════════════
+
+function showDebrief(winner, youWon) {
+    showScreen('debrief');
+
+    const total = G.players.length;
+    const correctBanishments = G.history.filter(h => h.action === 'banishment' && h.targetRole === 'traitor').length;
+    const incorrectBanishments = G.history.filter(h => h.action === 'banishment' && h.targetRole === 'faithful').length;
+    const murders = G.history.filter(h => h.action === 'murder').length;
+    const voteDecisions = G.decisionsMade.filter(d => d.phase === 'vote');
+    const correctVotes = voteDecisions.filter(d => d.votedCorrectly).length;
+    const accuracy = voteDecisions.length > 0 ? (correctVotes / voteDecisions.length * 100).toFixed(0) : 'N/A';
+
+    // Build per-round timeline
+    const rounds = G.history.reduce((acc, h) => {
+        if (!acc[h.round]) acc[h.round] = [];
+        acc[h.round].push(h);
+        return acc;
+    }, {});
+
+    const timelineHTML = Object.entries(rounds).map(([r, events]) => {
+        return events.map(e => {
+            const cls = e.action === 'murder' ? 'pip-faithful' : (e.targetRole === 'traitor' ? 'pip-traitor' : 'pip-faithful');
+            const icon = e.action === 'murder' ? '☠️' : '⚖️';
+            return `<div class="timeline-pip ${cls}" title="${e.targetName} (${e.action})">${icon}<span style="font-size:0.7em;margin-left:2px;">${e.targetName.slice(0,4)}</span></div>`;
+        }).join('');
+    }).join('');
+
+    // Exam questions based on what happened
+    const examQs = generateExamQuestions();
+
+    document.getElementById('debriefContent').innerHTML = `
+        <div class="announcement ${youWon ? 'victory' : 'defeat'}" style="margin-bottom:24px;">
+            <div class="announcement-title" style="font-size:1.8em;">
+                ${youWon ? '🏆 You Won!' : '💀 You Lost'}
+            </div>
+            <div class="announcement-body" style="font-size:1.1em;margin-top:8px;">
+                <strong>${winner === 'faithful' ? 'Faithfuls' : 'Traitors'} win</strong> after ${G.round - 1} round${G.round > 2 ? 's' : ''}.
+                You played as a <strong>${G.yourRole}</strong>.
+            </div>
+        </div>
+
+        <div class="debrief-grid">
+
+            <div class="debrief-card">
+                <h3 style="color:var(--gold)">Game Statistics</h3>
+                <div class="stat-row"><span class="stat-label">Rounds played</span><span class="stat-value">${G.round - 1}</span></div>
+                <div class="stat-row"><span class="stat-label">Players</span><span class="stat-value">${total}</span></div>
+                <div class="stat-row"><span class="stat-label">Players murdered</span><span class="stat-value text-crimson">${murders}</span></div>
+                <div class="stat-row"><span class="stat-label">Correct banishments</span><span class="stat-value text-faithful">${correctBanishments}</span></div>
+                <div class="stat-row"><span class="stat-label">Incorrect banishments</span><span class="stat-value text-crimson">${incorrectBanishments}</span></div>
+                <div class="stat-row"><span class="stat-label">Your vote accuracy</span><span class="stat-value">${accuracy}%</span></div>
+                <div class="stat-row"><span class="stat-label">Voting rule</span><span class="stat-value">${G.cfg.voting}</span></div>
+                <div class="stat-row"><span class="stat-label">Signal cost</span><span class="stat-value">${G.cfg.signalCost}</span></div>
+            </div>
+
+            <div class="debrief-card">
+                <h3 style="color:var(--gold)">Round Timeline</h3>
+                <div class="timeline-bar" style="flex-wrap:wrap;gap:4px;">
+                    ${timelineHTML || '<span class="text-dim small">No events recorded.</span>'}
+                </div>
+                <p class="text-dim small italic" style="margin-top:8px;">Red = Traitor banished ✓ | Green = Faithful banished/murdered ✗</p>
+                <hr class="divider">
+                <h3 style="color:var(--gold);margin-top:0;">Player Reveal</h3>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;font-size:0.82em;">
+                    ${G.players.map(p => `
+                        <div style="padding:5px 8px;background:rgba(${p.role==='traitor'?'139,26,26':'46,125,107'},0.15);border-radius:4px;border:1px solid rgba(${p.role==='traitor'?'192,57,43':'58,175,145'},0.3);">
+                            ${p.name} — <strong style="color:${p.role==='traitor'?'var(--crimson-bright)':'var(--faithful-bright)'}">${p.role}</strong>
+                            ${p.isYou?'<em style="color:var(--gold)"> (you)</em>':''}
+                            ${!p.alive?`<span style="color:var(--text-dim)"> (${p.status})</span>`:''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="debrief-card theory-card">
+                <h3>Theory Analysis: What Happened?</h3>
+                <p class="small" style="margin-bottom:10px;color:var(--text-dim)">
+                    ${winner === 'faithful'
+                        ? `Faithfuls won. This suggests effective Bayesian updating — the group aggregated information correctly and achieved voting coordination despite the collective action problem.`
+                        : incorrectBanishments > correctBanishments
+                            ? `Traitors won via false banishments. The group's belief updating was compromised — traitors successfully exploited the information asymmetry and generated misleading signals.`
+                            : `Traitors reached numerical parity through effective coalition coordination. Despite correct belief formation, the vote mechanism was insufficient under this configuration.`
+                    }
+                </p>
+
+                <div style="font-size:0.88em;">
+                    <div style="font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:0.1em;color:var(--theory-text);margin-bottom:8px;text-transform:uppercase;">Key Concepts Illustrated</div>
+                    ${[
+                        ['Information asymmetry', `Traitors held perfect coalition knowledge. Faithfuls operated under uncertainty throughout — exactly the incomplete information structure that makes this a rich game theory case.`],
+                        ['Bayesian reasoning', `Every murder and vote result should have updated your suspicion scores. The precision of belief updating was the key determinant of faithful success.`],
+                        ['Mechanism design', `The ${G.cfg.voting} voting rule ${G.cfg.voting === 'plurality' ? 'allowed quick decisions but created vote-splitting vulnerability' : G.cfg.voting === 'majority' ? 'required strong coordination — collective action was the bottleneck' : 'set a very high bar, likely favoring traitors through institutional inertia'}.`],
+                        ['Signalling', `Under ${G.cfg.signalCost} signal costs, speeches were ${G.cfg.signalCost === 'none' ? 'cheap talk — little information was credibly conveyed' : 'partially credible — signal costs created incentive-compatible behaviour in some cases'}.`],
+                    ].map(([concept, explanation]) => `
+                        <div style="margin-bottom:10px;padding:10px;background:var(--theory-bg);border-left:2px solid var(--theory-border);border-radius:4px;">
+                            <strong style="color:var(--theory-text)">${concept}</strong>
+                            <p style="margin-top:4px;color:var(--text-dim)">${explanation}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="debrief-card theory-card">
+                <h3>🎓 A-Level Exam Questions</h3>
+                <p class="text-dim small" style="margin-bottom:10px;">Based on what happened in your game — use these for reflection or as essay practice.</p>
+                ${examQs.map(q => `
+                    <div class="exam-q">
+                        <span class="mark">[${q.marks} marks]</span>
+                        ${q.text}
+                    </div>
+                `).join('')}
+                <hr class="divider">
+                <div style="font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:0.1em;color:var(--gold);margin-bottom:8px;">Your Decisions</div>
+                ${G.decisionsMade.length === 0
+                    ? '<p class="text-dim small">No decisions recorded.</p>'
+                    : G.decisionsMade.map(d => `
+                        <div style="font-size:0.85em;padding:5px 0;border-bottom:1px solid var(--border);">
+                            <span class="text-dim">Round ${d.round} — ${d.phase}:</span>
+                            <strong style="color:var(--text);margin-left:6px;">${d.choice}</strong>
+                            ${d.votedCorrectly !== undefined ? (d.votedCorrectly ? '<span style="color:var(--faithful-bright)"> ✓ Traitor</span>' : '<span style="color:var(--crimson-bright)"> ✗ Faithful</span>') : ''}
+                        </div>
+                    `).join('')
+                }
+            </div>
+
+        </div>
+    `;
+}
+
+function generateExamQuestions() {
+    const qs = [];
+    const v = G.cfg.voting;
+    const sigCost = G.cfg.signalCost;
+
+    qs.push({
+        text: `Using the concept of <strong>incomplete information</strong>, explain why Faithfuls face a coordination problem in eliminating Traitors.`,
+        marks: 6
+    });
+
+    qs.push({
+        text: `Analyse how <strong>${v} voting</strong> affected strategic behaviour in the Round Table vote. In what ways does this mechanism create or solve collective action problems?`,
+        marks: 10
+    });
+
+    qs.push({
+        text: `Evaluate the role of <strong>Bayesian updating</strong> in this game. To what extent does rational belief formation guarantee an efficient outcome for Faithfuls?`,
+        marks: 15
+    });
+
+    if (sigCost === 'none') {
+        qs.push({
+            text: `With zero signal costs, all statements in the Round Table are "cheap talk". Using signalling theory, explain why this undermines informational efficiency.`,
+            marks: 8
+        });
+    } else {
+        qs.push({
+            text: `Explain how <strong>costly signalling</strong> changes the credibility of Round Table speeches. Why might a rational Traitor still send costly signals?`,
+            marks: 8
+        });
+    }
+
+    qs.push({
+        text: `Draw a payoff matrix for the faithful coordination problem at the vote. Identify the Nash equilibrium and explain whether it represents an efficient outcome.`,
+        marks: 12
+    });
+
+    return qs;
+}
+
+// ══════════════════════════════════════════════════
+//  UTILITY
+// ══════════════════════════════════════════════════
+
+function addLog(msg, cls = '') {
+    G.log.unshift({ round: G.round, msg, cls });
+    const log = document.getElementById('gameLog');
+    if (!log) return;
+    log.innerHTML = G.log.slice(0, 20).map(e => `
+        <div class="log-entry ${e.cls}">
+            <span class="log-round">R${e.round}</span> ${e.msg}
+        </div>
+    `).join('');
+}
+
+function resetGame() {
+    selectedRole = null;
+    G = {};
+    document.getElementById('roleCardTraitor').classList.remove('selected');
+    document.getElementById('roleCardFaithful').classList.remove('selected');
+    document.getElementById('startBtn').disabled = true;
+    showScreen('setup');
+}
+
+// Print button
+document.addEventListener('DOMContentLoaded', () => {
+    // No additional init needed
+});
+</script>
+
+</body>
+</html>
