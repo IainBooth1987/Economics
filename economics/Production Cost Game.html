@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Production &amp; Costs Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; overflow-x: auto; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Economies classifier */
+        .scenario-box { background: var(--surface); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 1.25rem 1.5rem; font-size: 0.95rem; line-height: 1.7; color: var(--text); margin-bottom: 1.25rem; }
+        .cat-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.65rem; margin-bottom: 1rem; }
+        .cat-btn { padding: 0.7rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); text-align: center; transition: all 0.15s; }
+        .cat-btn:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .cat-btn.selected { background: var(--warning-bg); border-color: var(--amber); color: var(--amber); }
+        .cat-btn.correct-cat { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .cat-btn.incorrect-cat { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        [data-theme="light"] .cat-btn.correct-cat { color: #065f46; }
+        [data-theme="light"] .cat-btn.incorrect-cat { color: #991b1b; }
+        [data-theme="light"] .cat-btn.selected { color: #92400e; }
+        .econ-feedback { display: none; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); margin-top: 1rem; }
+        .econ-feedback.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .econ-feedback { color: var(--text); }
+        .econ-counter { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.75rem; }
+        /* Cost calculator */
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 0.85rem; }
+        .data-table th { background: rgba(59,130,246,0.15); color: var(--accent2); padding: 0.6rem; border: 1px solid var(--border); font-family: var(--ff-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .data-table td { padding: 0.6rem; border: 1px solid var(--border); text-align: center; background: var(--surface2); color: var(--text); font-weight: 500; }
+        .calc-row { display: grid; gap: 0.85rem; margin-bottom: 1rem; }
+        .calc-row label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); display: block; margin-bottom: 0.3rem; }
+        .calc-row select, .calc-row input { width: 100%; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--ff-sans); font-size: 0.87rem; }
+        .calc-row select:focus, .calc-row input:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+        [data-theme="light"] .calc-row select, [data-theme="light"] .calc-row input { background: #f1f5f9; }
+        .calc-answer { display: none; margin-top: 1rem; padding: 1.1rem 1.3rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .calc-answer.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .calc-answer { color: var(--text); }
+        .calc-verdict { margin-top: 0.75rem; padding: 0.65rem 1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; }
+        .calc-verdict.correct { background: var(--correct-bg); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+        .calc-verdict.incorrect { background: var(--incorrect-bg); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+        [data-theme="light"] .calc-verdict.correct { color: #065f46; }
+        [data-theme="light"] .calc-verdict.incorrect { color: #991b1b; }
+        /* Match game */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.92rem; color: var(--text); }
+        .passage-box h4 { font-family: var(--ff-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.5rem; margin-top: 1rem; }
+        .passage-box h4:first-child { margin-top: 0; }
+        .word-blank { display: inline-block; min-width: 75px; padding: 2px 7px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 720px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Production Cost Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_prodcost_game_pw';
+  var valid = ['ProdCost-2Gx!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['ProdCost-2Gx!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_prodcost_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Production &amp; Costs</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Economies &amp; Costs</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: ECONOMIES + COST CALC -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('econ', 0)">Economies Classification</button>
+            <button class="sub-tab" onclick="switchSubTab('econ', 1)">Cost Calculator</button>
+        </div>
+        <div class="sub-tab-content active" id="econ-sub-0">
+            <span class="mono-label">Read each scenario — select the correct category of economies</span>
+            <div class="q-num" id="econLabel">Scenario 1 of 15</div>
+            <div class="scenario-box" id="econScenario"></div>
+            <div class="cat-btns" id="econBtns"></div>
+            <div class="econ-feedback" id="econFeedback"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="nextEcon()">Next Scenario →</button>
+                <button class="btn btn-primary" onclick="checkEcon()">Check Answer</button>
+            </div>
+            <p class="econ-counter" id="econCounter">Score: 0 / 0 answered</p>
+        </div>
+        <div class="sub-tab-content" id="econ-sub-1">
+            <span class="mono-label">Cost Calculator — select a cost type, enter your answer, check the method</span>
+            <table class="data-table" id="costTable"></table>
+            <div class="calc-row">
+                <div>
+                    <label>Select cost to calculate</label>
+                    <select id="costType">
+                        <option value="">-- Select --</option>
+                        <option value="tc">Total Cost (TC)</option>
+                        <option value="mc">Marginal Cost (MC)</option>
+                        <option value="afc">Average Fixed Cost (AFC)</option>
+                        <option value="avc">Average Variable Cost (AVC)</option>
+                        <option value="atc">Average Total Cost (ATC)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Your answer (£, to 2 d.p.)</label>
+                    <input type="number" step="0.01" id="costAnswer" placeholder="Enter your calculated value">
+                </div>
+            </div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="generateCostData()">New Question</button>
+                <button class="btn btn-primary" onclick="checkCost()">Check Answer</button>
+            </div>
+            <div class="calc-answer" id="calcAnswer"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: MATCH + FILL -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('concepts', 0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab('concepts', 1)">Returns &amp; Diminishing Returns</button>
+        </div>
+        <div class="sub-tab-content active" id="concepts-sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="concepts-sub-1">
+            <span class="mono-label">Missing Words — Diminishing Returns &amp; Returns to Scale</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let econInit = false, matchInit = false, fillInit = false, costInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !econInit) { econInit = true; displayEcon(); }
+    if (index === 1 && !costInit) { costInit = true; generateCostData(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(group, index) {
+    const prefix = group + '-sub-';
+    document.querySelectorAll(`[id^="${prefix}"]`).forEach((el,i) => el.classList.toggle('active', i===index));
+    const tabs = group === 'econ'
+        ? document.querySelectorAll('.tab-content')[1].querySelectorAll('.sub-tab')
+        : document.querySelectorAll('.tab-content')[2].querySelectorAll('.sub-tab');
+    tabs.forEach((t,i) => t.classList.toggle('active', i===index));
+    if (group === 'concepts' && index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What is the difference between the short run and the long run in production?", options: ["Short run is one year, long run is more than one year","In the short run, at least one factor of production is fixed; in the long run, all factors are variable","Short run uses labour, long run uses capital","There is no difference"], correct: 1, explanation: "The SHORT RUN is a time period where at least one factor of production is FIXED (usually capital — factory size, machinery). Firms can vary labour but can't change factory size. The LONG RUN is when ALL factors of production are VARIABLE — firms can change everything including factory size, machinery, and labour. The distinction isn't about calendar time but about factor flexibility. A shipyard's short run might be 5 years (can't quickly build new docks), while a cafe's short run might be weeks (can quickly expand)." },
+    { question: "What is 'marginal returns' (marginal product)?", options: ["Total output produced","The additional output from employing one more unit of input","Average output per worker","The profit from selling output"], correct: 1, explanation: "Marginal returns (marginal product) is the ADDITIONAL OUTPUT from adding ONE MORE unit of input. If 5 workers produce 100 units and 6 workers produce 115 units, the marginal product of the 6th worker is 15 units (115−100). This measures the productivity of each additional worker. Initially marginal returns rise (workers specialise, cooperate), then they fall due to diminishing returns (too many workers, not enough equipment)." },
+    { question: "What is the law of diminishing returns?", options: ["Output always decreases","In the short run, adding more variable inputs to fixed inputs eventually leads to smaller increases in output","All workers become less productive over time","Firms always make less profit over time"], correct: 1, explanation: "The law of diminishing returns states: in the SHORT RUN, when you add more VARIABLE inputs (workers) to FIXED inputs (machines, factory), eventually the MARGINAL PRODUCT will DECREASE. Example: A factory with 5 machines. 1st worker produces 20 units, 2nd adds 25, 3rd adds 30, 4th adds 25, 5th adds 15, 6th adds 5. After the 3rd worker, marginal product falls — machines become crowded, workers wait for equipment. This is SHORT RUN only (factory size fixed). TOTAL output still rises, but ADDITIONS get smaller." },
+    { question: "A bakery has 3 ovens (fixed). As more bakers are hired: 1 baker: 50 loaves, 2 bakers: 120 loaves, 3 bakers: 210 loaves, 4 bakers: 280 loaves. When does diminishing returns set in?", options: ["After the 1st baker","After the 2nd baker","After the 3rd baker","Diminishing returns haven't set in"], correct: 2, explanation: "Calculate marginal product: 1st baker: 50, 2nd baker: 70 (120−50), 3rd baker: 90 (210−120), 4th baker: 70 (280−210). Diminishing returns set in AFTER the 3rd baker — the marginal product peaked at 90 and then fell to 70. The 3 ovens allow the first 3 bakers to become increasingly productive (one per oven), but the 4th baker must share ovens, reducing their marginal contribution. Diminishing returns occur when marginal product starts FALLING, not when total output falls." },
+    { question: "What are 'returns to scale'?", options: ["How output changes in the short run","How output changes in the long run when ALL inputs increase proportionally","The return on investment","The scale of a firm's profits"], correct: 1, explanation: "Returns to scale describes the LONG RUN relationship between inputs and output when ALL inputs increase proportionally. If you DOUBLE all inputs (workers AND factory size), does output double? INCREASING returns to scale: output more than doubles (economies of scale). CONSTANT returns to scale: output exactly doubles. DECREASING returns to scale: output less than doubles (diseconomies of scale). This is LONG RUN only — all factors variable. Different from diminishing returns (SHORT RUN, some factors fixed)." },
+    { question: "A firm doubles all inputs (workers and factory size). Output increases from 1,000 to 2,500 units. This firm experiences:", options: ["Diminishing returns","Constant returns to scale","Increasing returns to scale (economies of scale)","Decreasing returns to scale"], correct: 2, explanation: "This is INCREASING RETURNS TO SCALE. Doubling inputs (×2) increased output by 2.5× (from 1,000 to 2,500). Output increased MORE than proportionally — this indicates economies of scale. Larger scale allows specialisation, bulk buying, specialised machinery. Common in manufacturing. Different from diminishing returns (short run concept). Returns to scale is LONG RUN — all inputs variable. The firm benefits from operating at larger scale." },
+    { question: "What is the difference between fixed costs and variable costs?", options: ["Fixed costs change with output; variable costs don't","Fixed costs don't change with output level; variable costs change with output","All costs are fixed in the short run","All costs are variable in the long run"], correct: 1, explanation: "FIXED COSTS (FC) don't change with output level — rent, insurance, loan payments. Whether you produce 0 or 1,000 units, FC stays the same. VARIABLE COSTS (VC) change with output — raw materials, hourly wages, electricity used in production. More output = higher VC. SHORT RUN: Total Cost = FC + VC. LONG RUN: No fixed costs (all costs variable — can change factory size, exit leases). Understanding this distinction is crucial for business decisions — fixed costs must be paid even if production stops." },
+    { question: "What is 'marginal cost'?", options: ["The total cost of production","The additional cost of producing one more unit of output","The cost per unit on average","The fixed cost per unit"], correct: 1, explanation: "Marginal cost (MC) is the ADDITIONAL COST of producing ONE MORE unit. Formula: MC = Change in Total Cost / Change in Quantity. If producing 100 units costs £5,000 and 101 units costs £5,040, MC = £40. MC typically falls initially (productivity increases, spreading fixed costs) then rises (diminishing returns — need overtime, less efficient workers). MC intersects both AVC and ATC at their minimum points. Firms use MC for production decisions — produce if price > MC." },
+    { question: "Total cost is £10,000 (£4,000 fixed, £6,000 variable) for 200 units. What is Average Total Cost (ATC)?", options: ["£10,000","£50 per unit","£20 per unit","£30 per unit"], correct: 1, explanation: "ATC = Total Cost / Quantity = £10,000 / 200 = £50 per unit. You can also calculate: AFC = FC/Q = £4,000/200 = £20, AVC = VC/Q = £6,000/200 = £30, then ATC = AFC + AVC = £20 + £30 = £50. ATC shows the cost per unit on average. As output rises, AFC falls (spreading fixed costs over more units) but AVC eventually rises (diminishing returns). ATC curve is U-shaped — falls initially then rises." },
+    { question: "What are 'internal economies of scale'?", options: ["Cost savings from the entire industry growing","Cost advantages arising from within a firm as it grows larger","Government subsidies to large firms","Costs increasing as firms grow"], correct: 1, explanation: "INTERNAL economies of scale are cost advantages from WITHIN the firm as it grows. Types: TECHNICAL (specialised machinery, indivisibilities), PURCHASING (bulk buying discounts), MANAGERIAL (specialist managers), FINANCIAL (lower interest rates, easier loans), MARKETING (spreading advertising costs), RISK-BEARING (product diversification). As firms grow, LRAC falls. These are internal to the firm — competitors don't benefit. Amazon enjoys internal economies: bulk buying, sophisticated warehouses, specialised managers." },
+    { question: "What are 'external economies of scale'?", options: ["Cost advantages to individual firms from the entire industry growing in a region","Cost advantages from within a large firm","Costs that firms charge externally","Foreign trade advantages"], correct: 0, explanation: "EXTERNAL economies of scale benefit ALL FIRMS in an industry when the industry concentrates in a region. Benefits: SKILLED LABOUR POOL (workers with industry skills available), SPECIALISED SUPPLIERS (component makers nearby), INFRASTRUCTURE (transport links developed), RESEARCH SPILLOVERS (shared innovation). Example: Silicon Valley tech firms benefit from skilled engineers, venture capital availability, supplier networks — even small startups benefit. ALL tech firms in the area gain advantages, not just large firms. This reduces costs for the entire industry in that location." },
+    { question: "What are 'diseconomies of scale'?", options: ["When long-run average costs fall as output increases","When long-run average costs rise as the firm becomes too large","Short-run diminishing returns","Fixed costs increasing"], correct: 1, explanation: "Diseconomies of scale occur when firms become TOO LARGE — LRAC rises as output increases. Causes: COMMUNICATION problems (messages get distorted across many layers), COORDINATION difficulties (hard to manage huge organisations), MOTIVATION issues (workers feel like small cogs), SLOWER DECISION-MAKING (bureaucracy), X-INEFFICIENCY (managers less pressured to minimise costs). These are LONG RUN problems — firms can change everything but still face rising costs due to organisational inefficiency. Eventually limits firm size — why firms don't grow infinitely." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── ECONOMIES CLASSIFIER ── */
+const economiesScenarios = [
+    { text: "A car manufacturer buys steel in bulk quantities of 10,000 tonnes, receiving a 30% discount compared to small buyers purchasing 100 tonnes.", category: "internal-purchasing", explanation: "INTERNAL economy of scale — PURCHASING/BUYING economies. Large firms buy in bulk and negotiate better prices. The discount comes from the firm's own size (internal), benefiting only this firm, not competitors. Suppliers offer discounts for large orders to secure business and reduce their transaction costs." },
+    { text: "Silicon Valley has many skilled software engineers. When a new tech startup opens, it easily finds qualified programmers because the industry has attracted talent to the region.", category: "external", explanation: "EXTERNAL economy of scale — labour/skills pool. When an industry concentrates in a region (like tech in Silicon Valley), it attracts skilled workers. ALL firms in the area benefit — even small startups can hire experienced engineers. The benefit comes from the ENTIRE INDUSTRY being there (external), not from any individual firm's size." },
+    { text: "A multinational corporation can hire specialist marketing managers, specialised accountants, and dedicated legal teams — expertise that small firms can't afford.", category: "internal-managerial", explanation: "INTERNAL economy of scale — MANAGERIAL economies. Large firms afford specialist managers (marketing director, financial controller, HR director) who are more efficient than generalists. Small firms have one manager doing everything. Specialists increase productivity and reduce errors. This advantage is internal — competitors don't benefit unless they also grow large." },
+    { text: "A massive pharmaceutical company invests £1 billion in automated production lines that can produce 100 million units efficiently. Small firms can't afford this technology.", category: "internal-technical", explanation: "INTERNAL economy of scale — TECHNICAL economies. Large firms afford expensive specialised machinery with huge capacity. The equipment has indivisibilities — you can't buy 'half' an automated production line. Large output spreads the £1 billion cost over 100 million units (£10 per unit). Small firms produce manually at higher cost per unit." },
+    { text: "In the Scottish whisky region, specialised cooperage (barrel-making) companies have developed, supplying all distilleries in the area. This reduces barrel costs for every whisky producer.", category: "external", explanation: "EXTERNAL economy of scale — specialised suppliers/ancillary services. When an industry concentrates geographically, specialised supplier firms emerge to serve it. ALL whisky producers in Scotland benefit (external) — even small distilleries access quality barrels cheaply. The benefit comes from the ENTIRE INDUSTRY'S presence, not individual distillery size." },
+    { text: "As a logistics company grows to operate 10,000 trucks, communication becomes difficult. Head office instructions get misinterpreted by regional managers, causing delivery delays and costly mistakes.", category: "diseconomies", explanation: "DISECONOMY of scale — COMMUNICATION problems. As firms grow too large, messages travel through many management layers, getting distorted or delayed. Instructions from CEO to regional to depot to driver may be misunderstood. Coordination across 10,000 trucks is vastly harder than 100 trucks. This INCREASES average costs — the LRAC curve rises." },
+    { text: "Banks offer 2% interest rates to large corporations borrowing £50 million, but charge small businesses 6% for £50,000 loans. Large firms have lower borrowing costs.", category: "internal-financial", explanation: "INTERNAL economy of scale — FINANCIAL economies. Large firms access cheaper finance: lower interest rates, easier bank loans, can issue bonds, attract investors. Small firms pay higher rates (seen as risky) and may struggle to get loans. Large firms' size and track record reduce perceived risk for lenders. This advantage is internal — competitors don't benefit." },
+    { text: "A huge conglomerate experiences slow decision-making. Proposals need approval from 7 management layers. Projects that should take weeks take months, missing market opportunities.", category: "diseconomies", explanation: "DISECONOMY of scale — COORDINATION and decision-making problems. Large firms develop bureaucracy — many management layers mean slow approval processes. Small firms decide quickly (one manager decides). Large firms miss opportunities while committees deliberate. This organisational inefficiency INCREASES costs — LRAC rises. Also called X-inefficiency." },
+    { text: "An advertising campaign for a national supermarket chain costs £10 million. The cost per store is £100,000 (100 stores). A single independent shop would pay the full £10 million alone.", category: "internal-marketing", explanation: "INTERNAL economy of scale — MARKETING economies. Large firms spread advertising/promotional costs over many units or stores. TV campaign costs are similar whether you have 1 or 100 stores, but cost per store falls dramatically for large firms. Small shops can't afford national advertising. This is internal — the advantage comes from the firm's own size." },
+    { text: "London's financial district has attracted specialised business services: financial lawyers, auditors, consultants, and regulators. Every financial firm in the area benefits from this ecosystem.", category: "external", explanation: "EXTERNAL economy of scale — specialised services infrastructure. When an industry clusters (finance in London), specialised support services develop to serve it. Financial law firms, audit companies, consultants locate nearby. ALL financial firms benefit (external) — even small hedge funds access expert advice. The benefit comes from the ENTIRE INDUSTRY'S concentration." },
+    { text: "A diversified conglomerate produces electronics, food products, insurance, and hotels. If the electronics market crashes, other divisions still generate profit.", category: "internal-risk", explanation: "INTERNAL economy of scale — RISK-BEARING economies. Large firms diversify across products/markets, spreading risk. If one product fails, others compensate. Small firms often depend on one product — higher risk of total failure. Diversification allows large firms to survive industry downturns and take more risks in innovation. This advantage is internal — competitors don't benefit from another firm's diversification." },
+    { text: "Workers in a factory with 5,000 employees feel like anonymous numbers. They lack motivation, take more sick days, and work less carefully than in small firms where everyone knows each other.", category: "diseconomies", explanation: "DISECONOMY of scale — MOTIVATION and alienation problems. Very large organisations make workers feel disconnected and unimportant. Small firms have personal relationships — workers feel valued and take pride. Large firms face absenteeism, low morale, and reduced effort. This INCREASES costs through lower productivity and higher supervision needs." },
+    { text: "In Detroit's automotive cluster, specialised engineering colleges train automotive engineers. Research universities conduct automotive research. This knowledge benefits all car manufacturers in the region.", category: "external", explanation: "EXTERNAL economy of scale — education/training and research spillovers. Industry clusters attract universities/colleges offering relevant training and research. ALL firms benefit from the educated workforce and shared innovation (external). Detroit's auto firms all gain from engineering schools and research — knowledge spreads through worker mobility and collaboration." },
+    { text: "A telecommunications company becomes so large that senior management loses touch with customer needs. Bureaucracy slows innovation. Managers focus on internal politics rather than efficiency.", category: "diseconomies", explanation: "DISECONOMY of scale — X-INEFFICIENCY and managerial problems. Very large firms may become complacent — less competitive pressure on managers to minimise costs. Managers focus on career advancement, building departments, and internal politics rather than efficiency. Small firms have owners directly involved, pressuring for cost control. This organisational slack INCREASES LRAC." },
+    { text: "A major retailer with 500 stores negotiates exclusive deals with suppliers, demanding products that small competitors cannot access or replicate.", category: "internal-purchasing", explanation: "INTERNAL economy of scale — PURCHASING/BUYING power. Beyond just price discounts, very large firms negotiate exclusive supply agreements, custom products, and preferential treatment. Small firms can't match these terms. Large retailers dictate terms to suppliers — exclusive brands, custom packaging, priority delivery. This buying power advantage is internal — comes from the firm's own size." }
+];
+
+const econCategories = [
+    { id: 'internal-purchasing', label: 'Internal — Purchasing' },
+    { id: 'internal-technical', label: 'Internal — Technical' },
+    { id: 'internal-managerial', label: 'Internal — Managerial' },
+    { id: 'internal-financial', label: 'Internal — Financial' },
+    { id: 'internal-marketing', label: 'Internal — Marketing' },
+    { id: 'internal-risk', label: 'Internal — Risk-Bearing' },
+    { id: 'external', label: 'External Economies' },
+    { id: 'diseconomies', label: 'Diseconomies of Scale' }
+];
+
+let currentEcon = 0, econScore = 0, econAnsweredCount = 0, econAnsweredThis = false;
+
+function displayEcon() {
+    const s = economiesScenarios[currentEcon];
+    document.getElementById('econLabel').textContent = `Scenario ${currentEcon+1} of ${economiesScenarios.length}`;
+    document.getElementById('econScenario').textContent = s.text;
+    let cats;
+    if (s.category.startsWith('internal')) {
+        cats = econCategories.filter(c => c.id === s.category || c.id === 'external' || c.id === 'diseconomies');
+    } else if (s.category === 'external') {
+        cats = [econCategories.find(c=>c.id==='internal-purchasing'), econCategories.find(c=>c.id==='external'), econCategories.find(c=>c.id==='diseconomies')];
+    } else {
+        cats = [econCategories.find(c=>c.id==='internal-technical'), econCategories.find(c=>c.id==='external'), econCategories.find(c=>c.id==='diseconomies')];
+    }
+    document.getElementById('econBtns').innerHTML = cats.map(c =>
+        `<button class="cat-btn" data-cat="${c.id}" onclick="selectEconCat('${c.id}')">${c.label}</button>`
+    ).join('');
+    document.getElementById('econFeedback').classList.remove('show');
+    econAnsweredThis = false;
+    updateEconCounter();
+}
+
+function selectEconCat(id) {
+    if (econAnsweredThis) return;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`[data-cat="${id}"]`).classList.add('selected');
+}
+
+function checkEcon() {
+    if (econAnsweredThis) return;
+    const selected = document.querySelector('.cat-btn.selected');
+    if (!selected) { alert('Please select a category first.'); return; }
+    const s = economiesScenarios[currentEcon];
+    const userCat = selected.dataset.cat;
+    const correct = userCat === s.category;
+    econAnsweredCount++;
+    if (correct) { econScore++; selected.classList.add('correct-cat'); }
+    else {
+        selected.classList.add('incorrect-cat');
+        const correctBtn = document.querySelector(`[data-cat="${s.category}"]`);
+        if (correctBtn) correctBtn.classList.add('correct-cat');
+    }
+    econAnsweredThis = true;
+    const fb = document.getElementById('econFeedback');
+    fb.innerHTML = `<strong>${correct ? '✓ Correct!' : '✗ Incorrect'}</strong> — ${s.explanation}`;
+    fb.classList.add('show');
+    updateEconCounter();
+}
+
+function nextEcon() {
+    if (currentEcon < economiesScenarios.length - 1) { currentEcon++; displayEcon(); }
+}
+
+function updateEconCounter() {
+    document.getElementById('econCounter').textContent = `Score: ${econScore} / ${econAnsweredCount} answered`;
+}
+
+/* ── COST CALCULATOR ── */
+let costData = {};
+
+function generateCostData() {
+    const quantity = Math.floor(Math.random() * 3) + 3;
+    const fc = Math.floor(Math.random() * 500) + 500;
+    let currentVC = Math.floor(Math.random() * 100) + 50;
+    const vcPerUnit = [];
+    for (let i = 0; i < quantity; i++) {
+        vcPerUnit.push(currentVC);
+        currentVC += Math.floor(Math.random() * 20) - 5;
+        if (currentVC < 40) currentVC = 40;
+    }
+    costData = { quantity, fc, vcPerUnit };
+    let cumVC = 0;
+    const vcCumulative = vcPerUnit.map(v => { cumVC += v; return cumVC; });
+    const tcRow = vcCumulative.map(vc => fc + vc);
+    document.getElementById('costTable').innerHTML = `<tr><th>Quantity (Q)</th>${Array.from({length:quantity},(_,i)=>`<th>${i+1}</th>`).join('')}</tr>
+        <tr><td><strong>Fixed Cost (FC)</strong></td>${Array.from({length:quantity},()=>`<td>£${fc}</td>`).join('')}</tr>
+        <tr><td><strong>Variable Cost (VC)</strong></td>${vcCumulative.map(v=>`<td>£${v}</td>`).join('')}</tr>
+        <tr><td><strong>Total Cost (TC)</strong></td>${tcRow.map(t=>`<td>£${t}</td>`).join('')}</tr>`;
+    document.getElementById('costType').value = '';
+    document.getElementById('costAnswer').value = '';
+    document.getElementById('calcAnswer').classList.remove('show');
+}
+
+function checkCost() {
+    const type = document.getElementById('costType').value;
+    const userVal = parseFloat(document.getElementById('costAnswer').value);
+    if (!type) { alert('Please select a cost type.'); return; }
+    if (isNaN(userVal)) { alert('Please enter your calculated answer.'); return; }
+    const { quantity: q, fc, vcPerUnit } = costData;
+    const totalVC = vcPerUnit.reduce((a,b)=>a+b,0);
+    const tc = fc + totalVC;
+    let correct, method, expl;
+    switch(type) {
+        case 'tc': correct = tc; method = `TC = FC + VC = £${fc} + £${totalVC} = £${tc}`; expl = `Total Cost includes ALL costs — both fixed and variable.`; break;
+        case 'mc': { const prevVC = vcPerUnit.slice(0,q-1).reduce((a,b)=>a+b,0); const prevTC = fc+prevVC; correct = tc-prevTC; method = `MC = TC(${q}) − TC(${q-1}) = £${tc} − £${prevTC} = £${correct.toFixed(2)}`; expl = `Marginal Cost is the additional cost of producing one more unit.`; break; }
+        case 'afc': correct = fc/q; method = `AFC = FC / Q = £${fc} / ${q} = £${correct.toFixed(2)}`; expl = `AFC falls as output rises — fixed costs spread over more units.`; break;
+        case 'avc': correct = totalVC/q; method = `AVC = VC / Q = £${totalVC} / ${q} = £${correct.toFixed(2)}`; expl = `AVC shows variable cost per unit on average.`; break;
+        case 'atc': correct = tc/q; method = `ATC = TC / Q = £${tc} / ${q} = £${correct.toFixed(2)}`; expl = `ATC = AFC + AVC. U-shaped curve — falls then rises.`; break;
+    }
+    const isOk = Math.abs(userVal - correct) < 0.05;
+    document.getElementById('calcAnswer').innerHTML = `<p style="margin-bottom:0.5rem"><strong>Method:</strong> ${method}</p><p style="margin-bottom:0.75rem;color:var(--muted)">${expl}</p><div class="calc-verdict ${isOk?'correct':'incorrect'}">${isOk?'✓ Correct!':'Your answer: £'+userVal.toFixed(2)+' | Correct: £'+correct.toFixed(2)}</div>`;
+    document.getElementById('calcAnswer').classList.add('show');
+}
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Short Run", definition: "Time period where at least one factor of production is fixed", id: 1 },
+    { term: "Long Run", definition: "Time period where all factors of production are variable", id: 2 },
+    { term: "Law of Diminishing Returns", definition: "Adding more variable inputs to fixed inputs eventually causes marginal product to fall (short run)", id: 3 },
+    { term: "Marginal Product", definition: "The additional output from employing one more unit of input", id: 4 },
+    { term: "Returns to Scale", definition: "How output changes when ALL inputs increase proportionally (long run)", id: 5 },
+    { term: "Increasing Returns to Scale", definition: "Output increases more than proportionally — economies of scale exist", id: 6 },
+    { term: "Decreasing Returns to Scale", definition: "Output increases less than proportionally — diseconomies of scale exist", id: 7 },
+    { term: "Fixed Costs", definition: "Costs that don't change with output level (rent, insurance, loan payments)", id: 8 },
+    { term: "Variable Costs", definition: "Costs that change with output level (raw materials, hourly wages, energy)", id: 9 },
+    { term: "Marginal Cost", definition: "The additional cost of producing one more unit of output", id: 10 },
+    { term: "Average Total Cost", definition: "Total cost per unit (TC/Q) or AFC + AVC — U-shaped curve", id: 11 },
+    { term: "Internal Economies of Scale", definition: "Cost advantages from within a firm as it grows (technical, purchasing, managerial)", id: 12 },
+    { term: "External Economies of Scale", definition: "Cost advantages to all firms from the entire industry growing in a region", id: 13 },
+    { term: "Diseconomies of Scale", definition: "Long-run average costs rise as firm becomes too large (communication, coordination problems)", id: 14 },
+    { term: "Minimum Efficient Scale", definition: "The lowest output level where a firm reaches minimum long-run average cost", id: 15 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove();
+        delete matchMatches[defId];
+        defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild);
+    defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillAnswers = ["short","fixed","variable","fixed","eventually","fall","fixed","increases","30","specialize","falling","only","crowded","efficiently","total","additions","negative","slowly","shape","cost","inputs","rises","employment","diminishing","long","all","doubles","Increasing","more","more","economies","machinery","units","large","Constant","exactly","exactly","two","industries","less","less","diseconomies","motivation","average","falls","flat","rises","falling","rising","large","small","long","short","fixed"];
+const fillTemplate = "The law of diminishing returns applies in the [0] run when at least one factor of production is [1]. It states that as more [2] factors (like labour) are added to [3] factors (like machinery or land), [4] the additional output (marginal product) from each extra unit of the variable factor will [5]. For example, a factory has 5 machines ([6]). Initially, hiring more workers [7] marginal product — 1 worker produces 20 units, a 2nd worker adds [8] units (total 50). Workers can [9], use machines efficiently, and help each other. However, after a certain point, marginal product starts [10]. The 5th worker might add [11] 15 units, the 6th adds only 10 units. Why? The machines become [12] — workers must wait for equipment, get in each other's way, and can't work as [13]. Crucially, [14] output is still rising (more workers = more total output), but the [15] to total output are getting smaller. This is different from [16] productivity — total output isn't falling, just growing more [17]. The law of diminishing returns explains the [18] of the marginal product curve and why the short-run marginal [19] curve eventually rises. When marginal product falls, more [20] are needed to produce each additional unit, so marginal cost [21]. Understanding this helps firms decide optimal [22] levels — hiring more workers beyond the point where [23] is very high becomes inefficient. Returns to scale describes the [24] run relationship between inputs and output when [25] factors of production change proportionally. If a firm [26] all inputs (workers, machinery, factory size), what happens to output? [27] returns to scale occur when output increases [28] than proportionally. Doubling all inputs causes output to [29] than double (e.g., from 1,000 to 2,500 units). This happens due to [30] of scale — specialisation becomes possible, bulk buying discounts, specialised [31] can be used, and marketing costs are spread over more [32]. Increasing returns to scale explain why [33] firms can have lower costs per unit than small firms. [34] returns to scale occur when output increases exactly proportionally. Doubling all inputs causes output to [35] double. The firm scales up efficiently without gains or losses — it's essentially running [36] production processes. Decreasing returns to scale occur when output increases [38] than proportionally. Doubling all inputs causes output to [39] than double (e.g., from 1,000 to 1,800 units). This happens due to [40] of scale — communication problems, coordination difficulties, bureaucracy, and [41] issues in very large organisations. Returns to scale explain the shape of the long-run [42] cost curve. With increasing returns, LRAC [43]; with constant returns, LRAC stays [44]; with decreasing returns, LRAC [45]. Increasing returns to scale mean [46] costs per unit (economies of scale), while decreasing returns to scale mean [47] costs per unit. Understanding returns to scale helps explain why some industries have [48] firms dominating, while others have many [49] firms. Returns to scale is a [50] run concept — firms can change everything. This differs from diminishing returns, which is a [51] run concept with at least one factor [52].";
+
+let fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    const shuffled = [...fillAnswers].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank1').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = fillTemplate;
+    fillAnswers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`); });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(b => b.classList.remove('selected-word'));
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    const blank = document.querySelector(`[data-bid="${bid}"]`);
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        const oldWid = fillState.placed[bid].wid;
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${oldWid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+        delete fillState.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        const oldWid = fillState.placed[bid].wid;
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${oldWid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+    }
+    fillState.placed[bid] = { ...fillState.selected };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    let correct = 0;
+    fillAnswers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="${i}"]`);
+        if (!blank) return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = fillAnswers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('fillResult1');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passages and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

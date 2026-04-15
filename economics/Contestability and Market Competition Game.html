@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Contestable Markets &amp; Competition Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* FILL */
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        /* MATCH */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; color: #34d399; }
+        .match-item.matched:hover { transform: none; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+        [data-theme="light"] .match-item.matched { color: #065f46; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Contestability &amp; Market Competition Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_contmkt_game_pw';
+  var valid = ['ContMkt-7Wq!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['ContMkt-7Wq!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_contmkt_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Contestable Markets &amp; Competition</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Contestability &amp; Competition Elements</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('contestable')">
+                <span class="col-label">✅ High Contestability Features</span>
+                <div class="sort-items" id="contestable"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('noncontestable')">
+                <span class="col-label">❌ Low Contestability Features</span>
+                <div class="sort-items" id="noncontestable"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('benefits')">
+                <span class="col-label">📈 Benefits of Competition</span>
+                <div class="sort-items" id="benefits"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: INTERACTIVE GAMES ══ -->
+    <div class="tab-content">
+        <!-- Fill 1 -->
+        <span class="mono-label">Interactive Games</span>
+        <span class="passage-title" style="margin-top:0">Passage 1: Contestability Theory</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Fill 2 -->
+        <span class="passage-title">Passage 2: Competition &amp; Creative Destruction</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Match 1: Contestability Features -->
+        <span class="passage-title">Match: Contestability Features</span>
+        <div class="match-progress" id="matchProgress1">0 / 8 matched</div>
+        <div class="match-grid">
+            <div>
+                <span class="match-col-label">Terms</span>
+                <div class="match-items" id="matchTerms1"></div>
+            </div>
+            <div>
+                <span class="match-col-label">Definitions</span>
+                <div class="match-items" id="matchDefs1"></div>
+            </div>
+        </div>
+        <div id="matchResult1" class="inline-result" style="margin-top:1rem;"></div>
+        <div class="nav-row" style="justify-content:flex-end; margin-top:0.75rem;">
+            <button class="btn btn-ghost" onclick="resetMatch(1)">Reset</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Match 2: Creative Destruction -->
+        <span class="passage-title">Match: Creative Destruction Examples</span>
+        <div class="match-progress" id="matchProgress2">0 / 8 matched</div>
+        <div class="match-grid">
+            <div>
+                <span class="match-col-label">Innovation</span>
+                <div class="match-items" id="matchTerms2"></div>
+            </div>
+            <div>
+                <span class="match-col-label">What It Destroyed</span>
+                <div class="match-items" id="matchDefs2"></div>
+            </div>
+        </div>
+        <div id="matchResult2" class="inline-result" style="margin-top:1rem;"></div>
+        <div class="nav-row" style="justify-content:flex-end; margin-top:0.75rem;">
+            <button class="btn btn-ghost" onclick="resetMatch(2)">Reset</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); initMatch(1); initMatch(2); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What is a contestable market?", options: ["Market with one firm only","Market with low/zero barriers to entry and exit, where potential competition (threat of hit-and-run entry) disciplines incumbent behaviour even without actual competition","Perfectly competitive market","Market with no competition"], correct: 1, explanation: "CONTESTABLE MARKET: low/zero barriers to entry and exit mean POTENTIAL COMPETITION disciplines incumbent firms, even with few actual competitors. Key: THREAT of entry matters, not just actual entry. The incumbent can't charge excessive prices or make supernormal profit because a new firm could ENTER, undercut, take profit, EXIT before retaliation ('hit and run'). Result: incumbent behaves competitively (prices near AC) despite monopoly structure. Requires: FREE ENTRY/EXIT, NO SUNK COSTS, ACCESS TO TECHNOLOGY, RAPID ENTRY/EXIT." },
+    { question: "What are sunk costs?", options: ["Recoverable investment costs","Costs that cannot be recovered when exiting the market — specialised equipment, brand building, regulatory compliance — create barriers making markets less contestable","Operating costs only","Variable costs"], correct: 1, explanation: "SUNK COSTS: expenditures that CANNOT BE RECOVERED when a firm exits. Examples: 1) SPECIALISED EQUIPMENT: custom machinery for a specific market (pharmaceutical R&D equipment), 2) ADVERTISING: brand building investment lost on exit, 3) REGULATORY COMPLIANCE: legal/licensing costs for entry, 4) RESEARCH: product development costs. Effect: DETER ENTRY (risk losing investment), REDUCE CONTESTABILITY (exit costly, not 'hit-and-run'). HIGH sunk costs = NON-CONTESTABLE. LOW/ZERO sunk costs = CONTESTABLE." },
+    { question: "What is hit-and-run competition?", options: ["Violent competition","Entrant enters when incumbent makes supernormal profit, undercuts price, takes profit, exits before incumbent retaliates — threat disciplines incumbent even without actual entry","Long-term competition","Illegal competition"], correct: 1, explanation: "HIT-AND-RUN: New firm ENTERS market rapidly when incumbent charges excessive price/makes supernormal profit, UNDERCUTS incumbent price, CAPTURES profit before incumbent reacts, EXITS quickly before price war or retaliation. Requires: FREE ENTRY, FREE EXIT (no sunk costs), RAPID ENTRY/EXIT (before retaliation), ACCESS TO TECHNOLOGY. Result: incumbent CAN'T maintain supernormal profit — threat of hit-and-run forces competitive pricing even without actual entry. THREAT matters more than ACTUAL hit-and-run." },
+    { question: "What factors increase market contestability?", options: ["High sunk costs and barriers","Low/zero sunk costs, easy access to technology, no legal barriers, mobile capital equipment, low customer loyalty, rapid entry/exit possible","Patents and licences","Brand loyalty"], correct: 1, explanation: "HIGH CONTESTABILITY when: 1) LOW/ZERO SUNK COSTS: can exit without losses (aircraft mobile, not railways), 2) NO LEGAL BARRIERS: no patents, licences, regulations, 3) TECHNOLOGY ACCESS: entrants get same tech as incumbents, 4) MOBILE CAPITAL: equipment redeployable (planes, not sunk), 5) LOW BRAND LOYALTY: customers switch easily (commodities), 6) RAPID ENTRY: can enter/exit before incumbent reacts, 7) SCALE ECONOMIES: MES small relative to market. Examples CONTESTABLE: airline routes, deregulated buses, online retail." },
+    { question: "Why is contestability significant for industry performance?", options: ["Only actual competition matters","Threat of entry disciplines incumbent firms to price competitively, invest in efficiency, innovate — even monopoly can behave like perfect competition if highly contestable","Contestability has no effect","Only reduces prices"], correct: 1, explanation: "CONTESTABILITY SIGNIFICANCE: POTENTIAL competition disciplines incumbents WITHOUT need for actual competitors. Effects: 1) COMPETITIVE PRICING: threat of entry prevents excessive prices, 2) PRODUCTIVE EFFICIENCY: must minimise costs or entrant undercuts, 3) ALLOCATIVE EFFICIENCY: P closer to MC, 4) INNOVATION: must improve products or lose to better entrant, 5) NO X-INEFFICIENCY: can't be slack. Policy: don't need to break up monopoly if market contestable — contestability achieves competition benefits." },
+    { question: "What makes a market non-contestable?", options: ["Low barriers only","High sunk costs, patents/legal barriers, economies of scale, strong brand loyalty, long entry lag, network effects — prevent hit-and-run competition","Many competitors","Low profits"], correct: 1, explanation: "NON-CONTESTABLE features: 1) HIGH SUNK COSTS: specialised investment can't recover (railway infrastructure, pharmaceutical R&D), 2) LEGAL BARRIERS: patents (20 years), licences (taxis, pharmacies), regulations, 3) ECONOMIES OF SCALE: MES large vs market (natural monopoly), 4) BRAND LOYALTY: established brands hard to displace, 5) NETWORK EFFECTS: incumbents have network advantage (Facebook, eBay), 6) VERTICAL INTEGRATION: control of supply chain, 7) LONG ENTRY LAG. Result: incumbent can maintain supernormal profit — entry threat weak." },
+    { question: "What are the short-run benefits of competition?", options: ["No short-run benefits","Lower prices, allocative efficiency (P closer to MC), productive efficiency pressure, consumer choice, prevents X-inefficiency","Only long-run benefits","Higher prices"], correct: 1, explanation: "SHORT-RUN COMPETITION BENEFITS: 1) LOWER PRICES: competitive pressure prevents monopoly pricing, firms can't charge P >> MC, 2) ALLOCATIVE EFFICIENCY: P closer to MC (resources to highest value use), 3) PRODUCTIVE EFFICIENCY: must minimise AC or lose market share, 4) NO X-INEFFICIENCY: can't be slack/inefficient (rivals undercut), 5) CONSUMER CHOICE: variety as firms differentiate, 6) CONSUMER SURPLUS: lower prices, more quantity. Evidence: deregulation of industries (telecoms, airlines) showed immediate price falls and service improvements." },
+    { question: "What are the long-run benefits of competition?", options: ["Only short-run benefits","Dynamic efficiency — innovation, new products, R&D, technological progress, creative destruction replacing inefficient with efficient firms","No innovation","Higher costs"], correct: 1, explanation: "LONG-RUN COMPETITION BENEFITS: 1) DYNAMIC EFFICIENCY: innovation driven by competition (race to develop new products), 2) TECHNOLOGICAL PROGRESS: adopt new technology or lose to competitors, 3) R&D INVESTMENT: compete through innovation not just price, 4) NEW PRODUCTS: satisfy unmet consumer needs, 5) CREATIVE DESTRUCTION: inefficient firms replaced by efficient (market evolution), 6) PRODUCTIVITY GROWTH: continuous improvement to stay competitive. Examples: smartphones (competition drove rapid innovation), computing, retail (Amazon forced traditional retailers to innovate)." },
+    { question: "How do firms compete beyond price?", options: ["Only price competition exists","Quality improvements, innovation/R&D, customer service, branding/advertising, product range/variety, convenience/location, after-sales support","No non-price competition","Price is sufficient"], correct: 1, explanation: "NON-PRICE COMPETITION: 1) QUALITY: better materials, features, durability (Toyota vs competitors), 2) INNOVATION: new products, technology (Apple iPhone), 3) CUSTOMER SERVICE: support, guarantees, returns, 4) BRANDING: image, reputation, prestige (luxury goods), 5) CONVENIENCE: location, opening hours, online delivery (Amazon Prime), 6) VARIETY: product range, customisation, 7) EXPERIENCE: shopping environment (Apple Store), 8) AFTER-SALES: warranties, maintenance. Why use? Price wars erode profit; non-price competition is sustainable, harder to copy, builds loyalty. Especially important in oligopoly." },
+    { question: "What is creative destruction (Schumpeter)?", options: ["Physical destruction only","Process where innovation and new firms/products continuously replace outdated ones — old firms/industries destroyed by new, driving economic progress and growth","Government regulation","Static process"], correct: 1, explanation: "CREATIVE DESTRUCTION (Schumpeter): Innovation DESTROYS old firms/products while CREATING new ones. Process: 1) ENTREPRENEUR innovates (new product, technology, business model), 2) SUPERNORMAL PROFIT attracts imitators/improvers, 3) OLD FIRMS can't compete, DECLINE/EXIT, 4) RESOURCES reallocated to efficient new firms, 5) Economy MORE PRODUCTIVE. Examples: Digital cameras destroyed film (Kodak bankrupt), Streaming destroyed Blockbuster, Email reduced postal service, Amazon disrupted retail. FUNDAMENTAL to market economy: competition drives innovation, inefficient firms eliminated, resources to best use." },
+    { question: "How does monopoly profit incentivise entry and innovation?", options: ["No incentive exists","Large monopoly profits signal opportunity — attract new firms to enter, innovate to overcome barriers, develop better products — drives creative destruction","Monopoly prevents all entry","No innovation occurs"], correct: 1, explanation: "MONOPOLY PROFIT as SIGNAL: High profit indicates OPPORTUNITY, attracts entrepreneurs to: 1) INNOVATE around barriers (develop alternative technology avoiding patents), 2) ENTER MARKET (if contestable), 3) DEVELOP SUBSTITUTES (new products meeting same needs differently). Example: Microsoft Windows monopoly profit attracted Apple, Linux; Google search monopoly attracted Microsoft Bing, DuckDuckGo. Process: supernormal profit → entry incentive → innovation to overcome barriers → competition → profit eroded. Even strong barriers are eventually overcome by innovation (creative destruction)." },
+    { question: "What is the relationship between contestability and market structure?", options: ["Structure determines everything","High contestability makes market structure less important — even monopoly behaves competitively if contestable; low contestability makes structure matter more","No relationship","Only structure matters"], correct: 1, explanation: "CONTESTABILITY vs STRUCTURE: Traditional view: STRUCTURE (number of firms) determines CONDUCT (behaviour) determines PERFORMANCE (efficiency). Contestability theory: CONDUCT determined by POTENTIAL competition not just actual. HIGH CONTESTABILITY: even ONE firm (monopoly) behaves competitively — threat of entry disciplines. LOW CONTESTABILITY: even many firms might collude, not compete. Policy implication: focus on REDUCING BARRIERS (increase contestability) rather than breaking up concentrated industries." },
+    { question: "How does competition drive cost reduction?", options: ["Competition increases costs","Firms must minimise costs to survive — adopt efficient technology, eliminate waste, improve processes, achieve economies of scale — or lose to more efficient competitors","Costs unaffected","Only monopoly reduces costs"], correct: 1, explanation: "COMPETITION FORCES COST REDUCTION: 1) SURVIVAL: high-cost firms lose market share, eventually exit (natural selection), 2) TECHNOLOGY ADOPTION: must use latest efficient technology or can't match competitors' prices, 3) ELIMINATE X-INEFFICIENCY: no organisational slack, must optimise, 4) ECONOMIES OF SCALE: grow to achieve lower AC, 5) INNOVATION: process innovations reduce production costs. Examples: manufacturing competition drove lean production (Toyota), retail competition forced efficiency (Walmart), airlines lowered costs under competition." },
+    { question: "How does competition improve product quality?", options: ["Quality declines under competition","Firms compete on quality to differentiate — invest in R&D, better materials, improved features, reliability — or lose customers to superior competitors","Only price matters","Monopoly has better quality"], correct: 1, explanation: "QUALITY COMPETITION: 1) DIFFERENTIATION: avoid price wars, compete on superior quality (phone features, car reliability), 2) REPUTATION: quality builds brand value, repeat customers (Toyota reliability), 3) SURVIVAL: inferior quality → lose market share → exit, 4) INNOVATION: continuous improvement to stay ahead (annual phone upgrades), 5) STANDARDS RISE: competitive ratchet — each improvement sets new baseline. Evidence: consumer electronics quality explosion (competition drove smartphone revolution), car reliability improved massively (Japanese competition)." },
+    { question: "What is the role of entrepreneurship in creative destruction?", options: ["Entrepreneurs don't matter","Entrepreneurs identify opportunities, innovate, challenge incumbents, drive market entry, reallocate resources to more productive uses","Only large firms innovate","No role in markets"], correct: 1, explanation: "ENTREPRENEURIAL ROLE: 1) IDENTIFY OPPORTUNITIES: see unmet needs, inefficiencies (Uber saw taxi inefficiency), 2) INNOVATE: new products, business models, technologies (Netflix vs Blockbuster), 3) CHALLENGE INCUMBENTS: disrupt comfortable monopolies/oligopolies, 4) RESOURCE REALLOCATION: attract capital/labour from declining to growing sectors, 5) ACCEPT RISK: invest despite uncertainty. Schumpeter: entrepreneurs are ENGINE of creative destruction, without them capitalism stagnates. Competition provides INCENTIVE (profit), contestability provides OPPORTUNITY (low barriers)." },
+    { question: "How does competition affect service quality?", options: ["Service declines","Firms improve customer service, responsiveness, convenience, after-sales support to retain customers — competitive advantage through better service","Service unaffected","Only products matter"], correct: 1, explanation: "SERVICE COMPETITION: 1) CUSTOMER SERVICE: responsiveness, helpfulness (John Lewis 'never knowingly undersold'), 2) CONVENIENCE: opening hours, locations, online options (Amazon Prime delivery), 3) EXPERIENCE: pleasant shopping environment (Apple Store design), 4) AFTER-SALES: warranties, returns, maintenance, 5) LOYALTY PROGRAMS: rewards for repeat business (airline miles). Evidence: retail competition improved service, restaurant competition raised standards, banking competition improved online services. Monopoly: can provide poor service (captive customers, no alternatives)." },
+    { question: "What are examples of creative destruction?", options: ["No real examples exist","Digital cameras destroying film/Kodak, streaming destroying video rental/Blockbuster, Amazon disrupting retail, email reducing postal service, smartphones replacing multiple devices","Only small changes","Government destroys firms"], correct: 1, explanation: "CREATIVE DESTRUCTION EXAMPLES: 1) PHOTOGRAPHY: digital cameras destroyed film industry (Kodak, Polaroid bankrupt), now smartphones destroying standalone cameras, 2) VIDEO RENTAL: Netflix streaming destroyed Blockbuster, 3) RETAIL: Amazon disrupted high street (Woolworths, Toys R Us gone), 4) MUSIC: Spotify streaming destroyed CD sales, HMV struggled, 5) TRANSPORT: Uber challenged taxis, 6) COMMUNICATION: email reduced postal mail, WhatsApp disrupted SMS, 7) BOOKS: Kindle challenged physical bookshops. Pattern: innovation creates better/cheaper alternative, consumers switch, old firms decline, resources reallocate." },
+    { question: "How do regulations affect contestability?", options: ["Regulations always increase contestability","Licensing requirements, safety standards, planning permissions can reduce contestability by creating entry barriers; deregulation increases contestability by removing barriers","No effect on contestability","Only helps competition"], correct: 1, explanation: "REGULATIONS AND CONTESTABILITY: REDUCE contestability: 1) LICENSING: taxis, pharmacies, solicitors (limited entry), 2) PLANNING PERMISSION: retail planning restrictions, 3) SAFETY STANDARDS: compliance costs (aviation safety), 4) PROFESSIONAL QUALIFICATIONS: doctors, lawyers, 5) PATENTS: 20-year monopoly protection. INCREASE contestability: 1) DEREGULATION: remove unnecessary barriers (airline deregulation), 2) COMPETITION LAW: prevent anti-competitive practices. Trade-off: regulation protects consumers (safety, quality) but reduces competition. Need PROPORTIONATE regulation." },
+    { question: "What is the significance of mobile capital for contestability?", options: ["Mobility doesn't matter","Mobile capital (aircraft, trucks) can be redeployed to other markets, making exit costless — increases contestability; fixed capital (railways, pipes) creates sunk costs — reduces contestability","All capital is fixed","Only labour matters"], correct: 1, explanation: "CAPITAL MOBILITY crucial: MOBILE CAPITAL: 1) AIRCRAFT: can redeploy to different routes, airports — airline routes CONTESTABLE, 2) TRUCKS/BUSES: move to profitable routes — road transport CONTESTABLE, 3) ONLINE PLATFORMS: minimal physical capital, easily exit — tech markets MORE CONTESTABLE. FIXED/SUNK CAPITAL: 1) RAILWAY TRACKS: route-specific — NON-CONTESTABLE, 2) PIPELINES: oil, gas, water infrastructure — NON-CONTESTABLE, 3) ELECTRICITY GRID: massive fixed investment — NON-CONTESTABLE. Mobility = low exit costs = contestability." },
+    { question: "How does access to technology affect contestability?", options: ["Technology access irrelevant","If entrants can access same technology as incumbents, market more contestable; proprietary technology, patents, trade secrets reduce contestability by giving incumbents advantage","Only incumbents have technology","Technology reduces competition"], correct: 1, explanation: "TECHNOLOGY ACCESS: INCREASES CONTESTABILITY: 1) OPEN-SOURCE: anyone can use Linux technology, 2) OFF-THE-SHELF: standard equipment available to all, 3) LICENSING: technology available for fee (Intel chips), 4) REVERSE ENGINEERING: legal to copy once patent expires. REDUCES CONTESTABILITY: 1) PATENTS: 20-year monopoly on inventions (pharmaceuticals), 2) TRADE SECRETS: Coca-Cola formula, Google algorithm, 3) NETWORK EFFECTS: Facebook's network itself is advantage, 4) LEARNING CURVES: incumbent experience advantage (Boeing)." },
+    { question: "What is the prisoner's dilemma relationship to competition and collusion?", options: ["No relationship exists","Competition is dominant strategy in one-shot game, but repeated interaction and contestability threat can sustain cooperation; entry threat prevents collusion in contestable markets","Always cooperate","Competition impossible"], correct: 1, explanation: "CONTESTABILITY AND COLLUSION: HIGH CONTESTABILITY prevents collusion because: 1) ENTRY THREAT: if firms collude (raise prices), entrant enters, undercuts, takes profit, 2) UNSTABLE: can't maintain high prices with low entry barriers. LOW CONTESTABILITY enables collusion: 1) NO ENTRY THREAT: high barriers protect cartel from outsiders, 2) REPEATED INTERACTION: oligopolists sustain cooperation over time, 3) RETALIATION POSSIBLE: punish cheating. Policy: increase contestability to break collusion without prosecuting firms." },
+    { question: "How does brand loyalty affect contestability?", options: ["Increases contestability","Strong brand loyalty acts as barrier — customers won't switch despite better price/quality from entrant — reduces contestability; weak brand loyalty increases contestability","No effect","Eliminates all entry"], correct: 1, explanation: "BRAND LOYALTY AS BARRIER: REDUCES CONTESTABILITY: 1) SWITCHING COSTS: psychological attachment to brand (Apple), 2) RISK AVERSION: tried-and-tested vs unknown entrant, 3) HABITUAL PURCHASING: don't search alternatives (Coca-Cola), 4) STATUS: luxury brands signal wealth (Rolex), 5) NETWORK EFFECTS: everyone uses it (Microsoft Office). Result: entrant can't simply undercut price — must invest heavily in advertising to overcome loyalty. INCREASES SUNK COSTS for entry. Examples: NON-CONTESTABLE: Coca-Cola, Apple (strong loyalty); MORE CONTESTABLE: generic goods, commodities (petrol — low loyalty)." },
+    { question: "What is the relationship between economies of scale and contestability?", options: ["Scale doesn't affect contestability","Large economies of scale (high MES relative to market) create natural barriers — incumbent has cost advantage, entrant can't match price at small scale — reduces contestability","Scale increases contestability","No relationship"], correct: 1, explanation: "ECONOMIES OF SCALE AND CONTESTABILITY: LARGE ECONOMIES: 1) HIGH MES: need large output to achieve low AC (aircraft manufacturing, chip fabrication), 2) INCUMBENT ADVANTAGE: established firm already at efficient scale, 3) ENTRANT DISADVANTAGE: small-scale entry has high AC, can't match incumbent prices, 4) NATURAL MONOPOLY: MES = entire market. Result: REDUCES CONTESTABILITY. SMALL ECONOMIES: MES small relative to market, many firms can operate efficiently, INCREASES CONTESTABILITY. Examples: NON-CONTESTABLE: utilities, MORE CONTESTABLE: restaurants, hairdressers (low MES)." },
+    { question: "How does competition lead to innovation?", options: ["Competition reduces innovation","Innovate or lose market share — R&D race, patent race, first-mover advantage, creative destruction replaces non-innovators with innovators","Only monopoly innovates","No innovation pressure"], correct: 1, explanation: "COMPETITION DRIVES INNOVATION: 1) SURVIVAL: innovate or lose to competitors with better products (Nokia vs smartphones), 2) R&D RACE: compete to develop new products first (pharmaceutical patents), 3) FIRST-MOVER ADVANTAGE: early innovator gains market share (iPhone), 4) PRODUCT DIFFERENTIATION: innovation avoids price competition (car features), 5) PROCESS INNOVATION: reduce costs, underprice rivals, 6) CREATIVE DESTRUCTION: non-innovators replaced (Blockbuster vs Netflix). Evidence: smartphone competition drove rapid innovation, retail competition forced efficiency/online adoption." },
+    { question: "What is the policy significance of contestability theory?", options: ["Policies should ignore contestability","Focus on reducing barriers to entry/exit rather than breaking up firms — contestability can achieve competition benefits even with few firms if market contestable","Always break up monopolies","Structure is all that matters"], correct: 1, explanation: "POLICY IMPLICATIONS: 1) DEREGULATION: remove unnecessary entry barriers (professional licensing, planning), 2) REDUCE SUNK COSTS: policies encouraging mobile capital, redeployable assets, 3) PREVENT ANTI-COMPETITIVE PRACTICES: predatory pricing, exclusive dealing (deter entry), 4) PROMOTE INFORMATION: transparency helps entry decisions, 5) DON'T BREAK UP if CONTESTABLE: few firms acceptable if market contestable (airline routes). Shift from STRUCTURE focus (number of firms) to CONDUCT focus (behaviour). Trade-off: natural monopoly (scale benefits) + regulation vs forced competition." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — 3 columns
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Low or zero sunk costs — capital can be redeployed without loss", category: "contestable" },
+    { text: "Free entry — no legal, technical or financial barriers to entering", category: "contestable" },
+    { text: "Free exit — no costs or penalties for leaving market", category: "contestable" },
+    { text: "Access to same technology as incumbents", category: "contestable" },
+    { text: "Mobile capital equipment (aircraft, trucks) easily redeployed", category: "contestable" },
+    { text: "Low customer/brand loyalty — consumers switch easily", category: "contestable" },
+    { text: "Rapid entry and exit possible before incumbent retaliation", category: "contestable" },
+    { text: "High sunk costs — specialised investment cannot be recovered", category: "noncontestable" },
+    { text: "Significant legal barriers — patents, licences, regulations", category: "noncontestable" },
+    { text: "Large economies of scale giving incumbents cost advantages", category: "noncontestable" },
+    { text: "Strong brand loyalty creating customer switching costs", category: "noncontestable" },
+    { text: "Network effects favouring established incumbents", category: "noncontestable" },
+    { text: "Fixed/specialised capital (railways, pipelines) cannot be moved", category: "noncontestable" },
+    { text: "Long time lag for entry allowing incumbent response", category: "noncontestable" },
+    { text: "Lower prices for consumers through competitive pressure", category: "benefits" },
+    { text: "Innovation and new products through R&D competition", category: "benefits" },
+    { text: "Improved product quality and service standards", category: "benefits" },
+    { text: "Cost reduction and productive efficiency gains", category: "benefits" },
+    { text: "Dynamic efficiency — technological progress over time", category: "benefits" },
+    { text: "Greater consumer choice and variety", category: "benefits" },
+    { text: "Creative destruction replacing inefficient with efficient firms", category: "benefits" }
+];
+
+let selectedSortingItem = null;
+let sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['contestable','noncontestable','benefits'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two independent passages
+══════════════════════════════════════ */
+const fillData = {
+    1: {
+        answers: ["entry","Sunk","recovered","reduces","Hit","profit","competitively","mobile","technology","sunk","licenses","loyalty","monopoly","threat"],
+        template: "A contestable market has low or zero barriers to [0] and exit, where the threat of potential competition disciplines incumbent behaviour even without actual competition. [1] costs are expenditures that cannot be [2] when exiting the market, such as specialised equipment or advertising. High sunk costs [3] contestability by deterring entry. [4]-and-run competition occurs when an entrant enters quickly, undercuts the incumbent's price, takes [5], and exits before retaliation. This threat forces incumbents to price [6]. Contestability is increased by: low sunk costs, [7] capital equipment like aircraft that can be redeployed, access to the same [8] as incumbents, and rapid entry/exit. Contestability is reduced by: high [9] costs, legal barriers like patents and [10], large economies of scale, strong brand [11], and network effects. The significance of contestability is that even a [12] can behave competitively if the market is highly contestable. The [13] of entry matters more than actual entry in disciplining incumbent firms to price competitively and operate efficiently."
+    },
+    2: {
+        answers: ["lower","efficiency","efficiency","quality","service","destruction","film","Blockbuster","profits","barriers","process","reallocated","benefits"],
+        template: "Competition provides both short-run and long-run benefits. Short-run benefits include [0] prices, allocative efficiency (P closer to MC), productive [1] pressure, and elimination of X-inefficiency. Long-run benefits include dynamic [2] through innovation, new products, R&D investment, and technological progress. Firms compete beyond price through [3] improvements, innovation and R&D, customer [4], branding, product variety, and convenience. Creative [5] is the process identified by Schumpeter where innovation continuously replaces outdated firms and products. Examples include digital cameras destroying the [6] industry and Kodak, streaming services like Netflix destroying [7], and Amazon disrupting traditional retail. Large monopoly [8] signal opportunities and attract new firms to enter, innovate to overcome [9], and develop better products. This drives the creative destruction process. Competition is a fundamental [10] that operates through entrepreneurship identifying opportunities, innovation challenging incumbents, and resources being [11] to more productive uses. Even with few actual competitors, high contestability can achieve competition [12] by threatening hit-and-run entry that disciplines incumbent behaviour."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+/* ══════════════════════════════════════
+   MATCH GAMES (shared engine)
+══════════════════════════════════════ */
+const matchData = {
+    1: {
+        pairs: [
+            { concept: "Sunk Costs", definition: "Costs that cannot be recovered when exiting a market" },
+            { concept: "Hit-and-Run Competition", definition: "Entering, undercutting, taking profit, and exiting before retaliation" },
+            { concept: "Contestable Market", definition: "Market where threat of entry disciplines incumbent behaviour" },
+            { concept: "Mobile Capital", definition: "Equipment that can be redeployed to other markets without loss" },
+            { concept: "Barrier to Entry", definition: "Obstacles that prevent or deter new firms from entering a market" },
+            { concept: "X-Inefficiency", definition: "Operating above minimum cost due to lack of competitive pressure" },
+            { concept: "Potential Competition", definition: "Threat of new entrants that disciplines existing firms" },
+            { concept: "Market Power", definition: "Ability of a firm to influence price above competitive level" }
+        ]
+    },
+    2: {
+        pairs: [
+            { concept: "Digital Cameras", definition: "Film industry and Kodak" },
+            { concept: "Netflix Streaming", definition: "Video rental stores like Blockbuster" },
+            { concept: "Email", definition: "Traditional postal mail services" },
+            { concept: "Amazon", definition: "High street retail stores" },
+            { concept: "Spotify", definition: "CD sales and music stores" },
+            { concept: "Uber", definition: "Traditional taxi monopolies" },
+            { concept: "Smartphones", definition: "Standalone cameras, GPS devices, MP3 players" },
+            { concept: "Online Banking", definition: "High street bank branches" }
+        ]
+    }
+};
+
+const matchState = {
+    1: { selected: null, selectedSide: null, matched: 0, init: false },
+    2: { selected: null, selectedSide: null, matched: 0, init: false }
+};
+
+function initMatch(n) {
+    if (matchState[n].init) return;
+    matchState[n].init = true;
+    matchState[n].selected = null; matchState[n].selectedSide = null; matchState[n].matched = 0;
+    document.getElementById(`matchResult${n}`).classList.remove('show');
+    const pairs = matchData[n].pairs;
+    const shuffled = [...pairs].sort(()=>Math.random()-0.5);
+    document.getElementById(`matchTerms${n}`).innerHTML = pairs.map(p =>
+        `<button class="match-item" data-mid="${n}" data-key="${p.concept.replace(/'/g,'&#39;')}" data-side="L" onclick="selectMatchItem(${n},'${p.concept.replace(/'/g,"&#39;")}','L',this)">${p.concept}</button>`
+    ).join('');
+    document.getElementById(`matchDefs${n}`).innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-mid="${n}" data-key="${p.concept.replace(/'/g,'&#39;')}" data-side="R" onclick="selectMatchItem(${n},'${p.concept.replace(/'/g,"&#39;")}','R',this)">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress(n);
+}
+
+function selectMatchItem(n, key, side, el) {
+    if (el.classList.contains('matched')) return;
+    const state = matchState[n];
+    if (state.selected === key && state.selectedSide === side) {
+        el.classList.remove('selected'); state.selected = null; state.selectedSide = null; return;
+    }
+    document.querySelectorAll(`[data-mid="${n}"][data-side="${side}"]`).forEach(e => e.classList.remove('selected'));
+    if (state.selectedSide && state.selectedSide !== side) {
+        // Two sides selected — try match
+        const otherKey = state.selected;
+        const otherEl = document.querySelector(`[data-mid="${n}"][data-key="${otherKey}"][data-side="${state.selectedSide}"]`);
+        if (key === otherKey) {
+            el.classList.add('matched'); if (otherEl) { otherEl.classList.add('matched'); otherEl.classList.remove('selected'); }
+            state.matched++; updateMatchProgress(n);
+            if (state.matched === matchData[n].pairs.length) {
+                setTimeout(() => { const r = document.getElementById(`matchResult${n}`); r.textContent='🎉 All pairs matched!'; r.className='inline-result show success'; }, 300);
+            }
+        } else {
+            el.classList.add('wrong'); if (otherEl) otherEl.classList.add('wrong');
+            setTimeout(() => { el.classList.remove('wrong','selected'); if (otherEl) otherEl.classList.remove('wrong','selected'); }, 800);
+        }
+        state.selected = null; state.selectedSide = null;
+    } else {
+        state.selected = key; state.selectedSide = side; el.classList.add('selected');
+    }
+}
+
+function updateMatchProgress(n) {
+    document.getElementById(`matchProgress${n}`).textContent = `${matchState[n].matched} / ${matchData[n].pairs.length} matched`;
+}
+
+function resetMatch(n) { matchState[n].init = false; initMatch(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

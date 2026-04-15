@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Labour Market Discrimination Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* PROGRESS */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* MCQ */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        /* BUTTONS */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* RESULT PANEL */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* INLINE RESULT */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING — 3 columns */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* FILL IN BLANK */
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Labour Market Discrimination Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_labdisc_game_pw';
+  var valid = ['LabDisc-4Xv!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['LabDisc-4Xv!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_labdisc_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Labour Market Discrimination</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Types, Causes & Effects of Discrimination</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('types')">
+                <span class="col-label">📋 Types of Discrimination</span>
+                <div class="sort-items" id="types"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('causes')">
+                <span class="col-label">💰 Gender Pay Gap Causes</span>
+                <div class="sort-items" id="causes"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('effects')">
+                <span class="col-label">📊 Economic Effects</span>
+                <div class="sort-items" id="effects"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: MISSING WORDS ══ -->
+    <div class="tab-content">
+        <!-- Passage 1 -->
+        <span class="mono-label">Missing Words — Two Passages</span>
+        <span class="passage-title" style="margin-top:0">Passage 1: Wage Discrimination Theory</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Passage 2 -->
+        <span class="passage-title">Passage 2: Gender &amp; Ethnic Pay Gaps</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What are the necessary conditions for wage discrimination to occur?", options: ["No conditions needed","Perfect competition only","Only government intervention","Employer must have market power, ability to identify groups, groups must differ in supply elasticity, and arbitrage must be prevented"], correct: 3, explanation: "Wage discrimination requires: 1) MONOPSONY POWER: employer can set wages (not wage taker), 2) IDENTIFY GROUPS: can distinguish workers by characteristics (gender, ethnicity, age), 3) DIFFERENT ELASTICITIES: groups differ in willingness to accept lower wages (different labour supply elasticity), 4) PREVENT ARBITRAGE: groups can't switch identities or negotiate collectively. Without these, competition would eliminate wage differences." },
+    { question: "What is the UK gender pay gap (2024)?", options: ["Perfect equality achieved","No gap exists","Women earn approximately 14–15% less than men on average","Women earn more than men"], correct: 2, explanation: "UK gender pay gap (ONS 2024): median hourly pay for all employees, women earn ~14–15% less than men. For FULL-TIME only, gap is smaller (~8–9%) as part-time work (disproportionately female) pays less. Gap has narrowed from ~27% in 1997 but progress stalled recently. Gap varies by age (larger for 40+), sector (larger in finance, smaller in public sector), and region." },
+    { question: "What is direct discrimination in the labour market?", options: ["Treating individuals less favourably explicitly because of protected characteristics (gender, race, age)","Market-driven differences","Unintentional differences only","Productivity-based pay"], correct: 0, explanation: "Direct discrimination is EXPLICIT unequal treatment based on protected characteristics (gender, race, ethnicity, age, disability, religion, sexual orientation). Example: paying a woman £30k and a man £35k for an identical job with the same performance. This is ILLEGAL under the Equality Act 2010. However, proving direct discrimination is difficult — employers rarely admit it, and may disguise it as performance or experience differences." },
+    { question: "What is indirect discrimination?", options: ["Obvious unequal treatment","Direct wage differences","Policies/practices that appear neutral but disproportionately disadvantage certain groups","Legal pay structures"], correct: 2, explanation: "Indirect discrimination: apparently neutral policies with disproportionate impact. Examples: 1) Requiring full-time work excludes mothers with childcare duties, 2) Requiring height/physical strength excludes women unless justified, 3) Promotion requiring long hours/travel disadvantages carers, 4) 'Culture fit' selection perpetuates homogeneous workforce. Can be LEGAL if objectively justified by business needs. Often unintentional but creates inequality." },
+    { question: "What is statistical discrimination?", options: ["Using group averages to make decisions about individuals","Illegal in all cases","Always accurate","Using accurate individual assessments only"], correct: 0, explanation: "Statistical discrimination: employers use GROUP characteristics to predict INDIVIDUAL behaviour due to imperfect information. Examples: 1) Assume young women will have children (career break), so invest less in training — becomes self-fulfilling as fewer opportunities arise, 2) Assume older workers are less adaptable to technology, 3) Stereotype ethnic minorities as less reliable. May be RATIONAL for individual employers (information problems) but socially inefficient and unfair — penalises individuals based on group stereotypes." },
+    { question: "What is taste-based discrimination (Becker model)?", options: ["Employers, workers, or customers have prejudice","Statistical analysis of wages","Discrimination based on worker ability","Legal preferences"], correct: 0, explanation: "Gary Becker's theory: some employers have a 'taste for discrimination' — prejudice against certain groups (gender, race), acting as if discriminated workers cost more. Example: a prejudiced employer values a woman's work as £30k but a man's as £35k for identical productivity. Willing to sacrifice profit to avoid hiring the disfavoured group. In competitive markets, non-discriminating firms have a cost advantage and should drive discriminators out. However, discrimination persists due to imperfect competition, customer/employee discrimination, and market power." },
+    { question: "What factors contribute to the gender pay gap?", options: ["Pure discrimination only","No real causes","Occupational segregation, career breaks for childcare, part-time work penalties, glass ceiling limiting promotions, and discrimination","Women work less hard"], correct: 2, explanation: "Multiple factors: 1) OCCUPATIONAL SEGREGATION: women concentrated in lower-paid sectors (care, admin vs STEM, finance), 2) CAREER BREAKS: maternity leave creates experience gaps and lower progression, 3) PART-TIME PENALTY: part-time roles (70% female) have lower hourly pay and fewer promotions, 4) GLASS CEILING: women underrepresented in senior positions (FTSE 100 CEOs ~7% women), 5) DISCRIMINATION: taste-based and statistical, 6) NEGOTIATION: evidence women negotiate less aggressively. These factors interact and reinforce each other." },
+    { question: "What is occupational segregation and how does it affect pay gaps?", options: ["All occupations have equal gender representation","Women and men concentrated in different occupations/sectors","Only affects men negatively","Has no pay implications"], correct: 1, explanation: "Occupational segregation: women concentrated in the '5 Cs' — Caring, Cashiering, Catering, Cleaning, Clerical. Men dominate STEM, construction, finance. Female-dominated occupations pay LESS even with similar skill levels. Causes: 1) Social conditioning/stereotypes, 2) Education choices (fewer girls in STEM), 3) Work–life balance (caring jobs more flexible), 4) Discrimination in hiring, 5) Historical factors. Explains ~30–40% of the gender pay gap." },
+    { question: "What is the 'glass ceiling' and how does it affect gender pay?", options: ["Invisible barrier preventing women reaching top positions despite qualifications","Government legislation","Only affects the construction industry","A literal barrier in offices"], correct: 0, explanation: "Glass ceiling: qualified women can't reach senior positions. UK evidence: Women are 51% of the workforce but ~34% of managers and ~7% of FTSE 100 CEOs. The gap WIDENS at the top: young women and men have similar pay, but by their 40s a large gap emerges. Causes: 1) Lack of flexible senior roles, 2) Male-dominated networks/mentoring, 3) Unconscious bias in promotion decisions, 4) Work–life balance harder at senior levels." },
+    { question: "What is the ethnic pay gap in the UK?", options: ["Varies by ethnicity — Pakistani/Bangladeshi workers earn ~20% less, while Indian and Chinese workers earn similar or more","No ethnic pay differences exist","Only affects one ethnic group","All minorities earn identical amounts"], correct: 0, explanation: "UK ethnic pay gap varies significantly: Pakistani/Bangladeshi ~80% of white British median (20% lower); Black African/Caribbean ~85–90%; Indian ~100–105%; Chinese ~105–110%. However, controlling for education and location reduces gaps. Younger generations show smaller gaps. Female ethnic minorities face a 'double disadvantage' (gender + ethnicity). Sectors vary: financial services has larger gaps, the public sector smaller." },
+    { question: "What factors contribute to ethnic pay gaps?", options: ["Laziness of workers","No identifiable factors","Educational attainment differences, English language proficiency, discrimination","Only direct discrimination"], correct: 2, explanation: "Multiple factors: 1) EDUCATION: varies by ethnicity (Chinese/Indian high university rates; Pakistani/Bangladeshi lower), 2) LANGUAGE: English proficiency affects employability, especially for first-generation immigrants, 3) DISCRIMINATION: name-blind recruitment studies show bias (non-white names need 60% more applications for interview), 4) OCCUPATIONAL SEGREGATION: ethnic minorities underrepresented in senior positions, 5) NETWORKS: limited access to informal hiring channels, 6) GEOGRAPHY: concentration in high/low opportunity areas." },
+    { question: "What is the 'motherhood penalty'?", options: ["Affects fathers equally","Women's earnings fall after having children due to career breaks, part-time work, occupational downgrading, and reduced progression opportunities","A government tax on mothers","Only a temporary effect"], correct: 1, explanation: "Motherhood penalty: women's wages drop ~30–40% after their first child (compared to pre-birth trajectory), persisting 10+ years. Causes: 1) CAREER BREAKS: maternity leave creates experience gaps and skills depreciation, 2) PART-TIME WORK: reduced hours to accommodate childcare, 3) OCCUPATIONAL DOWNGRADING: taking lower-level jobs for flexibility, 4) REDUCED PROGRESSION: missing promotions/training, 5) STATISTICAL DISCRIMINATION: employers assume all young women will leave. Contrast: 'fatherhood premium' — men's wages INCREASE after having children." },
+    { question: "How does age discrimination affect labour markets?", options: ["No economic impact","Only affects retirement age","Older workers face hiring discrimination, lower training investment, forced early retirement, and stereotypes; younger workers face experience requirements","Age doesn't affect employment"], correct: 2, explanation: "Age discrimination affects both young and old: OLDER WORKERS (50+): 1) Hiring bias ('overqualified', 'inflexible'), 2) Less training investment (shorter payback), 3) Early retirement pressure, 4) Stereotypes (tech-averse, health issues), 5) Harder to find work after redundancy. YOUNGER WORKERS: 1) Experience requirements exclude entry, 2) Unpaid internships favour the wealthy, 3) Lower minimum wage (under 21), 4) 'Millennials/Gen Z are entitled' stereotypes. UK Employment Equality (Age) Regulations 2006 ban age discrimination but it is hard to prove." },
+    { question: "What is a potential 'advantage' of wage discrimination for employers?", options: ["Attracts the best talent","May reduce labour costs by exploiting lower bargaining power/elasticity of supply of discriminated groups","Improves firm reputation","Eliminates all labour market problems"], correct: 1, explanation: "Employer 'advantages' (morally questionable, economically short-term): 1) LOWER COSTS: pay discriminated workers less than their MRP, increasing profits, 2) EXPLOIT INELASTIC SUPPLY: women with caring responsibilities have fewer alternatives and accept lower wages. However, DISADVANTAGES for the employer: 1) Miss talented workers (inefficient), 2) Reputation damage, 3) Legal risks (fines, lawsuits), 4) Lower morale/productivity, 5) Loses competitive advantage to non-discriminating firms. Long-run: discrimination is INEFFICIENT even for discriminators." },
+    { question: "What are the disadvantages of wage discrimination for workers?", options: ["No negative effects","Workers all benefit equally","Lower wages, reduced career opportunities, occupational crowding into low-paid sectors, demotivation and lower job satisfaction","Only affects employers"], correct: 2, explanation: "Worker disadvantages: 1) LOWER WAGES: paid below MRP/productivity, 2) REDUCED OPPORTUNITIES: excluded from high-paying jobs/sectors/promotions, 3) OCCUPATIONAL CROWDING: pushed into limited sectors, depressing wages there further, 4) HUMAN CAPITAL: less training investment and reduced skills development, 5) PSYCHOLOGICAL: demotivation, stress, lower self-esteem, 6) BARGAINING POWER: discrimination reduces outside options, weakening negotiation position, 7) POVERTY: contributes to income inequality and poverty risk." },
+    { question: "What are the economic efficiency costs of discrimination for the whole economy?", options: ["No macroeconomic effects","Improves economic efficiency","Only affects discriminated groups","Misallocation of labour, lost output, reduced productivity, deadweight loss, and reduced innovation"], correct: 3, explanation: "Economy-wide costs: 1) MISALLOCATION: talented workers in the wrong jobs/sectors (square pegs in round holes), 2) LOST OUTPUT: underutilised human capital, economy produces below potential, 3) REDUCED PRODUCTIVITY: discrimination discourages investment in skills/education for discriminated groups, 4) DEADWEIGHT LOSS: mutually beneficial employment relationships don't occur, 5) INNOVATION: less diversity reduces creativity/problem-solving, 6) INEQUALITY: worsens income distribution, creates social tension. Studies suggest eliminating gender gaps could increase GDP by 10%+." },
+    { question: "How do equal pay laws attempt to reduce discrimination?", options: ["Only apply to the public sector","Make all wages identical","Have no enforcement mechanism","Require equal pay for equal work or work of equal value; mandatory gender pay gap reporting for large firms; burden of proof on employers"], correct: 3, explanation: "UK equal pay legislation — EQUALITY ACT 2010: 1) EQUAL PAY FOR EQUAL WORK: same job = same pay, 2) WORK OF EQUAL VALUE: different jobs with similar skill/effort/responsibility must pay equally, 3) PROTECTED CHARACTERISTICS: covers gender, race, age, disability, etc., 4) BURDEN OF PROOF: employers must justify pay differences. GENDER PAY GAP REPORTING: firms with 250+ employees must publish their gap annually, creating 'name and shame' pressure. However: hard to prove discrimination, occupational segregation is not directly addressed, and legal action is expensive." },
+    { question: "What is the 'like for like' vs 'overall' gender pay gap?", options: ["'Like for like' compares same job/seniority (~2–5%), while the overall gap (~14–15%) reflects structural inequality including occupational segregation","No meaningful difference","The overall gap is always zero","They are identical measures"], correct: 0, explanation: "LIKE FOR LIKE: comparing men/women in identical roles with the same experience/performance — gap ~2–5% (mostly unexplained, likely discrimination). OVERALL/AVERAGE: comparing all male vs all female employees regardless of job — gap ~14–15%. The large overall gap reflects: 1) OCCUPATIONAL SEGREGATION: women in lower-paid roles, 2) GLASS CEILING: fewer women in senior positions, 3) PART-TIME CONCENTRATION: women in lower-paid flexible roles. Both measures are important: like-for-like shows direct discrimination, overall shows structural inequality." },
+    { question: "How does childcare provision affect gender pay gaps?", options: ["Childcare is irrelevant to pay","Affordable, accessible childcare enables mothers to work full-time, maintain career progression, and reduce the motherhood penalty","Only affects fathers","No relationship exists"], correct: 1, explanation: "Childcare is crucial for gender pay equality. UK CHILDCARE COSTS (highest in Europe): ~£250/week per child in nursery. Effect: many mothers work part-time or leave the workforce (not economically viable to work). INTERNATIONAL EVIDENCE: Nordic countries with subsidised universal childcare have the smallest gender pay gaps (~5–10%), while the UK/US with expensive childcare have larger gaps (~14–15%). Mechanisms: 1) Enables full-time work, 2) Maintains career progression, 3) Reduces occupational downgrading, 4) Allows training participation." },
+    { question: "What is the 'double disadvantage' faced by ethnic minority women?", options: ["No compounding effects exist","Only one form affects them","They have advantages over others","Ethnic minority women face both gender discrimination AND racial discrimination, resulting in larger pay gaps than white women or ethnic minority men"], correct: 3, explanation: "INTERSECTIONALITY: ethnic minority women face combined/compounded discrimination. UK DATA: Pakistani/Bangladeshi women earn ~40–50% less than white British men (compared to ~20% for Pakistani/Bangladeshi men, ~15% for white British women). Factors: 1) Both gender AND ethnic discrimination in hiring/promotion, 2) Occupational segregation (concentrated in low-paid care/service roles), 3) Cultural barriers (some communities discourage female employment), 4) Statistical discrimination (stereotyped as unreliable), 5) Language barriers (especially first-generation)." },
+    { question: "How does discrimination affect labour market flexibility and efficiency?", options: ["No effect on flexibility","Improves flexibility and efficiency","Reduces flexibility by limiting labour mobility; reduces efficiency through talent misallocation, occupational crowding, and suboptimal matches","Only affects wages"], correct: 2, explanation: "Discrimination reduces efficiency: 1) BARRIERS TO ENTRY: discriminated groups can't enter best-suited occupations, 2) OCCUPATIONAL CROWDING: concentration in limited sectors creates oversupply there (depressing wages), undersupply in excluded sectors (raising wages inefficiently), 3) MISMATCH: workers in the wrong jobs for their skills, 4) MOBILITY: discrimination creates 'stickiness' — workers can't move to opportunities, 5) COMPETITIVE ADVANTAGE: non-discriminating firms should outcompete discriminators but market imperfections prevent this. Result: economy operates inside its PPF." },
+    { question: "What role does unconscious bias play in labour market discrimination?", options: ["Unconscious stereotypes and associations cause unintentional discrimination in hiring, promotion, and pay decisions","All discrimination is conscious and deliberate","Only affects uneducated people","Bias doesn't exist"], correct: 0, explanation: "Unconscious (implicit) bias: automatic stereotypes affecting decisions without awareness. Evidence: 1) NAME-BLIND STUDIES: identical CVs with white vs ethnic minority names — minority names need 60% more applications for callbacks, 2) ORCHESTRA AUDITIONS: blind auditions increased female musicians by 25–50%, 3) ACADEMIC HIRING: identical papers rated lower when attributed to women. Occurs in: hiring, performance reviews, pay decisions, and promotion panels. Even well-meaning people exhibit bias. Solutions: structured interviews, blind recruitment, diverse panels, bias training (limited evidence)." },
+    { question: "What is the role of trade unions in reducing discrimination?", options: ["Unions worsen discrimination","Only increase discrimination","Unions don't address discrimination","Unions can reduce discrimination through collective bargaining for equal pay and transparent pay scales, but may perpetuate inequality through insider-outsider effects"], correct: 3, explanation: "Union role — POSITIVE: 1) COLLECTIVE BARGAINING: negotiate equal pay clauses, transparent pay scales reduce discrimination, 2) REPRESENTATION: challenge discriminatory dismissals/promotions, 3) VOICE: workers less afraid to report discrimination, 4) TRAINING: educate members on equality, 5) POLITICAL PRESSURE: lobby for equality legislation. NEGATIVE: 1) HISTORICAL EXCLUSION: some unions historically excluded minorities/women, 2) INSIDER-OUTSIDER: protect existing (often white male) members over new entrants, 3) SENIORITY SYSTEMS: disadvantage groups with career breaks. Overall: unions generally reduce discrimination but are not perfect." },
+    { question: "What is the debate about diversity targets/quotas in addressing discrimination?", options: ["SUPPORTERS: targets necessary to break entrenched discrimination, increase representation, role models; CRITICS: 'reverse discrimination,' tokenism, undermines meritocracy, stigmatises beneficiaries","No debate exists","Universally accepted as the solution","All economists oppose quotas"], correct: 0, explanation: "CASE FOR QUOTAS: 1) Break self-perpetuating discrimination, 2) Fast-track equality (voluntary approaches too slow), 3) Diverse boards/teams perform better (evidence mixed), 4) Signal commitment to equality. CASE AGAINST: 1) 'Reverse discrimination' against the majority, 2) Undermines meritocracy (appearance of appointing based on characteristics not merit), 3) Stigmatises beneficiaries ('only got job due to quota'), 4) May reduce standards if insufficient qualified candidates, 5) Treats symptoms not causes. UK: voluntary targets for boards (33% women in FTSE 100), no mandatory quotas." },
+    { question: "How does monopsony power enable wage discrimination?", options: ["Monopsonist can price discriminate by paying different wages to groups with different labour supply elasticity","Monopsony eliminates discrimination","Perfect competition enables more discrimination","Market power is irrelevant"], correct: 0, explanation: "Monopsony enables discrimination through differential pay: If women have inelastic labour supply (caring responsibilities, discrimination elsewhere limits options), the monopsonist pays them LESS than men with elastic supply (more alternatives). Example: a single major employer in a town pays women £25k and men £32k for the same work — women stay (few alternatives), men would leave for only slightly better elsewhere. Mechanism: MRP is the same, but different MCL curves based on supply elasticity. Competition would eliminate this — rivals would hire discriminated workers cheaply, undercutting the discriminator." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — 3 columns
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Direct discrimination — explicitly treating individuals less favourably due to protected characteristics", category: "types" },
+    { text: "Indirect discrimination — neutral policies with disproportionate impact on certain groups", category: "types" },
+    { text: "Statistical discrimination — using group averages to predict individual behaviour", category: "types" },
+    { text: "Taste-based discrimination — employer prejudice against certain groups (Becker model)", category: "types" },
+    { text: "Unconscious bias — automatic stereotypes affecting decisions without awareness", category: "types" },
+    { text: "Customer discrimination — consumers preferring certain demographic characteristics", category: "types" },
+    { text: "Age discrimination affecting both young and older workers differently", category: "types" },
+    { text: "Occupational segregation — women concentrated in lower-paid sectors (care, admin)", category: "causes" },
+    { text: "Career breaks for childcare creating experience gaps and lower progression", category: "causes" },
+    { text: "Part-time work penalty — part-time roles (70% female) have lower pay/promotions", category: "causes" },
+    { text: "Glass ceiling preventing women reaching senior positions despite qualifications", category: "causes" },
+    { text: "Motherhood penalty — earnings fall 30–40% after children, persisting long-term", category: "causes" },
+    { text: "Educational choices — fewer girls studying STEM subjects affecting career paths", category: "causes" },
+    { text: "Weaker negotiation — evidence women negotiate less aggressively for pay", category: "causes" },
+    { text: "Misallocation of labour — talented workers not used optimally", category: "effects" },
+    { text: "Lost output and productivity — economy produces below potential", category: "effects" },
+    { text: "Reduced human capital investment for discriminated groups", category: "effects" },
+    { text: "Increased income inequality and poverty for discriminated groups", category: "effects" },
+    { text: "Lower innovation — less diversity reduces creativity and problem-solving", category: "effects" },
+    { text: "Deadweight welfare loss from restricted employment opportunities", category: "effects" },
+    { text: "Demotivation and lower job satisfaction among discriminated workers", category: "effects" }
+];
+
+let selectedSortingItem = null;
+let sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['types','causes','effects'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        const parentId = item.parentElement.id;
+        if (item.dataset.category === parentId) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two independent passages
+══════════════════════════════════════ */
+const fillData = {
+    1: {
+        answers: ["monopsony","takers","identify","supply","inelastic","arbitrage","Direct","Equality","neutral","Statistical","Taste","profit","non"],
+        template: "Wage discrimination requires specific conditions. Employer must have [0] power to set wages rather than being wage [1]. Must be able to [2] different groups by characteristics like gender or ethnicity. Groups must differ in elasticity of labour [3] — discriminated groups having more [4] supply (fewer alternatives). Must prevent [5] between groups — workers can't switch identities or negotiate collectively. [6] discrimination treats individuals less favourably explicitly because of protected characteristics — this is illegal under the [7] Act 2010. Indirect discrimination involves apparently [8] policies that disproportionately disadvantage certain groups. [9] discrimination uses group averages to predict individual behaviour due to imperfect information. [10]-based discrimination (Becker model) occurs when employers have prejudice, willing to sacrifice [11] to avoid hiring disfavoured groups. In competitive markets, non-discriminating firms should have a cost advantage and drive discriminators out of business — yet the [12]-discriminating firms argument has limits in imperfect markets."
+    },
+    2: {
+        answers: ["14","8","27","Occupational","breaks","penalty","premium","ceiling","51","penalty","20","women","misallocation","GDP"],
+        template: "UK gender pay gap is approximately [0]–15% for median hourly pay (all employees), narrower at [1]–9% for full-time only. Gap has narrowed from [2]% in 1997 but progress recently stalled. Multiple factors contribute: [3] segregation concentrates women in lower-paid sectors like care and administration rather than STEM or finance. Career [4] for childcare create experience gaps and reduce progression opportunities. The motherhood [5] sees women's earnings fall 30–40% after the first child, persisting 10+ years, while men experience a fatherhood [6]. Glass [7] prevents women reaching senior positions despite qualifications — women are [8]% of the workforce but only ~7% of FTSE 100 CEOs. Part-time work [9] affects women who are 70% of part-time workers. Ethnic pay gaps vary significantly: Pakistani/Bangladeshi workers earn ~[10]% less than white British, while Indian and Chinese workers earn similar or slightly more. Ethnic minority [11] face a 'double disadvantage' from both gender and racial discrimination. Economic costs include [12] of labour, lost output and productivity, and deadweight welfare loss. Eliminating gender gaps could increase [13] by 10%+."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid);
+        delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

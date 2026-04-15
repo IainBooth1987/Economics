@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Price Discrimination Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Price Discrimination Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_pricedisc_game_pw';
+  var valid = ['PriceDisc-4Nf!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['PriceDisc-4Nf!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_pricedisc_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Price Discrimination</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Conditions, Advantages &amp; Disadvantages</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('conditions')">
+                <span class="col-label">✅ Necessary Conditions</span>
+                <div class="sort-items" id="conditions"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('advantages')">
+                <span class="col-label">👍 Advantages</span>
+                <div class="sort-items" id="advantages"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('disadvantages')">
+                <span class="col-label">👎 Disadvantages</span>
+                <div class="sort-items" id="disadvantages"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: MISSING WORDS -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Conditions &amp; Types</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Impacts &amp; Examples</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What is price discrimination?", options: ["Charging same price to all customers","Charging different prices to different customers for the same product, where price differences are not justified by cost differences","Illegal in all cases","Random pricing"], correct: 1, explanation: "PRICE DISCRIMINATION: charging different prices to different customers/groups for essentially SAME PRODUCT, where price variations NOT based on cost differences. Key: same good, different prices based on customer characteristics (willingness to pay, location, time, etc.). NOT cost-based pricing differences (economy vs first class flights have different costs). Examples: student discounts, peak/off-peak train fares, senior citizen prices, geographical pricing. Requires market power — impossible in perfect competition." },
+    { question: "What conditions are necessary for price discrimination?", options: ["Perfect competition only","Price-making power (market power), ability to identify and separate different groups, different price elasticities between groups, prevent resale/arbitrage","No conditions needed","Only government permission"], correct: 1, explanation: "NECESSARY CONDITIONS: 1) MARKET POWER: firm must be price maker (monopoly, monopolistic competition, oligopoly), can't work in perfect competition, 2) IDENTIFY GROUPS: recognise customers with different willingness to pay (age, income, location, time), 3) DIFFERENT PED: groups must have different price elasticities of demand, 4) PREVENT RESALE: stop arbitrage (customers buying cheap and reselling to high-price customers). Example: cinemas can identify students (ID), prevent resale (non-transferable tickets), students more price elastic (lower income)." },
+    { question: "Why must groups have different price elasticities for price discrimination?", options: ["Elasticity doesn't matter","Charge higher price to inelastic demand group (won't reduce quantity much), lower price to elastic group (sensitive to price) — maximises total revenue","Always charge same regardless","Random pricing"], correct: 1, explanation: "DIFFERENT PED crucial: INELASTIC DEMAND (PED < 1): charge HIGH price (customers won't reduce quantity much, revenue rises). ELASTIC DEMAND (PED > 1): charge LOW price (increase quantity significantly, revenue rises). Example: business travellers (inelastic — must travel, company pays) charged high prices; leisure travellers (elastic — sensitive to price, can postpone) charged low prices. If all same elasticity, no benefit from discrimination. Profit max: charge each group where MR = MC (different prices achieve this)." },
+    { question: "Why must resale be prevented?", options: ["Resale doesn't matter","If customers can resell, low-price customers buy and resell to high-price customers, eliminating price differences and reducing firm profit","Resale increases profit","Legal requirement only"], correct: 1, explanation: "PREVENT RESALE/ARBITRAGE: if customers can resell, ARBITRAGE occurs: 1) Low-price customers BUY at cheap rate, 2) RESELL to high-price customers below firm's price, 3) Price discrimination COLLAPSES (converges to single price). Methods: SERVICES (can't resell haircut, train journey), IMMEDIATE CONSUMPTION (cinema ticket used immediately), PERSONAL ID (student cards, non-transferable), CONTRACTS (prohibit resale), GEOGRAPHY (international price differences hard to arbitrage)." },
+    { question: "What is first-degree (perfect) price discrimination?", options: ["Charging same price to all","Charging each customer their maximum willingness to pay — firm captures entire consumer surplus, produces where P = MC","Three price tiers","Time-based pricing"], correct: 1, explanation: "FIRST-DEGREE (PERFECT): charge EACH INDIVIDUAL customer their MAXIMUM willingness to pay. Firm extracts ENTIRE consumer surplus (becomes producer surplus). Outcome: allocatively efficient (P = MC for marginal customer), no deadweight loss, but VERY INEQUITABLE (all surplus to producer). Requires PERFECT INFORMATION about each customer's valuation. Examples: negotiated prices (car dealers, estate agents), personalized online pricing (limited by information/ethics). Rare in practice — information constraint." },
+    { question: "What is second-degree price discrimination?", options: ["Charging by customer group","Prices vary by quantity purchased or version/quality — bulk discounts, quantity surcharges, versioning — customers self-select","Perfect discrimination","Time-based only"], correct: 1, explanation: "SECOND-DEGREE: prices vary by QUANTITY or QUALITY, customers SELF-SELECT. Types: 1) QUANTITY DISCOUNTS: buy more = lower per-unit price (bulk buying at supermarkets, utilities standing charge + usage), 2) VERSIONING: different quality levels at different prices (software basic/premium, flights economy/business), 3) TWO-PART TARIFF: fixed fee + per-unit charge (gym membership + classes, Netflix subscription + usage). Firm offers menu of options, customers reveal preference. Less information needed than first-degree." },
+    { question: "What is third-degree price discrimination?", options: ["Perfect discrimination","Charging different prices to different identifiable groups/market segments — students, seniors, geographical markets, peak/off-peak times","Quantity-based pricing","Same price for all"], correct: 1, explanation: "THIRD-DEGREE: most common type, charge different prices to different IDENTIFIABLE GROUPS with different PED. Groups: AGE (students, seniors have lower income, more elastic), TIME (peak vs off-peak train/electricity), GEOGRAPHY (UK vs international prices), OCCUPATION (NHS workers, teachers). Firm identifies group membership (student ID, time of travel), charges accordingly. Examples: cinema tickets (£7 students, £12 adults), rail fares (off-peak 40% cheaper), international drug prices (poor countries charged less)." },
+    { question: "What is the diagrammatic analysis of third-degree price discrimination?", options: ["Single price to all groups","Separate diagrams for each group, charge where MR = MC in each market, higher price to inelastic group (steeper demand), lower to elastic (flatter demand)","No diagrams possible","Random prices"], correct: 1, explanation: "THIRD-DEGREE DIAGRAM: Show TWO MARKETS side-by-side. Market A (INELASTIC): steep demand, MR curve, set Q where MR_A = MC, read high P_A from demand. Market B (ELASTIC): flat demand, MR curve, set Q where MR_B = MC, read low P_B from demand. Same MC for both (assume constant). Result: P_A > P_B (inelastic group pays more), total profit > single-price outcome. Allocatively inefficient: P_A > MC, P_B > MC (but closer). Example: business travellers (inelastic, high price) vs leisure (elastic, low price)." },
+    { question: "What are the advantages of price discrimination for producers?", options: ["No advantages exist","Higher profit/revenue than single pricing, can serve price-sensitive customers without lowering prices to all, potential for economies of scale from higher output","Lower profits always","Only disadvantages"], correct: 1, explanation: "PRODUCER ADVANTAGES: 1) HIGHER PROFIT: capture consumer surplus as producer surplus, maximise revenue from each segment, 2) SERVE MORE CUSTOMERS: low-income/elastic customers served at lower price (wouldn't buy at single price), 3) ECONOMIES OF SCALE: higher total output → lower AC (especially with high fixed costs — airlines, cinemas), 4) CROSS-SUBSIDISATION: profits from high-price groups fund services to low-price groups (rural bus routes), 5) UTILISE CAPACITY: off-peak pricing fills unused capacity (trains, hotels, cinemas)." },
+    { question: "What are the advantages of price discrimination for consumers?", options: ["Always worse off","Some consumers gain access who couldn't afford single price (students, seniors), off-peak users save money, product might not exist without discrimination funding it","No advantages","Only producers benefit"], correct: 1, explanation: "CONSUMER ADVANTAGES: 1) INCREASED ACCESS: low-income groups (students, seniors, unemployed) can afford product at lower price, wouldn't buy at single price, 2) CHOICE: different options (peak/off-peak, basic/premium) suit different needs/budgets, 3) CROSS-SUBSIDY: some services only viable if funded by high-price customers (rural transport, universal service obligations), 4) OFF-PEAK SAVINGS: flexible consumers benefit from lower prices (train/electricity/hotel off-peak)." },
+    { question: "What are the disadvantages of price discrimination for consumers?", options: ["No disadvantages","Inelastic/high-income consumers pay more than single price, reduced consumer surplus overall, potential unfairness/inequality, administrative costs passed to consumers","All benefit equally","Only advantages exist"], correct: 1, explanation: "CONSUMER DISADVANTAGES: 1) HIGHER PRICES FOR SOME: inelastic groups (business travellers, captive markets) pay significantly MORE than single price would be, 2) REDUCED CONSUMER SURPLUS: firm captures surplus as profit (especially first-degree), 3) UNFAIRNESS: identical product, different prices feels unjust (even if economically rational), 4) COMPLEXITY: complicated pricing confuses consumers, 5) EXPLOITATION: vulnerable groups (addicts, essential medicines) charged high prices, 6) PRIVACY: personalised pricing requires data collection." },
+    { question: "What are the disadvantages of price discrimination for producers?", options: ["Only advantages exist","High administrative costs segregating markets, risk of consumer resentment damaging brand, legal/regulatory risks, information requirements costly, potential for arbitrage undermining system","No disadvantages","Guaranteed higher profits"], correct: 1, explanation: "PRODUCER DISADVANTAGES: 1) ADMINISTRATIVE COSTS: identifying groups, preventing resale, enforcement systems expensive, 2) CONSUMER RESENTMENT: high-price customers feel exploited, damages brand/goodwill, 3) LEGAL RISKS: discrimination illegal in some cases (protected characteristics — race, gender), regulatory scrutiny, 4) INFORMATION COSTS: determining willingness to pay requires data/analysis, 5) ARBITRAGE RISK: if resale occurs, system collapses, 6) COMPLEXITY: managing multiple prices, risk of errors." },
+    { question: "What is dynamic pricing and how does it relate to price discrimination?", options: ["Fixed prices always","Prices change in real-time based on demand, supply, customer characteristics — technology-enabled third-degree discrimination (Uber surge pricing, airline prices)","Static pricing only","Illegal everywhere"], correct: 1, explanation: "DYNAMIC PRICING: prices adjust frequently based on: 1) DEMAND LEVEL: high demand → high price (Uber surge, hotel booking.com), 2) TIME: proximity to event (airline tickets, concert tickets), 3) CUSTOMER DATA: browsing history, location, device (online retail), 4) INVENTORY: limited stock → higher price. Form of THIRD-DEGREE discrimination using algorithms and big data. Examples: Uber (surge pricing during peak/events), Amazon (personalised prices), airlines (price varies by booking time, route demand). Benefits: capacity management, profit max. Concerns: fairness, transparency, exploitation, algorithmic bias." },
+    { question: "How do airlines use price discrimination?", options: ["Single price for all","Multiple methods: business vs economy class, advance vs last-minute booking, flexible vs fixed tickets, peak vs off-peak routes — segment by time sensitivity and income","No discrimination","Random prices"], correct: 1, explanation: "AIRLINE PRICE DISCRIMINATION: 1) BUSINESS vs LEISURE: Business (inelastic — must travel, company pays, last-minute) charged high. Leisure (elastic — sensitive to price, book ahead) charged low, 2) ADVANCE BOOKING: early bookers (flexible, leisure) get discounts, late bookers (urgent, business) pay premium, 3) TICKET FLEXIBILITY: refundable/changeable tickets (business needs) expensive, fixed/non-refundable (leisure) cheap, 4) CLASS: first/business/premium economy/economy (versioning), 5) ROUTES: business routes (London-New York) pricier than leisure (UK-Spain). Prevents resale: tickets named, non-transferable." },
+    { question: "How do cinemas use price discrimination?", options: ["Same price for everyone","Student/senior/child discounts (lower income/more elastic), off-peak times cheaper than prime time, loyalty schemes, family tickets — segment by demographics and time","No discrimination","Only by seat location"], correct: 1, explanation: "CINEMA DISCRIMINATION: 1) AGE: students (£7, elastic — lower income, substitutes like Netflix), seniors (£8, elastic — time flexibility), children (£6), adults (£12–15, less elastic), 2) TIME: matinee/off-peak (weekday afternoon £7) vs prime time (Friday night £13), 3) LOYALTY CARDS: Cineworld Unlimited, Odeon Limitless (frequent users), 4) FAMILY TICKETS: bundle discount for families, 5) PEAK FILMS: blockbusters vs older releases. Prevents resale: tickets time-stamped, staff check. Enables: fill off-peak capacity, serve price-sensitive groups, maximise revenue." },
+    { question: "How do rail companies use price discrimination?", options: ["Single fare for all","Peak vs off-peak fares (commuters inelastic vs flexible travellers elastic), advance vs anytime tickets, railcards (young/senior), first vs standard class","No discrimination","Distance only"], correct: 1, explanation: "RAIL DISCRIMINATION: 1) PEAK vs OFF-PEAK: Peak (Mon-Fri 7–9am, 4–7pm, inelastic commuters, could be 2–3x off-peak price), Off-peak (flexible travellers, leisure, elastic), 2) ADVANCE vs ANYTIME: Advance (cheap, specific train, booked ahead), Anytime (expensive, flexibility, business), 3) RAILCARDS: 16–25, 26–30, Senior, Family & Friends (33% off, target elastic groups), 4) CLASS: First (business, more space), Standard, 5) SEASON TICKETS: regular commuters (bulk discount). Example: London-Manchester £120 peak anytime, £30 off-peak advance." },
+    { question: "How do utilities (gas, electricity) use price discrimination?", options: ["Single rate for all","Standing charge + usage (two-part tariff), Economy 7 (off-peak cheaper), tiered pricing (quantity discounts), prepayment meters (higher rates for vulnerable)","No discrimination","Completely random"], correct: 1, explanation: "UTILITY DISCRIMINATION: 1) TWO-PART TARIFF: fixed standing charge (£80–150/year) + per-kWh usage rate (captures consumer surplus from high users), 2) ECONOMY 7/10: cheap overnight electricity (off-peak, 12am–7am) vs expensive daytime (peak demand), 3) TIERED PRICING: first 100 kWh expensive (inelastic), additional kWh cheaper (or reverse — increasing block tariffs discouraging high use), 4) PREPAYMENT METERS: higher rates (vulnerability, credit risk) — controversial, regulator scrutiny, 5) BUSINESS vs DOMESTIC: large industrial users negotiated rates (elastic), households standard rates (inelastic)." },
+    { question: "What is geographical price discrimination?", options: ["Same price everywhere","Charging different prices in different locations/countries based on local income levels, competition, PED — pharmaceuticals, books, software licences","No location pricing","Illegal everywhere"], correct: 1, explanation: "GEOGRAPHICAL DISCRIMINATION: different prices by LOCATION. International: PHARMACEUTICALS (high prices in rich countries — US, UK; low in poor countries — India, Africa; prevents disease spread globally while funding R&D), BOOKS (hardback released in US first at high price, paperback UK later cheaper), SOFTWARE (Adobe/Microsoft charge more in rich countries), CARS (EU vs UK prices historically different). Domestic: PETROL (London more expensive than rural), TRANSPORT (London Underground vs regional bus). Prevents arbitrage: international — import/export restrictions, patents, licensing." },
+    { question: "What is price discrimination by time/peak-load pricing?", options: ["Same price all times","Higher prices during peak demand periods when capacity constrained, lower off-peak to utilise excess capacity — trains, electricity, hotels, car parks","Random timing","No time variation"], correct: 1, explanation: "PEAK-LOAD PRICING (time discrimination): PEAK (high demand, capacity constrained): high price to ration scarce capacity, inelastic demanders (commuters, business) willing to pay. OFF-PEAK (low demand, excess capacity): low price to fill capacity, attract elastic demanders (leisure, students). Examples: TRAINS (commuter vs leisure times), ELECTRICITY (day vs night), HOTELS (weekday business vs weekend leisure), CAR PARKS (weekday vs Sunday). Benefits: efficient capacity use, matches price to marginal cost (MC higher when capacity reached)." },
+    { question: "What is versioning/quality discrimination?", options: ["Identical products only","Creating different quality versions of similar product at different prices — software (basic/pro), flights (economy/business), books (hardback/paperback)","No quality differences","All same quality"], correct: 1, explanation: "VERSIONING: create QUALITY TIERS, customers self-select. Examples: 1) SOFTWARE: basic (£10/month, limited features), professional (£50/month, full features), enterprise (£200+, customisation) — marginal cost near zero, different willingness to pay, 2) FLIGHTS: economy (cramped, no frills), premium economy (more space), business (flat beds, lounge), first (suite, service) — cost differences smaller than price differences, 3) BOOKS: hardback (£20, released first, high-income/eager readers), paperback (£8, later, patient readers), e-book (£5, no printing cost). Form of second-degree — self-selection, firm doesn't need to identify customer type." },
+    { question: "What is the welfare impact of price discrimination?", options: ["Always increases total welfare","Ambiguous — producer surplus increases, consumer surplus decreases, total welfare may rise or fall depending on output effects and distribution","Always decreases welfare","No impact"], correct: 1, explanation: "WELFARE ANALYSIS: PRODUCER SURPLUS: increases (capture consumer surplus). CONSUMER SURPLUS: some gain (access at low price), some lose (pay more than single price), OVERALL LIKELY DECREASES. TOTAL WELFARE (CS + PS): AMBIGUOUS: 1) If discrimination increases OUTPUT (serve elastic groups who wouldn't buy at single price), welfare may RISE (reduced deadweight loss, closer to P = MC), 2) If output unchanged (just redistribution), welfare unchanged but INEQUITABLE (producer gains = consumer losses), 3) Perfect discrimination: max output (P = MC), zero deadweight loss BUT zero consumer surplus." },
+    { question: "When is price discrimination illegal or restricted?", options: ["Always illegal","Illegal when based on protected characteristics (race, gender, disability), anti-competitive abuse of dominance, or exploiting vulnerable groups — regulated by competition/equality law","Never restricted","Legal in all cases"], correct: 1, explanation: "LEGAL RESTRICTIONS: ILLEGAL: 1) PROTECTED CHARACTERISTICS: race, gender, ethnicity, religion, disability, sexual orientation (Equality Act 2010), 2) ABUSE OF DOMINANCE: dominant firm using discrimination anti-competitively (EU Article 102, UK Competition Act), 3) PREDATORY: discriminate to eliminate competitors. REGULATED: 1) UTILITIES: Ofgem, Ofwat monitor fairness, vulnerable customers, 2) PHARMACEUTICALS: NHS negotiates prices, NICE evaluates, 3) TRANSPORT: some regulation of peak fares. LEGAL: age discrimination (students, seniors), time (peak/off-peak), geography, quality versioning." },
+    { question: "What is the equity argument against price discrimination?", options: ["Perfectly fair always","Charging different prices for identical product feels unfair even if economically rational; high-price customers subsidise low-price, creating resentment; vulnerable groups may be exploited","No equity concerns","Only efficiency matters"], correct: 1, explanation: "EQUITY CONCERNS: 1) UNFAIRNESS: identical seat on plane/train costs different amounts (business traveller £400, leisure £80) — feels unjust, 2) EXPLOITATION: inelastic/vulnerable groups (business travellers, essential medicines, addicts) charged very high prices — ability to pay ≠ ethical, 3) REGRESSIVE: poor pay more as % of income (prepayment meters), 4) DIGNITY: personalised pricing based on wealth/desperation dehumanising. Counterargument: enables access for poor (students, seniors), cross-subsidy funds services, voluntary exchange." },
+    { question: "How does technology enable modern price discrimination?", options: ["Technology irrelevant","Big data tracks individual behaviour, algorithms predict willingness to pay, dynamic pricing adjusts real-time, personalised offers target customers — enables near-perfect discrimination","Makes discrimination impossible","No change from past"], correct: 1, explanation: "TECHNOLOGY REVOLUTION: 1) BIG DATA: track browsing, purchases, location, device — infer willingness to pay, 2) ALGORITHMS: machine learning predicts demand, optimises prices per customer, 3) DYNAMIC PRICING: adjust prices second-by-second (Uber, Amazon, airlines), 4) PERSONALISATION: different customers see different prices (cookies, accounts), 5) PERFECT DISCRIMINATION: approaching first-degree (charge each max willingness to pay). Examples: Amazon prices vary by user, Uber surge pricing, hotel dynamic pricing, retail personalised discounts. Concerns: TRANSPARENCY (hidden discrimination), FAIRNESS (algorithmic bias), PRIVACY (data exploitation)." },
+    { question: "What is the relationship between price discrimination and monopoly power?", options: ["No relationship exists","Price discrimination requires market power (price-making ability) — impossible in perfect competition; monopoly/oligopoly can discriminate; increases monopoly profit and reduces consumer surplus further","Only competitive firms discriminate","Reduces monopoly power"], correct: 1, explanation: "MARKET POWER ESSENTIAL: perfect competition CAN'T discriminate (price takers, homogeneous products, perfect information, free entry). MONOPOLY/OLIGOPOLY: necessary but not sufficient for discrimination (also need to identify groups, different PED, prevent resale). Effect: 1) INCREASES MONOPOLY PROFIT: capture more consumer surplus, 2) MAY INCREASE OUTPUT: serve elastic groups (partial welfare gain), 3) EXACERBATES EXPLOITATION: vulnerable/inelastic groups pay even more than single monopoly price. Policy: discrimination by monopoly more concerning than by competitive firm." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "Price-making power (market power) — firm must be price maker not price taker", category: "conditions" },
+    { text: "Ability to identify and separate different customer groups", category: "conditions" },
+    { text: "Different price elasticities of demand between groups", category: "conditions" },
+    { text: "Ability to prevent resale/arbitrage between groups", category: "conditions" },
+    { text: "Information about customers' willingness to pay", category: "conditions" },
+    { text: "Barriers preventing customers switching between groups", category: "conditions" },
+    { text: "Groups have different marginal valuations for the product", category: "conditions" },
+    { text: "Higher profit and revenue than single pricing for producers", category: "advantages" },
+    { text: "Can serve price-sensitive customers who couldn't afford single price", category: "advantages" },
+    { text: "Utilises excess capacity (off-peak pricing fills empty seats/rooms)", category: "advantages" },
+    { text: "Cross-subsidisation — profits from one group fund services to another", category: "advantages" },
+    { text: "May increase total output moving closer to allocative efficiency", category: "advantages" },
+    { text: "Economies of scale from higher total production volume", category: "advantages" },
+    { text: "Product/service might not exist without discrimination funding it", category: "advantages" },
+    { text: "Inelastic consumers pay more than they would under single pricing", category: "disadvantages" },
+    { text: "Reduced consumer surplus overall — producer captures surplus", category: "disadvantages" },
+    { text: "Unfairness — identical product charged at different prices feels unjust", category: "disadvantages" },
+    { text: "High administrative costs of segregating markets and preventing resale", category: "disadvantages" },
+    { text: "Consumer resentment damages brand and goodwill", category: "disadvantages" },
+    { text: "Legal and regulatory risks — discrimination may be illegal", category: "disadvantages" },
+    { text: "Exploitation of vulnerable groups (essential medicines, addicts)", category: "disadvantages" }
+];
+
+let selectedSortingItem = null, sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['conditions','advantages','disadvantages'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["prices","Market","identify","elasticities","resale","inelastic","lower","First","surplus","quantity","Third","diagrams","MR"],
+        template: "Price discrimination means charging different [0] to different customers for the same product, where price differences are NOT justified by cost differences. Necessary conditions include: [1] power (firm must be price maker), ability to [2] and separate different customer groups, different price [3] of demand between groups, and ability to prevent [4] or arbitrage. Groups with [5] demand (PED < 1) are charged higher prices, while groups with elastic demand are charged [6] prices to maximise revenue. There are three types of price discrimination. [7]-degree (perfect) involves charging each customer their maximum willingness to pay, capturing entire consumer [8]. Second-degree involves prices varying by [9] purchased or version/quality, with customers self-selecting. [10]-degree is most common, charging different prices to different identifiable groups like students, seniors, or geographical markets. Diagrammatically, third-degree discrimination shows separate [11] for each market segment, with firms setting output where [12] equals MC in each market, resulting in different prices."
+    },
+    2: {
+        answers: ["Railways","Airlines","Cinemas","tariffs","profit","capacity","access","more","unfairness","resentment","ambiguous","data","algorithms"],
+        template: "Real-world examples are widespread. [0] use peak vs off-peak fares, advance vs anytime tickets, and railcards for different age groups to segment customers by time sensitivity. [1] discriminate through business vs economy class, advance booking discounts, and flexible vs fixed tickets. [2] offer student, senior, and child discounts plus off-peak pricing. Utilities use two-part [3] (standing charge plus usage), Economy 7 (off-peak electricity), and tiered pricing. Advantages for producers include higher [4] than single pricing, ability to serve price-sensitive customers, and utilising excess [5]. For consumers, some gain [6] at lower prices while off-peak users save money. However, disadvantages include inelastic consumers paying [7] than single price, reduced consumer surplus overall, and feelings of [8]. High administrative costs, consumer [9], and legal risks are disadvantages for producers. Welfare impact is [10]: producer surplus increases, consumer surplus decreases, but total welfare may rise if output increases and more customers are served. Technology enables modern discrimination through big [11] tracking behaviour, [12] predicting willingness to pay, and dynamic pricing adjusting in real-time."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

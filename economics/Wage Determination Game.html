@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Wage Determination Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* FILL */
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Wage Determination Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_wagedet_game_pw';
+  var valid = ['WageDet-3Bk!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['WageDet-3Bk!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_wagedet_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Wage Determination</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Market Characteristics by Labour Market Type</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('perfect')">
+                <span class="col-label">✅ Perfect Competition</span>
+                <div class="sort-items" id="perfect"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('monopsony')">
+                <span class="col-label">🏢 Monopsony</span>
+                <div class="sort-items" id="monopsony"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('unions')">
+                <span class="col-label">👥 Trade Unions</span>
+                <div class="sort-items" id="unions"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: MISSING WORDS ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Perfect Competition in Labour Markets</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Imperfect Competition &amp; Monopsony</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What are the key assumptions of a perfectly competitive labour market?", options: ["Only one type of job exists","Many employers and workers, homogeneous labour, perfect information, perfect mobility, firms are wage takers","One employer dominates the market","Workers have no information"], correct: 1, explanation: "Perfect competition requires: 1) Many small employers (no single firm can influence wages), 2) Many workers, 3) Homogeneous labour (workers identical in skills/productivity), 4) Perfect information (workers know all wage rates/opportunities), 5) Perfect mobility (workers can easily switch jobs), 6) Firms are wage takers (must accept market wage). These rarely exist in reality." },
+    { question: "In a perfectly competitive labour market, how is the equilibrium wage determined?", options: ["Randomly set each year","By the largest employer","Where market labour demand equals market labour supply","By government legislation"], correct: 2, explanation: "Equilibrium wage is determined by market forces: the demand curve (sum of all firms' MRP curves) intersects the supply curve (sum of all workers' willingness to work at each wage). At the intersection: quantity demanded = quantity supplied. The market clears with no shortage or surplus. Individual firms are price takers, accepting this wage." },
+    { question: "Why are individual firms 'wage takers' in perfect competition?", options: ["Firms collude to set wages","Workers have no choice","Each firm is too small relative to the market to influence the wage","Government sets all wages"], correct: 2, explanation: "Individual firms are tiny relative to the total market. If a firm offers below-market wage, workers immediately move to competitors (perfect mobility, perfect information). The firm can't attract workers. If a firm offers above-market wage, workers flood in but the firm makes unnecessary costs. Result: firms accept the market wage, hiring as many workers as profitable at that wage (where W = MRP)." },
+    { question: "How do market forces determine relative wage rates between occupations?", options: ["All occupations pay the same wage","High demand and/or low supply occupations have higher wages; low demand and/or high supply have lower wages","Government sets all relative wages","Wages are random"], correct: 1, explanation: "Relative wages reflect supply and demand: Doctors earn more than cleaners because: 1) High demand (high MRP due to valued service), 2) Low supply (restricted by long training). Market signals through wages guide labour allocation. High wages attract workers (increasing supply), low wages deter entry (reducing supply). This allocates labour efficiently across occupations." },
+    { question: "What is a key criticism of the perfectly competitive labour market model?", options: ["It's too realistic","Real-world labour markets are imperfectly competitive","It predicts wages too accurately","It explains all labour market outcomes"], correct: 1, explanation: "All real labour markets are imperfectly competitive to varying degrees: 1) Labour isn't homogeneous (different skills/experience), 2) Information imperfect (workers don't know all opportunities/wages), 3) Geographical/occupational immobility exists, 4) Some employers have monopsony power, 5) Trade unions create bilateral monopoly. Perfect competition is a theoretical benchmark, not reality." },
+    { question: "What is monopsony power in a labour market?", options: ["Many small employers competing","Workers have all the power","Perfect competition","A single (or dominant) buyer of labour with wage-setting power"], correct: 3, explanation: "Monopsony: single (or few dominant) employer(s) in the labour market. Unlike perfect competition (wage takers), the monopsonist has wage-setting power and can pay below MRP because workers lack alternatives. Examples: single factory in small town, NHS as dominant healthcare employer in UK, Amazon in some warehouse markets. The monopsonist exploits workers, reducing both wages and employment." },
+    { question: "Why does a monopsonist face an upward-sloping labour supply curve?", options: ["Supply always slopes downward","Supply is perfectly elastic","To attract more workers, the monopsonist must raise wages for ALL workers, not just new hires","Workers have no power"], correct: 2, explanation: "The monopsonist dominates the market, so it faces the entire upward-sloping market supply curve. To hire an additional worker, it must raise the wage to attract them. But it can't discriminate — it must pay all workers the same wage. So the marginal cost of an extra worker = wage paid to that worker + extra paid to all existing workers. MCL > W. This differs from perfect competition where the firm faces a horizontal supply curve." },
+    { question: "In a monopsony, where is the profit-maximising employment level?", options: ["Where demand equals supply","Maximum possible employment","Where wage equals MRP","Where Marginal Cost of Labour equals MRP — but the wage paid is read from the supply curve and is below MRP"], correct: 3, explanation: "The monopsonist sets employment where MCL = MRP (profit-maximising rule: hire until marginal cost = marginal benefit). But the monopsonist doesn't pay wage = MRP. Instead, it reads the wage from the supply curve at that employment level. Since MCL > wage, and employment is set where MCL = MRP, wage < MRP. Workers are paid less than their contribution — this is monopsony exploitation." },
+    { question: "Compared to perfect competition, monopsony results in:", options: ["Higher wages and lower employment","Higher wages and higher employment","Lower wages and lower employment","Same wages and employment"], correct: 2, explanation: "Monopsony creates deadweight loss: 1) Employment lower than competitive (where W = MRP), set where MCL = MRP < competitive level, 2) Wages lower — workers paid less than MRP (exploitation), 3) Workers would willingly work at higher wages (supply curve shows this), 4) Employers would benefit from hiring more (MRP > wage), but the monopsonist restricts employment to maintain low wages. This is market failure." },
+    { question: "What is an example of monopsony power?", options: ["A perfectly competitive labour market","A competitive retail market with many shops","London's competitive finance sector","A single supermarket in an isolated rural town employing most local workers"], correct: 3, explanation: "Monopsony examples: 1) Single factory in a small town (workers lack alternatives without relocating), 2) Mining company in a remote area, 3) NHS as dominant healthcare employer in a region, 4) Tech companies in specialised areas (Amazon in Seattle), 5) Professional sports (single league for athletes). Common where geographical immobility or specialisation limits worker alternatives." },
+    { question: "How can trade unions affect wages in competitive labour markets?", options: ["No effect possible","Increase wages by acting as monopoly supplier of labour, restricting supply or bargaining collectively for higher wages above equilibrium","Always decrease wages","Make markets perfectly competitive"], correct: 1, explanation: "Trade unions increase wages through: 1) Collective bargaining (negotiate as a single unit, more power than individuals), 2) Threatening strikes/industrial action, 3) Restricting labour supply (closed shops, limiting apprenticeships), 4) Productivity deals. However, higher wages may cause unemployment if set above equilibrium. Creates a trade-off: higher pay for employed workers vs fewer jobs." },
+    { question: "In a bilateral monopoly (monopsonist employer + trade union), what determines wages?", options: ["Always the union's demand","Pure market forces alone","Always the employer's preference","The relative bargaining strength of union vs employer"], correct: 3, explanation: "Bilateral monopoly: monopsony buyer vs monopoly seller (union). There is no determinate equilibrium — the outcome depends on relative bargaining power. A strong union may achieve high wages close to the competitive level or above. A weak union may accept wages closer to the monopsony level. Bargaining range: monopsony wage (floor) to competitive wage or higher (ceiling). Strikes, legislation, and public opinion all affect the outcome." },
+    { question: "Can a trade union increase both wages AND employment in a monopsony labour market?", options: ["Yes — union can raise wages toward competitive level while increasing employment, countering monopsony power","Never possible","Only by reducing wages","Unions always reduce employment"], correct: 0, explanation: "Paradox: in a monopsony, a union can increase wages AND employment. The monopsonist sets W below MRP and restricts employment. A union pushing wages toward the competitive level forces the monopsonist to employ more workers. The wage increase from W_monopsony toward W_competitive reduces exploitation and increases employment toward the efficient level. Beyond the competitive wage, the usual trade-off applies." },
+    { question: "How does imperfect information create labour market imperfection?", options: ["Only affects product markets","Information is always perfect","Workers don't know all job opportunities/wages, employers can't perfectly assess worker productivity","Has no effect on markets"], correct: 2, explanation: "Imperfect information causes: 1) Wage dispersion for identical work (workers don't know best opportunities), 2) Search unemployment (time finding jobs/workers), 3) Mismatches (wrong workers in wrong jobs), 4) Employers can't perfectly assess productivity before hiring (adverse selection, screening costs), 5) Workers can't perfectly observe effort (moral hazard). Differs from the perfect competition assumption." },
+    { question: "What is the effect of minimum wage legislation in a competitive labour market?", options: ["Eliminates all wage differences","Always increases employment","If set above equilibrium, creates unemployment as quantity supplied exceeds quantity demanded","No effect if set below equilibrium"], correct: 2, explanation: "Minimum wage above equilibrium: 1) Raises wages for employed workers, 2) Increases quantity supplied (more want to work), 3) Reduces quantity demanded (higher labour costs), 4) Creates unemployment (excess supply). However, if monopsony exists, minimum wage can increase both wages and employment by countering employer power. The effect depends on market structure." },
+    { question: "How does occupational licensing affect labour market outcomes?", options: ["Has no economic effects","Always increases employment","Restricts labour supply by creating entry barriers, raising wages but reducing employment","Makes markets perfectly competitive"], correct: 2, explanation: "Licensing (doctors, lawyers, electricians) restricts supply: 1) Creates barriers to entry (exams, qualifications), 2) Reduces supply, raising wages, 3) Can protect consumers from low quality (information problem), 4) Can be rent-seeking by incumbents to restrict competition. Creates a trade-off: quality assurance vs restricted access and higher prices." },
+    { question: "What causes wage differentials between occupations in imperfect labour markets?", options: ["Government sets all wages differently","All wages are identical","Random variation only","Differences in skills/qualifications, compensating differentials, discrimination, market power, imperfect information, mobility barriers"], correct: 3, explanation: "Wage differentials arise from: 1) Human capital differences (education/skills raise productivity), 2) Compensating differentials (danger, unsocial hours need higher pay), 3) Discrimination (gender/race wage gaps), 4) Monopsony power (depresses wages), 5) Union power (raises wages), 6) Imperfect information (wage dispersion), 7) Immobility barriers (geographic/occupational), 8) Non-monetary factors. These factors interact in complex ways." },
+    { question: "How does labour market discrimination create imperfection?", options: ["Makes markets more competitive","Discrimination means equally productive workers receive different wages based on characteristics","It doesn't affect markets","Only affects product markets"], correct: 1, explanation: "Discrimination violates perfect competition: 1) Workers with the same MRP paid differently (not homogeneous treatment), 2) Gender pay gap: women earn less for the same work, 3) Racial discrimination in hiring/promotion, 4) Age discrimination affecting older workers. Causes: employer prejudice, customer discrimination, statistical discrimination. Results in inefficient allocation and deadweight loss as talented workers are underutilised." },
+    { question: "What is the impact of labour market monopsony on worker welfare?", options: ["Reduces worker welfare through exploitation","Only affects employer profits","No impact on welfare","Increases worker welfare maximally"], correct: 0, explanation: "Monopsony harms workers: 1) Exploitation: paid less than value (W < MRP), 2) Lower wages than competitive, 3) Fewer employed than would choose to work at a fair wage, 4) Transfer of surplus from workers to employer, 5) Deadweight welfare loss (some mutually beneficial trades don't occur). This market failure justifies intervention: minimum wage, union recognition, anti-monopsony regulation." },
+    { question: "In the real world, why are most labour markets imperfectly competitive?", options: ["Workers differ in skills, information is costly, geographical immobility exists, some employers have power, unions exist, discrimination occurs","They're all perfectly competitive","Government prevents competition","Perfect competition is common"], correct: 0, explanation: "Real markets deviate from perfect competition: 1) Labour heterogeneous (different skills, experience, productivity), 2) Information imperfect and costly to acquire, 3) Geographical immobility (can't/won't relocate), 4) Occupational immobility (training barriers), 5) Monopsony power (concentrated employers), 6) Trade unions (monopoly labour supply), 7) Minimum wages, licensing, 8) Discrimination. Perfect competition is a theoretical ideal, useful for comparison but not reality." },
+    { question: "How does the existence of trade unions create labour market imperfection?", options: ["Unions have no effect on markets","Unions only affect product markets","Unions make markets perfectly competitive","Unions act as monopoly suppliers of labour, restricting supply and bargaining collectively, violating perfect competition's many independent suppliers"], correct: 3, explanation: "Trade unions create imperfection: 1) Act as a single seller (monopoly) rather than many independent workers, 2) Collectively bargain, using strike threat as leverage, 3) Can restrict supply (closed shops, apprenticeship limits), 4) Create wage rigidity (negotiated rates), 5) Reduce wage flexibility to market changes. However, may counter monopsony power. Creates bilateral monopoly when facing a monopsonist employer." },
+    { question: "What is 'exploitation' in labour market economics?", options: ["Dangerous working conditions","Long working hours only","Any low wage","When workers are paid less than their marginal revenue product (W < MRP)"], correct: 3, explanation: "Economic exploitation: W < MRP. The worker produces value exceeding the wage received; the employer captures the difference as excess profit. In perfect competition, W = MRP (no exploitation). Monopsony creates exploitation by restricting employment and depressing wages. Minimum wage or unions can reduce exploitation by raising wages toward MRP. Note: this is the technical definition; it differs from common usage (poor conditions, low pay)." },
+    { question: "How can minimum wage policy address monopsony power?", options: ["Minimum wage set between monopsony wage and competitive wage can increase both wages AND employment by countering employer power","It can't — always creates unemployment","Only helps in competitive markets","Always reduces employment"], correct: 0, explanation: "In a monopsony, minimum wage can improve outcomes: 1) Forces the monopsonist to pay a higher wage, 2) Eliminates the MCL curve — must pay the minimum wage to all, 3) Can increase employment toward the competitive level (if set below the competitive wage), 4) Reduces exploitation, 5) Increases worker welfare. However, if set too high (above the competitive wage), it creates unemployment. The optimal minimum wage is at/near the competitive equilibrium." },
+    { question: "What is the 'efficiency wage' theory and how does it relate to wage determination?", options: ["All wages are equal","Wages have no effect on productivity","Firms voluntarily pay wages ABOVE market equilibrium to boost productivity, reduce turnover, and attract better workers","Efficiency wages reduce output"], correct: 2, explanation: "Efficiency wage theory: firms pay above-equilibrium wages because: 1) PRODUCTIVITY: higher pay motivates workers to work harder, 2) RETENTION: reduces costly staff turnover, 3) ATTRACTION: attracts higher-quality applicants (adverse selection reduced), 4) SHIRKING REDUCTION: job is more valuable, workers fear losing it. Explains why wages may not fall to clear labour markets — cutting wages may reduce productivity more than it saves in wage costs." },
+    { question: "How does geographical immobility contribute to wage differentials between regions?", options: ["No effect on regional wages","Creates regional wage differentials — high-demand regions pay more because restricted labour supply from immobility prevents equalisation","All regions pay identical wages","Only affects product markets"], correct: 1, explanation: "Geographical immobility prevents wage equalisation across regions: 1) London/South East: high demand, limited housing prevents inward migration, wages stay high, 2) Former industrial regions: falling demand, limited outward migration, wages remain low, 3) Workers face barriers: housing costs, family ties, children's schooling, social networks. Result: persistent regional wage differentials. Free labour mobility would equalise wages; immobility prevents this." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — 3 columns
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Many small employers, none can influence the market wage", category: "perfect" },
+    { text: "Homogeneous labour — workers identical in skills and productivity", category: "perfect" },
+    { text: "Perfect information — workers know all wage rates and opportunities", category: "perfect" },
+    { text: "Perfect mobility — workers can easily switch between employers", category: "perfect" },
+    { text: "Firms are wage takers — must accept the market-determined wage", category: "perfect" },
+    { text: "Equilibrium where market demand equals market supply", category: "perfect" },
+    { text: "Workers paid a wage equal to their MRP (W = MRP)", category: "perfect" },
+    { text: "Single dominant employer (or very few employers) in labour market", category: "monopsony" },
+    { text: "Employer has wage-setting power — not a wage taker", category: "monopsony" },
+    { text: "Faces upward-sloping labour supply curve", category: "monopsony" },
+    { text: "Marginal cost of labour exceeds wage (MCL > W)", category: "monopsony" },
+    { text: "Sets employment where MCL = MRP, paying wage from supply curve", category: "monopsony" },
+    { text: "Workers paid less than MRP — exploitation (W < MRP)", category: "monopsony" },
+    { text: "Lower wages and employment than competitive equilibrium", category: "monopsony" },
+    { text: "Acts as monopoly supplier of labour through collective organisation", category: "unions" },
+    { text: "Uses collective bargaining and strike threats to raise wages", category: "unions" },
+    { text: "Can restrict labour supply through closed shops or licensing", category: "unions" },
+    { text: "May increase wages above competitive equilibrium", category: "unions" },
+    { text: "Creates bilateral monopoly when facing a monopsonist employer", category: "unions" },
+    { text: "In monopsony, can increase both wages and employment", category: "unions" },
+    { text: "Wage outcome depends on relative bargaining strength", category: "unions" }
+];
+
+let selectedSortingItem = null;
+let sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['perfect','monopsony','unions'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two independent passages
+══════════════════════════════════════ */
+const fillData = {
+    1: {
+        answers: ["small","homogeneous","information","mobility","takers","demand","small","leave","relative","higher","imperfectly","imperfect","power","benchmark"],
+        template: "A perfectly competitive labour market assumes: many [0] employers and workers, [1] labour (workers identical in skills), perfect [2] (knowledge of all wages/opportunities), perfect [3] (easy job switching), and firms are wage [4]. Equilibrium wage is determined where market labour [5] equals market labour supply. Individual firms are wage takers because they're too [6] relative to the market — offering below market wage causes workers to [7] to competitors. Market forces determine [8] wage rates: high demand and/or low supply occupations have [9] wages. However, all real-world labour markets are [10] competitive to varying degrees because: workers aren't homogeneous, information is [11], mobility is limited, and some employers have market [12]. Perfect competition is a theoretical [13] useful for comparison, not an accurate description of reality."
+    },
+    2: {
+        answers: ["single","sloping","all","MCL","MRP","lower","exploitation","NHS","monopoly","bargaining","wages","information","discrimination","licensing","employment"],
+        template: "Monopsony is a [0] buyer of labour with wage-setting power. The monopsonist faces an upward-[1] labour supply curve — to attract more workers it must raise wages for [2] workers. This means the marginal cost of labour ([3]) exceeds the wage rate. The profit-maximising monopsonist sets employment where MCL equals [4], then pays the wage from the supply curve at that employment level. Compared to perfect competition, monopsony results in [5] wages and lower employment. Workers are paid less than their MRP — this is economic [6]. Examples include single factories in small towns or the [7] as dominant healthcare employer. Trade unions can counter monopsony power by acting as [8] suppliers of labour. In bilateral monopoly (monopsonist vs union), wage outcome depends on relative [9] strength. Paradoxically, in monopsony, unions can increase both [10] and employment by pushing wages toward the competitive level. Other labour market imperfections include imperfect [11] (workers don't know all opportunities), [12] (unequal pay for equal work), and occupational [13] restricting supply. Minimum wage legislation in monopsony can increase both wages and [14] by countering employer power."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid);
+        delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

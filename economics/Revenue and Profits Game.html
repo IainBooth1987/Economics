@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Revenue &amp; Profits Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; overflow-x: auto; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Calculator */
+        .data-table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 0.85rem; }
+        .data-table th { background: rgba(59,130,246,0.15); color: var(--accent2); padding: 0.6rem; border: 1px solid var(--border); font-family: var(--ff-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+        .data-table td { padding: 0.6rem; border: 1px solid var(--border); text-align: center; background: var(--surface2); color: var(--text); font-weight: 500; }
+        .calc-row { display: grid; gap: 0.85rem; margin-bottom: 1rem; }
+        .calc-row label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); display: block; margin-bottom: 0.3rem; }
+        .calc-row select, .calc-row input { width: 100%; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--ff-sans); font-size: 0.87rem; }
+        .calc-row select:focus, .calc-row input:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+        [data-theme="light"] .calc-row select, [data-theme="light"] .calc-row input { background: #f1f5f9; }
+        .calc-answer { display: none; margin-top: 1rem; padding: 1.1rem 1.3rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .calc-answer.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .calc-answer { color: var(--text); }
+        .calc-verdict { margin-top: 0.75rem; padding: 0.65rem 1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; }
+        .calc-verdict.correct { background: var(--correct-bg); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+        .calc-verdict.incorrect { background: var(--incorrect-bg); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+        [data-theme="light"] .calc-verdict.correct { color: #065f46; }
+        [data-theme="light"] .calc-verdict.incorrect { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.92rem; color: var(--text); }
+        .passage-box h4 { font-family: var(--ff-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.5rem; margin-top: 1rem; }
+        .passage-box h4:first-child { margin-top: 0; }
+        .word-blank { display: inline-block; min-width: 75px; padding: 2px 7px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 720px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Revenue &amp; Profits Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_revprof_game_pw';
+  var valid = ['RevProf-6Yd!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['RevProf-6Yd!2026','MktStr-Lbr#9Xq2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_revprof_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<div id="pw-overlay" style="position:fixed;inset:0;background:#0a0e1a;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;">
+  <div style="background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:2.5rem 2rem;width:min(380px,90vw);text-align:center;">
+    <div style="font-size:1.25rem;font-weight:900;letter-spacing:-0.02em;margin-bottom:0.5rem;color:#f1f5f9;">BIZ<span style="color:#f59e0b">-</span>OMICS</div>
+    <div style="font-family:monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:#3b82f6;background:rgba(59,130,246,0.1);padding:0.25rem 0.65rem;border-radius:100px;border:1px solid rgba(59,130,246,0.2);display:inline-block;margin-bottom:1.5rem;">Market Structures &amp; Labour Pack</div>
+    <p style="color:#94a3b8;font-size:0.85rem;margin-bottom:1.25rem;line-height:1.6;">Enter your access password to unlock this revision game.</p>
+    <input id="pw-input" type="password" placeholder="Enter password" style="width:100%;padding:0.7rem 1rem;background:#0d1526;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#f1f5f9;font-size:0.9rem;margin-bottom:0.75rem;box-sizing:border-box;" onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()" style="width:100%;padding:0.7rem;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:0.87rem;font-weight:600;cursor:pointer;">Unlock</button>
+    <p id="pw-err" style="color:#ef4444;font-size:0.8rem;margin-top:0.65rem;display:none;">Incorrect password. Please try again.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var k='biz-omics-micro-access';
+  if(localStorage.getItem(k)==='1')document.getElementById('pw-overlay').style.display='none';
+})();
+function checkPw(){
+  var v=document.getElementById('pw-input').value;
+  if(v==='MktStr-Lbr#9Xq'){localStorage.setItem('biz-omics-micro-access','1');document.getElementById('pw-overlay').style.display='none';}
+  else{document.getElementById('pw-err').style.display='block';document.getElementById('pw-input').value='';}
+}
+</script>
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Revenue &amp; Profits</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Revenue &amp; Profit Calculator</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: CALCULATOR -->
+    <div class="tab-content">
+        <span class="mono-label">Revenue &amp; Profit Calculator — review the data, select a calculation, enter your answer</span>
+        <table class="data-table" id="revTable"></table>
+        <div class="calc-row">
+            <div>
+                <label>Select calculation</label>
+                <select id="calcType" onchange="toggleProfitType()">
+                    <option value="">-- Select --</option>
+                    <option value="tr">Total Revenue (TR)</option>
+                    <option value="ar">Average Revenue (AR)</option>
+                    <option value="mr">Marginal Revenue (MR)</option>
+                    <option value="profit">Total Profit</option>
+                    <option value="normal-profit">Normal or Abnormal Profit?</option>
+                </select>
+            </div>
+            <div id="numInputRow">
+                <label>Your answer (£, to 2 d.p.)</label>
+                <input type="number" step="0.01" id="calcAnswer" placeholder="Enter your calculated value">
+            </div>
+            <div id="profitTypeRow" style="display:none">
+                <label>Select profit type</label>
+                <select id="profitTypeAnswer">
+                    <option value="">-- Select --</option>
+                    <option value="normal">Normal Profit</option>
+                    <option value="abnormal">Abnormal (Supernormal) Profit</option>
+                    <option value="loss">Loss (below normal profit)</option>
+                </select>
+            </div>
+        </div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="generateRevData()">New Question</button>
+            <button class="btn btn-primary" onclick="checkCalc()">Check Answer</button>
+        </div>
+        <div class="calc-answer" id="calcAnswerBox"></div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Role of Profit</button>
+            <button class="sub-tab" onclick="switchSubTab(2)">Revenue Relationships</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Role of Profit in a Market Economy</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-2">
+            <span class="mono-label">Missing Words — MR &amp; TR Relationships</span>
+            <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage2"></div>
+            <div id="fillResult2" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let calcInit = false, matchInit = false;
+const fillInitialised = {1: false, 2: false};
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !calcInit) { calcInit = true; generateRevData(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    [0,1,2].forEach(i => { const el = document.getElementById(`sub-${i}`); if(el) el.classList.toggle('active', i===index); });
+    if (index === 1) initFillPassage(1);
+    if (index === 2) initFillPassage(2);
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What is 'total revenue'?", options: ["The profit made from sales","The total income from selling all units — Price × Quantity","The revenue per unit sold","The additional revenue from one more unit"], correct: 1, explanation: "Total Revenue (TR) = Price × Quantity. It's the total money received from selling all units. If a firm sells 100 units at £10 each, TR = £10 × 100 = £1,000. TR shows the firm's total income from sales before any costs are deducted. TR can rise by increasing price OR quantity, or both." },
+    { question: "What is 'average revenue'?", options: ["Total revenue divided by quantity — which equals price","The change in total revenue","Total revenue plus costs","Marginal revenue minus total revenue"], correct: 0, explanation: "Average Revenue (AR) = Total Revenue / Quantity = (P × Q) / Q = Price. AR is simply the price per unit. If TR = £1,000 from 100 units, AR = £1,000/100 = £10 (the price). CRUCIAL: The Average Revenue curve IS the firm's demand curve — it shows the price consumers will pay at each quantity level. AR curve slopes downward for firms with market power." },
+    { question: "Why is the average revenue (AR) curve the firm's demand curve?", options: ["Because they look similar","Because AR shows the price consumers will pay at each quantity level — exactly what a demand curve shows","Because revenue equals demand","They are not the same"], correct: 1, explanation: "The AR curve IS the demand curve because: AR = TR/Q = (P×Q)/Q = P (price). The demand curve shows price at each quantity — exactly what AR shows. When a firm considers selling 50 units, the demand curve tells them the maximum price consumers will pay (say £20). This £20 is also their AR. For firms with downward-sloping demand, AR falls as quantity rises — to sell more, lower the price." },
+    { question: "What is 'marginal revenue'?", options: ["The average revenue per unit","The additional revenue from selling one more unit","Total revenue divided by quantity","The profit from the last unit"], correct: 1, explanation: "Marginal Revenue (MR) is the ADDITIONAL revenue from selling ONE MORE unit. MR = Change in TR / Change in Q. If selling 100 units brings £1,000 TR and 101 units brings £1,009 TR, then MR = £9. For firms with market power, MR < AR (MR is below AR) because to sell more, they must lower price on ALL units, not just the extra one. MR is crucial for profit maximisation (produce where MR = MC)." },
+    { question: "A firm sells 50 units at £20 each (TR = £1,000). If it sells 51 units, it must lower price to £19.80 for all units (TR = £1,009.80). What is the marginal revenue of the 51st unit?", options: ["£19.80","£20","£9.80","£1,009.80"], correct: 2, explanation: "MR = Change in TR = £1,009.80 − £1,000 = £9.80. Notice MR (£9.80) is LESS than the price (£19.80). Why? The firm gains £19.80 from selling the 51st unit BUT loses £0.20 on each of the previous 50 units (price fell from £20 to £19.80). Net gain = £19.80 − (50 × £0.20) = £19.80 − £10 = £9.80. This shows why MR < AR for firms with market power — price reductions affect all units." },
+    { question: "What is the relationship between average revenue (AR) and marginal revenue (MR) for a firm with market power?", options: ["AR = MR always","MR is below AR (MR curve is below AR/demand curve)","MR is above AR always","They are unrelated"], correct: 1, explanation: "For firms with downward-sloping demand (market power), MR is BELOW AR. The MR curve lies below the demand/AR curve. Why? To sell more, the firm must lower price on ALL units. The extra unit brings in price P, but all previous units now sell for less. MR = price of extra unit MINUS revenue lost from lowering price on previous units. Only in perfect competition (horizontal demand) does MR = AR = Price, because firms are price-takers." },
+    { question: "What is the relationship between marginal revenue and total revenue?", options: ["They are unrelated","When MR is positive, TR is rising; when MR is negative, TR is falling; TR is maximum when MR = 0","When MR rises, TR falls","MR and TR always move together"], correct: 1, explanation: "MR and TR have a crucial relationship: When MR > 0 (positive), selling more increases TR — TR RISING. When MR = 0, TR is at its MAXIMUM point (neither rising nor falling). When MR < 0 (negative), selling more actually DECREASES TR — TR FALLING. Example: If price cuts reduce TR, MR is negative. This relationship helps firms decide production levels — never produce where MR is negative (you're reducing revenue!)." },
+    { question: "What is profit?", options: ["Total revenue","The difference between total revenue and total costs (TR − TC)","Average revenue minus marginal cost","The amount the government takes in tax"], correct: 1, explanation: "Profit = Total Revenue − Total Costs (TR − TC). It's what remains after paying ALL costs. If TR = £10,000 and TC = £7,000, profit = £3,000. Firms aim to maximise profit. Profit signals to entrepreneurs where to allocate resources. Important: Total costs include ALL costs — explicit costs (money paid out) AND implicit costs (opportunity costs like owner's time and capital)." },
+    { question: "What is 'normal profit'?", options: ["The minimum profit needed to keep entrepreneurs in the industry — covers opportunity costs","Any profit above zero","The average profit in the economy","Profit after tax"], correct: 0, explanation: "Normal profit is the MINIMUM profit needed to keep a firm in the industry long-term. It covers opportunity costs — what the entrepreneur could earn elsewhere. Normal profit = zero economic profit (TR = TC including opportunity costs). If an entrepreneur could earn £40,000 working elsewhere, normal profit must cover this. Normal profit is included in economic costs. Firms earning only normal profit stay in the industry but have no incentive to expand or for new firms to enter." },
+    { question: "What is 'abnormal profit' (supernormal profit)?", options: ["Any profit that's unusual","Profit above normal profit — a signal for new firms to enter the industry","Profit below normal","Negative profit (loss)"], correct: 1, explanation: "Abnormal profit (supernormal profit) is profit ABOVE normal profit. It's an 'economic profit' — revenue exceeds ALL costs including opportunity costs. Abnormal profit signals SUCCESS and attracts new firms. In competitive markets, abnormal profits attract entry, increasing supply and reducing prices until only normal profit remains. Monopolies can sustain abnormal profits due to barriers to entry. Abnormal profit rewards innovation and risk-taking, driving economic progress." },
+    { question: "A café owner could earn £30,000 working elsewhere. The café makes £35,000 revenue with £25,000 explicit costs. What profit situation exists?", options: ["Abnormal profit of £10,000","Loss — the café should close","Breaking even with zero profit","Accounting profit of £10,000 but making a loss economically"], correct: 3, explanation: "Accounting profit = £35,000 − £25,000 = £10,000. BUT economic costs include opportunity cost of £30,000 (forgone salary). Economic profit = £35,000 − £25,000 − £30,000 = −£20,000 (LOSS). The owner earns £10,000 but could earn £30,000 elsewhere — they're £20,000 worse off. This café is not earning normal profit. The owner should close and take the job. This shows why opportunity costs matter — accounting profit doesn't tell the full story." },
+    { question: "What roles does profit play in a market economy?", options: ["No important role — profit is just excess money","Signals resource allocation, rewards risk/innovation, incentivises efficiency, measures business success","Only to make owners rich","Just indicates demand for products"], correct: 1, explanation: "Profit plays CRUCIAL roles: (1) SIGNAL for resource allocation — high profits signal 'produce more here', losses signal 'produce less'. Resources flow toward profitable sectors. (2) REWARD for risk-taking and innovation — entrepreneurs risk capital, profit compensates risk. (3) INCENTIVE for efficiency — firms minimise costs to maximise profit. (4) Source of INVESTMENT funds — retained profits finance expansion. (5) MEASURES success — profit indicates firms are creating value consumers want. Without profit signals, market economies couldn't efficiently allocate resources." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── CALCULATOR ── */
+let revData = {};
+
+function generateRevData() {
+    const quantity = Math.floor(Math.random() * 3) + 4;
+    let currentPrice = Math.floor(Math.random() * 30) + 50;
+    const fc = Math.floor(Math.random() * 300) + 200;
+    const avc = Math.floor(Math.random() * 20) + 20;
+    revData = { quantities: [], prices: [], totalCosts: [] };
+    for (let q = 1; q <= quantity; q++) {
+        revData.quantities.push(q);
+        revData.prices.push(currentPrice);
+        const vc = avc * q + Math.floor(Math.random() * 20) - 10;
+        revData.totalCosts.push(fc + vc);
+        currentPrice -= Math.floor(Math.random() * 4) + 2;
+    }
+    document.getElementById('revTable').innerHTML = `
+        <tr><th>Quantity (Q)</th>${revData.quantities.map(q=>`<th>${q}</th>`).join('')}</tr>
+        <tr><td><strong>Price (P)</strong></td>${revData.prices.map(p=>`<td>£${p}</td>`).join('')}</tr>
+        <tr><td><strong>Total Cost (TC)</strong></td>${revData.totalCosts.map(t=>`<td>£${t}</td>`).join('')}</tr>`;
+    document.getElementById('calcType').value = '';
+    document.getElementById('calcAnswer').value = '';
+    document.getElementById('profitTypeAnswer').value = '';
+    document.getElementById('calcAnswerBox').classList.remove('show');
+    document.getElementById('numInputRow').style.display = 'block';
+    document.getElementById('profitTypeRow').style.display = 'none';
+}
+
+function toggleProfitType() {
+    const t = document.getElementById('calcType').value;
+    document.getElementById('numInputRow').style.display = t === 'normal-profit' ? 'none' : 'block';
+    document.getElementById('profitTypeRow').style.display = t === 'normal-profit' ? 'block' : 'none';
+}
+
+function checkCalc() {
+    const type = document.getElementById('calcType').value;
+    if (!type) { alert('Please select a calculation type.'); return; }
+    const q = revData.quantities.length;
+    const lastQ = revData.quantities[q-1];
+    const lastP = revData.prices[q-1];
+    const lastTC = revData.totalCosts[q-1];
+    const lastTR = lastP * lastQ;
+    let method, expl, isCorrect, html;
+
+    if (type === 'normal-profit') {
+        const ans = document.getElementById('profitTypeAnswer').value;
+        if (!ans) { alert('Please select a profit type.'); return; }
+        const profit = lastTR - lastTC;
+        let correctType = profit > 50 ? 'abnormal' : profit >= -20 ? 'normal' : 'loss';
+        isCorrect = ans === correctType;
+        const labels = {normal:'Normal Profit', abnormal:'Abnormal (Supernormal) Profit', loss:'Loss (below normal profit)'};
+        method = `TR = £${lastP} × ${lastQ} = £${lastTR} | TC = £${lastTC} | Profit = £${profit}`;
+        expl = correctType === 'abnormal' ? `Profit of £${profit} significantly exceeds what's needed to keep the firm in the industry — this is ABNORMAL (supernormal) profit. It would attract new entrants in competitive markets.`
+             : correctType === 'normal' ? `Profit of £${profit} approximates NORMAL profit — the minimum needed to keep the entrepreneur in this business, covering opportunity costs. No strong incentive for entry or exit.`
+             : `A LOSS of £${Math.abs(profit)} means the firm is not covering all costs including opportunity costs. In the long run, the entrepreneur would be better off closing.`;
+        html = `<p style="margin-bottom:0.5rem"><strong>Method:</strong> ${method}</p><p style="margin-bottom:0.75rem;color:var(--muted);line-height:1.7">${expl}</p><div class="calc-verdict ${isCorrect?'correct':'incorrect'}">${isCorrect?'✓ Correct!':'Incorrect. Answer: '+labels[correctType]}</div>`;
+    } else {
+        const userVal = parseFloat(document.getElementById('calcAnswer').value);
+        if (isNaN(userVal)) { alert('Please enter your calculated answer.'); return; }
+        let correctAnswer;
+        if (type === 'tr') {
+            correctAnswer = lastTR;
+            method = `TR = P × Q = £${lastP} × ${lastQ} = £${lastTR}`;
+            expl = `Total Revenue is the total income from all sales at quantity ${lastQ}.`;
+        } else if (type === 'ar') {
+            correctAnswer = lastP;
+            method = `AR = TR / Q = £${lastTR} / ${lastQ} = £${lastP} (equals price)`;
+            expl = `Average Revenue equals Price. The AR curve is the firm's demand curve.`;
+        } else if (type === 'mr') {
+            if (q < 2) { alert('Need at least 2 quantity levels to calculate MR.'); return; }
+            const prevQ = revData.quantities[q-2];
+            const prevP = revData.prices[q-2];
+            const prevTR = prevP * prevQ;
+            correctAnswer = lastTR - prevTR;
+            method = `MR = TR(${lastQ}) − TR(${prevQ}) = £${lastTR} − £${prevTR} = £${correctAnswer.toFixed(2)}`;
+            expl = `MR (£${correctAnswer.toFixed(2)}) < Price (£${lastP}) because lowering price from £${prevP} to £${lastP} reduces revenue on all ${prevQ} previous units.`;
+        } else {
+            correctAnswer = lastTR - lastTC;
+            method = `Profit = TR − TC = £${lastTR} − £${lastTC} = £${correctAnswer.toFixed(2)}`;
+            expl = correctAnswer > 0 ? `The firm is profitable. Whether this is normal or abnormal profit depends on opportunity costs.` : `The firm is making a loss — costs exceed revenue.`;
+        }
+        isCorrect = Math.abs(userVal - correctAnswer) < 0.05;
+        html = `<p style="margin-bottom:0.5rem"><strong>Method:</strong> ${method}</p><p style="margin-bottom:0.75rem;color:var(--muted);line-height:1.7">${expl}</p><div class="calc-verdict ${isCorrect?'correct':'incorrect'}">${isCorrect?'✓ Correct!':'Your answer: £'+userVal.toFixed(2)+' | Correct: £'+correctAnswer.toFixed(2)}</div>`;
+    }
+    document.getElementById('calcAnswerBox').innerHTML = html;
+    document.getElementById('calcAnswerBox').classList.add('show');
+}
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Total Revenue", definition: "Total income from sales — Price × Quantity (TR = P × Q)", id: 1 },
+    { term: "Average Revenue", definition: "Revenue per unit — TR/Q, which equals Price. The AR curve IS the demand curve", id: 2 },
+    { term: "Marginal Revenue", definition: "The additional revenue from selling one more unit (Change in TR / Change in Q)", id: 3 },
+    { term: "Profit", definition: "The difference between total revenue and total costs (Profit = TR − TC)", id: 4 },
+    { term: "Normal Profit", definition: "Minimum profit needed to keep entrepreneur in industry — covers opportunity costs (zero economic profit)", id: 5 },
+    { term: "Abnormal Profit", definition: "Profit above normal profit — signals success and attracts new firms (also called supernormal or economic profit)", id: 6 },
+    { term: "AR = Demand Curve", definition: "Average revenue curve is the firm's demand curve because AR = P at each quantity level", id: 7 },
+    { term: "MR below AR", definition: "For firms with market power, MR lies below AR because price must fall on ALL units to sell more", id: 8 },
+    { term: "MR and TR Relationship", definition: "When MR > 0, TR rises; when MR = 0, TR is maximum; when MR < 0, TR falls", id: 9 },
+    { term: "Profit's Signalling Role", definition: "High profits signal 'produce more here'; losses signal 'produce less' — allocates resources efficiently", id: 10 },
+    { term: "Profit Rewards Innovation", definition: "Abnormal profits reward successful entrepreneurship, risk-taking, and innovation", id: 11 },
+    { term: "Profit Incentivises Efficiency", definition: "Firms that minimise costs and maximise revenue earn higher profits — drives continuous improvement", id: 12 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["market","signal","value","productively","firms","expand","losses","demand","exit","productive","scarce","planning","reward","capital","abnormal","risks","innovation","needs","innovation","economic","efficiency","revenue","production","efficiently","efficient","funds","equipment","markets","internal","workers","success","costs","value","more","value","downsides","failure","existing","higher","failure","external","directly","taxation","society","allocates","funds","progress"],
+        template: "Profit plays several crucial roles in a [0] economy. First, profit acts as a [1] for resource allocation. When firms make high profits in an industry, this signals that consumers [2] these products and that resources are being used [3]. High profits attract new [4] into the industry and encourage existing firms to [5] production. Resources flow toward profitable sectors. Conversely, [6] signal that resources are being used inefficiently or that consumer [7] is low. Losses cause firms to [8] the industry or reduce production, releasing resources for more [9] uses elsewhere. This signalling mechanism helps allocate [10] resources to their most valued uses without central [11]. Second, profit acts as a [12] for entrepreneurship, innovation, and risk-taking. Entrepreneurs risk their [13] and time when starting businesses. The possibility of earning [14] profit rewards this risk-taking. Without potential profits, entrepreneurs wouldn't take [15], and innovation would slow. Abnormal profits reward successful [16] — developing new products, improving production methods, or better serving customer [17]. For example, Apple's abnormal profits from the iPhone rewarded their [18] in touchscreen smartphones. This profit incentive drives [19] progress and improvements in living standards. Third, profit incentivises [20]. Firms that minimise costs and maximise [21] earn higher profits. This creates constant pressure to improve [22] methods, reduce waste, and increase productivity. Firms that fail to operate [23] make losses and eventually exit. Competition forces firms to be [24] or face elimination. This drives continuous improvement in how resources are used. Fourth, profit provides a source of [25] for business expansion. Retained profits can be reinvested in new [26], research and development, or expansion into new [27]. This [28] investment drives economic growth. Firms earning profits can expand capacity, hire more [29], and increase output without needing to borrow. Finally, profit measures business [30]. Accounting profit shows whether revenue exceeds explicit [31]. Economic profit (including opportunity costs) shows whether the business creates more [32] than alternative uses of resources. Positive economic profit means resources are being used [33] effectively here than elsewhere — the business is creating genuine [34]. However, profit also has potential [35]. Very high abnormal profits may indicate monopoly power and market [36]. If barriers to entry prevent new firms from entering profitable industries, [37] firms may sustain abnormal profits while producing less and charging [38] prices than competitive markets would. This represents market [39] and consumer harm. Additionally, the pursuit of profit may lead firms to ignore [40] costs (pollution, environmental damage) if they don't bear these costs [41]. Government intervention through regulation and [42] may be needed to ensure profit-seeking behaviour benefits [43] as well as private interests. In summary, profit is essential in market economies. It [44] resources, rewards innovation and risk, incentivises efficiency, provides investment [45], and measures success. The profit motive drives economic [46] and improvements in living standards, though regulation is needed to address market failures."
+    },
+    2: {
+        answers: ["relationship","change","total","decisions","positive","more","rising","increase","selling","lower","units","zero","nothing","falls","unit","price","beyond","revenue","negative","revenue","costs","brings","inelastic","shape","maximum","horizontal","elasticity","revenue","larger","positive","equals","0","decreases","negative","below","lower","price","previous","inelastic","perfect","AR","price","line","profit","0","costs","positive","falling"],
+        template: "Marginal revenue and total revenue have a fundamental mathematical [0]. Marginal revenue is the [1] in total revenue from selling one more unit, while total revenue is the [2] income from all sales. Understanding their relationship is crucial for business [3]. When marginal revenue is [4] (MR > 0), selling additional units INCREASES total revenue. Each extra unit adds [5] revenue than zero, so TR is [6]. For example, if MR = £5, selling one more unit adds £5 to total revenue, causing TR to [7]. As long as MR remains positive, firms can increase TR by [8] more units. This occurs when the price effect of selling more (having to [9] price) is smaller than the quantity effect (selling more [10]). When marginal revenue equals [11] (MR = 0), total revenue is at its MAXIMUM point. At this quantity, selling one more unit adds [12] to total revenue — TR neither rises nor [13]. This is the peak of the TR curve. At this point, the gain from selling one more [14] exactly equals the revenue lost from lowering [15] on all previous units. Firms should never produce [16] this point because additional output would reduce total [17]. When marginal revenue is [18] (MR < 0), selling additional units DECREASES total revenue. Each extra unit subtracts from [19], so TR is falling. The price reduction needed to sell more now [20] more revenue (on all previous units) than the additional unit [21]. This occurs when demand is [22] — quantity increases are proportionally smaller than price decreases required. Why does this relationship matter? The MR-TR relationship explains the [23] of the total revenue curve. TR rises when MR is positive, reaches a [24] when MR = 0, and falls when MR is negative. The MR curve crosses the [25] axis (MR = 0) exactly when TR is at its maximum. This relationship links to price [26]. When demand is elastic (PED > 1), lowering price increases [27] because the percentage increase in quantity demanded is [28] than the percentage fall in price. In this range, MR is [29] and TR rises. When demand is unit elastic (PED = 1), the percentage change in quantity exactly [30] the percentage price change. Here MR = [31] and TR is maximised. When demand is inelastic (PED < 1), lowering price [32] revenue because quantity increases proportionally less than price falls. In this range, MR is [33] and TR falls. For firms with market power (downward-sloping demand), the MR curve lies [34] the demand/AR curve. This is because to sell more, the firm must [35] price on ALL units, not just the extra one. The marginal revenue from an additional unit equals the [36] of that unit MINUS the revenue lost from lowering price on [37] units. The steeper the demand curve (more [38]), the further below AR the MR curve lies. In [39] competition, firms are price-takers with horizontal demand at market price. Here MR = [40] = Price always. The firm can sell any quantity at market price without lowering price, so marginal revenue equals [41]. TR increases linearly with quantity (TR = P × Q as a straight [42]). Understanding MR-TR relationships helps firms make production decisions. Rational firms produce where MR = MC (marginal cost) to maximise [43]. They should NEVER produce where MR < [44] (they'd be reducing revenue while still incurring [45] to produce the unit). The profit-maximising quantity is always where MR = MC and MR is [46] or zero, never in the negative MR region where TR is [47]."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        const oldBtn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+        delete state.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) {
+        const oldBtn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+    }
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        if (!blank) return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
