@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bond Market Crisis Simulator | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0e1117;
+            --bg-card: #161b22;
+            --bg-card-alt: #1c2333;
+            --bg-input: #1c2333;
+            --border: #2a3142;
+            --border-accent: #3fb950;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --green: #3fb950;
+            --green-dim: rgba(63,185,80,0.15);
+            --green-glow: rgba(63,185,80,0.3);
+            --amber: #d29922;
+            --amber-dim: rgba(210,153,34,0.15);
+            --red: #f85149;
+            --red-dim: rgba(248,81,73,0.15);
+            --blue: #58a6ff;
+            --blue-dim: rgba(88,166,255,0.12);
+            --serif: 'Fraunces', Georgia, serif;
+            --sans: 'DM Sans', -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-family: var(--serif);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .header h1 span { color: var(--green); }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover { color: var(--text-primary); background: var(--bg-card-alt); }
+        .tab-btn.active { background: var(--green-dim); color: var(--green); }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .control-group { display: flex; flex-direction: column; }
+
+        .control-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        select {
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b949e' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        select:focus { outline: none; border-color: var(--green); }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--sans);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--green);
+            color: #0e1117;
+        }
+
+        .btn-primary:hover { background: #4cc964; box-shadow: 0 0 20px var(--green-glow); }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+        /* Crisis Info Banner */
+        .crisis-info {
+            background: var(--amber-dim);
+            border: 1px solid var(--amber);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .crisis-info h3 {
+            font-family: var(--serif);
+            color: var(--amber);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .crisis-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            line-height: 1.65;
+        }
+
+        .crisis-info p strong { color: var(--text-primary); }
+
+        /* Shock Alert */
+        .shock-alert {
+            padding: 16px 20px;
+            background: var(--red-dim);
+            border: 1px solid var(--red);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--red);
+            text-align: center;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        /* Before / After Panels */
+        .market-state {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .state-panel {
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+
+        .state-panel.before { border-color: var(--blue); background: var(--blue-dim); }
+        .state-panel.after { border-color: var(--red); background: var(--red-dim); }
+
+        .state-panel h2 {
+            font-family: var(--serif);
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .state-panel.before h2 { color: var(--blue); }
+        .state-panel.after h2 { color: var(--red); }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.9rem;
+        }
+
+        .metric:last-child { border-bottom: none; }
+        .metric-label { color: var(--text-secondary); }
+        .metric-value { font-weight: 700; }
+
+        /* Bonds */
+        .bonds-section { margin-top: 28px; }
+
+        .bonds-section > h2 {
+            font-family: var(--serif);
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .bonds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .bond-card {
+            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .bond-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .bond-card.existing { border-color: var(--green); background: var(--green-dim); }
+        .bond-card.new { border-color: var(--amber); background: var(--amber-dim); }
+
+        .bond-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .bond-detail {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .bond-detail strong { color: var(--text-primary); }
+
+        /* Explanation box */
+        .explanation {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 28px;
+            border-left: 4px solid var(--green);
+        }
+
+        .explanation h3 {
+            font-family: var(--serif);
+            color: var(--green);
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .explanation p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            line-height: 1.65;
+        }
+
+        .explanation p strong { color: var(--text-primary); }
+
+        .highlight {
+            background: var(--amber-dim);
+            color: var(--amber);
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        /* Yield Curve Canvas */
+        .yield-curve-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .yield-curve-wrap h3 {
+            font-family: var(--serif);
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            font-size: 1rem;
+        }
+
+        .yield-curve-legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 12px;
+            font-size: 0.82rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        canvas#yieldCurveCanvas {
+            width: 100%;
+            height: 260px;
+            display: block;
+        }
+
+        /* Slider section */
+        .slider-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .slider-section h3 {
+            font-family: var(--serif);
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .slider-section .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            min-width: 120px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--green);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--green-glow);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--green);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--green);
+        }
+
+        .slider-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .slider-result-card {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .slider-result-card .label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .slider-result-card .value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: var(--serif);
+        }
+
+        .slider-result-card .value.loss { color: var(--red); }
+        .slider-result-card .value.neutral { color: var(--text-primary); }
+        .slider-result-card .value.gain { color: var(--green); }
+
+        /* Glossary */
+        .glossary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .glossary h3 {
+            font-family: var(--serif);
+            color: var(--green);
+            margin-bottom: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .glossary h3 .toggle-icon { transition: transform 0.3s; font-size: 0.8rem; color: var(--text-muted); }
+        .glossary h3 .toggle-icon.open { transform: rotate(180deg); }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s;
+        }
+
+        .glossary-grid.collapsed { max-height: 0; opacity: 0; }
+        .glossary-grid.expanded { max-height: 2000px; opacity: 1; }
+
+        .glossary-item {
+            padding: 12px;
+            background: var(--bg-card-alt);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .glossary-item dt {
+            font-weight: 700;
+            color: var(--green);
+            font-size: 0.88rem;
+            margin-bottom: 3px;
+        }
+
+        .glossary-item dd {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+
+        /* Comparison */
+        .comparison-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .comparison-col {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .comparison-col h3 {
+            font-family: var(--serif);
+            font-size: 1rem;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-col:first-child h3 { color: var(--blue); }
+        .comparison-col:last-child h3 { color: var(--amber); }
+
+        .comp-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            font-size: 0.88rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .comp-metric:last-child { border-bottom: none; }
+        .comp-metric span:first-child { color: var(--text-secondary); }
+        .comp-metric span:last-child { font-weight: 700; }
+
+        .comp-bonds-title {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 14px 0 8px;
+        }
+
+        .comp-bond {
+            background: var(--bg-card-alt);
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+        }
+
+        .comp-bond .name { font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+        .comp-bond .details { color: var(--text-secondary); }
+
+        /* Scenario bar */
+        .scenario-bar {
+            margin-bottom: 20px;
+        }
+
+        .scenario-bar label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .scenario-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .scenario-chip {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scenario-chip:hover { border-color: var(--green); color: var(--text-primary); }
+        .scenario-chip.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+        .scenario-briefing {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--green);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .scenario-briefing h4 {
+            font-family: var(--serif);
+            color: var(--green);
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .scenario-briefing p {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.6;
+            margin-bottom: 4px;
+        }
+
+        .scenario-briefing .scenario-task {
+            color: var(--amber);
+            font-weight: 600;
+            font-size: 0.88rem;
+            margin-top: 8px;
+        }
+
+        .slider-insight {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            display: none;
+        }
+
+        .slider-insight strong { color: var(--text-primary); }
+        .slider-insight .good { color: var(--green); font-weight: 600; }
+        .slider-insight .bad { color: var(--red); font-weight: 600; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container { padding: 16px 14px 40px; }
+            .header h1 { font-size: 1.5rem; }
+            .controls { grid-template-columns: 1fr; }
+            .market-state { grid-template-columns: 1fr; }
+            .comparison-controls { grid-template-columns: 1fr; }
+            .comparison-panels { grid-template-columns: 1fr; }
+            .bonds-grid { grid-template-columns: 1fr; }
+            .slider-row { flex-direction: column; align-items: stretch; gap: 6px; }
+            .slider-label { min-width: auto; }
+            .slider-value { text-align: left; }
+            .slider-results { grid-template-columns: 1fr 1fr; }
+            .tab-btn { font-size: 0.78rem; padding: 8px 6px; }
+        }
+
+        @media (max-width: 480px) {
+            .slider-results { grid-template-columns: 1fr; }
+            .glossary-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Bond Market Simulator</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_bondmkt_pw';
+  var valid = ['BondMkt-6Wq!2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['BondMkt-6Wq!2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_bondmkt_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <div class="container">
+        <div class="header">
+            <h1>Bond Market <span>Crisis Simulator</span></h1>
+            <p>Real-world examples of how economic shocks affect government bond yields</p>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="simulator">Simulator</button>
+            <button class="tab-btn" data-tab="compare">Compare Crises</button>
+            <button class="tab-btn" data-tab="explorer">Yield Explorer</button>
+        </div>
+
+        <!-- ====== TAB 1: SIMULATOR ====== -->
+        <div class="tab-panel active" id="tab-simulator">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Select Historical Crisis Event</label>
+                    <select id="crisisType">
+                        <option value="truss">UK: Liz Truss Mini-Budget (Sept 2022)</option>
+                        <option value="greece">Greece: Sovereign Debt Crisis (2012)</option>
+                        <option value="russia">Russia: Default &amp; Devaluation (Aug 1998)</option>
+                        <option value="argentina2001">Argentina: Default (Dec 2001)</option>
+                        <option value="argentina2018">Argentina: Crisis (2018-2019)</option>
+                        <option value="brazil">Brazil: Election Uncertainty (2002)</option>
+                        <option value="turkey">Turkey: Currency Crisis (2018)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" id="applyCrisis">Trigger Crisis</button>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" id="resetBtn">Reset</button>
+                </div>
+            </div>
+
+            <div id="crisisInfo" class="crisis-info"></div>
+            <div id="shockAlert" class="shock-alert"></div>
+
+            <div class="market-state">
+                <div class="state-panel before">
+                    <h2 id="beforeTitle">Before Crisis: Stable Market</h2>
+                    <div class="metric">
+                        <span class="metric-label" id="beforeYieldLabel">10-Year Gilt Yield:</span>
+                        <span class="metric-value" id="beforeYield">3.49%</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Bond Prices:</span>
+                        <span class="metric-value" id="beforePrice">£100</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Investor Confidence:</span>
+                        <span class="metric-value" id="beforeConfidence">High</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Market Stability:</span>
+                        <span class="metric-value" id="beforeDemand">Stable</span>
+                    </div>
+                </div>
+                <div class="state-panel after">
+                    <h2 id="afterTitle">Peak Crisis</h2>
+                    <div class="metric">
+                        <span class="metric-label" id="afterYieldLabel">10-Year Yield:</span>
+                        <span class="metric-value" id="afterYield">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Bond Prices:</span>
+                        <span class="metric-value" id="afterPrice">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Investor Confidence:</span>
+                        <span class="metric-value" id="afterConfidence">-</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Market Stability:</span>
+                        <span class="metric-value" id="afterDemand">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yield Curve -->
+            <div class="yield-curve-wrap" id="yieldCurveWrap" style="display:none;">
+                <h3>Yield Curve Shift</h3>
+                <div class="yield-curve-legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div> Before Crisis</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div> During Crisis</div>
+                </div>
+                <canvas id="yieldCurveCanvas"></canvas>
+            </div>
+
+            <div class="bonds-section">
+                <h2 id="bondsTitle">UK Government Gilts Portfolio</h2>
+                <div class="bonds-grid" id="bondsGrid"></div>
+            </div>
+
+            <div class="explanation">
+                <h3>Understanding the Crisis Impact</h3>
+                <p><strong>Before the Crisis:</strong> Government bonds trade at stable yields reflecting low risk. Existing bonds have fixed coupon rates based on pre-crisis market conditions.</p>
+                <p><strong>During the Crisis:</strong> Investors panic and demand much higher returns to compensate for increased risk. Existing bond prices crash as yields spike (inverse relationship). <span class="highlight">When governments need to issue new bonds</span>, they must offer dramatically <span class="highlight">higher coupon rates</span> to attract any buyers at all.</p>
+                <p><strong>The Vicious Cycle:</strong> Higher borrowing costs strain government finances further, potentially triggering downgrades, more panic, and even higher yields. This is why fiscal credibility matters so much.</p>
+            </div>
+
+            <!-- Glossary -->
+            <div class="glossary">
+                <h3 id="glossaryToggle">Key Terms <span class="toggle-icon">&#9660;</span></h3>
+                <div class="glossary-grid collapsed" id="glossaryGrid">
+                    <div class="glossary-item"><dl><dt>Yield</dt><dd>The annual return an investor receives from a bond, expressed as a percentage. When bond prices fall, yields rise — and vice versa.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Coupon Rate</dt><dd>The fixed annual interest payment on a bond, set when the bond is first issued. A bond with a £100 face value and 3% coupon pays £3 per year.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Face Value (Par)</dt><dd>The amount the bondholder receives at maturity — typically £100. Bonds trade above or below par depending on market yields.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Inverse Relationship</dt><dd>Bond prices and yields move in opposite directions. If investors demand higher yields, existing bonds with lower coupons become less attractive, so their price falls.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Maturity</dt><dd>The date when the bond issuer repays the face value. Longer-maturity bonds are more sensitive to yield changes — a small yield rise causes a larger price drop.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Credit Risk / Default Risk</dt><dd>The risk that a government (or issuer) fails to make interest or principal payments. Higher perceived risk means investors demand higher yields as compensation.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Gilt</dt><dd>A UK government bond. The name comes from the original certificates having gilded (gold) edges. Considered one of the safest bond markets globally.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Yield Curve</dt><dd>A graph plotting bond yields against their maturity. Normally slopes upward (longer = higher yield). An inverted curve can signal recession expectations.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Basis Points (bps)</dt><dd>One hundredth of a percentage point. A rise from 3.00% to 3.50% is a 50 basis point increase. Used because small yield changes have large effects on price.</dd></dl></div>
+                    <div class="glossary-item"><dl><dt>Spread</dt><dd>The difference in yield between two bonds — often between a risky bond and a 'safe' benchmark like US Treasuries or German Bunds. Wider spreads signal greater perceived risk.</dd></dl></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB 2: COMPARE ====== -->
+        <div class="tab-panel" id="tab-compare">
+            <div class="comparison-controls">
+                <div class="control-group">
+                    <label>Crisis A</label>
+                    <select id="compareA">
+                        <option value="truss">UK: Liz Truss Mini-Budget</option>
+                        <option value="greece">Greece: Sovereign Debt Crisis</option>
+                        <option value="russia">Russia: Default (1998)</option>
+                        <option value="argentina2001">Argentina: Default (2001)</option>
+                        <option value="argentina2018">Argentina: Crisis (2018)</option>
+                        <option value="brazil">Brazil: Election (2002)</option>
+                        <option value="turkey">Turkey: Currency Crisis (2018)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Crisis B</label>
+                    <select id="compareB">
+                        <option value="greece" selected>Greece: Sovereign Debt Crisis</option>
+                        <option value="truss">UK: Liz Truss Mini-Budget</option>
+                        <option value="russia">Russia: Default (1998)</option>
+                        <option value="argentina2001">Argentina: Default (2001)</option>
+                        <option value="argentina2018">Argentina: Crisis (2018)</option>
+                        <option value="brazil">Brazil: Election (2002)</option>
+                        <option value="turkey">Turkey: Currency Crisis (2018)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" id="compareBtn">Compare</button>
+                </div>
+            </div>
+            <div class="comparison-panels" id="comparisonPanels"></div>
+        </div>
+
+        <!-- ====== TAB 3: YIELD EXPLORER ====== -->
+        <div class="tab-panel" id="tab-explorer">
+
+            <!-- Scenario selector -->
+            <div class="scenario-bar">
+                <label>Choose a scenario</label>
+                <div class="scenario-chips" id="scenarioChips"></div>
+            </div>
+
+            <!-- Scenario briefing -->
+            <div class="scenario-briefing" id="scenarioBriefing"></div>
+
+            <!-- Sliders -->
+            <div class="slider-section">
+                <h3>Your Bond</h3>
+                <p class="subtitle" id="sliderPrompt">Select a scenario above to begin</p>
+
+                <div class="slider-row">
+                    <span class="slider-label">Coupon Rate</span>
+                    <input type="range" id="sliderCoupon" min="0.5" max="20" step="0.25" value="3">
+                    <span class="slider-value" id="sliderCouponVal">3.00%</span>
+                </div>
+                <div class="slider-row">
+                    <span class="slider-label">Market Yield</span>
+                    <input type="range" id="sliderYield" min="0.5" max="50" step="0.25" value="3">
+                    <span class="slider-value" id="sliderYieldVal">3.00%</span>
+                </div>
+                <div class="slider-row">
+                    <span class="slider-label">Years to Maturity</span>
+                    <input type="range" id="sliderMaturity" min="1" max="30" step="1" value="10">
+                    <span class="slider-value" id="sliderMaturityVal">10</span>
+                </div>
+
+                <div class="slider-results">
+                    <div class="slider-result-card">
+                        <div class="label">Bond Price</div>
+                        <div class="value neutral" id="sliderPrice">£100.00</div>
+                    </div>
+                    <div class="slider-result-card">
+                        <div class="label">Price Change</div>
+                        <div class="value neutral" id="sliderChange">0.00%</div>
+                    </div>
+                    <div class="slider-result-card">
+                        <div class="label">Annual Coupon</div>
+                        <div class="value neutral" id="sliderAnnual">£3.00</div>
+                    </div>
+                    <div class="slider-result-card">
+                        <div class="label">Current Yield</div>
+                        <div class="value neutral" id="sliderCurrentYield">3.00%</div>
+                    </div>
+                </div>
+
+                <!-- Insight that updates based on current state -->
+                <div class="slider-insight" id="sliderInsight"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA ============
+        const crisisData = {
+            truss: {
+                name: "UK: Liz Truss Mini-Budget",
+                date: "September 23, 2022",
+                beforeYield: 3.49, afterYield: 5.10, beforePrice: 100,
+                currency: "£", bondType: "Gilt",
+                yieldLabel: "30-Year Gilt Yield", country: "UK",
+                existingBonds: [
+                    { name: "UK Gilt 2020", coupon: 0.625, issued: "2020", maturity: 30 },
+                    { name: "UK Gilt 2021", coupon: 1.50, issued: "2021", maturity: 10 },
+                    { name: "UK Gilt 2022", coupon: 3.25, issued: "Jan 2022", maturity: 5 }
+                ],
+                yieldCurve: {
+                    before: [3.0, 3.2, 3.3, 3.4, 3.49],
+                    after: [4.2, 4.5, 4.7, 4.9, 5.10]
+                },
+                description: "On September 23, 2022, Chancellor Kwasi Kwarteng announced £45 billion in unfunded tax cuts. The 'Growth Plan' included reversing corporation tax increases, cutting National Insurance, and eliminating the 45p higher rate income tax.",
+                impact: "30-year gilt yields spiked from 3.49% to over 5.10% within days. The pound plummeted to historic lows against the dollar. Pension funds faced margin calls on derivative positions. Bank of England emergency intervention required.",
+                outcome: "Most tax cuts reversed within weeks. Both Kwarteng and Truss resigned. Yields partially recovered but remained elevated versus pre-crisis levels. UK borrowing costs permanently increased."
+            },
+            greece: {
+                name: "Greece: Sovereign Debt Crisis",
+                date: "March 2012 (Peak)",
+                beforeYield: 8.5, afterYield: 41.77, beforePrice: 100,
+                currency: "€", bondType: "Government Bond",
+                yieldLabel: "10-Year Bond Yield", country: "Greece",
+                existingBonds: [
+                    { name: "Greek Bond 2009", coupon: 5.5, issued: "2009", maturity: 10 },
+                    { name: "Greek Bond 2010", coupon: 6.2, issued: "2010", maturity: 7 }
+                ],
+                yieldCurve: {
+                    before: [6.0, 7.0, 7.8, 8.2, 8.5],
+                    after: [30.0, 35.0, 38.0, 40.0, 41.77]
+                },
+                description: "After the 2008 crisis, Greece's structural weaknesses (massive deficits, high debt, weak growth, fraudulent budget data) were exposed. Unable to devalue within the Eurozone, Greece faced brutal austerity or default.",
+                impact: "10-year yields reached an astronomical 41.77% in March 2012 — the highest in modern European history. Spread over German bunds hit 3,000 basis points (30%). Complete loss of market access.",
+                outcome: "Multiple EU/ECB/IMF bailouts totaling over €300 billion. Debt restructuring with 50%+ haircuts for bondholders. Decade-long depression with 25%+ unemployment. Still faces elevated spreads today."
+            },
+            russia: {
+                name: "Russia: Default & Devaluation",
+                date: "August 17, 1998",
+                beforeYield: 40, afterYield: 150, beforePrice: 100,
+                currency: "₽", bondType: "GKO (Treasury Bill)",
+                yieldLabel: "Ruble Bond Yield", country: "Russia",
+                existingBonds: [
+                    { name: "GKO 1997", coupon: 25, issued: "1997", maturity: 2 },
+                    { name: "GKO Early 1998", coupon: 35, issued: "1998", maturity: 1 }
+                ],
+                yieldCurve: {
+                    before: [35, 37, 38, 39, 40],
+                    after: [120, 130, 140, 145, 150]
+                },
+                description: "Russia defaulted on 281 billion rubles of domestic debt (GKOs) and devalued the ruble. Oil price collapse, weak tax collection, and Asian financial crisis contagion triggered the crisis.",
+                impact: "Yields on ruble bonds exceeded 150% annualised during peak panic. Complete destruction of domestic bond market. Ruble lost 70% of value. Global contagion caused LTCM hedge fund collapse.",
+                outcome: "Foreign investors suffered massive losses. Domestic financial system collapsed. However, high oil prices in 2000s enabled recovery. Established Russia's reputation for sovereign risk."
+            },
+            argentina2001: {
+                name: "Argentina: Default",
+                date: "December 2001",
+                beforeYield: 15, afterYield: 50, beforePrice: 100,
+                currency: "$", bondType: "Government Bond",
+                yieldLabel: "10-Year Bond Yield", country: "Argentina",
+                existingBonds: [
+                    { name: "Argentine Bond 1999", coupon: 11, issued: "1999", maturity: 10 },
+                    { name: "Argentine Bond 2000", coupon: 13, issued: "2000", maturity: 8 }
+                ],
+                yieldCurve: {
+                    before: [12, 13, 14, 14.5, 15],
+                    after: [40, 43, 46, 48, 50]
+                },
+                description: "Argentina defaulted on $100 billion of sovereign debt — the largest sovereign default in history at the time. Currency board peg to US dollar collapsed amid economic depression.",
+                impact: "Yields spiked to 40-60% before default. Complete loss of market access. Banking system froze deposits ('corralito'). GDP contracted 20% from peak. Unemployment exceeded 20%.",
+                outcome: "Decade-long restructuring negotiations. Bondholders took 65%+ haircuts. Country locked out of international markets. Established pattern of repeated Argentine defaults."
+            },
+            argentina2018: {
+                name: "Argentina: Crisis",
+                date: "2018-2019",
+                beforeYield: 6.5, afterYield: 33, beforePrice: 100,
+                currency: "$", bondType: "Government Bond",
+                yieldLabel: "10-Year Bond Yield", country: "Argentina",
+                existingBonds: [
+                    { name: "Argentine Bond 2016", coupon: 7.5, issued: "2016", maturity: 10 },
+                    { name: "Argentine Bond 2017", coupon: 7.125, issued: "2017", maturity: 7 }
+                ],
+                yieldCurve: {
+                    before: [5.5, 6.0, 6.2, 6.4, 6.5],
+                    after: [25, 28, 30, 32, 33]
+                },
+                description: "Peso depreciation, high inflation (40%+), and fears over IMF bailout conditions triggered another Argentine crisis. Political uncertainty ahead of 2019 elections intensified capital flight.",
+                impact: "10-year yields exceeded 33%. Peso lost over 50% against dollar in 2018. Required $57 billion IMF bailout — largest in IMF history. Inflation accelerated above 50%.",
+                outcome: "Political change in 2019. Subsequent 2020 restructuring. Argentina demonstrates how repeated crises create permanent risk premium — investors never fully trust Argentine bonds."
+            },
+            brazil: {
+                name: "Brazil: Election Uncertainty",
+                date: "2002",
+                beforeYield: 10, afterYield: 25, beforePrice: 100,
+                currency: "$", bondType: "Government Bond",
+                yieldLabel: "10-Year USD Bond Yield", country: "Brazil",
+                existingBonds: [
+                    { name: "Brazilian Bond 2000", coupon: 12.5, issued: "2000", maturity: 10 },
+                    { name: "Brazilian Bond 2001", coupon: 12.0, issued: "2001", maturity: 8 }
+                ],
+                yieldCurve: {
+                    before: [8, 9, 9.5, 9.8, 10],
+                    after: [20, 22, 23.5, 24.5, 25]
+                },
+                description: "Presidential election featuring Lula da Silva sparked fears of unsustainable populist policies, debt default, and IMF confrontation. Market panic ensued despite strong fundamentals.",
+                impact: "10-year dollar bond yields surged above 25%. Real currency depreciated sharply. IMF provided $30 billion precautionary credit line. Spreads over US Treasuries exceeded 2,000 bps.",
+                outcome: "Lula won but immediately signalled fiscal responsibility and central bank independence. Markets rallied dramatically. Yields retraced to pre-crisis levels. Became a case study in political risk vs actual policy."
+            },
+            turkey: {
+                name: "Turkey: Currency Crisis",
+                date: "August 2018",
+                beforeYield: 12, afterYield: 27, beforePrice: 100,
+                currency: "₺", bondType: "Government Bond",
+                yieldLabel: "10-Year Lira Bond Yield", country: "Turkey",
+                existingBonds: [
+                    { name: "Turkish Bond 2016", coupon: 10.5, issued: "2016", maturity: 10 },
+                    { name: "Turkish Bond 2017", coupon: 11.2, issued: "2017", maturity: 5 }
+                ],
+                yieldCurve: {
+                    before: [10, 11, 11.5, 11.8, 12],
+                    after: [22, 24, 25.5, 26.5, 27]
+                },
+                description: "Turkish lira collapsed amid runaway inflation, loss of central bank credibility, political interference in monetary policy, and US sanctions dispute. External debt concerns mounted.",
+                impact: "Lira lost 40% against dollar in weeks. Domestic bond yields exceeded 27%. Inflation hit 25%. Capital flight accelerated. Credit rating downgraded to junk.",
+                outcome: "Emergency rate hikes to 24%. Economic recession. Continued high inflation and currency volatility. Demonstrates dangers of politicised central banks and dollarised external debt."
+            }
+        };
+
+        const state = { currentCrisis: null, shockApplied: false };
+
+        // ============ HELPERS ============
+        function calcBondPrice(coupon, yieldRate, years, face = 100) {
+            const c = coupon / 100, y = yieldRate / 100;
+            let pv = 0;
+            for (let t = 1; t <= years; t++) pv += (c * face) / Math.pow(1 + y, t);
+            pv += face / Math.pow(1 + y, years);
+            return pv;
+        }
+
+        // ============ TABS ============
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ============ GLOSSARY TOGGLE ============
+        document.getElementById('glossaryToggle').addEventListener('click', () => {
+            const grid = document.getElementById('glossaryGrid');
+            const icon = document.querySelector('.toggle-icon');
+            grid.classList.toggle('collapsed');
+            grid.classList.toggle('expanded');
+            icon.classList.toggle('open');
+        });
+
+        // ============ SIMULATOR ============
+        function renderBonds(crisis) {
+            const grid = document.getElementById('bondsGrid');
+            grid.innerHTML = '';
+            if (!crisis) crisis = crisisData.truss;
+
+            crisis.existingBonds.forEach(bond => {
+                const yrs = bond.maturity;
+                const priceAfter = state.shockApplied ? calcBondPrice(bond.coupon, crisis.afterYield, yrs) : null;
+                const card = document.createElement('div');
+                card.className = 'bond-card existing';
+                card.innerHTML = `
+                    <div class="bond-title">${bond.name}</div>
+                    <div class="bond-detail"><span>Coupon Rate:</span><strong>${bond.coupon}%</strong></div>
+                    <div class="bond-detail"><span>Maturity:</span><strong>${yrs} years</strong></div>
+                    <div class="bond-detail"><span>Original Price:</span><strong>${crisis.currency}100</strong></div>
+                    ${state.shockApplied ? `
+                    <div class="bond-detail" style="color:var(--red)"><span>Current Price:</span><strong>${crisis.currency}${priceAfter.toFixed(2)}</strong></div>
+                    <div class="bond-detail" style="color:var(--red)"><span>Current Yield:</span><strong>${crisis.afterYield.toFixed(2)}%</strong></div>
+                    <div class="bond-detail" style="color:var(--red);margin-top:4px;font-size:0.82rem"><span>Loss:</span><strong>${(100 - priceAfter).toFixed(1)}%</strong></div>
+                    ` : `
+                    <div class="bond-detail"><span>Current Yield:</span><strong>${bond.coupon}%</strong></div>
+                    `}
+                `;
+                grid.appendChild(card);
+            });
+
+            if (state.shockApplied) {
+                const increase = crisis.afterYield - crisis.beforeYield;
+                const card = document.createElement('div');
+                card.className = 'bond-card new';
+                card.innerHTML = `
+                    <div class="bond-title">New ${crisis.bondType} (${new Date().getFullYear()})</div>
+                    <div class="bond-detail"><span>Required Coupon:</span><strong style="color:var(--amber)">${crisis.afterYield.toFixed(2)}%</strong></div>
+                    <div class="bond-detail"><span>Issue Price:</span><strong>${crisis.currency}100</strong></div>
+                    <div style="background:var(--bg-card-alt);padding:12px;border-radius:6px;margin-top:10px;font-size:0.85rem">
+                        <strong style="color:var(--amber)">Borrowing Cost Increase:</strong><br>
+                        +${increase.toFixed(2)} percentage points<br>
+                        <span style="color:var(--text-secondary);font-size:0.82rem">(${((increase / crisis.beforeYield) * 100).toFixed(0)}% higher than before crisis)</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        // ============ YIELD CURVE ============
+        function drawYieldCurve(crisis) {
+            const wrap = document.getElementById('yieldCurveWrap');
+            wrap.style.display = 'block';
+            const canvas = document.getElementById('yieldCurveCanvas');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+
+            const maturities = [2, 5, 10, 20, 30];
+            const before = crisis.yieldCurve.before;
+            const after = crisis.yieldCurve.after;
+
+            const allYields = [...before, ...after];
+            const yMin = Math.floor(Math.min(...allYields) * 0.85);
+            const yMax = Math.ceil(Math.max(...allYields) * 1.1);
+
+            const padL = 50, padR = 20, padT = 16, padB = 36;
+            const plotW = W - padL - padR;
+            const plotH = H - padT - padB;
+
+            function xPos(i) { return padL + (i / (maturities.length - 1)) * plotW; }
+            function yPos(v) { return padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH; }
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            const steps = 5;
+            for (let i = 0; i <= steps; i++) {
+                const v = yMin + (yMax - yMin) * (i / steps);
+                const y = yPos(v);
+                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+                ctx.fillStyle = '#8b949e';
+                ctx.font = '11px DM Sans, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(v.toFixed(1) + '%', padL - 8, y + 4);
+            }
+
+            // X axis labels
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#8b949e';
+            maturities.forEach((m, i) => {
+                ctx.fillText(m + 'yr', xPos(i), H - 8);
+            });
+
+            function drawLine(data, color) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.5;
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                data.forEach((v, i) => {
+                    const x = xPos(i), y = yPos(v);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+
+                // Dots
+                data.forEach((v, i) => {
+                    const x = xPos(i), y = yPos(v);
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                });
+            }
+
+            drawLine(before, '#58a6ff');
+            drawLine(after, '#f85149');
+        }
+
+        function applyCrisis() {
+            const crisisType = document.getElementById('crisisType').value;
+            const crisis = crisisData[crisisType];
+            state.currentCrisis = crisis;
+            state.shockApplied = true;
+
+            const infoBox = document.getElementById('crisisInfo');
+            infoBox.innerHTML = `
+                <h3>${crisis.name} (${crisis.date})</h3>
+                <p><strong>Background:</strong> ${crisis.description}</p>
+                <p><strong>Market Impact:</strong> ${crisis.impact}</p>
+                <p><strong>Outcome:</strong> ${crisis.outcome}</p>
+            `;
+            infoBox.style.display = 'block';
+
+            document.getElementById('beforeTitle').textContent = `Before Crisis (${crisis.country})`;
+            document.getElementById('beforeYieldLabel').textContent = crisis.yieldLabel + ':';
+            document.getElementById('beforeYield').textContent = crisis.beforeYield.toFixed(2) + '%';
+            document.getElementById('beforePrice').textContent = crisis.currency + crisis.beforePrice;
+
+            document.getElementById('afterTitle').textContent = `Peak Crisis (${crisis.country})`;
+            document.getElementById('afterYieldLabel').textContent = crisis.yieldLabel + ':';
+            document.getElementById('afterYield').textContent = crisis.afterYield.toFixed(2) + '%';
+            document.getElementById('afterYield').style.color = 'var(--red)';
+
+            let totalValue = 0;
+            crisis.existingBonds.forEach(bond => {
+                totalValue += calcBondPrice(bond.coupon, crisis.afterYield, bond.maturity);
+            });
+            const avgPrice = (totalValue / crisis.existingBonds.length).toFixed(2);
+            document.getElementById('afterPrice').textContent = crisis.currency + avgPrice;
+            document.getElementById('afterPrice').style.color = 'var(--red)';
+            document.getElementById('afterConfidence').textContent = 'Collapsed';
+            document.getElementById('afterConfidence').style.color = 'var(--red)';
+            document.getElementById('afterDemand').textContent = 'Crisis';
+            document.getElementById('afterDemand').style.color = 'var(--red)';
+
+            const increase = crisis.afterYield - crisis.beforeYield;
+            const alert = document.getElementById('shockAlert');
+            alert.textContent = `CRISIS: Yields spike by ${increase.toFixed(2)} percentage points. New bonds must offer ${crisis.afterYield.toFixed(2)}% to attract buyers — a ${((increase / crisis.beforeYield) * 100).toFixed(0)}% increase in borrowing costs.`;
+            alert.style.display = 'block';
+
+            document.getElementById('bondsTitle').textContent = `${crisis.country} Government Bonds Portfolio`;
+
+            renderBonds(crisis);
+            drawYieldCurve(crisis);
+        }
+
+        function reset() {
+            state.shockApplied = false;
+            state.currentCrisis = null;
+            document.getElementById('crisisInfo').style.display = 'none';
+            document.getElementById('shockAlert').style.display = 'none';
+            document.getElementById('yieldCurveWrap').style.display = 'none';
+
+            document.getElementById('beforeTitle').textContent = 'Before Crisis: Stable Market';
+            document.getElementById('beforeYieldLabel').textContent = '10-Year Gilt Yield:';
+            document.getElementById('beforeYield').textContent = '3.49%';
+            document.getElementById('beforePrice').textContent = '£100';
+            document.getElementById('beforeConfidence').textContent = 'High';
+            document.getElementById('beforeDemand').textContent = 'Stable';
+
+            document.getElementById('afterTitle').textContent = 'Peak Crisis';
+            document.getElementById('afterYieldLabel').textContent = '10-Year Yield:';
+            ['afterYield','afterPrice','afterConfidence','afterDemand'].forEach(id => {
+                const el = document.getElementById(id);
+                el.textContent = '-';
+                el.style.color = '';
+            });
+
+            document.getElementById('bondsTitle').textContent = 'UK Government Gilts Portfolio';
+            renderBonds(crisisData.truss);
+        }
+
+        document.getElementById('applyCrisis').addEventListener('click', applyCrisis);
+        document.getElementById('resetBtn').addEventListener('click', reset);
+        renderBonds(crisisData.truss);
+
+        // ============ COMPARISON ============
+        function runComparison() {
+            const a = crisisData[document.getElementById('compareA').value];
+            const b = crisisData[document.getElementById('compareB').value];
+            const panel = document.getElementById('comparisonPanels');
+
+            function buildCol(c, colorVar) {
+                const increase = c.afterYield - c.beforeYield;
+                const pctIncrease = ((increase / c.beforeYield) * 100).toFixed(0);
+                let avgLoss = 0;
+                c.existingBonds.forEach(bond => {
+                    avgLoss += (100 - calcBondPrice(bond.coupon, c.afterYield, bond.maturity));
+                });
+                avgLoss = (avgLoss / c.existingBonds.length).toFixed(1);
+
+                let bondsHTML = '';
+                c.existingBonds.forEach(bond => {
+                    const price = calcBondPrice(bond.coupon, c.afterYield, bond.maturity).toFixed(2);
+                    bondsHTML += `<div class="comp-bond"><div class="name">${bond.name}</div><div class="details">Coupon ${bond.coupon}% | ${bond.maturity}yr | Price after: ${c.currency}${price}</div></div>`;
+                });
+
+                return `
+                <div class="comparison-col">
+                    <h3>${c.name} (${c.date})</h3>
+                    <div class="comp-metric"><span>Country</span><span>${c.country}</span></div>
+                    <div class="comp-metric"><span>Yield Before</span><span>${c.beforeYield.toFixed(2)}%</span></div>
+                    <div class="comp-metric"><span>Yield After</span><span style="color:var(--red)">${c.afterYield.toFixed(2)}%</span></div>
+                    <div class="comp-metric"><span>Yield Increase</span><span style="color:var(--red)">+${increase.toFixed(2)}pp (${pctIncrease}%)</span></div>
+                    <div class="comp-metric"><span>Avg Bond Loss</span><span style="color:var(--red)">${avgLoss}%</span></div>
+                    <div class="comp-bonds-title">Bond Portfolio</div>
+                    ${bondsHTML}
+                </div>`;
+            }
+
+            panel.innerHTML = buildCol(a, '--blue') + buildCol(b, '--amber');
+        }
+
+        document.getElementById('compareBtn').addEventListener('click', runComparison);
+        runComparison();
+
+        // ============ YIELD EXPLORER (SCENARIOS) ============
+        const scenarios = [
+            {
+                id: 'boe_hike',
+                label: 'BoE Rate Hike',
+                title: 'Bank of England Raises Rates',
+                briefing: 'You bought a 10-year UK gilt last year with a 3% coupon when yields were 3%. The Bank of England has just raised the base rate by 0.75 percentage points, pushing market yields up.',
+                task: 'Move the Market Yield slider to 3.75% and observe what happens to your bond\'s price. Then try increasing it further — what if yields hit 5%?',
+                coupon: 3, yield: 3, maturity: 10
+            },
+            {
+                id: 'low_coupon',
+                label: 'COVID-Era Gilt',
+                title: 'Holding a Low-Coupon Bond in a Rising Rate Environment',
+                briefing: 'During 2020, the UK government issued gilts with very low coupons because yields were near historic lows. You hold a 30-year gilt with just a 0.625% coupon.',
+                task: 'See what happens to this bond\'s price as yields rise from 0.625% towards 4%. Why does a long-maturity, low-coupon bond lose so much more value?',
+                coupon: 0.625, yield: 0.625, maturity: 30
+            },
+            {
+                id: 'short_vs_long',
+                label: 'Short vs Long Maturity',
+                title: 'Why Maturity Matters',
+                briefing: 'Two bonds have the same 5% coupon, but one matures in 2 years and the other in 30 years. Both face the same yield increase.',
+                task: 'Start with maturity at 2 years and yield at 7%. Note the price. Then change maturity to 30 years. Same yield shock — dramatically different price impact. Why?',
+                coupon: 5, yield: 5, maturity: 2
+            },
+            {
+                id: 'em_crisis',
+                label: 'Emerging Market Shock',
+                title: 'Capital Flight from an Emerging Market',
+                briefing: 'You hold a government bond from an emerging economy paying a 10% coupon with 8 years to maturity. Investors are fleeing the country and yields are surging.',
+                task: 'Push the Market Yield slider from 10% towards 25% and watch the price collapse. At what yield has the bond lost half its value?',
+                coupon: 10, yield: 10, maturity: 8
+            },
+            {
+                id: 'premium_bond',
+                label: 'Above-Par Bond',
+                title: 'When Yields Fall Below the Coupon',
+                briefing: 'A bond paying 6% was issued when yields were 6%. Since then, the central bank has cut rates aggressively and yields have fallen.',
+                task: 'Drag the Market Yield slider below 6% — down to 2% or even 1%. Why does the bond trade above £100? What\'s the maximum price it can reach?',
+                coupon: 6, yield: 6, maturity: 10
+            }
+        ];
+
+        let activeScenario = null;
+
+        function renderScenarioChips() {
+            const container = document.getElementById('scenarioChips');
+            container.innerHTML = '';
+            scenarios.forEach(s => {
+                const chip = document.createElement('button');
+                chip.className = 'scenario-chip';
+                chip.textContent = s.label;
+                chip.dataset.id = s.id;
+                chip.addEventListener('click', () => selectScenario(s));
+                container.appendChild(chip);
+            });
+        }
+
+        function selectScenario(s) {
+            activeScenario = s;
+
+            // Update chips
+            document.querySelectorAll('.scenario-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.id === s.id);
+            });
+
+            // Briefing
+            const briefing = document.getElementById('scenarioBriefing');
+            briefing.innerHTML = `
+                <h4>${s.title}</h4>
+                <p>${s.briefing}</p>
+                <p class="scenario-task">${s.task}</p>
+            `;
+            briefing.style.display = 'block';
+
+            // Set sliders
+            document.getElementById('sliderCoupon').value = s.coupon;
+            document.getElementById('sliderYield').value = s.yield;
+            document.getElementById('sliderMaturity').value = s.maturity;
+            document.getElementById('sliderPrompt').textContent = 'Now adjust the sliders to explore';
+
+            updateSlider();
+        }
+
+        function updateSlider() {
+            const coupon = parseFloat(document.getElementById('sliderCoupon').value);
+            const yieldVal = parseFloat(document.getElementById('sliderYield').value);
+            const maturity = parseInt(document.getElementById('sliderMaturity').value);
+
+            document.getElementById('sliderCouponVal').textContent = coupon.toFixed(2) + '%';
+            document.getElementById('sliderYieldVal').textContent = yieldVal.toFixed(2) + '%';
+            document.getElementById('sliderMaturityVal').textContent = maturity;
+
+            const price = calcBondPrice(coupon, yieldVal, maturity);
+            const change = price - 100;
+            const annualCoupon = coupon;
+            const currentYield = (annualCoupon / price) * 100;
+
+            document.getElementById('sliderPrice').textContent = '£' + price.toFixed(2);
+            const changeEl = document.getElementById('sliderChange');
+            changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+
+            const priceEl = document.getElementById('sliderPrice');
+            const cyEl = document.getElementById('sliderCurrentYield');
+
+            if (change < -0.5) {
+                priceEl.className = 'value loss';
+                changeEl.className = 'value loss';
+            } else if (change > 0.5) {
+                priceEl.className = 'value gain';
+                changeEl.className = 'value gain';
+            } else {
+                priceEl.className = 'value neutral';
+                changeEl.className = 'value neutral';
+            }
+
+            document.getElementById('sliderAnnual').textContent = '£' + annualCoupon.toFixed(2);
+            cyEl.textContent = currentYield.toFixed(2) + '%';
+            cyEl.className = 'value neutral';
+
+            // Dynamic insight
+            updateInsight(coupon, yieldVal, maturity, price, change);
+        }
+
+        function updateInsight(coupon, yieldVal, maturity, price, change) {
+            const insight = document.getElementById('sliderInsight');
+
+            if (!activeScenario) {
+                insight.style.display = 'none';
+                return;
+            }
+
+            insight.style.display = 'block';
+            const diff = yieldVal - coupon;
+            let text = '';
+
+            if (Math.abs(change) < 0.5) {
+                text = `The bond trades <span class="good">at par</span> (close to £100) because the market yield roughly equals the coupon rate. Buyers get exactly the return they demand.`;
+            } else if (change < -30) {
+                text = `<span class="bad">Severe loss of ${Math.abs(change).toFixed(1)}%.</span> The market now demands <strong>${yieldVal.toFixed(2)}%</strong> but this bond only pays <strong>${coupon.toFixed(2)}%</strong>. With <strong>${maturity} years</strong> to maturity, that gap compounds into a massive price drop. ${maturity >= 20 ? 'Long-maturity bonds amplify this effect — the same yield change on a shorter bond would hurt far less.' : ''}`;
+            } else if (change < -10) {
+                text = `<span class="bad">Significant loss of ${Math.abs(change).toFixed(1)}%.</span> Market yields have risen above the coupon, so the bond must trade at a discount to compensate new buyers for the lower coupon payments. ${maturity >= 15 ? 'The long maturity magnifies the price sensitivity.' : ''}`;
+            } else if (change < 0) {
+                text = `A <span class="bad">modest decline of ${Math.abs(change).toFixed(1)}%</span>. Yields are slightly above the coupon rate, pushing the price below par. ${maturity <= 3 ? 'The short maturity limits the damage — the bondholder gets their £100 back soon.' : ''}`;
+            } else if (change > 20) {
+                text = `<span class="good">Trading at a large premium of +${change.toFixed(1)}%.</span> This bond\'s <strong>${coupon.toFixed(2)}%</strong> coupon is much higher than the market yield of <strong>${yieldVal.toFixed(2)}%</strong>, making it very attractive. Investors bid the price well above par.`;
+            } else if (change > 0) {
+                text = `<span class="good">Trading above par (+${change.toFixed(1)}%)</span> because the coupon exceeds the current market yield. Investors are willing to pay more than £100 for these above-market interest payments.`;
+            }
+
+            insight.innerHTML = text;
+        }
+
+        ['sliderCoupon', 'sliderYield', 'sliderMaturity'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateSlider);
+        });
+
+        renderScenarioChips();
+        updateSlider();
+
+        // ============ RESIZE HANDLER FOR YIELD CURVE ============
+        window.addEventListener('resize', () => {
+            if (state.shockApplied && state.currentCrisis) {
+                drawYieldCurve(state.currentCrisis);
+            }
+        });
+    </script>
+</body>
+</html>

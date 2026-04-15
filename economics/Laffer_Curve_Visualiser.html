@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Laffer Curve - Interactive Visualisation | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0f0a;
+            --bg-secondary: #111a11;
+            --bg-card: #162016;
+            --bg-card-hover: #1c2a1c;
+            --bg-input: #1a251a;
+            --green-primary: #4caf50;
+            --green-bright: #66bb6a;
+            --green-dim: #2e7d32;
+            --green-glow: rgba(76, 175, 80, 0.15);
+            --green-glow-strong: rgba(76, 175, 80, 0.3);
+            --amber: #f5a623;
+            --amber-dim: rgba(245, 166, 35, 0.15);
+            --red: #ef5350;
+            --red-dim: rgba(239, 83, 80, 0.12);
+            --blue: #42a5f5;
+            --blue-dim: rgba(66, 165, 245, 0.12);
+            --purple: #ab47bc;
+            --purple-dim: rgba(171, 71, 188, 0.12);
+            --text-primary: #e8f5e9;
+            --text-secondary: #a5c4a5;
+            --text-dim: #6b8a6b;
+            --border: #2a3d2a;
+            --border-light: #344c34;
+            --font-display: 'Fraunces', serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* ─── Header ─── */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 20px; }
+
+        .logo {
+            height: 42px;
+            opacity: 0.95;
+        }
+
+        .header h1 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.6em;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            font-size: 0.85em;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--green-bright); }
+
+        /* ─── Tabs ─── */
+        .nav-tabs {
+            display: flex;
+            gap: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--text-dim);
+            transition: all 0.25s;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover { color: var(--text-secondary); background: var(--green-glow); }
+
+        .nav-tab.active {
+            color: var(--green-bright);
+            border-bottom-color: var(--green-primary);
+            background: var(--green-glow);
+        }
+
+        /* ─── Content ─── */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-header {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.05em;
+            color: var(--green-bright);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ─── Chart ─── */
+        .chart-section { display: flex; flex-direction: column; gap: 16px; }
+
+        .chart-container {
+            position: relative;
+            height: 480px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 180px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .control-label {
+            font-size: 0.78em;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+
+        .control-select {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.88em;
+            cursor: pointer;
+        }
+
+        .control-select:focus { outline: none; border-color: var(--green-primary); }
+
+        /* ─── Country Comparison Controls ─── */
+        .country-compare-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .country-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.85em;
+        }
+
+        .country-tag .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .country-tag select {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .country-tag select:focus { outline: none; }
+        .country-tag select option { background: var(--bg-card); color: var(--text-primary); }
+
+        .compare-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .compare-toggle input { display: none; }
+
+        .toggle-track {
+            width: 36px;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.25s;
+        }
+
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: all 0.25s;
+        }
+
+        .compare-toggle input:checked + .toggle-track {
+            background: var(--green-dim);
+        }
+
+        .compare-toggle input:checked + .toggle-track::after {
+            left: 18px;
+            background: var(--green-bright);
+        }
+
+        /* ─── Historical Pins Legend ─── */
+        .pins-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .pins-toggle input { display: none; }
+
+        /* ─── Slider Panel ─── */
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tax-rate-display {
+            text-align: center;
+            font-family: var(--font-display);
+            font-size: 2.4em;
+            font-weight: 700;
+            padding: 16px;
+            border-radius: 10px;
+            background: var(--green-glow);
+            border: 1px solid var(--green-dim);
+            color: var(--green-bright);
+            transition: all 0.3s;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+            margin-top: 12px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green-primary);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+            transition: transform 0.15s;
+        }
+
+        .slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+        .slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green-primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* ─── Revenue & Zone ─── */
+        .revenue-info {
+            background: var(--green-glow);
+            border-left: 3px solid var(--green-primary);
+            padding: 14px;
+            border-radius: 6px;
+        }
+
+        .revenue-percentage {
+            font-family: var(--font-display);
+            font-size: 1.6em;
+            font-weight: 700;
+            color: var(--green-bright);
+        }
+
+        .revenue-label { font-size: 0.85em; color: var(--text-dim); margin-top: 2px; }
+
+        .zone-indicator {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.88em;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .zone-efficient { background: var(--green-glow); color: var(--green-bright); border: 1px solid var(--green-dim); }
+        .zone-optimal { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
+        .zone-inefficient { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,83,80,0.25); }
+
+        .explanation {
+            font-size: 0.9em;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border-left: 3px solid var(--green-dim);
+        }
+
+        /* ─── Buttons ─── */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--green-dim);
+            color: var(--text-primary);
+        }
+
+        .btn-primary:hover { background: var(--green-primary); }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+
+        /* ─── Case Study ─── */
+        .case-study {
+            background: var(--blue-dim);
+            border-left: 3px solid var(--blue);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .case-study h4 { color: var(--blue); margin-bottom: 6px; font-size: 0.95em; }
+        .case-study p { font-size: 0.88em; line-height: 1.6; color: var(--text-secondary); }
+
+        /* ─── Mathematical Panel ─── */
+        .math-panel {
+            background: var(--purple-dim);
+            border: 1px solid rgba(171,71,188,0.2);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .math-panel .card-header { color: var(--purple); }
+
+        .formula {
+            background: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.88em;
+            color: var(--text-primary);
+            margin: 8px 0;
+            border-left: 3px solid var(--purple);
+        }
+
+        .formula-sub { font-family: var(--font-body); font-size: 0.85em; color: var(--text-dim); margin-top: 4px; }
+
+        /* ─── Scenario Cards ─── */
+        .scenario-cards { display: flex; flex-direction: column; gap: 12px; }
+
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-card:hover {
+            border-color: var(--amber);
+            background: var(--bg-card-hover);
+        }
+
+        .scenario-card.active {
+            border-color: var(--amber);
+            background: rgba(245,166,35,0.08);
+        }
+
+        .scenario-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--amber);
+            margin-bottom: 6px;
+        }
+
+        .scenario-desc {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .scenario-params {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .scenario-param {
+            background: var(--bg-secondary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78em;
+            color: var(--text-dim);
+        }
+
+        .scenario-predict {
+            margin-top: 14px;
+            display: none;
+        }
+
+        .scenario-card.active .scenario-predict { display: block; }
+
+        .predict-options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+
+        .predict-option {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .predict-option:hover { border-color: var(--amber); color: var(--text-primary); }
+        .predict-option.selected { border-color: var(--amber); background: var(--amber-dim); color: var(--amber); }
+        .predict-option.correct { border-color: var(--green-primary); background: var(--green-glow); color: var(--green-bright); }
+        .predict-option.incorrect { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+
+        .scenario-feedback {
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 0.88em;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .scenario-feedback.show { display: block; }
+
+        .scenario-feedback.correct-fb { background: var(--green-glow); border-left: 3px solid var(--green-primary); color: var(--text-secondary); }
+        .scenario-feedback.incorrect-fb { background: var(--red-dim); border-left: 3px solid var(--red); color: var(--text-secondary); }
+
+        /* ─── Theory & Evidence Pages ─── */
+        .page-content {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.5em;
+            color: var(--text-primary);
+        }
+
+        .info-card {
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid;
+        }
+
+        .info-card.green-card { background: var(--green-glow); border-color: rgba(76,175,80,0.2); }
+        .info-card.amber-card { background: var(--amber-dim); border-color: rgba(245,166,35,0.2); }
+        .info-card.blue-card { background: var(--blue-dim); border-color: rgba(66,165,245,0.2); }
+        .info-card.purple-card { background: var(--purple-dim); border-color: rgba(171,71,188,0.2); }
+        .info-card.red-card { background: var(--red-dim); border-color: rgba(239,83,80,0.2); }
+
+        .info-card h3 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 14px;
+        }
+
+        .info-card.green-card h3 { color: var(--green-bright); }
+        .info-card.amber-card h3 { color: var(--amber); }
+        .info-card.blue-card h3 { color: var(--blue); }
+        .info-card.purple-card h3 { color: var(--purple); }
+        .info-card.red-card h3 { color: var(--red); }
+
+        .info-card p, .info-card li {
+            font-size: 0.9em;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .info-card ul, .info-card ol { margin-left: 20px; }
+        .info-card li { margin-bottom: 6px; }
+        .info-card strong { color: var(--text-primary); }
+
+        .assumption-item {
+            background: var(--bg-secondary);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--red);
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .assumption-item strong { color: var(--text-primary); }
+
+        .tooltip {
+            position: relative;
+            display: inline;
+            cursor: help;
+            color: var(--blue);
+            font-weight: 600;
+            border-bottom: 1px dashed var(--blue);
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 240px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            text-align: left;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.25s;
+            font-size: 0.85em;
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        /* Timeline */
+        .timeline-item {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--blue);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+
+        .timeline-year { font-weight: 700; color: var(--blue); font-size: 1em; margin-bottom: 4px; }
+        .timeline-country { font-weight: 600; color: var(--text-dim); margin-bottom: 6px; font-size: 0.9em; }
+        .timeline-outcome { font-size: 0.88em; color: var(--text-secondary); line-height: 1.6; }
+        .timeline-outcome strong { color: var(--text-primary); }
+
+        /* Evaluation */
+        .eval-point {
+            background: var(--bg-secondary);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--amber);
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        .eval-point strong { color: var(--amber); }
+        .eval-point ul { margin-left: 18px; margin-top: 6px; }
+        .eval-point li { margin-bottom: 3px; }
+
+        /* Challenge Mode */
+        .challenge-card {
+            background: var(--amber-dim);
+            border: 1px solid rgba(245,166,35,0.25);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .challenge-question {
+            background: var(--bg-secondary);
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-weight: 500;
+            font-size: 0.95em;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .challenge-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+
+        .challenge-option {
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.88em;
+            color: var(--text-secondary);
+        }
+
+        .challenge-option:hover { border-color: var(--green-dim); color: var(--text-primary); }
+        .challenge-option.selected { border-color: var(--green-primary); background: var(--green-glow); color: var(--green-bright); }
+        .challenge-option.correct { border-color: var(--green-primary); background: var(--green-glow); color: var(--green-bright); }
+        .challenge-option.incorrect { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+
+        .challenge-feedback {
+            background: var(--bg-secondary);
+            padding: 14px;
+            border-radius: 8px;
+            border-left: 3px solid var(--green-primary);
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            display: none;
+        }
+
+        .challenge-feedback.show { display: block; }
+
+        /* Misconceptions */
+        .misconception {
+            background: var(--bg-secondary);
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--amber);
+        }
+
+        .misconception-title { font-weight: 700; color: var(--amber); margin-bottom: 6px; font-size: 0.92em; }
+        .misconception p { font-size: 0.88em; color: var(--text-secondary); line-height: 1.5; }
+        .misconception-correction { color: var(--green-bright); font-style: italic; margin-top: 6px; font-size: 0.88em; }
+
+        /* Comparison grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .comparison-input-card {
+            background: var(--bg-secondary);
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-input-card label { font-weight: 600; color: var(--green-bright); font-size: 0.9em; }
+
+        .comparison-input-card input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 1.1em;
+        }
+
+        .comparison-input-card input:focus { outline: none; border-color: var(--green-primary); }
+
+        .comparison-results {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 14px;
+            display: none;
+        }
+
+        /* ─── Step Guide ─── */
+        .step-guide {
+            background: var(--green-glow);
+            border-left: 3px solid var(--green-primary);
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .step-guide-title { font-weight: 700; color: var(--green-bright); margin-bottom: 10px; }
+        .step-guide ol { margin-left: 20px; line-height: 1.9; }
+        .step-guide li { color: var(--text-secondary); font-size: 0.9em; }
+        .step-guide strong { color: var(--text-primary); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 1200px) {
+            .main-content { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs { flex-direction: column; }
+            .header { flex-direction: column; gap: 12px; text-align: center; }
+            .header-left { flex-direction: column; }
+            .button-group { grid-template-columns: 1fr; }
+            .chart-controls { flex-direction: column; }
+            .country-compare-bar { flex-direction: column; }
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            body { background: white; color: #333; }
+            .nav-tabs, .button-group, .compare-toggle, .pins-toggle { display: none; }
+            .main-content { display: block; }
+            .card { border: 1px solid #ddd; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.6); }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Laffer Curve Visualiser</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_laffer_pw';
+  var valid = ['Laffer-Cv5!j2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['Laffer-Cv5!j2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_laffer_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <div class="header">
+        <div class="header-left">
+            <img src="BIZ-OMICS_Final_LOGO.png" alt="BIZ-OMICS" class="logo" onerror="this.style.display='none'">
+            <div>
+                <h1>The Laffer Curve</h1>
+                <div class="header-subtitle">Interactive Visualisation &middot; A-Level Economics</div>
+            </div>
+        </div>
+        <a href="../economics/index.html" class="back-link">&larr; Back to Economics Hub</a>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('interactive', this)">Interactive Simulator</button>
+        <button class="nav-tab" onclick="switchTab('scenarios', this)">What Would Happen If&hellip;</button>
+        <button class="nav-tab" onclick="switchTab('theory', this)">Economic Theory</button>
+        <button class="nav-tab" onclick="switchTab('evidence', this)">Real-World Evidence</button>
+        <button class="nav-tab" onclick="switchTab('assessment', this)">Challenge Mode</button>
+        <button class="nav-tab" onclick="switchTab('teaching', this)">Teacher Resources</button>
+    </div>
+
+    <!-- ═══════════════════════ INTERACTIVE SIMULATOR ═══════════════════════ -->
+    <div id="tab-interactive" class="tab-content active">
+        <div class="main-content">
+            <div class="chart-section">
+                <div class="chart-controls">
+                    <div class="control-group">
+                        <div class="control-label">Elasticity Model</div>
+                        <select id="elasticitySelect" class="control-select">
+                            <option value="moderate">Moderate Elasticity (Standard)</option>
+                            <option value="high">High Elasticity (Supply-Side)</option>
+                            <option value="low">Low Elasticity (Inelastic)</option>
+                        </select>
+                    </div>
+                    <div class="control-group" style="display:flex;flex-direction:column;justify-content:center;gap:10px;">
+                        <label class="compare-toggle">
+                            <input type="checkbox" id="compareToggle" onchange="toggleComparison()">
+                            <span class="toggle-track"></span>
+                            Compare Two Countries
+                        </label>
+                        <label class="pins-toggle">
+                            <input type="checkbox" id="pinsToggle" onchange="togglePins()">
+                            <span class="toggle-track"></span>
+                            Show Historical Pins
+                        </label>
+                    </div>
+                </div>
+
+                <div id="countryCompareBar" class="country-compare-bar" style="display:none;">
+                    <div class="country-tag">
+                        <span class="dot" style="background:var(--green-primary)"></span>
+                        <select id="country1Select" onchange="updateComparison()">
+                            <option value="uk">UK (Current)</option>
+                            <option value="us">United States</option>
+                            <option value="sweden">Sweden</option>
+                            <option value="singapore">Singapore</option>
+                            <option value="france75">France (2013)</option>
+                            <option value="reagan">US (Reagan Era)</option>
+                        </select>
+                    </div>
+                    <span style="color:var(--text-dim);font-size:0.85em;">vs</span>
+                    <div class="country-tag">
+                        <span class="dot" style="background:var(--amber)"></span>
+                        <select id="country2Select" onchange="updateComparison()">
+                            <option value="singapore">Singapore</option>
+                            <option value="uk">UK (Current)</option>
+                            <option value="us">United States</option>
+                            <option value="sweden">Sweden</option>
+                            <option value="france75">France (2013)</option>
+                            <option value="reagan">US (Reagan Era)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="lafferChart"></canvas>
+                </div>
+
+                <div class="math-panel">
+                    <div class="card-header">Mathematical Model</div>
+                    <div class="formula">
+                        Revenue = Tax Rate &times; Tax Base &times; (1 - (Tax Rate / 100) &times; Elasticity)
+                        <div class="formula-sub">Where elasticity determines how much the tax base shrinks as rates increase</div>
+                    </div>
+                    <div id="currentCalculation" class="formula" style="border-left-color:var(--green-dim);"></div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="card">
+                    <div class="control-label">Adjust Tax Rate</div>
+                    <div class="tax-rate-display" id="taxRateDisplay">25%</div>
+                    <input type="range" min="0" max="100" value="25" class="slider" id="taxRateSlider" aria-label="Tax rate slider">
+
+                    <div class="button-group" style="margin-top:14px;">
+                        <button class="btn btn-primary" onclick="resetToOptimal()">Jump to Optimal</button>
+                        <button class="btn btn-secondary" onclick="randomScenario()">Random Scenario</button>
+                        <button class="btn btn-secondary" onclick="resetSimulation()">Reset</button>
+                        <button class="btn btn-secondary" onclick="window.print()">Print Summary</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Current Revenue Impact</div>
+                    <div class="revenue-info">
+                        <div class="revenue-percentage" id="revenuePercentage">85%</div>
+                        <div class="revenue-label" id="revenueText">of maximum possible revenue</div>
+                    </div>
+                    <div id="zoneIndicator" class="zone-indicator zone-efficient" style="margin-top:12px;">
+                        Efficient Zone &ndash; Revenue Increasing
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Economic Interpretation</div>
+                    <div class="explanation" id="explanationText">
+                        At this tax rate, the economy is operating efficiently...
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Real-World Example</div>
+                    <div class="case-study">
+                        <div id="caseStudyContent"></div>
+                    </div>
+                    <div class="button-group" style="margin-top:12px;">
+                        <button class="btn btn-secondary" onclick="cycleCaseStudy('prev')">&larr; Previous</button>
+                        <button class="btn btn-secondary" onclick="cycleCaseStudy('next')">Next &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ WHAT WOULD HAPPEN IF... ═══════════════════════ -->
+    <div id="tab-scenarios" class="tab-content">
+        <div class="page-content">
+            <div class="page-title">What Would Happen If&hellip;</div>
+            <p style="color:var(--text-secondary);font-size:0.92em;line-height:1.6;">Select a scenario, predict the outcome, then reveal the analysis. Each scenario auto-adjusts the simulator to show the result on the curve.</p>
+            <div class="scenario-cards" id="scenarioContainer"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ ECONOMIC THEORY ═══════════════════════ -->
+    <div id="tab-theory" class="tab-content">
+        <div class="page-content">
+            <div class="page-title">Economic Theory Behind the Laffer Curve</div>
+
+            <div class="info-card red-card">
+                <h3>Key Assumptions</h3>
+                <div class="assumption-item">
+                    <strong>Behavioural Responses:</strong> Workers and firms actively respond to tax changes by adjusting their economic behaviour (working more/less, investing, or engaging in <span class="tooltip">tax avoidance<span class="tooltiptext">Legal methods to reduce tax liability, such as using tax reliefs or moving income to lower-tax periods</span></span>).
+                </div>
+                <div class="assumption-item">
+                    <strong>Elasticity Matters:</strong> The <span class="tooltip">elasticity of labour supply<span class="tooltiptext">How responsive workers are to changes in after-tax wages. Higher elasticity means workers change hours worked significantly when tax rates change</span></span> determines how dramatically the curve bends. Higher elasticity creates a steeper curve with a lower optimal rate.
+                </div>
+                <div class="assumption-item">
+                    <strong>Tax Avoidance &amp; Evasion:</strong> As rates rise, incentives increase for <span class="tooltip">tax avoidance<span class="tooltiptext">Legal methods to reduce taxes</span></span> (legal) and <span class="tooltip">tax evasion<span class="tooltiptext">Illegal non-payment of taxes</span></span> (illegal), shrinking the tax base.
+                </div>
+                <div class="assumption-item">
+                    <strong>Capital Mobility:</strong> In globalised economies, high earners and businesses can relocate to lower-tax jurisdictions, reducing the <span class="tooltip">tax base<span class="tooltiptext">The total amount of income, wealth, or activity subject to taxation</span></span>.
+                </div>
+                <div class="assumption-item">
+                    <strong>Time Horizons:</strong> Short-run vs. long-run responses differ. People may not immediately change behaviour but will adjust over time.
+                </div>
+            </div>
+
+            <div class="step-guide">
+                <div class="step-guide-title">Understanding the Curve Shape</div>
+                <ol>
+                    <li><strong>Zero Tax Rate (0%):</strong> Government revenue = &pound;0 (obvious &ndash; no taxes collected)</li>
+                    <li><strong>Low Rates (0&ndash;40%):</strong> Revenue rises as rates increase. The negative behavioural effects are minimal.</li>
+                    <li><strong>Optimal Point (around 40&ndash;70%):</strong> Revenue maximised. Depends heavily on elasticity assumptions.</li>
+                    <li><strong>High Rates (70&ndash;100%):</strong> Revenue falls as rates increase. Behavioural responses (reduced work, tax avoidance, capital flight) shrink the tax base faster than the rate increase.</li>
+                    <li><strong>100% Tax Rate:</strong> Revenue = &pound;0 (no one works if all income is taxed)</li>
+                </ol>
+            </div>
+
+            <div class="info-card green-card">
+                <h3>Links to Supply-Side Economics</h3>
+                <p style="margin-bottom:12px;">The Laffer Curve is central to <strong>supply-side economics</strong>, which argues that:</p>
+                <ul>
+                    <li>Lower tax rates can <strong>increase incentives to work, save, and invest</strong></li>
+                    <li>This shifts the <strong>LRAS curve rightward</strong> (increasing potential output)</li>
+                    <li>Economic growth may partially or fully offset revenue losses from lower rates</li>
+                    <li>The curve suggests there's a "sweet spot" that maximises both revenue AND economic efficiency</li>
+                </ul>
+            </div>
+
+            <div class="info-card amber-card">
+                <h3>Critical Evaluation</h3>
+                <div class="eval-point">
+                    <strong>Where is the peak?</strong> Economists disagree widely. Estimates range from 40% to 70% for income taxes. It depends on:
+                    <ul>
+                        <li>Type of tax (income vs. corporate vs. VAT)</li>
+                        <li>Income level being taxed (top 1% are more elastic)</li>
+                        <li>Country's institutional quality and enforcement</li>
+                    </ul>
+                </div>
+                <div class="eval-point">
+                    <strong>Empirical evidence is mixed:</strong> Most developed countries operate on the LEFT side of the curve (raising rates would increase revenue). Only a few historical cases show countries clearly on the right side.
+                </div>
+                <div class="eval-point">
+                    <strong>Dynamic effects are complex:</strong> Tax cuts don't always "pay for themselves" through growth. The relationship between tax rates and growth is far more complicated than the simple curve suggests.
+                </div>
+                <div class="eval-point">
+                    <strong>Political misuse:</strong> The curve has been used to justify tax cuts even when evidence suggests the country is far from the revenue-maximising point.
+                </div>
+                <div class="eval-point">
+                    <strong>Equity concerns ignored:</strong> Revenue maximisation isn't the only goal. Tax systems also aim for fairness, redistribution, and funding public services.
+                </div>
+            </div>
+
+            <div class="info-card amber-card">
+                <h3>Exam Application Tips</h3>
+                <p><strong>For evaluation essays:</strong></p>
+                <ul>
+                    <li>Always discuss the <strong>uncertainty about where the peak is</strong></li>
+                    <li>Consider both <strong>short-run and long-run effects</strong></li>
+                    <li>Link to real-world evidence (Reagan, Thatcher, Scandinavian high-tax success)</li>
+                    <li>Don't just argue "it depends on elasticity" &ndash; explain WHY elasticity varies</li>
+                    <li>Balance efficiency arguments with equity considerations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ REAL-WORLD EVIDENCE ═══════════════════════ -->
+    <div id="tab-evidence" class="tab-content">
+        <div class="page-content">
+            <div class="page-title">Real-World Evidence &amp; Historical Cases</div>
+
+            <div class="info-card blue-card">
+                <h3>Historical Tax Rate Changes</h3>
+                <div class="timeline-item">
+                    <div class="timeline-year">1981&ndash;1989: United States (Reagan)</div>
+                    <div class="timeline-country">Tax Cuts: Top rate from 70% &rarr; 28%</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> Strong economic growth BUT massive budget deficits. Revenue as % of GDP slightly decreased. The tax cuts did NOT pay for themselves, contrary to supply-side predictions. Economic growth had multiple causes beyond tax policy.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">1979&ndash;1990: United Kingdom (Thatcher)</div>
+                    <div class="timeline-country">Tax Cuts: Top rate from 83% &rarr; 40%</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> Strong economic revival, but revenue initially fell. GDP growth accelerated, unemployment eventually fell after initial rise. However, inequality increased significantly. Debate continues about whether growth came from tax cuts or other reforms (privatisation, deregulation, North Sea oil).</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">1991&ndash;1993: Sweden</div>
+                    <div class="timeline-country">Tax Reform: Broadened base, lowered rates</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> "Tax cuts with stable revenue" approach. Lowered marginal rates but eliminated loopholes. Revenue remained stable while improving efficiency. Shows that tax base matters as much as rates.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">1993&ndash;2001: United States (Clinton)</div>
+                    <div class="timeline-country">Tax Increases: Top rate from 31% &rarr; 39.6%</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> Strong economic growth continued, budget moved to surplus. This case challenges simple Laffer Curve predictions &ndash; higher rates coincided with boom. Shows the economy is on the LEFT side of the curve for most countries.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2013: France (Hollande)</div>
+                    <div class="timeline-country">Temporary 75% top tax rate</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> Capital flight, tax avoidance, and protests. High earners relocated (e.g., actor G&eacute;rard Depardieu). Policy abandoned after 2 years. Raised little revenue and damaged France's international reputation.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2017: United States (Trump)</div>
+                    <div class="timeline-country">Corporate Tax Cuts: 35% &rarr; 21%</div>
+                    <div class="timeline-outcome"><strong>Outcome:</strong> Corporate tax revenue fell sharply (from $297B to $205B in year 1). Economic growth modest. Most benefits went to shareholders through buybacks rather than investment. Increased deficit significantly.</div>
+                </div>
+            </div>
+
+            <div class="info-card blue-card">
+                <h3>What Modern Research Shows</h3>
+                <p style="margin-bottom:10px;"><strong>Diamond &amp; Saez (2011)</strong> estimated the revenue-maximising top rate for the US at around <strong>73%</strong> &ndash; much higher than current rates.</p>
+                <p style="margin-bottom:10px;"><strong>IMF Studies</strong> suggest most developed countries are on the LEFT side of the Laffer Curve, meaning tax increases would raise revenue.</p>
+                <p style="margin-bottom:10px;"><strong>Scandinavian Success:</strong> Denmark, Sweden, and Norway maintain high tax rates (50&ndash;60%) with strong economic performance, suggesting the optimal point varies by country.</p>
+                <p><strong>Corporate Tax Competition:</strong> Globalisation has made corporate taxes more elastic (easier to avoid), shifting the peak leftward for corporate taxes specifically.</p>
+            </div>
+
+            <div class="info-card amber-card">
+                <h3>Controversies &amp; Debates</h3>
+                <div class="eval-point"><strong>Self-financing tax cuts?</strong> No major tax cut in modern history has fully paid for itself through growth. Partial offset at best.</div>
+                <div class="eval-point"><strong>Inequality vs. Efficiency:</strong> Lower taxes on high earners may boost efficiency but worsen inequality. Society must balance these competing goals.</div>
+                <div class="eval-point"><strong>Tax avoidance infrastructure:</strong> The rise of tax havens and sophisticated avoidance schemes means elasticity has increased over time, making the curve more relevant today.</div>
+                <div class="eval-point"><strong>Different taxes, different curves:</strong> Income tax, corporate tax, VAT, and capital gains all have different optimal rates. There's no single "Laffer Curve."</div>
+            </div>
+
+            <div class="info-card purple-card">
+                <h3>Key Takeaways for Students</h3>
+                <ol>
+                    <li>The Laffer Curve is a <strong>theoretical framework</strong>, not a precise prediction</li>
+                    <li>Location of the peak is <strong>highly debated</strong> and varies by context</li>
+                    <li>Most evidence suggests developed countries are <strong>LEFT of the peak</strong></li>
+                    <li>Tax policy involves trade-offs between <strong>efficiency, equity, and revenue</strong></li>
+                    <li>Real-world outcomes depend on <strong>many factors beyond tax rates</strong></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ CHALLENGE MODE ═══════════════════════ -->
+    <div id="tab-assessment" class="tab-content">
+        <div class="page-content" style="max-width:900px;">
+            <div class="page-title">Challenge Mode: Test Your Understanding</div>
+
+            <div class="challenge-card">
+                <div class="card-header" style="color:var(--amber);">Challenge Question</div>
+                <div class="challenge-question" id="challengeQuestion">Loading challenge...</div>
+                <div class="challenge-options" id="challengeOptions"></div>
+                <button class="btn btn-primary" style="width:100%;margin-bottom:12px;" onclick="checkAnswer()">Check Answer</button>
+                <div class="challenge-feedback" id="challengeFeedback"></div>
+                <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="nextChallenge()">Next Challenge &rarr;</button>
+            </div>
+
+            <div class="card" style="margin-top:0;">
+                <div class="card-header">Compare Scenarios</div>
+                <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:14px;">Select two tax rates to compare their revenue outcomes:</p>
+                <div class="comparison-grid">
+                    <div class="comparison-input-card">
+                        <label>Scenario A</label>
+                        <input type="number" id="compareRate1" value="25" min="0" max="100">
+                    </div>
+                    <div class="comparison-input-card">
+                        <label>Scenario B</label>
+                        <input type="number" id="compareRate2" value="75" min="0" max="100">
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="runComparison()">Compare Results</button>
+                <div id="comparisonResults" class="comparison-results"></div>
+            </div>
+
+            <div class="info-card green-card">
+                <h3>Prediction Activity</h3>
+                <p style="margin-bottom:12px;">Before adjusting the slider, predict what will happen:</p>
+                <div style="background:var(--bg-secondary);padding:14px;border-radius:8px;margin-bottom:12px;">
+                    <strong style="color:var(--text-primary);">Question:</strong> <span style="color:var(--text-secondary);">If we increase the tax rate from 30% to 80%, what will happen to government revenue?</span>
+                    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+                        <label style="cursor:pointer;color:var(--text-secondary);font-size:0.9em;"><input type="radio" name="prediction" value="increase" style="margin-right:8px;"> Revenue will significantly increase</label>
+                        <label style="cursor:pointer;color:var(--text-secondary);font-size:0.9em;"><input type="radio" name="prediction" value="slight-increase" style="margin-right:8px;"> Revenue will slightly increase</label>
+                        <label style="cursor:pointer;color:var(--text-secondary);font-size:0.9em;"><input type="radio" name="prediction" value="decrease" style="margin-right:8px;"> Revenue will actually decrease</label>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="testPrediction()">Test My Prediction</button>
+                <div id="predictionFeedback" style="margin-top:12px;display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ TEACHER RESOURCES ═══════════════════════ -->
+    <div id="tab-teaching" class="tab-content">
+        <div class="page-content" style="max-width:1000px;">
+            <div class="page-title">Teacher Resources &amp; Guidance</div>
+
+            <div class="info-card amber-card">
+                <h3>Common Student Misconceptions</h3>
+                <div class="misconception">
+                    <div class="misconception-title">&#10007; "Higher taxes always mean less revenue"</div>
+                    <p>Students often think we're always on the right side of the curve. This isn't true for most developed countries.</p>
+                    <div class="misconception-correction">&#10003; Correction: Emphasise that most countries operate on the LEFT side, where tax increases DO raise revenue. The right side is relatively rare.</div>
+                </div>
+                <div class="misconception">
+                    <div class="misconception-title">&#10007; "The peak is always at 50%"</div>
+                    <p>Students may assume there's a universal optimal rate.</p>
+                    <div class="misconception-correction">&#10003; Correction: The peak varies HUGELY by tax type, country, time period, and income level. Estimates range from 40% to 80%.</div>
+                </div>
+                <div class="misconception">
+                    <div class="misconception-title">&#10007; "Tax cuts always pay for themselves"</div>
+                    <p>Supply-side rhetoric has convinced many students this is automatic.</p>
+                    <div class="misconception-correction">&#10003; Correction: Show empirical evidence. No major tax cut has fully self-financed. Partial offsets at best.</div>
+                </div>
+                <div class="misconception">
+                    <div class="misconception-title">&#10007; "The curve applies equally to all taxes"</div>
+                    <p>Students may not distinguish between income tax, corporate tax, VAT, etc.</p>
+                    <div class="misconception-correction">&#10003; Correction: Each tax type has different elasticity. Corporate taxes are more elastic (easier to avoid) than income taxes, which are more elastic than VAT.</div>
+                </div>
+                <div class="misconception">
+                    <div class="misconception-title">&#10007; "The Laffer Curve proves low taxes are better"</div>
+                    <p>Students may treat this as an argument against all taxation.</p>
+                    <div class="misconception-correction">&#10003; Correction: The curve only addresses revenue maximisation, not optimal tax policy. Tax policy also considers equity, public services, and social welfare.</div>
+                </div>
+            </div>
+
+            <div class="step-guide">
+                <div class="step-guide-title">Suggested Teaching Sequence</div>
+                <ol>
+                    <li><strong>Start with extremes:</strong> Ask students "What revenue at 0%? At 100%?" This builds intuition.</li>
+                    <li><strong>Introduce behavioural responses:</strong> Discuss why people work less, avoid taxes, or relocate when rates are too high.</li>
+                    <li><strong>Explore the shape:</strong> Use the simulator to show how elasticity changes the curve.</li>
+                    <li><strong>Present evidence:</strong> Show real historical cases (Reagan, Thatcher, Clinton, France 2013).</li>
+                    <li><strong>Critical evaluation:</strong> Discuss debates about where countries actually are on the curve.</li>
+                    <li><strong>Apply to essays:</strong> Practice using the Laffer Curve as evaluation in tax policy questions.</li>
+                </ol>
+            </div>
+
+            <div class="info-card amber-card">
+                <h3>Exam Board Specifications</h3>
+                <p><strong>AQA A-Level:</strong></p>
+                <ul>
+                    <li>4.1.5.5 &ndash; Supply-side policies</li>
+                    <li>4.1.6.1 &ndash; Taxation</li>
+                    <li>Used in evaluation of fiscal policy effectiveness</li>
+                </ul>
+                <p style="margin-top:12px;"><strong>Edexcel A-Level:</strong></p>
+                <ul>
+                    <li>Theme 2: 2.5.1 &ndash; Taxation</li>
+                    <li>Theme 4: 4.4 &ndash; Macro policy</li>
+                    <li>Evaluation tool for supply-side policies</li>
+                </ul>
+                <p style="margin-top:12px;"><strong>OCR A-Level:</strong></p>
+                <ul>
+                    <li>4.1 &ndash; Government intervention</li>
+                    <li>5.2 &ndash; Supply-side policies</li>
+                    <li>Required for evaluation marks in essays</li>
+                </ul>
+            </div>
+
+            <div class="info-card blue-card">
+                <h3>Suggested Discussion Questions</h3>
+                <ol>
+                    <li>Why might the optimal tax rate differ between the UK and Singapore?</li>
+                    <li>How does tax avoidance infrastructure (havens, accountants) affect the curve?</li>
+                    <li>Should governments maximise revenue, or are there other goals?</li>
+                    <li>How does globalisation affect the Laffer Curve for corporate taxes?</li>
+                    <li>Can you think of situations where high taxes DON'T reduce work effort? (Hint: essential workers)</li>
+                    <li>What role does enforcement play in determining the peak of the curve?</li>
+                </ol>
+            </div>
+
+            <div class="info-card green-card">
+                <h3>Additional Resources</h3>
+                <ul>
+                    <li><strong>BIZ-OMICS Website:</strong> <a href="https://biz-omics.co.uk" style="color:var(--blue);">biz-omics.co.uk</a></li>
+                    <li><strong>YouTube Channel:</strong> @biz-omics8348</li>
+                    <li><strong>TikTok:</strong> @biz_omics</li>
+                    <li><strong>Instagram:</strong> @biz_omics</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════════════ DATA ═══════════════════════
+
+    let chart;
+    let currentElasticity = 'moderate';
+    let comparisonActive = false;
+    let pinsActive = false;
+    const slider = document.getElementById('taxRateSlider');
+    const taxRateDisplay = document.getElementById('taxRateDisplay');
+    const elasticitySelect = document.getElementById('elasticitySelect');
+
+    // Challenge
+    let currentChallengeIndex = 0;
+    let selectedAnswer = null;
+
+    // Curve parameters
+    const curveParams = {
+        moderate: { peak: 50, elasticity: 1.5, description: "Standard model with moderate behavioural responses" },
+        high:     { peak: 35, elasticity: 2.5, description: "High elasticity - strong supply-side effects" },
+        low:      { peak: 65, elasticity: 0.8, description: "Low elasticity - limited behavioural responses" }
+    };
+
+    // Country profiles for comparison
+    const countryProfiles = {
+        uk:        { name: 'UK (Current)',   rate: 45, elasticity: 'moderate', color: '#66bb6a', peak: 50 },
+        us:        { name: 'United States',  rate: 37, elasticity: 'moderate', color: '#42a5f5', peak: 48 },
+        sweden:    { name: 'Sweden',         rate: 57, elasticity: 'low',      color: '#fdd835', peak: 62 },
+        singapore: { name: 'Singapore',      rate: 22, elasticity: 'high',     color: '#ef5350', peak: 38 },
+        france75:  { name: 'France (2013)',  rate: 75, elasticity: 'moderate', color: '#ab47bc', peak: 50 },
+        reagan:    { name: 'US (Reagan Era)',rate: 28, elasticity: 'high',     color: '#ff7043', peak: 40 }
+    };
+
+    // Historical pins for the chart
+    const historicalPins = [
+        { label: 'UK 2024',          rate: 45, elasticity: 'moderate', color: '#66bb6a' },
+        { label: 'US 2024',          rate: 37, elasticity: 'moderate', color: '#42a5f5' },
+        { label: 'Sweden',           rate: 57, elasticity: 'low',      color: '#fdd835' },
+        { label: 'Singapore',        rate: 22, elasticity: 'moderate', color: '#ef5350' },
+        { label: 'France 2013',      rate: 75, elasticity: 'moderate', color: '#ab47bc' },
+        { label: 'UK 1970s',         rate: 83, elasticity: 'moderate', color: '#78909c' },
+        { label: 'Reagan US',        rate: 28, elasticity: 'moderate', color: '#ff7043' },
+    ];
+
+    // What Would Happen If... scenarios
+    const scenarios = [
+        {
+            title: "The UK raises its top income tax rate from 45% to 60%?",
+            desc: "The government wants to fund increased NHS spending by raising the top rate. Critics warn of brain drain to Dubai and Singapore.",
+            params: ['Income tax', 'Moderate elasticity', 'From 45% to 60%'],
+            options: [
+                "Revenue increases substantially — we're well left of the peak",
+                "Revenue increases modestly — some avoidance offsets the gain",
+                "Revenue stays roughly flat — behavioural responses nearly cancel out",
+                "Revenue falls — high earners relocate or shelter income"
+            ],
+            correct: 1,
+            rateFrom: 45,
+            rateTo: 60,
+            feedback: "Most research (Diamond & Saez, IFS) suggests the UK is still on the left side of the curve for income tax, so a move to 60% would likely raise revenue — but not proportionally. High earners have increasingly mobile options, and the UK already sees significant tax planning at the 45% threshold. Revenue gains would be real but moderated by avoidance. The optimal point is estimated around 50–65% for top income tax."
+        },
+        {
+            title: "Singapore doubles its corporate tax rate from 17% to 34%?",
+            desc: "Singapore considers matching OECD averages to fund social housing. The business community threatens relocation to Hong Kong and Dubai.",
+            params: ['Corporate tax', 'High elasticity', 'From 17% to 34%'],
+            options: [
+                "Revenue doubles — corporations can't easily leave",
+                "Revenue increases but less than doubled — some firms restructure",
+                "Revenue barely changes — gains from higher rates offset by lost firms",
+                "Revenue could actually fall — Singapore's appeal IS its low tax rate"
+            ],
+            correct: 2,
+            rateFrom: 17,
+            rateTo: 34,
+            feedback: "Corporate tax is highly elastic — multinationals can shift profits and relocate headquarters relatively easily. Singapore's competitive advantage is built on low taxation. Doubling the rate would trigger significant capital flight, profit-shifting to subsidiaries in lower-tax jurisdictions, and reduced FDI. Research suggests corporate tax peaks are much lower than income tax peaks (around 25–35%). The revenue gain from the rate increase would be largely cancelled by shrinkage of the tax base."
+        },
+        {
+            title: "France reintroduces a 75% top rate — but with exit taxes?",
+            desc: "Learning from 2013, France pairs the 75% rate with strict exit taxes on anyone leaving the country to avoid it. Would this change the outcome?",
+            params: ['Income tax', 'Reduced mobility', 'Rate: 75%'],
+            options: [
+                "Yes — exit taxes solve the problem entirely; revenue soars",
+                "Partially — exit taxes reduce but don't eliminate avoidance",
+                "No — other forms of avoidance (trusts, deferrals) replace emigration",
+                "It makes things worse — the economy suffers from reduced incentives even without emigration"
+            ],
+            correct: 1,
+            rateFrom: 45,
+            rateTo: 75,
+            feedback: "Exit taxes reduce one channel of avoidance (physical relocation) but don't eliminate others. At 75%, incentives for legal avoidance through trusts, pension contributions, income deferral, and restructuring as corporate income remain enormous. The work-effort disincentive also persists regardless of exit taxes. Research suggests that even with reduced mobility, 75% exceeds the revenue-maximising rate because avoidance is multi-dimensional. Revenue would improve compared to 2013 but still fall short of what a naïve calculation predicts."
+        },
+        {
+            title: "The US cuts corporate tax from 21% to 10%?",
+            desc: "Proponents argue this would attract global HQs and trigger an investment boom that pays for itself through growth.",
+            params: ['Corporate tax', 'Current: 21%', 'Proposed: 10%'],
+            options: [
+                "Revenue increases — the boom more than compensates",
+                "Revenue drops sharply — the US is firmly left of the peak at 21%",
+                "Revenue drops initially but recovers within 5 years",
+                "Revenue barely changes — investment boost offsets lower rate"
+            ],
+            correct: 1,
+            rateFrom: 21,
+            rateTo: 10,
+            feedback: "At 21%, the US corporate tax rate is already well to the LEFT of most estimated peaks (25–35%). Cutting to 10% would reduce revenue substantially. The 2017 cut from 35% to 21% saw corporate revenue fall from $297B to $205B in year one without a commensurate investment boom. A further cut would be even further into the 'clearly left of peak' territory. While some relocation benefit would occur, the revenue loss would be immediate and significant. No major tax cut in modern history has fully paid for itself."
+        },
+        {
+            title: "Denmark cuts its top rate from 55% to 35%?",
+            desc: "Denmark debates a radical supply-side experiment to boost entrepreneurship and attract tech firms from Silicon Valley.",
+            params: ['Income tax', 'Low elasticity', 'From 55% to 35%'],
+            options: [
+                "Revenue falls substantially — Denmark operates near the peak, not past it",
+                "Revenue stays similar — they're right at the peak",
+                "Revenue increases — Danish workers respond strongly to tax cuts",
+                "Revenue increases slightly — reduced avoidance partially offsets rate cut"
+            ],
+            correct: 0,
+            rateFrom: 55,
+            rateTo: 35,
+            feedback: "Denmark's high-tax, high-trust model operates with low elasticity — strong enforcement, broad compliance, and social norms that support taxpaying. Research suggests Scandinavian countries have higher optimal points (around 60–65%) because their citizens are less responsive to tax changes. Cutting to 35% would move Denmark firmly to the left of its peak, sacrificing substantial revenue. The 'supply-side boom' argument works poorly in already-efficient Nordic economies. Denmark would lose revenue for public services that themselves support productivity."
+        },
+        {
+            title: "A developing country sets income tax at 50% to fund infrastructure?",
+            desc: "A low-income country with weak tax enforcement tries to maximise revenue for desperately needed roads, hospitals, and schools.",
+            params: ['Income tax', 'Very high elasticity', 'Weak enforcement'],
+            options: [
+                "Strong revenue — the need justifies the rate",
+                "Moderate revenue — some avoidance but enforcement improves over time",
+                "Poor revenue — weak enforcement means massive evasion at 50%",
+                "Revenue collapses — most economic activity moves to the informal sector"
+            ],
+            correct: 2,
+            rateFrom: 20,
+            rateTo: 50,
+            feedback: "In developing countries with weak institutions, the Laffer Curve peaks much earlier (perhaps 20–30%). At 50%, with poor enforcement capacity, the informal economy would expand dramatically. Tax evasion in developing countries is already high at lower rates. Raising rates without first building enforcement infrastructure simply pushes more activity underground. The IMF consistently advises developing countries to broaden the tax base rather than raise rates. This scenario illustrates why institutional quality matters as much as the rate itself."
+        }
+    ];
+
+    // Challenge questions
+    const challenges = [
+        {
+            question: "A country with a 30% income tax rate is considering raising it to 35%. Based on the Laffer Curve theory, what should policymakers consider?",
+            options: [
+                "Revenue will definitely increase by 5% × tax base",
+                "Revenue will definitely decrease due to behavioural responses",
+                "The revenue impact depends on whether they're left or right of the peak, which requires empirical analysis",
+                "The Laffer Curve doesn't apply to small rate changes"
+            ],
+            correct: 2,
+            explanation: "The Laffer Curve suggests that the revenue impact depends on WHERE the country currently sits on the curve. At 30%, most developed countries are likely on the left side (where increases raise revenue), but this requires empirical verification. The curve is a framework for thinking, not a precise prediction."
+        },
+        {
+            question: "Why might the revenue-maximising rate be HIGHER for income taxes on middle earners than for corporate taxes?",
+            options: [
+                "Middle earners work harder than corporations",
+                "Corporate taxes are easier to avoid through relocation and profit-shifting",
+                "The Laffer Curve only applies to income taxes",
+                "Middle earners have higher incomes than corporations"
+            ],
+            correct: 1,
+            explanation: "Corporate taxes are highly elastic because multinational corporations can shift profits to low-tax jurisdictions, relocate headquarters, or use transfer pricing. Middle earners have fewer avoidance options and can't easily relocate, making their tax base less elastic. This means the peak of the curve is further right (higher rate) for middle-income taxation."
+        },
+        {
+            question: "In 2013, France introduced a 75% top tax rate. It raised little revenue and was abandoned after 2 years. What does this tell us about the Laffer Curve?",
+            options: [
+                "France was clearly on the right side of the curve for top earners",
+                "The Laffer Curve is completely wrong",
+                "75% is always too high for any country",
+                "Tax rates don't matter for revenue"
+            ],
+            correct: 0,
+            explanation: "France's experience suggests that 75% was beyond the revenue-maximising point for their top earners. High earners responded by relocating (Depardieu, etc.) or avoiding taxes. This is strong evidence they were on the RIGHT side of the curve. However, this doesn't mean the curve is always right or that lower rates would've been optimal for all goals (equity, etc.)."
+        },
+        {
+            question: "During the Clinton administration (1993–2001), top tax rates INCREASED from 31% to 39.6%, yet the economy boomed and budget surpluses emerged. How does this relate to the Laffer Curve?",
+            options: [
+                "This proves the Laffer Curve is completely false",
+                "This suggests the US was on the LEFT side of the curve, where rate increases do raise revenue",
+                "The boom happened despite the tax increase, not because of it",
+                "Tax rates are irrelevant to economic growth"
+            ],
+            correct: 1,
+            explanation: "The Clinton experience is strong evidence that the US was operating on the LEFT side of the Laffer Curve in the 1990s. Rate increases raised revenue without triggering enough negative behavioural responses to offset the rate increase. This doesn't disprove the curve — it just shows where the US was positioned. The boom had multiple causes (tech revolution, etc.), but higher taxes clearly didn't prevent it."
+        },
+        {
+            question: "A country wants to maximise tax revenue. Should they simply use the Laffer Curve to set rates?",
+            options: [
+                "Yes — revenue maximisation is the primary goal of tax policy",
+                "No — tax policy also considers equity, public services, and welfare, not just revenue",
+                "Yes — the Laffer Curve gives us the exact optimal rate",
+                "No — the Laffer Curve only applies to historical data"
+            ],
+            correct: 1,
+            explanation: "Revenue maximisation is NOT the sole goal of tax policy. Governments also consider distributional effects (equity), funding adequate public services, automatic stabilisers, and overall social welfare. A revenue-maximising rate might be inequitable or insufficient for public needs. The Laffer Curve is ONE tool for thinking about tax policy, not the complete answer."
+        },
+        {
+            question: "Why might the peak of the Laffer Curve shift LEFTWARD (to a lower rate) in a more globalised economy?",
+            options: [
+                "Globalisation makes everyone poorer",
+                "Greater capital mobility means taxpayers can more easily avoid high rates by relocating",
+                "Globalisation eliminates all taxes",
+                "The Laffer Curve doesn't change with globalisation"
+            ],
+            correct: 1,
+            explanation: "Globalisation increases the ELASTICITY of tax bases, especially for mobile factors like capital and high-skilled labour. When it's easier to relocate yourself or your business to lower-tax jurisdictions, behavioural responses to high rates become stronger. This makes the tax base shrink faster at high rates, pushing the peak leftward to a lower revenue-maximising rate."
+        }
+    ];
+
+    // Case studies
+    const caseStudies = {
+        efficient: [
+            { title: "UK Income Tax (2024)", content: "The UK's basic rate of income tax is 20%, with higher rates at 40% and 45%. Most economists agree the UK operates well within the efficient zone. The Institute for Fiscal Studies suggests there's substantial room to raise rates on top earners without hitting the peak." },
+            { title: "US Corporate Tax Reform Debate", content: "Before 2017, the US corporate rate was 35%. Research by the Tax Policy Center suggested this was still on the left side of the curve, though the optimal point was debated. The 2017 cut to 21% significantly reduced revenue." },
+            { title: "Sweden's Tax System", content: "Sweden maintains high tax rates (around 57% top rate) with strong revenue collection and economic growth. This challenges claims that high rates always reduce revenue, suggesting Scandinavian countries may have higher optimal points due to strong enforcement and public trust." }
+        ],
+        optimal: [
+            { title: "The Theoretical Sweet Spot", content: "Economic research suggests the revenue-maximising rate varies widely: 40–80% depending on the type of tax, enforcement quality, and taxpayer mobility. You're exploring the most debated region of the curve where small changes can have large effects." },
+            { title: "Denmark's Balanced Approach", content: "Denmark maintains top tax rates around 55% with high revenue collection and strong public services. They're often cited as potentially near an optimal point, balancing high rates with broad bases and limited avoidance." }
+        ],
+        inefficient: [
+            { title: "France's 75% Experiment (2013–2014)", content: "President Hollande's 75% top rate led to high-earner emigration, raised minimal revenue, and was abandoned after 2 years. A clear case of operating beyond the peak." },
+            { title: "UK 1970s: 83% Top Rate", content: "Before Thatcher's reforms, the UK's 83% top rate (98% on investment income) led to massive tax avoidance, brain drain, and poor revenue performance. The 'brain drain' saw many professionals leave for the US and Commonwealth nations." },
+            { title: "Research Consensus", content: "Studies consistently show that rates above 70–80% are counterproductive. Diamond & Saez (2011) estimated optimal top rates around 73% for the US, suggesting anything significantly higher would reduce revenue while causing economic distortions." }
+        ]
+    };
+
+    let currentCaseIndex = { efficient: 0, optimal: 0, inefficient: 0 };
+
+    // ═══════════════════════ CHART FUNCTIONS ═══════════════════════
+
+    function calculateRevenue(rate, elasticity = 'moderate') {
+        const params = curveParams[elasticity];
+        const peak = params.peak;
+        const baseRevenue = rate * (100 - rate);
+        const peakRevenue = peak * (100 - peak);
+        const normalizedRevenue = baseRevenue / peakRevenue;
+        const elasticityEffect = 1 - Math.abs(rate - peak) / 100 * params.elasticity * 0.5;
+        return normalizedRevenue * elasticityEffect * 100;
+    }
+
+    function calculateRevenueCustom(rate, peak, elast) {
+        const baseRevenue = rate * (100 - rate);
+        const peakRevenue = peak * (100 - peak);
+        const normalizedRevenue = baseRevenue / peakRevenue;
+        const elasticityEffect = 1 - Math.abs(rate - peak) / 100 * elast * 0.5;
+        return normalizedRevenue * elasticityEffect * 100;
+    }
+
+    function createChart() {
+        const ctx = document.getElementById('lafferChart').getContext('2d');
+        const dataPoints = [];
+        for (let i = 0; i <= 100; i++) {
+            dataPoints.push({ x: i, y: calculateRevenue(i, currentElasticity) });
+        }
+
+        const datasets = [{
+            label: 'Tax Revenue',
+            data: dataPoints,
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76, 175, 80, 0.08)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }];
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#162016',
+                        borderColor: '#2a3d2a',
+                        borderWidth: 1,
+                        titleColor: '#66bb6a',
+                        bodyColor: '#a5c4a5',
+                        callbacks: {
+                            label: ctx => `Rate: ${ctx.parsed.x}% → Revenue: ${ctx.parsed.y.toFixed(1)}%`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Tax Rate (%)', color: '#6b8a6b', font: { size: 13, weight: '600', family: 'DM Sans' } },
+                        min: 0, max: 100,
+                        ticks: { stepSize: 10, color: '#6b8a6b', font: { size: 11 } },
+                        grid: { color: 'rgba(42,61,42,0.5)' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Government Revenue (% of Maximum)', color: '#6b8a6b', font: { size: 13, weight: '600', family: 'DM Sans' } },
+                        min: 0, max: 105,
+                        ticks: { stepSize: 20, color: '#6b8a6b', font: { size: 11 } },
+                        grid: { color: 'rgba(42,61,42,0.5)' }
+                    }
+                },
+                animation: { duration: 750 }
+            }
+        });
+    }
+
+    function rebuildChart() {
+        if (chart) chart.destroy();
+        createChart();
+        if (comparisonActive) addComparisonCurve();
+        if (pinsActive) addHistoricalPins();
+        updateChartMarker(parseInt(slider.value));
+    }
+
+    // ═══════════════════════ COMPARISON OVERLAY ═══════════════════════
+
+    function toggleComparison() {
+        comparisonActive = document.getElementById('compareToggle').checked;
+        document.getElementById('countryCompareBar').style.display = comparisonActive ? 'flex' : 'none';
+        rebuildChart();
+    }
+
+    function addComparisonCurve() {
+        const key1 = document.getElementById('country1Select').value;
+        const key2 = document.getElementById('country2Select').value;
+        const c1 = countryProfiles[key1];
+        const c2 = countryProfiles[key2];
+
+        // Country 1 curve
+        const data1 = [];
+        const p1 = c1.peak;
+        const e1 = curveParams[c1.elasticity].elasticity;
+        for (let i = 0; i <= 100; i++) data1.push({ x: i, y: calculateRevenueCustom(i, p1, e1) });
+
+        // Country 2 curve
+        const data2 = [];
+        const p2 = c2.peak;
+        const e2 = curveParams[c2.elasticity].elasticity;
+        for (let i = 0; i <= 100; i++) data2.push({ x: i, y: calculateRevenueCustom(i, p2, e2) });
+
+        // Replace main dataset with country 1
+        chart.data.datasets[0] = {
+            label: c1.name,
+            data: data1,
+            borderColor: c1.color,
+            backgroundColor: c1.color.replace(')', ', 0.06)').replace('rgb', 'rgba').replace('#', '').length ? 'rgba(76,175,80,0.06)' : 'transparent',
+            borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: 0
+        };
+
+        // Country 1 current position
+        chart.data.datasets.push({
+            label: c1.name + ' current rate',
+            data: [{ x: c1.rate, y: calculateRevenueCustom(c1.rate, p1, e1) }],
+            borderColor: c1.color, backgroundColor: c1.color,
+            pointRadius: 7, pointHoverRadius: 9, showLine: false
+        });
+
+        // Country 2 curve
+        chart.data.datasets.push({
+            label: c2.name,
+            data: data2,
+            borderColor: c2.color,
+            borderWidth: 2.5, borderDash: [6, 3],
+            fill: false, tension: 0.4, pointRadius: 0
+        });
+
+        // Country 2 current position
+        chart.data.datasets.push({
+            label: c2.name + ' current rate',
+            data: [{ x: c2.rate, y: calculateRevenueCustom(c2.rate, p2, e2) }],
+            borderColor: c2.color, backgroundColor: c2.color,
+            pointRadius: 7, pointHoverRadius: 9, showLine: false,
+            pointStyle: 'rectRot'
+        });
+
+        chart.options.plugins.legend.display = true;
+        chart.options.plugins.legend.labels = { color: '#a5c4a5', font: { size: 11, family: 'DM Sans' }, boxWidth: 12 };
+        chart.update();
+    }
+
+    function updateComparison() {
+        if (comparisonActive) rebuildChart();
+    }
+
+    // ═══════════════════════ HISTORICAL PINS ═══════════════════════
+
+    function togglePins() {
+        pinsActive = document.getElementById('pinsToggle').checked;
+        rebuildChart();
+    }
+
+    function addHistoricalPins() {
+        historicalPins.forEach(pin => {
+            const rev = calculateRevenue(pin.rate, currentElasticity);
+            chart.data.datasets.push({
+                label: pin.label,
+                data: [{ x: pin.rate, y: rev }],
+                borderColor: pin.color,
+                backgroundColor: pin.color,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                showLine: false,
+                pointStyle: 'triangle'
+            });
+        });
+        chart.options.plugins.legend.display = true;
+        chart.options.plugins.legend.labels = { color: '#a5c4a5', font: { size: 11, family: 'DM Sans' }, boxWidth: 12 };
+        chart.update();
+    }
+
+    // ═══════════════════════ VISUALISATION UPDATE ═══════════════════════
+
+    function updateVisualization(rate) {
+        taxRateDisplay.textContent = rate + '%';
+        const revenue = calculateRevenue(rate, currentElasticity);
+        const maxRevenue = calculateRevenue(curveParams[currentElasticity].peak, currentElasticity);
+        const revenuePercentage = (revenue / maxRevenue * 100).toFixed(1);
+
+        document.getElementById('revenuePercentage').textContent = revenuePercentage + '%';
+        document.getElementById('revenueText').textContent = 'of maximum possible revenue';
+
+        const optimalRate = curveParams[currentElasticity].peak;
+        const zoneIndicator = document.getElementById('zoneIndicator');
+
+        if (rate < optimalRate - 10) {
+            zoneIndicator.className = 'zone-indicator zone-efficient';
+            zoneIndicator.textContent = 'Efficient Zone \u2013 Tax increases raise revenue';
+        } else if (rate <= optimalRate + 10) {
+            zoneIndicator.className = 'zone-indicator zone-optimal';
+            zoneIndicator.textContent = 'Near Optimal \u2013 Close to revenue-maximising rate';
+        } else {
+            zoneIndicator.className = 'zone-indicator zone-inefficient';
+            zoneIndicator.textContent = 'Inefficient Zone \u2013 Tax increases reduce revenue';
+        }
+
+        updateExplanation(rate, optimalRate, revenue, revenuePercentage);
+        updateCaseStudyForRate(rate, optimalRate);
+        updateChartMarker(rate);
+        updateCalculation(rate, revenue);
+    }
+
+    function updateExplanation(rate, optimalRate, revenue, revenuePercentage) {
+        const el = document.getElementById('explanationText');
+        let explanation = '';
+        if (rate < optimalRate - 10) {
+            explanation = `At ${rate}%, the economy is in the <strong>efficient zone</strong>. Tax increases would raise revenue because behavioural responses (reduced work effort, tax avoidance) are relatively small. The tax base remains robust, so higher rates multiply by a still-substantial base. Moving toward ${optimalRate}% would increase revenue collection.`;
+        } else if (rate <= optimalRate + 10) {
+            explanation = `At ${rate}%, you're near the <strong>revenue-maximising point</strong> (around ${optimalRate}%). This is the theoretical "sweet spot" where the trade-off between higher rates and shrinking tax base is balanced. Small changes in either direction have minimal revenue impact, but large changes would reduce revenue. However, remember that revenue maximisation isn't the only policy goal!`;
+        } else {
+            explanation = `At ${rate}%, the economy is in the <strong>inefficient zone</strong>. Tax increases now REDUCE revenue because behavioural responses are strong: workers reduce hours, businesses relocate, and tax avoidance/evasion intensifies. The tax base shrinks faster than the rate increases. Cutting rates toward ${optimalRate}% would paradoxically raise revenue while improving economic efficiency.`;
+        }
+        el.innerHTML = explanation;
+    }
+
+    function updateCaseStudyForRate(rate, optimalRate) {
+        let zoneKey = rate < optimalRate - 10 ? 'efficient' : rate <= optimalRate + 10 ? 'optimal' : 'inefficient';
+        updateCaseStudy(zoneKey);
+    }
+
+    function updateCaseStudy(zoneKey) {
+        const cases = caseStudies[zoneKey];
+        const c = cases[currentCaseIndex[zoneKey]];
+        document.getElementById('caseStudyContent').innerHTML = `
+            <h4>${c.title}</h4>
+            <p>${c.content}</p>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(66,165,245,0.2);font-size:0.8em;color:var(--text-dim);">
+                Case ${currentCaseIndex[zoneKey] + 1} of ${cases.length}
+            </div>`;
+    }
+
+    function updateChartMarker(rate) {
+        // Find and remove existing marker
+        const markerIdx = chart.data.datasets.findIndex(d => d.label === 'Current Position');
+        if (markerIdx > -1) chart.data.datasets.splice(markerIdx, 1);
+
+        const revenue = calculateRevenue(rate, currentElasticity);
+        chart.data.datasets.push({
+            label: 'Current Position',
+            data: [{ x: rate, y: revenue }],
+            borderColor: '#e8f5e9',
+            backgroundColor: '#e8f5e9',
+            pointRadius: 8,
+            pointHoverRadius: 10,
+            showLine: false
+        });
+        chart.update('none');
+    }
+
+    function updateCalculation(rate, revenue) {
+        const taxBase = 100 - (rate / 100) * curveParams[currentElasticity].elasticity * 50;
+        document.getElementById('currentCalculation').innerHTML = `
+            <strong>Current Calculation:</strong><br>
+            Revenue = ${rate}% &times; Tax Base (${taxBase.toFixed(1)}) = ${revenue.toFixed(1)}<br>
+            <span class="formula-sub">Tax base decreases as rate rises due to behavioural responses (elasticity = ${curveParams[currentElasticity].elasticity})</span>`;
+    }
+
+    function cycleCaseStudy(direction) {
+        const rate = parseInt(slider.value);
+        const optimalRate = curveParams[currentElasticity].peak;
+        let zoneKey = rate < optimalRate - 10 ? 'efficient' : rate <= optimalRate + 10 ? 'optimal' : 'inefficient';
+        const cases = caseStudies[zoneKey];
+        if (direction === 'next') {
+            currentCaseIndex[zoneKey] = (currentCaseIndex[zoneKey] + 1) % cases.length;
+        } else {
+            currentCaseIndex[zoneKey] = (currentCaseIndex[zoneKey] - 1 + cases.length) % cases.length;
+        }
+        updateCaseStudy(zoneKey);
+    }
+
+    // ═══════════════════════ TAB SWITCHING ═══════════════════════
+
+    function switchTab(tabName, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        if (btn) btn.classList.add('active');
+        if (tabName === 'assessment') loadChallenge(currentChallengeIndex);
+    }
+
+    // ═══════════════════════ SIMULATOR CONTROLS ═══════════════════════
+
+    function resetToOptimal() {
+        const optimalRate = curveParams[currentElasticity].peak;
+        slider.value = optimalRate;
+        updateVisualization(optimalRate);
+        taxRateDisplay.style.animation = 'bounce 0.6s ease-out';
+        setTimeout(() => taxRateDisplay.style.animation = '', 600);
+    }
+
+    function randomScenario() {
+        const scenarios_r = [Math.random() * 25, 25 + Math.random() * 30, 75 + Math.random() * 25];
+        const randomRate = Math.round(scenarios_r[Math.floor(Math.random() * scenarios_r.length)]);
+        slider.value = randomRate;
+        updateVisualization(randomRate);
+        taxRateDisplay.style.animation = 'glow 1s ease-out';
+        setTimeout(() => taxRateDisplay.style.animation = '', 1000);
+    }
+
+    function resetSimulation() {
+        slider.value = 25;
+        currentElasticity = 'moderate';
+        elasticitySelect.value = 'moderate';
+        rebuildChart();
+        updateVisualization(25);
+    }
+
+    // ═══════════════════════ CHALLENGE MODE ═══════════════════════
+
+    function loadChallenge(index) {
+        const c = challenges[index];
+        document.getElementById('challengeQuestion').textContent = c.question;
+        const optionsDiv = document.getElementById('challengeOptions');
+        optionsDiv.innerHTML = '';
+        c.options.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = 'challenge-option';
+            div.textContent = opt;
+            div.onclick = () => selectChallengeOption(i, div);
+            optionsDiv.appendChild(div);
+        });
+        selectedAnswer = null;
+        document.getElementById('challengeFeedback').classList.remove('show');
+    }
+
+    function selectChallengeOption(index, el) {
+        document.querySelectorAll('.challenge-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedAnswer = index;
+    }
+
+    function checkAnswer() {
+        if (selectedAnswer === null) return alert('Please select an answer first.');
+        const c = challenges[currentChallengeIndex];
+        const options = document.querySelectorAll('.challenge-option');
+        options.forEach((opt, i) => {
+            if (i === c.correct) opt.classList.add('correct');
+            else if (i === selectedAnswer) opt.classList.add('incorrect');
+            opt.onclick = null;
+        });
+        const fb = document.getElementById('challengeFeedback');
+        fb.innerHTML = `<strong>${selectedAnswer === c.correct ? 'Correct!' : 'Incorrect'}</strong><br><br>${c.explanation}`;
+        fb.classList.add('show');
+    }
+
+    function nextChallenge() {
+        currentChallengeIndex = (currentChallengeIndex + 1) % challenges.length;
+        loadChallenge(currentChallengeIndex);
+    }
+
+    // ═══════════════════════ SCENARIO COMPARISON ═══════════════════════
+
+    function runComparison() {
+        const rate1 = parseInt(document.getElementById('compareRate1').value);
+        const rate2 = parseInt(document.getElementById('compareRate2').value);
+        const revenue1 = calculateRevenue(rate1, currentElasticity);
+        const revenue2 = calculateRevenue(rate2, currentElasticity);
+        const maxRevenue = calculateRevenue(curveParams[currentElasticity].peak, currentElasticity);
+
+        let winner, analysis;
+        if (revenue1 > revenue2) {
+            winner = `Scenario A (${rate1}%) generates MORE revenue`;
+            analysis = `Revenue difference: ${((revenue1 - revenue2) / maxRevenue * 100).toFixed(1)} percentage points`;
+        } else if (revenue2 > revenue1) {
+            winner = `Scenario B (${rate2}%) generates MORE revenue`;
+            analysis = `Revenue difference: ${((revenue2 - revenue1) / maxRevenue * 100).toFixed(1)} percentage points`;
+        } else {
+            winner = 'Both scenarios generate equal revenue';
+            analysis = 'This is rare but can occur at symmetric points around the optimal rate';
+        }
+
+        const results = document.getElementById('comparisonResults');
+        results.style.display = 'block';
+        results.innerHTML = `
+            <div class="card-header" style="color:var(--green-bright);">Comparison Results</div>
+            <div class="comparison-grid" style="margin:12px 0;">
+                <div style="background:var(--bg-card);padding:14px;border-radius:8px;border:1px solid var(--border);">
+                    <div style="font-weight:700;color:var(--green-bright);font-size:0.85em;">Scenario A</div>
+                    <div style="font-size:1.3em;margin:6px 0;color:var(--text-primary);">${rate1}% tax rate</div>
+                    <div style="color:var(--text-dim);font-size:0.85em;">Revenue: ${(revenue1 / maxRevenue * 100).toFixed(1)}%</div>
+                </div>
+                <div style="background:var(--bg-card);padding:14px;border-radius:8px;border:1px solid var(--border);">
+                    <div style="font-weight:700;color:var(--green-bright);font-size:0.85em;">Scenario B</div>
+                    <div style="font-size:1.3em;margin:6px 0;color:var(--text-primary);">${rate2}% tax rate</div>
+                    <div style="color:var(--text-dim);font-size:0.85em;">Revenue: ${(revenue2 / maxRevenue * 100).toFixed(1)}%</div>
+                </div>
+            </div>
+            <div style="background:var(--bg-card);padding:14px;border-radius:8px;border-left:3px solid var(--green-primary);">
+                <strong style="color:var(--text-primary);">${winner}</strong><br>
+                <span style="color:var(--text-secondary);font-size:0.88em;">${analysis}</span>
+            </div>`;
+    }
+
+    function testPrediction() {
+        const selected = document.querySelector('input[name="prediction"]:checked');
+        if (!selected) return alert('Please make a prediction first.');
+        const fb = document.getElementById('predictionFeedback');
+        const revenue30 = calculateRevenue(30, currentElasticity);
+        const revenue80 = calculateRevenue(80, currentElasticity);
+
+        let correct = false;
+        let explanation = '';
+
+        if (revenue80 < revenue30 && selected.value === 'decrease') {
+            correct = true;
+            explanation = "Correct! At 80%, we're far beyond the optimal point. The tax base shrinks dramatically due to avoidance, reduced work effort, and capital flight. Revenue falls despite the higher rate.";
+        } else {
+            explanation = `Not quite. At 30%, revenue is ${revenue30.toFixed(1)}. At 80%, revenue is ${revenue80.toFixed(1)}. The rate increase actually REDUCES revenue because we're beyond the peak of the Laffer Curve.`;
+        }
+
+        fb.innerHTML = `<div style="background:${correct ? 'var(--green-glow)' : 'var(--red-dim)'};padding:14px;border-radius:8px;border-left:3px solid ${correct ? 'var(--green-primary)' : 'var(--red)'};"><strong style="color:${correct ? 'var(--green-bright)' : 'var(--red)'};">${correct ? 'Excellent prediction!' : 'Not quite right'}</strong><br><br><span style="color:var(--text-secondary);">${explanation}</span></div>`;
+        fb.style.display = 'block';
+
+        slider.value = 80;
+        updateVisualization(80);
+    }
+
+    // ═══════════════════════ WHAT WOULD HAPPEN IF... ═══════════════════════
+
+    let activeScenarioIndex = null;
+    let scenarioSelectedAnswer = null;
+
+    function buildScenarios() {
+        const container = document.getElementById('scenarioContainer');
+        container.innerHTML = '';
+        scenarios.forEach((s, idx) => {
+            const card = document.createElement('div');
+            card.className = 'scenario-card';
+            card.id = 'scenario-' + idx;
+
+            let paramsHTML = s.params.map(p => `<span class="scenario-param">${p}</span>`).join('');
+            let optionsHTML = s.options.map((o, oi) =>
+                `<div class="predict-option" onclick="selectScenarioOption(${idx}, ${oi}, this)">${o}</div>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="scenario-title">${s.title}</div>
+                <div class="scenario-desc">${s.desc}</div>
+                <div class="scenario-params">${paramsHTML}</div>
+                <div class="scenario-predict" id="scenario-predict-${idx}">
+                    <div style="font-weight:600;color:var(--text-primary);font-size:0.9em;margin-bottom:8px;">What do you predict?</div>
+                    <div class="predict-options" id="scenario-options-${idx}">${optionsHTML}</div>
+                    <button class="btn btn-primary" style="width:100%;" onclick="revealScenario(${idx})">Reveal Analysis</button>
+                    <div class="scenario-feedback" id="scenario-feedback-${idx}"></div>
+                    <button class="btn btn-secondary" style="width:100%;margin-top:8px;display:none;" id="scenario-sim-btn-${idx}" onclick="jumpToScenario(${idx})">Show on Simulator &rarr;</button>
+                </div>`;
+
+            card.addEventListener('click', function(e) {
+                if (e.target.closest('.predict-option') || e.target.closest('.btn')) return;
+                toggleScenarioCard(idx);
+            });
+
+            container.appendChild(card);
+        });
+    }
+
+    function toggleScenarioCard(idx) {
+        const card = document.getElementById('scenario-' + idx);
+        const wasActive = card.classList.contains('active');
+
+        document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+        scenarioSelectedAnswer = null;
+
+        if (!wasActive) {
+            card.classList.add('active');
+            activeScenarioIndex = idx;
+        } else {
+            activeScenarioIndex = null;
+        }
+    }
+
+    function selectScenarioOption(scenarioIdx, optionIdx, el) {
+        const options = document.querySelectorAll(`#scenario-options-${scenarioIdx} .predict-option`);
+        options.forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        scenarioSelectedAnswer = optionIdx;
+    }
+
+    function revealScenario(idx) {
+        if (scenarioSelectedAnswer === null) return alert('Make a prediction first!');
+        const s = scenarios[idx];
+        const fb = document.getElementById('scenario-feedback-' + idx);
+        const options = document.querySelectorAll(`#scenario-options-${idx} .predict-option`);
+
+        options.forEach((o, i) => {
+            if (i === s.correct) o.classList.add('correct');
+            else if (i === scenarioSelectedAnswer) o.classList.add('incorrect');
+            o.onclick = null;
+            o.style.cursor = 'default';
+        });
+
+        const isCorrect = scenarioSelectedAnswer === s.correct;
+        fb.className = `scenario-feedback show ${isCorrect ? 'correct-fb' : 'incorrect-fb'}`;
+        fb.innerHTML = `<strong style="color:${isCorrect ? 'var(--green-bright)' : 'var(--red)'};">${isCorrect ? 'Correct!' : 'Not quite'}</strong><br><br>${s.feedback}`;
+
+        document.getElementById('scenario-sim-btn-' + idx).style.display = 'flex';
+    }
+
+    function jumpToScenario(idx) {
+        const s = scenarios[idx];
+        switchTab('interactive', document.querySelector('.nav-tab'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.nav-tab').classList.add('active');
+        slider.value = s.rateTo;
+        updateVisualization(s.rateTo);
+    }
+
+    // ═══════════════════════ EVENT LISTENERS ═══════════════════════
+
+    slider.addEventListener('input', function() { updateVisualization(parseInt(this.value)); });
+
+    elasticitySelect.addEventListener('change', function() {
+        currentElasticity = this.value;
+        rebuildChart();
+        updateVisualization(parseInt(slider.value));
+    });
+
+    slider.addEventListener('keydown', function(e) {
+        let step = 1;
+        if (e.shiftKey) step = 10;
+        if (e.ctrlKey || e.metaKey) step = 5;
+        let newValue = parseInt(this.value);
+        switch(e.key) {
+            case 'ArrowLeft': case 'ArrowDown': newValue = Math.max(0, newValue - step); break;
+            case 'ArrowRight': case 'ArrowUp': newValue = Math.min(100, newValue + step); break;
+            case 'Home': newValue = 0; break;
+            case 'End': newValue = 100; break;
+        }
+        if (newValue !== parseInt(this.value)) {
+            e.preventDefault();
+            this.value = newValue;
+            updateVisualization(newValue);
+        }
+    });
+
+    // ═══════════════════════ INITIALISE ═══════════════════════
+
+    createChart();
+    updateVisualization(25);
+    buildScenarios();
+    </script>
+</body>
+</html>

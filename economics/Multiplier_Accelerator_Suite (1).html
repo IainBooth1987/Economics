@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Multiplier &amp; Accelerator Effects | BIZ-OMICS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy: #1a2744;
+      --navy-dark: #0f1a30;
+      --navy-mid: #1e2f52;
+      --gold: #c9a227;
+      --gold-light: #e0b93a;
+      --gold-pale: rgba(201,162,39,0.15);
+      --text: #eaf0ff;
+      --muted: #a8bada;
+      --border: rgba(255,255,255,0.1);
+      --shadow: 0 20px 48px rgba(0,0,0,0.45);
+      --ok: #5de28b;
+      --bad: #ff6b7a;
+      --warn: #ffcc66;
+      --teal: #68e1c6;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: radial-gradient(ellipse 120% 60% at 10% 0%, rgba(26,39,68,0.9), transparent 70%),
+                  radial-gradient(ellipse 80% 50% at 90% 20%, rgba(201,162,39,0.08), transparent 60%),
+                  linear-gradient(180deg, #0d1628 0%, #070e1c 100%);
+      min-height: 100vh;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── HEADER ── */
+    header {
+      max-width: 1180px; margin: 0 auto; padding: 32px 20px 18px;
+    }
+    .brand-row {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 14px;
+    }
+    .brand-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px; font-weight: 900; letter-spacing: 2px;
+      color: var(--gold); text-transform: uppercase;
+      border: 1px solid var(--gold); padding: 5px 10px; border-radius: 6px;
+    }
+    .badge {
+      font-size: 11px; padding: 4px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+      color: var(--muted);
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(26px, 4vw, 42px); font-weight: 900;
+      line-height: 1.1; letter-spacing: -0.5px;
+    }
+    h1 span { color: var(--gold); }
+    .subtitle {
+      color: var(--muted); font-size: 15px; margin-top: 8px; max-width: 72ch;
+    }
+
+    /* ── TAB BAR ── */
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 60px; }
+    .tabbar {
+      display: flex; gap: 8px; flex-wrap: wrap; padding: 10px;
+      border: 1px solid var(--border); border-radius: 24px;
+      background: rgba(255,255,255,0.04); backdrop-filter: blur(12px);
+      position: sticky; top: 12px; z-index: 20;
+      box-shadow: var(--shadow);
+    }
+    .tabbtn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 700; transition: all 0.15s ease;
+      user-select: none;
+    }
+    .tabbtn:hover { border-color: var(--gold); color: var(--text); transform: translateY(-1px); }
+    .tabbtn.active {
+      background: linear-gradient(90deg, rgba(201,162,39,0.22), rgba(201,162,39,0.08));
+      border-color: var(--gold); color: var(--gold);
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+    }
+    .tabbtn.active .dot { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+
+    /* ── PANELS ── */
+    .panel { display: none; margin-top: 16px; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      box-shadow: var(--shadow); padding: 24px; margin-bottom: 16px;
+    }
+    .card-gold {
+      border-color: rgba(201,162,39,0.3);
+      background: linear-gradient(160deg, rgba(201,162,39,0.1), rgba(201,162,39,0.03));
+    }
+    .card-teal {
+      border-color: rgba(104,225,198,0.25);
+      background: linear-gradient(160deg, rgba(104,225,198,0.08), rgba(104,225,198,0.02));
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 700; margin-bottom: 12px;
+      color: var(--text);
+    }
+    h2 span { color: var(--gold); }
+    h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 8px; }
+    p:last-child { margin-bottom: 0; }
+    strong { color: var(--text); }
+
+    /* ── FORMULA BLOCKS ── */
+    .formula-block {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(201,162,39,0.35);
+      border-radius: 12px; padding: 16px 20px; margin: 12px 0;
+      font-family: 'Playfair Display', serif;
+      text-align: center;
+    }
+    .formula-block .formula-main {
+      font-size: 20px; color: var(--gold); font-weight: 700; letter-spacing: 0.5px;
+    }
+    .formula-block .formula-sub {
+      font-size: 12px; color: var(--muted); margin-top: 6px; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── LEAKAGE PILLS ── */
+    .leakage-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+    .leakage-pill {
+      flex: 1; min-width: 120px; padding: 10px 14px; border-radius: 12px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+      text-align: center;
+    }
+    .leakage-pill .lp-letter {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 900; color: var(--gold);
+    }
+    .leakage-pill .lp-name { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow-diagram {
+      display: flex; align-items: center; gap: 0;
+      flex-wrap: wrap; margin: 14px 0;
+    }
+    .flow-node {
+      flex: 1; min-width: 80px; padding: 10px 8px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      text-align: center; font-size: 12px; color: var(--muted);
+    }
+    .flow-node strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 3px; }
+    .flow-arrow {
+      color: var(--gold); font-size: 18px; padding: 0 6px; flex-shrink: 0;
+    }
+
+    /* ── WHAT AFFECTS SIZE ── */
+    .factor-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .factor-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 12px; margin-bottom: 8px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: rgba(255,255,255,0.03); font-size: 13px; color: var(--muted);
+    }
+    .factor-list li .fi-icon {
+      font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; margin-top: 1px;
+    }
+    .factor-list li strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    /* ── ACCELERATOR TABLE ── */
+    .acc-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+    .acc-table th {
+      text-align: left; padding: 10px 12px;
+      background: rgba(201,162,39,0.12); color: var(--gold);
+      border-bottom: 1px solid rgba(201,162,39,0.25);
+    }
+    .acc-table td {
+      padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--muted);
+    }
+    .acc-table tr:last-child td { border-bottom: none; }
+    .acc-table .neg { color: var(--bad); }
+    .acc-table .pos { color: var(--ok); }
+
+    /* ── INTERACTION FLOW ── */
+    .cycle-box {
+      border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(255,255,255,0.03); padding: 14px 16px;
+      position: relative; margin-bottom: 10px;
+    }
+    .cycle-box .cb-num {
+      position: absolute; top: -12px; left: 14px;
+      font-family: 'Playfair Display', serif;
+      font-size: 11px; font-weight: 900;
+      background: var(--navy-dark); border: 1px solid var(--gold);
+      color: var(--gold); padding: 2px 8px; border-radius: 999px;
+    }
+    .cycle-connector {
+      text-align: center; color: var(--gold); font-size: 22px;
+      margin: -4px 0; line-height: 1;
+    }
+
+    /* ── EVALUATION ── */
+    .eval-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media(max-width:700px){ .eval-grid { grid-template-columns: 1fr; } }
+    .eval-card {
+      border-radius: 12px; padding: 16px;
+      border: 1px solid var(--border);
+    }
+    .eval-card.lim { background: rgba(255,107,122,0.07); border-color: rgba(255,107,122,0.25); }
+    .eval-card.app { background: rgba(93,226,139,0.07); border-color: rgba(93,226,139,0.25); }
+    .eval-card h3 { font-size: 14px; margin-bottom: 10px; }
+    .eval-card.lim h3 { color: var(--bad); }
+    .eval-card.app h3 { color: var(--ok); }
+    .eval-point {
+      font-size: 13px; color: var(--muted); padding: 7px 10px;
+      border-radius: 8px; background: rgba(255,255,255,0.04);
+      margin-bottom: 6px;
+    }
+    .eval-point strong { color: var(--text); }
+
+    /* ═══════════════════════════════════
+       TAB 2 – MULTIPLIER CALCULATOR
+    ═══════════════════════════════════ */
+    .diff-row {
+      display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .diff-btn {
+      padding: 8px 16px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 700; transition: all 0.15s;
+    }
+    .diff-btn:hover { border-color: var(--gold); color: var(--text); }
+    .diff-btn.sel {
+      background: var(--gold-pale); border-color: var(--gold); color: var(--gold);
+    }
+
+    .scenario-card {
+      border: 1px solid rgba(201,162,39,0.3);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(201,162,39,0.08), rgba(201,162,39,0.02));
+      padding: 22px; margin-bottom: 16px;
+    }
+    .scenario-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    }
+    .scenario-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px; font-weight: 900; color: var(--gold); line-height: 1;
+    }
+    .scenario-meta { flex: 1; }
+    .scenario-meta .sm-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--muted); font-weight: 700;
+    }
+    .scenario-meta .sm-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+    }
+    .scenario-text {
+      font-size: 15px; color: var(--text); line-height: 1.7;
+      background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px 16px;
+      margin-bottom: 16px; border: 1px solid var(--border);
+    }
+    .task-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .task-group { flex: 1; min-width: 180px; }
+    .task-group label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .task-group .inp-wrap {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .task-group input {
+      flex: 1; padding: 11px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+      font-weight: 700; outline: none; transition: border-color 0.2s;
+    }
+    .task-group input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,39,0.12); }
+    .task-group input.correct { border-color: var(--ok); background: rgba(93,226,139,0.08); }
+    .task-group input.wrong { border-color: var(--bad); background: rgba(255,107,122,0.08); }
+    .task-group .inp-unit {
+      font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 700;
+    }
+
+    .calc-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-check {
+      padding: 12px 22px; border-radius: 10px; cursor: pointer;
+      border: 1px solid rgba(93,226,139,0.4); background: rgba(93,226,139,0.12);
+      color: var(--ok); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 700; transition: all 0.15s;
+    }
+    .btn-check:hover { background: rgba(93,226,139,0.2); transform: translateY(-1px); }
+    .btn-reveal {
+      padding: 12px 22px; border-radius: 10px; cursor: pointer;
+      border: 1px solid rgba(201,162,39,0.4); background: rgba(201,162,39,0.1);
+      color: var(--gold); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 700; transition: all 0.15s;
+    }
+    .btn-reveal:hover { background: rgba(201,162,39,0.18); transform: translateY(-1px); }
+    .btn-next {
+      padding: 12px 22px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.06);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 700; transition: all 0.15s;
+    }
+    .btn-next:hover { border-color: var(--gold); color: var(--text); }
+
+    .feedback-box {
+      margin-top: 14px; padding: 14px 16px; border-radius: 10px;
+      font-size: 14px; display: none; animation: fadeIn 0.3s ease;
+    }
+    .feedback-box.ok { background: rgba(93,226,139,0.1); border: 1px solid rgba(93,226,139,0.3); color: var(--ok); }
+    .feedback-box.bad { background: rgba(255,107,122,0.1); border: 1px solid rgba(255,107,122,0.3); color: var(--bad); }
+
+    .worked-solution {
+      margin-top: 14px; display: none; animation: fadeIn 0.3s ease;
+      border: 1px solid rgba(104,225,198,0.25); border-radius: 12px;
+      background: rgba(104,225,198,0.05); overflow: hidden;
+    }
+    .ws-header {
+      padding: 12px 16px; background: rgba(104,225,198,0.1);
+      border-bottom: 1px solid rgba(104,225,198,0.2);
+      font-size: 13px; font-weight: 700; color: var(--teal);
+    }
+    .ws-body { padding: 16px; }
+    .ws-step {
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 10px; font-size: 13px; color: var(--muted);
+    }
+    .ws-step:last-child { margin-bottom: 0; }
+    .ws-step-num {
+      flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(104,225,198,0.15); border: 1px solid rgba(104,225,198,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 900; color: var(--teal);
+    }
+    .ws-formula {
+      display: inline-block; background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(201,162,39,0.3); border-radius: 6px;
+      padding: 2px 8px; font-weight: 700; color: var(--gold);
+      font-family: 'Playfair Display', serif; font-size: 14px; margin: 2px 0;
+    }
+    .ws-answer {
+      margin-top: 10px; padding: 12px 14px;
+      background: rgba(201,162,39,0.12); border: 1px solid rgba(201,162,39,0.3);
+      border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--gold);
+    }
+
+    .score-bar {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px; border-radius: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .score-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .score-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 900; color: var(--gold);
+    }
+    .streak-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 900; color: var(--teal);
+    }
+
+    /* ═══════════════════════════════════
+       TAB 3 – RIPPLE SIMULATOR
+    ═══════════════════════════════════ */
+    .sim-controls {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;
+      margin-bottom: 16px;
+    }
+    .sim-control label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: var(--muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .sim-control .ctrl-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sim-control input[type=range] {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      background: rgba(255,255,255,0.1); border-radius: 2px; outline: none;
+    }
+    .sim-control input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      background: var(--gold); border-radius: 50%; cursor: pointer;
+      box-shadow: 0 0 6px rgba(201,162,39,0.4);
+    }
+    .sim-control .ctrl-val {
+      min-width: 42px; text-align: right; font-weight: 700;
+      color: var(--gold); font-size: 14px;
+    }
+
+    .sim-inject-btn {
+      padding: 13px 28px; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border: none; color: var(--navy-dark); font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 900; transition: all 0.2s;
+      margin-right: 10px;
+    }
+    .sim-inject-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,162,39,0.35); }
+    .sim-reset-btn {
+      padding: 13px 20px; border-radius: 10px; cursor: pointer;
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 700; transition: all 0.15s;
+    }
+    .sim-reset-btn:hover { border-color: var(--gold); color: var(--text); }
+
+    .sim-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin: 16px 0;
+    }
+    .sim-stat {
+      border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(255,255,255,0.04); padding: 14px 16px; text-align: center;
+    }
+    .sim-stat .ss-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+    .sim-stat .ss-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; font-weight: 900; margin-top: 4px;
+    }
+
+    #simCanvas {
+      width: 100%; border-radius: 12px; display: block;
+      border: 1px solid var(--border); background: rgba(0,0,0,0.25);
+    }
+
+    .round-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+    .round-table th {
+      padding: 9px 12px; text-align: left;
+      background: rgba(255,255,255,0.05); color: var(--muted);
+      border-bottom: 1px solid var(--border); font-weight: 700; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    .round-table td {
+      padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+    .round-table tr:last-child td { border-bottom: none; }
+    .round-table .rtd-round { color: var(--text); font-weight: 700; }
+    .round-table .rtd-spend { color: var(--gold); }
+    .round-table .rtd-withdrawal { color: var(--bad); }
+    .round-table .rtd-income { color: var(--ok); }
+
+    /* ═══════════════════════════════════
+       TAB 4 – EXAM TECHNIQUE
+    ═══════════════════════════════════ */
+    .exam-q {
+      border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(255,255,255,0.04); margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .exam-q-header {
+      padding: 14px 16px; display: flex; justify-content: space-between;
+      align-items: center; cursor: pointer; user-select: none;
+      transition: background 0.15s;
+    }
+    .exam-q-header:hover { background: rgba(255,255,255,0.04); }
+    .exam-q-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .exam-q-marks {
+      font-size: 12px; padding: 3px 10px; border-radius: 999px;
+      background: var(--gold-pale); border: 1px solid rgba(201,162,39,0.3);
+      color: var(--gold); font-weight: 700; flex-shrink: 0;
+    }
+    .exam-q-body {
+      padding: 0 16px 16px; display: none;
+      border-top: 1px solid var(--border);
+    }
+    .exam-q-body.open { display: block; }
+    .ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    @media(max-width:700px){ .ms-grid { grid-template-columns: 1fr; } }
+    .ms-box {
+      border-radius: 10px; padding: 12px 14px; font-size: 13px;
+    }
+    .ms-box.do { background: rgba(93,226,139,0.08); border: 1px solid rgba(93,226,139,0.25); }
+    .ms-box.dont { background: rgba(255,107,122,0.08); border: 1px solid rgba(255,107,122,0.25); }
+    .ms-box h4 { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .ms-box.do h4 { color: var(--ok); }
+    .ms-box.dont h4 { color: var(--bad); }
+    .ms-box li { color: var(--muted); margin-bottom: 5px; margin-left: 14px; }
+
+    .exemplar-box {
+      margin-top: 12px; border: 1px solid rgba(104,225,198,0.25);
+      border-radius: 10px; background: rgba(104,225,198,0.05);
+      overflow: hidden;
+    }
+    .exemplar-header {
+      padding: 10px 14px; background: rgba(104,225,198,0.1);
+      border-bottom: 1px solid rgba(104,225,198,0.2);
+      font-size: 12px; font-weight: 700; color: var(--teal);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .exemplar-body { padding: 14px; font-size: 13px; color: var(--muted); line-height: 1.8; }
+    .ex-highlight {
+      background: rgba(201,162,39,0.15); border-bottom: 1px solid var(--gold);
+      color: var(--text); padding: 0 2px;
+    }
+    .ex-chain {
+      background: rgba(104,225,198,0.12); border-bottom: 1px solid var(--teal);
+      color: var(--text); padding: 0 2px;
+    }
+    .exemplar-key { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; }
+    .ek-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .ek-swatch {
+      width: 14px; height: 3px; border-radius: 1px;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      .tabbar, .diff-row, .calc-btns, .sim-controls,
+      #simCanvas, .sim-inject-btn, .sim-reset-btn,
+      .btn-check, .btn-reveal, .btn-next,
+      .exam-q-header { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .card, .scenario-card, .eval-card { border: 1px solid #ccc !important; background: white !important; box-shadow: none !important; page-break-inside: avoid; }
+      .panel { display: block !important; }
+      h1, h2, h3 { color: black !important; font-family: serif !important; }
+      p, .factor-list li, .eval-point { color: #333 !important; }
+      header::before { content: 'BIZ-OMICS — Multiplier & Accelerator Effects'; display: block; font-family: serif; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid black; padding-bottom: 6px; margin-bottom: 16px; }
+      .panel.active { page-break-before: always; }
+    }
+
+    /* ── PRINT BTN ── */
+    .print-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-left: auto; padding: 8px 16px; border-radius: 999px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.05);
+      color: var(--muted); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    }
+    .print-btn:hover { border-color: var(--gold); color: var(--gold); }
+  </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Multiplier-Accelerator Suite</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_multacc_pw';
+  var valid = ['MultAcc-3Xb2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MultAcc-3Xb2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_multacc_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+  <div class="brand-row">
+    <div class="brand-logo">BIZ-OMICS</div>
+    <div class="badge">AQA A-Level Economics</div>
+    <div class="badge">Theme 2 / Paper 2</div>
+    <button class="print-btn" onclick="window.print()">🖨 Print</button>
+  </div>
+  <h1>The <span>Multiplier</span> &amp; <span>Accelerator</span> Effects</h1>
+  <p class="subtitle">Aggregate Demand · Theory · Calculator Practice · Ripple Simulator</p>
+</header>
+
+<div class="wrap">
+
+  <!-- TAB BAR -->
+  <div class="tabbar" role="tablist">
+    <button class="tabbtn active" onclick="showTab('exam', this)" role="tab"><div class="dot"></div>📊 Aggregate Demand</button>
+    <button class="tabbtn" onclick="showTab('theory', this)" role="tab"><div class="dot"></div>📖 Theory</button>
+    <button class="tabbtn" onclick="showTab('calculator', this)" role="tab"><div class="dot"></div>🧮 Calculator Practice</button>
+    <button class="tabbtn" onclick="showTab('simulator', this)" role="tab"><div class="dot"></div>🌊 Ripple Simulator</button>
+  </div>
+
+  <!-- ═══════════════════════════
+       TAB 1 – THEORY
+  ═══════════════════════════ -->
+  <div id="tab-theory" class="panel">
+
+    <!-- BIG PICTURE -->
+    <div class="card card-gold">
+      <h2>🔍 The Big Picture</h2>
+      <p>The multiplier and accelerator are the two great <strong>amplification mechanisms</strong> in macroeconomics. They explain why the economy does not simply respond to a change in spending in a neat, proportionate way — instead, small shocks are magnified into large swings in output and investment.</p>
+      <div class="flow-diagram">
+        <div class="flow-node"><strong>Injection ↑</strong>e.g. G spending</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node"><strong>Multiplier</strong>amplifies into income</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node"><strong>Income ↑</strong>boosts consumer spending</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node"><strong>Accelerator</strong>triggers investment</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node"><strong>Boom cycle</strong>feeds back in</div>
+      </div>
+      <p style="font-size:13px;">This feedback loop is what drives <strong>boom-bust cycles</strong> and makes macroeconomic stabilisation genuinely difficult.</p>
+    </div>
+
+    <!-- MULTIPLIER -->
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h2><span>The Multiplier Effect</span></h2>
+          <p>An initial injection of spending into the circular flow generates a <strong>greater final increase in national income</strong> than the original injection. This is because each round of spending becomes income for someone else.</p>
+
+          <div class="formula-block">
+            <div class="formula-main">K = 1 ÷ MPW</div>
+            <div class="formula-sub">where MPW = marginal propensity to withdraw (MPS + MPT + MPM)</div>
+          </div>
+          <div class="formula-block">
+            <div class="formula-main">K = 1 ÷ (1 − MPC)</div>
+            <div class="formula-sub">in a simple closed economy with no government</div>
+          </div>
+
+          <h3>The Three Withdrawals</h3>
+          <div class="leakage-row">
+            <div class="leakage-pill">
+              <div class="lp-letter">S</div>
+              <div class="lp-name">Saving<br><span style="font-size:10px;color:#7aa2ff;">MPS</span></div>
+            </div>
+            <div class="leakage-pill">
+              <div class="lp-letter">T</div>
+              <div class="lp-name">Taxation<br><span style="font-size:10px;color:#7aa2ff;">MPT</span></div>
+            </div>
+            <div class="leakage-pill">
+              <div class="lp-letter">M</div>
+              <div class="lp-name">Imports<br><span style="font-size:10px;color:#7aa2ff;">MPM</span></div>
+            </div>
+          </div>
+          <p style="font-size:13px;">Every time income leaks out through saving, tax or imports, it does not pass on to the next round. A high MPW means a <strong>small multiplier</strong>.</p>
+
+          <div class="formula-block">
+            <div class="formula-main">ΔY = K × ΔI</div>
+            <div class="formula-sub">Change in national income = multiplier × initial injection</div>
+          </div>
+
+          <h3>📊 Worked Example</h3>
+          <p style="font-size:13px;">If the government increases spending by <strong>£20bn</strong> and the MPC = 0.75 (so MPW = 0.25):</p>
+          <p style="font-size:13px;">K = 1 ÷ 0.25 = <strong>4</strong></p>
+          <p style="font-size:13px;">ΔY = 4 × £20bn = <strong>£80bn</strong> increase in national income</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2><span>What Affects the Size?</span></h2>
+          <ul class="factor-list">
+            <li>
+              <div class="fi-icon">📉</div>
+              <div><strong>Openness of the economy</strong><br>High import propensity (MPM) = large leakage = smaller multiplier. UK's high import share limits its multiplier.</div>
+            </li>
+            <li>
+              <div class="fi-icon">🏭</div>
+              <div><strong>Spare capacity</strong><br>If the economy is near full employment, the multiplier works through prices (inflation) not output. Real effect is smaller.</div>
+            </li>
+            <li>
+              <div class="fi-icon">💰</div>
+              <div><strong>Marginal propensity to consume</strong><br>Higher MPC → less saved each round → more passes on → bigger multiplier. Poorer households typically have higher MPCs.</div>
+            </li>
+            <li>
+              <div class="fi-icon">🏦</div>
+              <div><strong>Tax rates</strong><br>Higher income tax rates increase MPT and reduce the multiplier. This is partly why fiscal multipliers are debated in high-tax economies.</div>
+            </li>
+            <li>
+              <div class="fi-icon">⏱</div>
+              <div><strong>Time lags</strong><br>The full multiplier effect takes time — successive spending rounds can stretch over months or even years.</div>
+            </li>
+            <li>
+              <div class="fi-icon">😰</div>
+              <div><strong>Consumer & business confidence</strong><br>If households are pessimistic, they may save extra income rather than spend it, reducing MPC and cutting the multiplier.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCELERATOR -->
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h2><span>The Accelerator Effect</span></h2>
+          <p>The accelerator shows that <strong>net investment depends on the change in output</strong>, not the level of output. When demand is growing, firms must invest to expand capacity. When growth slows — even if the economy is still expanding — net investment can <em>fall</em>.</p>
+
+          <div class="formula-block">
+            <div class="formula-main">I = v × ΔY</div>
+            <div class="formula-sub">where v = capital-output ratio (accelerator coefficient)</div>
+          </div>
+
+          <h3>The Capital-Output Ratio (v)</h3>
+          <p style="font-size:13px;">This measures how much capital (£) is needed to produce £1 of output. If v = 3, then each £1 rise in output requires <strong>£3 of new capital investment</strong>. Capital-intensive industries (e.g. energy, manufacturing) have high values of v.</p>
+
+          <h3>🔑 The Key Insight</h3>
+          <p style="font-size:13px; background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.2); border-radius:8px; padding:10px 12px;">Even a <strong>slowdown in growth</strong> (not a recession) causes net investment to fall — because firms no longer need to expand capacity as rapidly. This is what makes the accelerator so powerful in amplifying downturns.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Accelerator <span>in Action</span></h2>
+          <p style="font-size:13px; margin-bottom:10px;">Assume capital-output ratio v = 3. Watch what happens when growth slows:</p>
+          <table class="acc-table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Output (£bn)</th>
+                <th>ΔOutput</th>
+                <th>Net Investment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>500</td><td>—</td><td>—</td></tr>
+              <tr><td>2</td><td>520</td><td class="pos">+20</td><td class="pos">+60</td></tr>
+              <tr><td>3</td><td>550</td><td class="pos">+30</td><td class="pos">+90</td></tr>
+              <tr><td>4</td><td>570</td><td class="pos">+20</td><td class="neg">+60 ↓</td></tr>
+              <tr><td>5</td><td>580</td><td class="pos">+10</td><td class="neg">+30 ↓↓</td></tr>
+              <tr><td>6</td><td>580</td><td>0</td><td class="neg">0 ↓↓↓</td></tr>
+              <tr><td>7</td><td>575</td><td class="neg">−5</td><td class="neg">−15 ↓↓↓</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px; margin-top:10px;">Year 6: output has <em>stopped growing</em> — net investment collapses to zero. Year 7: a small fall in output causes <strong>large negative</strong> net investment (disinvestment).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTION -->
+    <div class="card">
+      <h2>🔄 The <span>Multiplier-Accelerator Interaction</span></h2>
+      <p>The two effects do not operate in isolation — they form a <strong>self-reinforcing feedback loop</strong> that drives business cycles. This interaction was formalised by Samuelson (1939) and remains central to understanding macroeconomic volatility.</p>
+
+      <div style="max-width: 700px; margin: 16px auto 0;">
+        <div class="cycle-box">
+          <div class="cb-num">① TRIGGER</div>
+          <p style="font-size:13px; padding-top:6px;">An initial <strong>injection</strong> occurs — e.g. government increases spending by £10bn on infrastructure.</p>
+        </div>
+        <div class="cycle-connector">↓</div>
+        <div class="cycle-box">
+          <div class="cb-num">② MULTIPLIER</div>
+          <p style="font-size:13px; padding-top:6px;">That £10bn circulates through the economy. Each round of spending generates income for someone else. With K = 4, national income eventually rises by <strong>£40bn</strong>.</p>
+        </div>
+        <div class="cycle-connector">↓</div>
+        <div class="cycle-box">
+          <div class="cb-num">③ ACCELERATOR</div>
+          <p style="font-size:13px; padding-top:6px;">Firms see rising consumer demand and need to expand productive capacity. Net investment rises sharply — amplifying the original injection further. This is a <strong>new injection</strong> into the circular flow.</p>
+        </div>
+        <div class="cycle-connector">↓</div>
+        <div class="cycle-box">
+          <div class="cb-num">④ SECOND MULTIPLIER</div>
+          <p style="font-size:13px; padding-top:6px;">The investment spending from step ③ is itself subject to the multiplier — it circulates, generates incomes, and further boosts output.</p>
+        </div>
+        <div class="cycle-connector">↓</div>
+        <div class="cycle-box" style="border-color: rgba(201,162,39,0.35); background: rgba(201,162,39,0.06);">
+          <div class="cb-num" style="border-color:var(--gold); color:var(--gold);">⑤ BOOM</div>
+          <p style="font-size:13px; padding-top:6px; color: var(--text);">The combined effect far exceeds the original injection. The cycle can generate an <strong>inflationary boom</strong> — or, in reverse, a severe recession from a small negative shock.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVALUATION -->
+    <div class="card">
+      <h2>⚖️ <span>Evaluation</span></h2>
+      <div class="eval-grid">
+        <div class="eval-card lim">
+          <h3>⚠ Limitations of the Multiplier</h3>
+          <div class="eval-point"><strong>Spare capacity required</strong> — if the economy is near full employment, the multiplier effect on real output is minimal; it just causes inflation.</div>
+          <div class="eval-point"><strong>Crowding out</strong> — government borrowing may raise interest rates, reducing private investment and partially offsetting the fiscal stimulus.</div>
+          <div class="eval-point"><strong>Time lags</strong> — successive rounds of spending take time; by the time the full multiplier works through, conditions may have changed.</div>
+          <div class="eval-point"><strong>Open economy leakages</strong> — the UK's high import propensity means a significant share of each round leaks abroad, substantially reducing the multiplier value.</div>
+        </div>
+        <div class="eval-card lim">
+          <h3>⚠ Limitations of the Accelerator</h3>
+          <div class="eval-point"><strong>Assumes instant adjustment</strong> — in practice, firms do not immediately invest when output rises; capacity constraints, planning lags, and credit availability all create delays.</div>
+          <div class="eval-point"><strong>Existing spare capacity</strong> — if firms already have under-utilised capital, they may not invest even when output is growing.</div>
+          <div class="eval-point"><strong>Pessimistic expectations</strong> — if firms expect growth to be temporary, they may not invest; animal spirits (Keynes) matter as much as the model.</div>
+          <div class="eval-point"><strong>Fixed capital-output ratio</strong> — in reality, v varies across industries and over time; the model oversimplifies investment decisions.</div>
+        </div>
+        <div class="eval-card app">
+          <h3>✔ When Effects are Strongest</h3>
+          <div class="eval-point"><strong>Multiplier strongest</strong> when: economy has significant spare capacity; MPC is high; economy is relatively closed; tax rates are low.</div>
+          <div class="eval-point"><strong>Accelerator strongest</strong> when: firms are already near full capacity utilisation; credit is cheap and accessible; confidence is high.</div>
+          <div class="eval-point"><strong>Interaction most powerful</strong> during: early recovery from recession when capacity is spare and consumer confidence is recovering.</div>
+        </div>
+        <div class="eval-card app">
+          <h3>✔ Real-World Context</h3>
+          <div class="eval-point"><strong>Post-2008</strong>: fiscal multipliers proved relatively small in the UK due to austerity, high import leakages, and the liquidity trap reducing the transmission of spending.</div>
+          <div class="eval-point"><strong>COVID-19 stimulus</strong>: large government injections had mixed multiplier effects — high household saving rates initially limited the pass-through of income to spending.</div>
+          <div class="eval-point"><strong>Infrastructure investment</strong>: capital projects have higher multipliers in underdeveloped regions where local supply capacity exists — a key policy debate.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-theory -->
+
+
+  <!-- ═══════════════════════════
+       TAB 2 – CALCULATOR
+  ═══════════════════════════ -->
+  <div id="tab-calculator" class="panel">
+
+    <div class="card">
+      <h2>🧮 <span>Multiplier Calculator Practice</span></h2>
+      <p>Work through randomised scenarios. Calculate the multiplier and change in national income, enter your answers, then check — or reveal the full worked method.</p>
+
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+        <div>
+          <div style="font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Difficulty</div>
+          <div class="diff-row" style="margin-bottom:0;">
+            <button class="diff-btn sel" onclick="setDiff('foundation',this)">🟢 Foundation</button>
+            <button class="diff-btn" onclick="setDiff('standard',this)">🟡 Standard</button>
+            <button class="diff-btn" onclick="setDiff('stretch',this)">🔴 Stretch</button>
+          </div>
+        </div>
+        <div class="score-bar" style="flex:1; min-width:220px;">
+          <div>
+            <div class="score-label">Score</div>
+            <div class="score-val" id="scoreVal">0</div>
+          </div>
+          <div style="width:1px; height:36px; background:var(--border);"></div>
+          <div>
+            <div class="score-label">Streak 🔥</div>
+            <div class="streak-val" id="streakVal">0</div>
+          </div>
+          <div style="width:1px; height:36px; background:var(--border);"></div>
+          <div>
+            <div class="score-label">Attempted</div>
+            <div class="score-val" id="attemptVal">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENARIO DISPLAY -->
+      <div class="scenario-card" id="scenarioCard">
+        <div class="scenario-header">
+          <div class="scenario-num" id="scenNum">01</div>
+          <div class="scenario-meta">
+            <div class="sm-label">Scenario</div>
+            <div class="sm-title" id="scenTitle">Loading…</div>
+          </div>
+          <div class="badge" id="scenDiff">Foundation</div>
+        </div>
+
+        <div class="scenario-text" id="scenText">Loading scenario…</div>
+
+        <div class="task-row" id="taskRow">
+          <!-- dynamically built -->
+        </div>
+
+        <div class="calc-btns">
+          <button class="btn-check" onclick="checkAnswer()">✓ Check Answer</button>
+          <button class="btn-reveal" onclick="revealSolution()">💡 Show Worked Method</button>
+          <button class="btn-next" onclick="nextScenario()">→ Next Scenario</button>
+        </div>
+
+        <div class="feedback-box" id="feedbackBox"></div>
+        <div class="worked-solution" id="workedSolution">
+          <div class="ws-header">📐 Worked Solution</div>
+          <div class="ws-body" id="wsBody"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-calculator -->
+
+
+  <!-- ═══════════════════════════
+       TAB 3 – RIPPLE SIMULATOR
+  ═══════════════════════════ -->
+  <div id="tab-simulator" class="panel">
+
+    <div class="card">
+      <h2>🌊 <span>Ripple Effect Simulator</span></h2>
+      <p>Inject spending into the circular flow and watch each successive round shrink as withdrawals leak out. Adjust the parameters to see how they affect the multiplier in real time.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <h3>⚙ Parameters</h3>
+          <div class="sim-controls">
+            <div class="sim-control">
+              <label>Initial Injection (£bn)</label>
+              <div class="ctrl-row">
+                <input type="range" id="sInjection" min="5" max="100" value="20" oninput="updateSim()"/>
+                <span class="ctrl-val" id="vInjection">£20bn</span>
+              </div>
+            </div>
+            <div class="sim-control">
+              <label>MPC (Marginal Propensity to Consume)</label>
+              <div class="ctrl-row">
+                <input type="range" id="sMPC" min="0.3" max="0.95" step="0.05" value="0.7" oninput="updateSim()"/>
+                <span class="ctrl-val" id="vMPC">0.70</span>
+              </div>
+            </div>
+            <div class="sim-control">
+              <label>MPT (Tax propensity)</label>
+              <div class="ctrl-row">
+                <input type="range" id="sMPT" min="0" max="0.3" step="0.05" value="0.1" oninput="updateSim()"/>
+                <span class="ctrl-val" id="vMPT">0.10</span>
+              </div>
+            </div>
+            <div class="sim-control">
+              <label>MPM (Import propensity)</label>
+              <div class="ctrl-row">
+                <input type="range" id="sMPM" min="0" max="0.3" step="0.05" value="0.1" oninput="updateSim()"/>
+                <span class="ctrl-val" id="vMPM">0.10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sim-stats">
+            <div class="sim-stat">
+              <div class="ss-label">Multiplier (K)</div>
+              <div class="ss-val" style="color:var(--gold);" id="statK">3.33</div>
+            </div>
+            <div class="sim-stat">
+              <div class="ss-label">MPW</div>
+              <div class="ss-val" style="color:var(--bad);" id="statMPW">0.30</div>
+            </div>
+            <div class="sim-stat">
+              <div class="ss-label">Final ΔY</div>
+              <div class="ss-val" style="color:var(--ok);" id="statDY">£67bn</div>
+            </div>
+            <div class="sim-stat">
+              <div class="ss-label">Rounds until &lt;1%</div>
+              <div class="ss-val" style="color:var(--teal);" id="statRounds">—</div>
+            </div>
+          </div>
+
+          <div style="margin-top:4px;">
+            <button class="sim-inject-btn" onclick="runAnimation()">▶ Animate Ripple</button>
+            <button class="sim-reset-btn" onclick="resetSim()">↺ Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="padding:16px;">
+          <h3>Spending Rounds</h3>
+          <canvas id="simCanvas" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 Round-by-Round Breakdown</h3>
+      <div style="overflow-x:auto;">
+        <table class="round-table" id="roundTable">
+          <thead>
+            <tr>
+              <th>Round</th>
+              <th>New Spending (£bn)</th>
+              <th>Withdrawals (£bn)</th>
+              <th>Cumulative Income (£bn)</th>
+            </tr>
+          </thead>
+          <tbody id="roundTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-simulator -->
+
+
+  <!-- ═══════════════════════════
+       TAB 4 – AGGREGATE DEMAND
+  ═══════════════════════════ -->
+  <div id="tab-exam" class="panel active">
+
+    <div class="card card-gold">
+      <h2>📊 <span>Aggregate Demand</span></h2>
+      <p><strong>Aggregate Demand (AD)</strong> is the total spending on goods and services produced in an economy over a given time period. It is made up of four components: consumer spending, investment by firms, government spending, and net exports (exports minus imports).</p>
+      <p style="margin-top:8px;">Understanding AD is the foundation for everything else in this resource — the multiplier and accelerator are the mechanisms that explain <strong>why</strong> changes in AD have much larger amplified effects on national income and investment than the original change might suggest.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+        <div class="badge" style="font-size:12px; padding:5px 12px;">📘 GCSE &amp; A-Level</div>
+        <div class="badge" style="font-size:12px; padding:5px 12px;">🇬🇧 UK context throughout</div>
+        <div class="badge" style="font-size:12px; padding:5px 12px;">🔗 Links to multiplier &amp; accelerator flagged</div>
+      </div>
+    </div>
+
+    <!-- LAW OF AD -->
+    <div class="card">
+      <h2>The <span>Law of Aggregate Demand</span></h2>
+      <p>The AD curve shows the <strong>total spending in an economy at different price levels</strong>. The key rule: as the average price level in the economy falls, the total quantity of real output demanded rises. This gives the AD curve its characteristic <strong>downward slope</strong> from left to right.</p>
+      <p style="font-size:13px; margin-top:6px;">Think of it this way: if everything in the economy suddenly got cheaper, people could afford more with the same income — so they'd buy more. Three separate effects explain the mechanics behind this:</p>
+
+      <div class="three-col" style="margin-top:14px;">
+        <div class="cycle-box" style="border-color:rgba(201,162,39,0.3);">
+          <div class="cb-num" style="border-color:var(--gold);color:var(--gold);">① Real Wealth Effect</div>
+          <p style="font-size:13px; padding-top:8px;">When prices fall, your savings and financial assets <strong>buy more in real terms</strong> — you feel wealthier even if the number in your bank account hasn't changed. This encourages households to spend more (C ↑) → AD rises.</p>
+        </div>
+        <div class="cycle-box" style="border-color:rgba(104,225,198,0.3);">
+          <div class="cb-num" style="border-color:var(--teal);color:var(--teal);">② Interest Rate Effect</div>
+          <p style="font-size:13px; padding-top:8px;">Lower price levels reduce the amount of money people need to borrow for everyday transactions. This pushes <strong>interest rates down</strong>, making borrowing cheaper → investment by firms (I ↑) and consumer credit spending both rise → AD rises.</p>
+        </div>
+        <div class="cycle-box" style="border-color:rgba(93,226,139,0.3);">
+          <div class="cb-num" style="border-color:var(--ok);color:var(--ok);">③ International Competitiveness</div>
+          <p style="font-size:13px; padding-top:8px;">If UK prices fall relative to other countries, UK goods become <strong>cheaper for overseas buyers</strong> → exports rise (X ↑). At the same time, UK consumers switch from expensive imports to cheaper domestic goods (M ↓). Net exports rise → AD rises.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:12px 14px;">
+        <h3 style="font-size:13px; margin-bottom:6px;">⚠ Important distinction</h3>
+        <p style="font-size:13px; margin:0;"><strong>Movement along the AD curve</strong> = caused by a change in the price level (e.g. inflation falls → move down along AD). &nbsp;&nbsp; <strong>Shift of the AD curve</strong> = caused by a change in one of the components — C, I, G or (X−M) — at every price level.</p>
+      </div>
+
+      <!-- AD DIAGRAM SVG -->
+      <div style="margin-top:16px; border:1px solid var(--border); border-radius:12px; background:rgba(0,0,0,0.25); padding:16px; max-width:480px; margin-left:auto; margin-right:auto;">
+        <svg viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+          <!-- Axes -->
+          <line x1="50" y1="20" x2="50" y2="260" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <line x1="50" y1="260" x2="390" y2="260" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <!-- Axis labels -->
+          <text x="200" y="288" fill="rgba(168,186,218,0.9)" font-size="13" font-family="DM Sans,sans-serif" text-anchor="middle">Real GDP (National Output)</text>
+          <text x="22" y="145" fill="rgba(168,186,218,0.9)" font-size="13" font-family="DM Sans,sans-serif" text-anchor="middle" transform="rotate(-90,22,145)">Price Level</text>
+          <!-- AD curve -->
+          <path d="M 80 40 Q 200 160 370 240" stroke="#c9a227" stroke-width="2.5" fill="none"/>
+          <text x="375" y="237" fill="#c9a227" font-size="13" font-family="DM Sans,sans-serif" font-weight="700">AD</text>
+          <!-- AD right shift -->
+          <path d="M 120 40 Q 240 160 390 230" stroke="rgba(201,162,39,0.35)" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>
+          <text x="390" y="227" fill="rgba(201,162,39,0.5)" font-size="11" font-family="DM Sans,sans-serif" font-weight="700">AD₁</text>
+          <!-- Shift arrow -->
+          <path d="M 200 160 L 230 155" stroke="rgba(93,226,139,0.7)" stroke-width="1.5" marker-end="url(#arrowG)" fill="none"/>
+          <text x="215" y="148" fill="rgba(93,226,139,0.8)" font-size="10" font-family="DM Sans,sans-serif">Shift right →</text>
+          <!-- Arrow marker -->
+          <defs>
+            <marker id="arrowG" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="rgba(93,226,139,0.7)"/>
+            </marker>
+          </defs>
+          <!-- Price level label -->
+          <text x="54" y="16" fill="rgba(168,186,218,0.6)" font-size="10" font-family="DM Sans,sans-serif">PL</text>
+        </svg>
+        <p style="font-size:12px; text-align:center; margin-top:6px;">Movement along AD = change in price level. Shift of AD = change in a non-price determinant.</p>
+      </div>
+    </div>
+
+    <!-- COMPONENTS + DETERMINANTS -->
+    <div class="card">
+      <h2>AD = <span>C + I + G + (X − M)</span></h2>
+      <p style="margin-bottom:6px;">Aggregate demand has four components. Each one can change independently, shifting the whole AD curve left or right. The table below is your starting point — it explains what each component means and what causes it to change.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+        <span class="badge" style="padding:5px 12px; font-size:12px; border-color:rgba(201,162,39,0.4); color:var(--gold);">C = Consumer spending</span>
+        <span class="badge" style="padding:5px 12px; font-size:12px; border-color:rgba(104,225,198,0.3); color:var(--teal);">I = Investment by firms</span>
+        <span class="badge" style="padding:5px 12px; font-size:12px; border-color:rgba(255,204,102,0.3); color:var(--warn);">G = Government spending</span>
+        <span class="badge" style="padding:5px 12px; font-size:12px; border-color:rgba(93,226,139,0.3); color:var(--ok);">X−M = Exports minus Imports</span>
+      </div>
+
+      <!-- C -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(201,162,39,0.2);border:1px solid rgba(201,162,39,0.4);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;color:var(--gold);font-size:16px;">C</div>
+          <div>
+            <h3 style="margin:0;">Consumer Expenditure</h3>
+            <p style="font-size:12px; margin:2px 0 0; color:var(--muted);">Household spending on goods and services — typically <strong style="color:var(--text);">60–65% of UK AD</strong>. The biggest component by far.</p>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="eval-point"><strong>Real disposable income</strong><br>The income households have left after paying taxes. Higher take-home pay → more spending. If taxes rise, disposable income falls → C falls → AD shifts left.</div>
+          <div class="eval-point"><strong>Consumer confidence</strong><br>If people feel secure about their jobs and future incomes, they spend more today. If they're worried, they save instead — even if their income hasn't changed.</div>
+          <div class="eval-point"><strong>Interest rates</strong><br>Lower interest rates make borrowing cheaper (e.g. mortgages, credit cards) and reduce the reward for saving → households spend more. Key lever for the Bank of England.</div>
+          <div class="eval-point"><strong>Wealth effects</strong><br>If house prices or share values rise, homeowners feel richer and spend more — even without extra income. Particularly powerful in the UK given high rates of homeownership.</div>
+          <div class="eval-point"><strong>Availability of credit</strong><br>When banks lend freely, consumers can borrow to spend beyond their current income. When credit tightens (as in 2008), spending can fall sharply even if incomes hold steady.</div>
+          <div class="eval-point"><strong>Distribution of income</strong><br>Poorer households tend to spend a higher proportion of any extra income (high MPC) than wealthier ones. Redistribution can raise total consumer spending even without changing total income. <em style="font-size:11px; color:var(--muted);">(A-Level: link to MPC)</em></div>
+        </div>
+      </div>
+
+      <!-- I -->
+      <div style="margin-bottom:12px; padding-top:12px; border-top:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(104,225,198,0.15);border:1px solid rgba(104,225,198,0.35);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;color:var(--teal);font-size:16px;">I</div>
+          <div>
+            <h3 style="margin:0;">Investment</h3>
+            <p style="font-size:12px; margin:2px 0 0; color:var(--muted);">Spending by firms on capital goods — machinery, buildings, technology. The <strong style="color:var(--text);">most volatile</strong> component and the key link to the accelerator effect.</p>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="eval-point"><strong>Interest rates</strong><br>Firms often borrow to invest. Higher interest rates raise the cost of borrowing, making fewer investment projects worthwhile → I falls → AD shifts left.</div>
+          <div class="eval-point"><strong>Business confidence &amp; expectations</strong><br>Firms only invest if they expect future profits to outweigh costs. When confidence is low — e.g. during political uncertainty — investment dries up even if rates are low. Keynes called this "animal spirits".</div>
+          <div class="eval-point" style="border-color:rgba(104,225,198,0.3); background:rgba(104,225,198,0.06);"><strong style="color:var(--teal);">🔗 Accelerator effect</strong><br>When consumer demand is rising, firms near full capacity must invest to expand. The bigger the rise in national income (ΔY), the bigger the investment response. <em style="font-size:11px;">This is the accelerator: I = v × ΔY</em></div>
+          <div class="eval-point"><strong>Technological change</strong><br>New technologies create investment opportunities — e.g. AI, renewable energy. They can also make existing capital obsolete, forcing firms to invest in replacements.</div>
+          <div class="eval-point"><strong>Corporation tax</strong><br>Lower tax on profits increases the return on investment projects → I rises. Used as a supply-side policy lever by governments.</div>
+          <div class="eval-point"><strong>Availability of finance</strong><br>Beyond interest rates, firms need access to bank loans, equity investment, or retained profits. If banks are risk-averse, investment can fall even when rates are low. <em style="font-size:11px; color:var(--muted);">(A-Level: credit channel)</em></div>
+        </div>
+      </div>
+
+      <!-- G -->
+      <div style="margin-bottom:12px; padding-top:12px; border-top:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,204,102,0.15);border:1px solid rgba(255,204,102,0.35);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;color:var(--warn);font-size:16px;">G</div>
+          <div>
+            <h3 style="margin:0;">Government Expenditure</h3>
+            <p style="font-size:12px; margin:2px 0 0; color:var(--muted);">Spending by central and local government on public services, infrastructure, welfare etc. A <strong style="color:var(--text);">direct injection</strong> into the circular flow — the multiplier acts here first.</p>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="eval-point"><strong>Fiscal policy decisions</strong><br>The government can choose to increase or cut spending through the annual Budget. An increase in G directly shifts AD right — this is expansionary fiscal policy.</div>
+          <div class="eval-point"><strong>Automatic stabilisers</strong><br>In a recession, unemployment benefit payments automatically rise and tax receipts fall — so G rises without any deliberate policy decision. This cushions the fall in AD. In a boom, the reverse happens.</div>
+          <div class="eval-point" style="border-color:rgba(201,162,39,0.3); background:rgba(201,162,39,0.06);"><strong style="color:var(--gold);">🔗 Multiplier effect</strong><br>G is the most direct injection into the circular flow. The multiplier then amplifies its impact: ΔY = K × ΔG. A £10bn rise in G becomes a much larger final rise in national income.</div>
+          <div class="eval-point"><strong>Government debt levels</strong><br>If public debt is already high (as in post-pandemic UK), markets may demand higher interest rates on government borrowing, constraining how much G can rise.</div>
+          <div class="eval-point"><strong>Crowding out</strong><br>If G is financed by borrowing, it may push up interest rates → private investment (I) falls. The net effect on AD depends on whether the multiplier effect outweighs the crowding-out effect. <em style="font-size:11px; color:var(--muted);">(A-Level evaluation)</em></div>
+          <div class="eval-point"><strong>Political cycle</strong><br>Governments may increase spending ahead of elections. The independent Office for Budget Responsibility (OBR) exists partly to limit this kind of short-term fiscal manipulation.</div>
+        </div>
+      </div>
+
+      <!-- XM -->
+      <div style="padding-top:12px; border-top:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <div style="width:36px;height:32px;border-radius:8px;background:rgba(93,226,139,0.12);border:1px solid rgba(93,226,139,0.3);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:900;color:var(--ok);font-size:13px;">X−M</div>
+          <div>
+            <h3 style="margin:0;">Net Exports (X − M)</h3>
+            <p style="font-size:12px; margin:2px 0 0; color:var(--muted);">Exports minus imports. If the UK exports more than it imports, this adds to AD. Imports matter twice here: they reduce AD <strong style="color:var(--text);">and</strong> they are the main leakage that limits the multiplier.</p>
+          </div>
+        </div>
+        <div class="three-col">
+          <div class="eval-point"><strong>Exchange rate</strong><br>If the pound falls in value (depreciates), UK exports become cheaper for foreign buyers (X ↑) and imports become more expensive for UK consumers (M ↓). Net exports rise → AD shifts right.</div>
+          <div class="eval-point"><strong>Overseas income &amp; growth</strong><br>If the UK's main trading partners (US, EU) are growing fast, demand for UK exports rises. UK AD is therefore directly affected by global economic conditions.</div>
+          <div class="eval-point"><strong>Relative inflation</strong><br>If UK prices rise faster than in competitor countries, UK goods become less competitive internationally → exports fall, imports rise → AD shifts left.</div>
+          <div class="eval-point" style="border-color:rgba(93,226,139,0.3); background:rgba(93,226,139,0.05);"><strong style="color:var(--ok);">🔗 Import leakage &amp; the multiplier</strong><br>Every time income rises in the UK, some of it is spent on imports — this leaks out of the circular flow. A high propensity to import (MPM) directly reduces the size of the multiplier. This is a key reason UK fiscal multipliers are relatively small. <em style="font-size:11px;">(A-Level: MPW = MPS + MPT + MPM)</em></div>
+          <div class="eval-point"><strong>Trade policy</strong><br>Tariffs and trade agreements affect the relative price of imports. Post-Brexit non-tariff barriers have likely reduced UK trade volumes with the EU, affecting both X and M.</div>
+          <div class="eval-point"><strong>Non-price competitiveness</strong><br>Quality, reliability, delivery times, and after-sales service all affect export demand — not just price. Important for UK manufacturing and services exports.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE BRIDGE: AD SHIFTS → MULTIPLIER → ACCELERATOR -->
+    <div class="card" style="border-color:rgba(201,162,39,0.35); background: linear-gradient(160deg, rgba(201,162,39,0.07), rgba(201,162,39,0.02));">
+      <h2>🔗 <span>The Bridge: How AD Shifts Trigger the Multiplier &amp; Accelerator</span></h2>
+      <p style="margin-bottom:14px;">A shift in AD is not the end of the story — it is the beginning. The multiplier and accelerator determine how large the final macroeconomic impact will be.</p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; margin:0 auto; max-width:820px;">
+        <div style="padding:16px; border:1px solid rgba(201,162,39,0.25); border-radius:12px 0 0 12px; background:rgba(201,162,39,0.07); text-align:center;">
+          <div style="font-size:22px; margin-bottom:6px;">📈</div>
+          <h3 style="font-size:14px; color:var(--gold); margin-bottom:6px;">1. AD Shifts Right</h3>
+          <p style="font-size:12px;">A determinant changes — e.g. government cuts interest rates, raising C and I. Or government increases G. AD curve shifts right.</p>
+        </div>
+        <div style="padding:16px; border:1px solid rgba(104,225,198,0.25); border-top:1px solid rgba(104,225,198,0.25); border-bottom:1px solid rgba(104,225,198,0.25); background:rgba(104,225,198,0.05); text-align:center;">
+          <div style="font-size:22px; margin-bottom:6px;">✕</div>
+          <h3 style="font-size:14px; color:var(--teal); margin-bottom:6px;">2. Multiplier Amplifies</h3>
+          <p style="font-size:12px;">The initial injection circulates through the economy. Each round of spending becomes income — the multiplier (K = 1/MPW) magnifies the original shift.</p>
+        </div>
+        <div style="padding:16px; border:1px solid rgba(93,226,139,0.25); border-radius:0 12px 12px 0; background:rgba(93,226,139,0.05); text-align:center;">
+          <div style="font-size:22px; margin-bottom:6px;">🚀</div>
+          <h3 style="font-size:14px; color:var(--ok); margin-bottom:6px;">3. Accelerator Follows</h3>
+          <p style="font-size:12px;">Rising income increases consumer demand → firms near capacity invest to expand → the accelerator triggers further investment (I = v × ΔY) → another injection.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:10px; padding:14px 16px;">
+        <h3 style="font-size:14px; margin-bottom:8px;">⚠ Why This Matters for Policy</h3>
+        <div class="two-col" style="gap:10px;">
+          <div style="font-size:13px; color:var(--muted);">
+            <strong style="color:var(--text);">Fiscal policy effectiveness</strong> depends on the size of K. A government spending cut (ΔG negative) reduces AD, but the final fall in Y is K × ΔG — potentially much larger. This is why austerity can be self-defeating: the multiplied income loss reduces tax revenues, partially offsetting the deficit reduction.
+          </div>
+          <div style="font-size:13px; color:var(--muted);">
+            <strong style="color:var(--text);">Investment volatility</strong> is explained by the accelerator. Even a small slowdown in consumer spending growth (a shift in the rate of AD change) can cause a sharp fall in investment — amplifying any initial demand shock and making recessions deeper than the original trigger would suggest.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FACTORS SUMMARY TABLE -->
+    <div class="card">
+      <h2>📋 <span>Shifts in AD — Quick Reference</span></h2>
+      <p style="margin-bottom:12px;">A summary of the key factors that shift the AD curve, with direction of effect.</p>
+      <div style="overflow-x:auto;">
+        <table class="acc-table">
+          <thead>
+            <tr>
+              <th>Factor</th>
+              <th>Component affected</th>
+              <th>Direction</th>
+              <th>Link to multiplier/accelerator</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>↓ Interest rates</strong></td>
+              <td>C ↑, I ↑</td>
+              <td class="pos">AD shifts right</td>
+              <td>Higher I triggers accelerator; higher C feeds multiplier rounds</td>
+            </tr>
+            <tr>
+              <td><strong>↑ Government spending</strong></td>
+              <td>G ↑</td>
+              <td class="pos">AD shifts right</td>
+              <td>Direct injection — multiplier amplifies: ΔY = K × ΔG</td>
+            </tr>
+            <tr>
+              <td><strong>↑ Consumer confidence</strong></td>
+              <td>C ↑</td>
+              <td class="pos">AD shifts right</td>
+              <td>Lowers MPS → raises MPC → larger multiplier effect</td>
+            </tr>
+            <tr>
+              <td><strong>↓ Sterling (depreciation)</strong></td>
+              <td>X ↑, M ↓</td>
+              <td class="pos">AD shifts right</td>
+              <td>Lower MPM → smaller leakage → larger multiplier</td>
+            </tr>
+            <tr>
+              <td><strong>↑ Income tax rates</strong></td>
+              <td>C ↓</td>
+              <td class="neg">AD shifts left</td>
+              <td>Raises MPT → raises MPW → smaller multiplier</td>
+            </tr>
+            <tr>
+              <td><strong>↑ Import propensity (MPM)</strong></td>
+              <td>M ↑, net X ↓</td>
+              <td class="neg">AD shifts left</td>
+              <td>Directly raises MPW → reduces K — key UK constraint</td>
+            </tr>
+            <tr>
+              <td><strong>↓ Business confidence</strong></td>
+              <td>I ↓</td>
+              <td class="neg">AD shifts left</td>
+              <td>Weakens accelerator — firms don't invest even near capacity</td>
+            </tr>
+            <tr>
+              <td><strong>↑ Overseas growth</strong></td>
+              <td>X ↑</td>
+              <td class="pos">AD shifts right</td>
+              <td>Export injection subject to multiplier — open economy benefit</td>
+            </tr>
+            <tr>
+              <td><strong>↑ House / asset prices</strong></td>
+              <td>C ↑ (wealth effect)</td>
+              <td class="pos">AD shifts right</td>
+              <td>Boosts MPC of homeowners → amplifies multiplier rounds</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-exam -->
+
+</div><!-- /wrap -->
+
+<script>
+// ──────────────────────────────────────────────
+// TAB SWITCHING
+// ──────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tabbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'simulator') { updateSim(); drawCanvas(); }
+  if (name === 'calculator') { if (!currentScenario) nextScenario(); }
+}
+
+function toggleExam(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ──────────────────────────────────────────────
+// CALCULATOR TAB
+// ──────────────────────────────────────────────
+let score = 0, streak = 0, attempts = 0;
+let currentScenario = null;
+let currentDiff = 'foundation';
+
+const scenarios = {
+  foundation: [
+    {
+      title: "Government Infrastructure Spending",
+      text: "The government increases spending on new roads by £15bn. The MPC in this economy is 0.75.",
+      tasks: [
+        { label: "Multiplier (K)", key: "K", answer: 4, dp: 2, unit: "" },
+        { label: "Change in National Income (ΔY)", key: "DY", answer: 60, dp: 1, unit: "£bn" }
+      ],
+      solution: (d) => [
+        { text: `MPW = 1 − MPC = 1 − 0.75 = <b>0.25</b>` },
+        { text: `K = 1 ÷ MPW = 1 ÷ 0.25 = <b>4</b>` },
+        { text: `ΔY = K × ΔI = 4 × £15bn = <b>£60bn</b>` }
+      ],
+      injection: 15, k: 4, dy: 60
+    },
+    {
+      title: "Export Boom",
+      text: "A rise in overseas demand increases UK exports by £8bn. The MPS = 0.2 in this simple economy (assume no government or trade sector beyond this injection).",
+      tasks: [
+        { label: "Multiplier (K)", key: "K", answer: 5, dp: 2, unit: "" },
+        { label: "Change in National Income (ΔY)", key: "DY", answer: 40, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `MPW = MPS = 0.2 (simple economy)` },
+        { text: `K = 1 ÷ 0.2 = <b>5</b>` },
+        { text: `ΔY = 5 × £8bn = <b>£40bn</b>` }
+      ],
+      injection: 8, k: 5, dy: 40
+    },
+    {
+      title: "Consumer Spending Injection",
+      text: "Consumer confidence rises and autonomous consumption increases by £25bn. The MPC = 0.8.",
+      tasks: [
+        { label: "Multiplier (K)", key: "K", answer: 5, dp: 2, unit: "" },
+        { label: "Change in National Income (ΔY)", key: "DY", answer: 125, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `MPW = 1 − MPC = 1 − 0.8 = <b>0.2</b>` },
+        { text: `K = 1 ÷ 0.2 = <b>5</b>` },
+        { text: `ΔY = 5 × £25bn = <b>£125bn</b>` }
+      ],
+      injection: 25, k: 5, dy: 125
+    }
+  ],
+  standard: [
+    {
+      title: "Open Economy — UK Government Stimulus",
+      text: "The UK government increases infrastructure spending by £30bn. MPS = 0.15, MPT = 0.20, MPM = 0.15. Calculate the multiplier and the final change in GDP.",
+      tasks: [
+        { label: "MPW", key: "MPW", answer: 0.5, dp: 2, unit: "" },
+        { label: "Multiplier (K)", key: "K", answer: 2, dp: 2, unit: "" },
+        { label: "Change in GDP (ΔY)", key: "DY", answer: 60, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `MPW = MPS + MPT + MPM = 0.15 + 0.20 + 0.15 = <b>0.5</b>` },
+        { text: `K = 1 ÷ MPW = 1 ÷ 0.5 = <b>2</b>` },
+        { text: `ΔY = 2 × £30bn = <b>£60bn</b>` }
+      ],
+      injection: 30, k: 2, dy: 60
+    },
+    {
+      title: "Working Backwards from K",
+      text: "An economist reports that the multiplier in a particular economy is 2.5. An injection of £12bn has just entered the circular flow.",
+      tasks: [
+        { label: "MPW", key: "MPW", answer: 0.4, dp: 2, unit: "" },
+        { label: "Change in National Income (ΔY)", key: "DY", answer: 30, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `K = 1 ÷ MPW  →  MPW = 1 ÷ K = 1 ÷ 2.5 = <b>0.4</b>` },
+        { text: `ΔY = K × ΔI = 2.5 × £12bn = <b>£30bn</b>` }
+      ],
+      injection: 12, k: 2.5, dy: 30
+    },
+    {
+      title: "Investment Boom",
+      text: "Business investment increases by £20bn following a cut in interest rates. MPS = 0.1, MPT = 0.25, MPM = 0.2.",
+      tasks: [
+        { label: "MPW", key: "MPW", answer: 0.55, dp: 2, unit: "" },
+        { label: "Multiplier (K)", key: "K", answer: 1.82, dp: 2, unit: "" },
+        { label: "Change in National Income (ΔY)", key: "DY", answer: 36.4, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `MPW = 0.1 + 0.25 + 0.2 = <b>0.55</b>` },
+        { text: `K = 1 ÷ 0.55 = <b>1.82</b> (2 d.p.)` },
+        { text: `ΔY = 1.82 × £20bn = <b>£36.4bn</b>` }
+      ],
+      injection: 20, k: 1.82, dy: 36.4
+    }
+  ],
+  stretch: [
+    {
+      title: "Multiplier-Accelerator Combined",
+      text: "Following a government injection of £10bn, the multiplier effect increases national income by £30bn (K=3). The capital-output ratio is 2.5. Calculate: (a) the MPW, (b) the net investment triggered by the accelerator, and (c) the further increase in national income if this investment is also subject to the same multiplier.",
+      tasks: [
+        { label: "MPW", key: "MPW", answer: 0.333, dp: 2, unit: "" },
+        { label: "Net Investment (I = v × ΔY)", key: "K", answer: 75, dp: 1, unit: "£bn" },
+        { label: "Further ΔY from investment", key: "DY", answer: 225, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `MPW = 1 ÷ K = 1 ÷ 3 = <b>0.33</b>` },
+        { text: `Net Investment = v × ΔY = 2.5 × £30bn = <b>£75bn</b>` },
+        { text: `Further ΔY = K × I = 3 × £75bn = <b>£225bn</b>` },
+        { text: `<b>Total ΔY</b> = £30bn + £225bn = <b>£255bn</b> from original £10bn injection — the power of the interaction!` }
+      ],
+      injection: 10, k: 3, dy: 255
+    },
+    {
+      title: "Policy Evaluation",
+      text: "Country A: MPC=0.85, MPT=0.05, MPM=0.05. Country B: MPC=0.65, MPT=0.20, MPM=0.15. Both governments inject £50bn. Calculate the multiplier and final ΔY for each country and the difference in outcomes.",
+      tasks: [
+        { label: "Country A Multiplier", key: "MPW", answer: 6.67, dp: 2, unit: "" },
+        { label: "Country B Multiplier", key: "K", answer: 2, dp: 2, unit: "" },
+        { label: "Difference in ΔY (£bn)", key: "DY", answer: 233.3, dp: 1, unit: "£bn" }
+      ],
+      solution: () => [
+        { text: `Country A: MPW = 1−0.85+0.05+0.05 = 0.15. K = 1÷0.15 = <b>6.67</b>. ΔY = £333.3bn` },
+        { text: `Country B: MPW = 1−0.65+0.20+0.15 = 0.50. K = 1÷0.50 = <b>2.0</b>. ΔY = £100bn` },
+        { text: `Difference = £333.3bn − £100bn = <b>£233.3bn</b> from identical injections` },
+        { text: `Key insight: Country A's lower tax rate and lower import propensity dramatically amplify the fiscal stimulus` }
+      ],
+      injection: 50, k: 6.67, dy: 333.3
+    }
+  ]
+};
+
+let usedIndexes = { foundation: [], standard: [], stretch: [] };
+let currentIndex = -1;
+
+function setDiff(diff, btn) {
+  currentDiff = diff;
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  usedIndexes[diff] = [];
+  nextScenario();
+}
+
+function nextScenario() {
+  const pool = scenarios[currentDiff];
+  let available = pool.map((_, i) => i).filter(i => !usedIndexes[currentDiff].includes(i));
+  if (available.length === 0) {
+    usedIndexes[currentDiff] = [];
+    available = pool.map((_, i) => i);
+  }
+  currentIndex = available[Math.floor(Math.random() * available.length)];
+  usedIndexes[currentDiff].push(currentIndex);
+  currentScenario = pool[currentIndex];
+  renderScenario();
+}
+
+function renderScenario() {
+  const s = currentScenario;
+  const n = (usedIndexes[currentDiff].length);
+  document.getElementById('scenNum').textContent = String(n).padStart(2, '0');
+  document.getElementById('scenTitle').textContent = s.title;
+  document.getElementById('scenText').textContent = s.text;
+  document.getElementById('scenDiff').textContent = currentDiff.charAt(0).toUpperCase() + currentDiff.slice(1);
+
+  const taskRow = document.getElementById('taskRow');
+  taskRow.innerHTML = '';
+  s.tasks.forEach((t, i) => {
+    const g = document.createElement('div');
+    g.className = 'task-group';
+    g.innerHTML = `<label>${t.label}</label>
+      <div class="inp-wrap">
+        <input type="number" id="inp_${i}" placeholder="Your answer" step="0.01"/>
+        ${t.unit ? `<span class="inp-unit">${t.unit}</span>` : ''}
+      </div>`;
+    taskRow.appendChild(g);
+  });
+
+  document.getElementById('feedbackBox').style.display = 'none';
+  document.getElementById('workedSolution').style.display = 'none';
+}
+
+function checkAnswer() {
+  const s = currentScenario;
+  let allCorrect = true;
+  let anyFilled = false;
+
+  s.tasks.forEach((t, i) => {
+    const inp = document.getElementById('inp_' + i);
+    const val = parseFloat(inp.value);
+    if (!isNaN(val)) {
+      anyFilled = true;
+      const tolerance = Math.max(0.05, Math.abs(t.answer) * 0.02);
+      if (Math.abs(val - t.answer) <= tolerance) {
+        inp.className = 'correct';
+      } else {
+        inp.className = 'wrong';
+        allCorrect = false;
+      }
+    } else {
+      allCorrect = false;
+    }
+  });
+
+  if (!anyFilled) return;
+
+  attempts++;
+  document.getElementById('attemptVal').textContent = attempts;
+
+  const fb = document.getElementById('feedbackBox');
+  if (allCorrect) {
+    score++;
+    streak++;
+    fb.className = 'feedback-box ok';
+    fb.textContent = `✓ Correct! Well done. ${streak >= 3 ? '🔥 ' + streak + ' in a row!' : ''}`;
+  } else {
+    streak = 0;
+    fb.className = 'feedback-box bad';
+    fb.textContent = `✗ Not quite — check the highlighted fields. Use "Show Worked Method" if you're stuck.`;
+  }
+  fb.style.display = 'block';
+
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+}
+
+function revealSolution() {
+  const s = currentScenario;
+  const steps = s.solution();
+  const ws = document.getElementById('workedSolution');
+  const body = document.getElementById('wsBody');
+
+  body.innerHTML = steps.map((step, i) => `
+    <div class="ws-step">
+      <div class="ws-step-num">${i + 1}</div>
+      <div>${step.text}</div>
+    </div>
+  `).join('');
+
+  const ansText = `Final answers: ${s.tasks.map(t => `${t.label} = ${t.answer}${t.unit ? ' ' + t.unit : ''}`).join(' | ')}`;
+  body.innerHTML += `<div class="ws-answer">📌 ${ansText}</div>`;
+  ws.style.display = 'block';
+}
+
+// ──────────────────────────────────────────────
+// SIMULATOR TAB
+// ──────────────────────────────────────────────
+let simData = [];
+let animFrame = 0;
+let animId = null;
+
+function updateSim() {
+  const inj = parseFloat(document.getElementById('sInjection').value);
+  const mpc = parseFloat(document.getElementById('sMPC').value);
+  const mpt = parseFloat(document.getElementById('sMPT').value);
+  const mpm = parseFloat(document.getElementById('sMPM').value);
+
+  document.getElementById('vInjection').textContent = '£' + inj + 'bn';
+  document.getElementById('vMPC').textContent = mpc.toFixed(2);
+  document.getElementById('vMPT').textContent = mpt.toFixed(2);
+  document.getElementById('vMPM').textContent = mpm.toFixed(2);
+
+  const mpw = 1 - mpc + mpt + mpm;
+  const k = 1 / mpw;
+  const dy = inj * k;
+
+  document.getElementById('statK').textContent = k.toFixed(2);
+  document.getElementById('statMPW').textContent = mpw.toFixed(2);
+  document.getElementById('statDY').textContent = '£' + dy.toFixed(1) + 'bn';
+
+  // build round data
+  simData = [];
+  let current = inj;
+  let cumulative = 0;
+  let rounds = 0;
+  const threshold = inj * 0.01;
+  while (current > threshold && rounds < 20) {
+    rounds++;
+    const withdrawal = current * mpw;
+    const nextSpend = current * mpc - current * mpt - current * mpm;
+    cumulative += current;
+    simData.push({ round: rounds, spend: current, withdrawal, cumulative });
+    current = current - withdrawal;
+    if (current < 0.001) break;
+  }
+  document.getElementById('statRounds').textContent = rounds;
+
+  buildRoundTable();
+  drawCanvas();
+}
+
+function buildRoundTable() {
+  const tbody = document.getElementById('roundTableBody');
+  tbody.innerHTML = simData.slice(0, 10).map(r => `
+    <tr>
+      <td class="rtd-round">${r.round}</td>
+      <td class="rtd-spend">£${r.spend.toFixed(2)}bn</td>
+      <td class="rtd-withdrawal">£${r.withdrawal.toFixed(2)}bn</td>
+      <td class="rtd-income">£${r.cumulative.toFixed(1)}bn</td>
+    </tr>
+  `).join('');
+  if (simData.length > 10) {
+    tbody.innerHTML += `<tr><td colspan="4" style="text-align:center;color:var(--muted);font-size:12px;">… ${simData.length - 10} more rounds</td></tr>`;
+  }
+}
+
+function drawCanvas(highlightTo) {
+  const canvas = document.getElementById('simCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth;
+  const H = 300;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!simData.length) return;
+
+  const maxVal = simData[0].spend;
+  const n = Math.min(simData.length, 12);
+  const barW = Math.min(52, (W - 40) / n - 8);
+  const chartH = H - 60;
+  const startX = 30;
+
+  const limit = (highlightTo !== undefined) ? highlightTo : n;
+
+  for (let i = 0; i < n; i++) {
+    const d = simData[i];
+    const bH = (d.spend / maxVal) * chartH;
+    const x = startX + i * ((W - 60) / n) + (W - 60) / n / 2 - barW / 2;
+    const y = H - 40 - bH;
+
+    if (i < limit) {
+      const alpha = i < limit - 1 ? 1 : 0.6;
+      ctx.fillStyle = `rgba(201,162,39,${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, bH, [4, 4, 0, 0]);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255,107,122,0.5)';
+      const wH = (d.withdrawal / maxVal) * chartH;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, wH, [3, 3, 0, 0]);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = `bold 10px DM Sans, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('£' + d.spend.toFixed(1), x + barW / 2, y - 5);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, bH, [4, 4, 0, 0]);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = `10px DM Sans, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('R' + d.round, x + barW / 2, H - 20);
+  }
+
+  // Legend
+  ctx.fillStyle = 'rgba(201,162,39,0.8)'; ctx.fillRect(startX, H - 10, 12, 6);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '10px DM Sans';
+  ctx.textAlign = 'left'; ctx.fillText('New spending', startX + 16, H - 4);
+  ctx.fillStyle = 'rgba(255,107,122,0.8)'; ctx.fillRect(startX + 120, H - 10, 12, 6);
+  ctx.fillText('Withdrawals', startX + 136, H - 4);
+}
+
+function runAnimation() {
+  if (animId) cancelAnimationFrame(animId);
+  animFrame = 0;
+  const n = Math.min(simData.length, 12);
+  function step() {
+    animFrame++;
+    drawCanvas(animFrame);
+    if (animFrame < n) animId = requestAnimationFrame(step);
+  }
+  step();
+}
+
+function resetSim() {
+  if (animId) cancelAnimationFrame(animId);
+  animFrame = 0;
+  drawCanvas(0);
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+window.addEventListener('load', () => {
+  nextScenario();
+  updateSim();
+});
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('tab-simulator').classList.contains('active')) {
+    drawCanvas();
+  }
+});
+</script>
+</body>
+</html>

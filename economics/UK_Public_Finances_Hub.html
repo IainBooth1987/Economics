@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Public Finances Hub | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0e1117;
+            --bg-secondary: #161b22;
+            --bg-card: #1c2333;
+            --bg-elevated: #242d3d;
+            --green: #2ecc71;
+            --green-dim: rgba(46,204,113,0.15);
+            --green-glow: rgba(46,204,113,0.3);
+            --amber: #f0a500;
+            --amber-dim: rgba(240,165,0,0.15);
+            --red: #e74c3c;
+            --red-dim: rgba(231,76,60,0.15);
+            --blue: #3498db;
+            --blue-dim: rgba(52,152,219,0.15);
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border: rgba(255,255,255,0.08);
+            --font-display: 'Fraunces', serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ── HEADER ── */
+        .site-header {
+            padding: 28px 24px 0;
+            text-align: center;
+        }
+        .site-header h1 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        .site-header h1 span { color: var(--green); }
+        .site-header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 6px;
+        }
+
+        /* ── TABS ── */
+        .tab-bar {
+            display: flex;
+            max-width: 820px;
+            margin: 24px auto 0;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .tab-bar::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            flex: 1;
+            min-width: max-content;
+            padding: 14px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text-secondary); }
+        .tab-btn.active {
+            color: var(--green);
+            border-bottom-color: var(--green);
+        }
+
+        /* ── CONTENT PANELS ── */
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+        }
+        .tab-panel { display: none; animation: fadeUp 0.35s ease; }
+        .tab-panel.active { display: block; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── DEBT CLOCK TAB ── */
+        .clock-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .clock-card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--green), var(--amber));
+        }
+        .metric-toggles {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .metric-toggles button {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.25s;
+        }
+        .metric-toggles button:hover { border-color: var(--green); color: var(--text-primary); }
+        .metric-toggles button.active {
+            background: var(--green-dim);
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .debt-amount {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 6vw, 3.6rem);
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+            margin-bottom: 6px;
+        }
+        .confidence-range {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+        .metric-name {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .per-second {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .live-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .live-dot {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .clock-source {
+            margin-top: 16px;
+            font-size: 0.8rem;
+        }
+        .clock-source a {
+            color: var(--amber);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--amber);
+        }
+        .clock-source a:hover { border-bottom-style: solid; }
+
+        .clock-context {
+            background: var(--green-dim);
+            border-left: 3px solid var(--green);
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin-top: 24px;
+            text-align: left;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+        .clock-context a { color: var(--green); cursor: pointer; text-decoration: underline; }
+
+        /* ── ACCORDIONS ── */
+        .accordion-group { margin-top: 28px; }
+        .accordion {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        .accordion-header:hover { background: var(--bg-elevated); }
+        .accordion-chevron {
+            transition: transform 0.3s;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .accordion.open .accordion-chevron { transform: rotate(180deg); }
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+        .accordion.open .accordion-body { max-height: 2000px; }
+        .accordion-inner {
+            padding: 0 20px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.75;
+        }
+        .accordion-inner p { margin-bottom: 10px; }
+        .accordion-inner ul, .accordion-inner ol { margin-left: 20px; margin-bottom: 10px; }
+        .accordion-inner li { margin-bottom: 4px; }
+        .accordion-inner code {
+            background: var(--bg-elevated);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        /* ── STAT GRID (clock tab) ── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 24px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .stat-card h4 {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-muted); }
+        .stat-value { color: var(--text-primary); font-weight: 600; }
+        .stat-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* ── FACTFILE TABS (EU / UK) ── */
+        .section {
+            margin-bottom: 36px;
+            border-left: 3px solid var(--green);
+            padding-left: 20px;
+        }
+        .section h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .section h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 18px 0 8px;
+        }
+        .section p, .section li {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 8px;
+            font-size: 0.92rem;
+        }
+        .section ul, .section ol { margin-left: 20px; }
+        .section li { margin-bottom: 6px; }
+        .section strong { color: var(--text-primary); }
+
+        .year-tag {
+            display: inline-block;
+            background: var(--green-dim);
+            color: var(--green);
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+        .highlight-box {
+            background: var(--green-dim);
+            border-left: 3px solid var(--green);
+            padding: 14px 18px;
+            margin: 14px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .warning-box {
+            background: var(--red-dim);
+            border-left: 3px solid var(--red);
+            padding: 14px 18px;
+            margin: 14px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .info-box {
+            background: var(--blue-dim);
+            border-left: 3px solid var(--blue);
+            padding: 14px 18px;
+            margin: 14px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* ── QUIZ TAB ── */
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .quiz-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .score-display {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .progress-bar {
+            background: var(--bg-elevated);
+            height: 6px;
+            border-radius: 3px;
+            margin-bottom: 28px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, var(--green), var(--amber));
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+        .scenario-card {
+            background: linear-gradient(135deg, #1a3a2a 0%, #1c2333 100%);
+            border: 1px solid var(--green-dim);
+            padding: 28px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+        }
+        .scenario-card .question-type {
+            display: inline-block;
+            background: var(--green-dim);
+            color: var(--green);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .scenario-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .scenario-card p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+        .scenario-card strong { color: var(--text-primary); }
+        .data-box {
+            background: rgba(255,255,255,0.05);
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin: 14px 0;
+        }
+        .data-box p {
+            margin: 4px 0;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+        .options { display: grid; gap: 10px; margin: 16px 0; }
+        .option-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.25s;
+        }
+        .option-btn:hover {
+            border-color: var(--green);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        .option-btn.selected {
+            background: var(--green-dim);
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .option-btn.correct {
+            background: var(--green-dim);
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .option-btn.incorrect {
+            background: var(--red-dim);
+            border-color: var(--red);
+            color: var(--red);
+        }
+        .submit-btn {
+            background: var(--green);
+            color: var(--bg-primary);
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            transition: all 0.25s;
+        }
+        .submit-btn:hover { filter: brightness(1.1); }
+        .submit-btn:disabled {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        .feedback {
+            margin-top: 16px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .feedback.show { display: block; animation: fadeUp 0.35s ease; }
+        .feedback.correct {
+            background: var(--green-dim);
+            border-left: 3px solid var(--green);
+            color: var(--text-secondary);
+        }
+        .feedback.incorrect {
+            background: var(--red-dim);
+            border-left: 3px solid var(--red);
+            color: var(--text-secondary);
+        }
+        .feedback h3 { color: var(--text-primary); margin-bottom: 8px; font-size: 1rem; }
+        .next-btn {
+            background: var(--green);
+            color: var(--bg-primary);
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 14px;
+            transition: all 0.25s;
+        }
+        .next-btn:hover { filter: brightness(1.1); }
+        .final-score {
+            background: linear-gradient(135deg, #1a3a2a 0%, #1c2333 100%);
+            border: 1px solid var(--green);
+            color: var(--text-primary);
+            padding: 40px;
+            border-radius: 14px;
+            text-align: center;
+        }
+        .final-score h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .final-score .big-score {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--green);
+            margin: 16px 0;
+        }
+        .final-score p { color: var(--text-secondary); font-size: 1.05rem; }
+        .restart-btn {
+            background: var(--green);
+            color: var(--bg-primary);
+            border: none;
+            padding: 14px 36px;
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.25s;
+        }
+        .restart-btn:hover { filter: brightness(1.1); }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            text-align: center;
+            padding: 20px 24px 32px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .site-header h1 { font-size: 1.5rem; }
+            .tab-btn { padding: 12px 14px; font-size: 0.8rem; }
+            .clock-card { padding: 28px 18px; }
+            .container { padding: 24px 16px 48px; }
+            .section { padding-left: 14px; }
+            .scenario-card { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">UK Public Finances Hub</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_pubfin_pw';
+  var valid = ['PubFin-X3!k2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['PubFin-X3!k2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_pubfin_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<div class="site-header">
+    <h1>UK Public <span>Finances</span> Hub</h1>
+    <p>Real-time debt data, fiscal rules and interactive assessment</p>
+</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('clock', this)">Debt Clock</button>
+    <button class="tab-btn" onclick="showTab('eu', this)">EU Fiscal Rules</button>
+    <button class="tab-btn" onclick="showTab('uk', this)">UK Fiscal Rules</button>
+    <button class="tab-btn" onclick="showTab('quiz', this)">Quiz</button>
+</div>
+
+<div class="container">
+
+    <!-- ════════════════ TAB 1: DEBT CLOCK ════════════════ -->
+    <div id="tab-clock" class="tab-panel active">
+
+        <div class="clock-card">
+            <div class="metric-toggles">
+                <button class="active" onclick="switchMetric('netDebt', this)">Net Debt (ex. banks)</button>
+                <button onclick="switchMetric('grossDebt', this)">Gross Debt</button>
+                <button onclick="switchMetric('debtGDP', this)">Debt as % of GDP</button>
+            </div>
+
+            <div class="debt-amount" id="debtDisplay">£0</div>
+            <div class="confidence-range" id="confidenceRange"></div>
+            <div class="metric-name" id="metricName"></div>
+            <div class="per-second" id="perSecond"></div>
+
+            <div class="live-row">
+                <div class="live-dot"></div>
+                <span id="lastUpdate">Loading...</span>
+            </div>
+
+            <div class="clock-source">
+                <a href="https://www.ons.gov.uk/economy/governmentpublicsectorandtaxes/publicsectorfinance" target="_blank" rel="noopener">
+                    Source: Office for National Statistics
+                </a>
+            </div>
+
+            <div class="clock-context">
+                UK net debt currently sits at around 98% of GDP — well above the 60% Maastricht reference value. <a onclick="showTab('uk', document.querySelectorAll('.tab-btn')[2])">See UK Fiscal Rules</a> to understand why this matters.
+            </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <h4>Current Statistics</h4>
+                <div class="stat-row">
+                    <span class="stat-label">Active Metric</span>
+                    <span class="stat-value" id="activeMetric">Net Debt</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Per-Second Change</span>
+                    <span class="stat-value" id="rateDisplay">—</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Interpolation</span>
+                    <span class="stat-value">Linear</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Uncertainty</span>
+                    <span class="stat-value" id="uncertaintyDisplay">—</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h4>Understanding the Clock</h4>
+                <p>This clock uses linear interpolation between two official monthly debt figures from the ONS. The confidence interval reflects typical daily variation in government borrowing — a reminder that the smooth rate is a simplification of complex fiscal reality.</p>
+            </div>
+        </div>
+
+        <!-- Accordions for methodology / breakdown -->
+        <div class="accordion-group">
+            <div class="accordion">
+                <button class="accordion-header" onclick="toggleAccordion(this)">
+                    <span>Methodology</span>
+                    <span class="accordion-chevron">&#9660;</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-inner">
+                        <p><strong>Data Source:</strong> Public Sector Net Debt (PSND) excluding public sector banks, published monthly by the Office for National Statistics (ONS).</p>
+                        <p><strong>Calculation Method:</strong> Linear interpolation between two official data points:</p>
+                        <ol>
+                            <li>Take two most recent official monthly values: D&#8320; at time t&#8320; and D&#8321; at time t&#8321;</li>
+                            <li>Calculate per-second rate: <code>rate = (D&#8321; - D&#8320;) / (t&#8321; - t&#8320;) in seconds</code></li>
+                            <li>Current estimate: <code>debt_now = D&#8320; + rate &times; (now - t&#8320;)</code></li>
+                        </ol>
+                        <p><strong>Confidence Interval:</strong> The uncertainty band reflects daily variation in tax receipts and spending, timing differences in government transactions, the constant-rate assumption (reality is lumpier), and one-off events like asset sales or emergency spending.</p>
+                        <p><strong>Limitations:</strong> Assumes constant rate of change between monthly data points. Does not account for intra-month fiscal events. Real debt changes are event-driven, not smooth. Should not be cited as official figures.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion">
+                <button class="accordion-header" onclick="toggleAccordion(this)">
+                    <span>What's Included in Each Metric?</span>
+                    <span class="accordion-chevron">&#9660;</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-inner">
+                        <p><strong>Net Debt (ex. banks) — Headline Metric:</strong> The most commonly reported figure in the media. Includes gilts, Treasury bills, central and local government loans. Excludes public sector banks and liquid assets.</p>
+                        <p><strong>Gross Debt:</strong> Total government liabilities without deducting assets. Typically 10–15% higher than net debt. Used for international comparisons.</p>
+                        <p><strong>Debt as % of GDP:</strong> Shows debt relative to the size of the economy. More meaningful for sustainability analysis. UK currently around 95–100% of GDP. Changes with both debt levels and economic growth.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════ TAB 2: EU FISCAL RULES ════════════════ -->
+    <div id="tab-eu" class="tab-panel">
+
+        <div class="section">
+            <h2>1. The Maastricht Criteria (1992)</h2>
+            <div class="info-box">
+                <strong>Foundation of the euro's fiscal framework</strong>
+            </div>
+            <p>Set in the Treaty of Maastricht, forming the foundation of the euro's fiscal framework.</p>
+            <h3>Required before joining the euro:</h3>
+            <ul>
+                <li><strong>Government deficit &le; 3% of GDP</strong></li>
+                <li><strong>Public debt &le; 60% of GDP</strong></li>
+            </ul>
+            <p><strong>Purpose:</strong> To ensure fiscal discipline and convergence among EU members before adopting the euro.</p>
+            <p>These benchmarks remain at the heart of later fiscal rules.</p>
+        </div>
+
+        <div class="section">
+            <h2>2. The Stability and Growth Pact (1997)</h2>
+            <p>Introduced to maintain discipline after countries joined the euro. Made the Maastricht limits permanent requirements for all EU states.</p>
+            <h3>Contains two main parts:</h3>
+            <ul>
+                <li><strong>Preventive Arm</strong> — tries to stop deficits and debt from becoming excessive</li>
+                <li><strong>Corrective Arm (Excessive Deficit Procedure)</strong> — forces action if limits are broken</li>
+            </ul>
+            <p><strong>Purpose:</strong> To coordinate fiscal policy and prevent unsustainable borrowing.</p>
+        </div>
+
+        <div class="section">
+            <h2>3. 2005 Reform of the SGP</h2>
+            <div class="warning-box">
+                <p>The early version was criticised for being too rigid — Germany and France both broke the rules in the early 2000s without sanctions.</p>
+            </div>
+            <p>Reform added more flexibility, allowing the Commission to consider:</p>
+            <ul>
+                <li>The economic cycle (boom vs. recession)</li>
+                <li>Structural reforms and investment needs</li>
+            </ul>
+            <p>Marked a shift from strict enforcement to more "economic judgment."</p>
+        </div>
+
+        <div class="section">
+            <h2>4. Post-Eurozone Crisis Reforms (2011–2013)</h2>
+            <p>After the 2008–2010 debt crisis, the rules were tightened dramatically:</p>
+
+            <h3><span class="year-tag">2011</span> "Six-Pack"</h3>
+            <ul>
+                <li>Introduced a debt reduction benchmark (the <strong>"1/20 rule"</strong>: countries must reduce the excess of debt over 60% of GDP by 1/20 each year)</li>
+                <li>Strengthened surveillance and automatic sanctions for euro members</li>
+            </ul>
+
+            <h3><span class="year-tag">2013</span> "Two-Pack"</h3>
+            <ul>
+                <li>Required euro area countries to submit draft budgets to the European Commission each October for review</li>
+                <li>Enhanced monitoring for countries in financial difficulty</li>
+            </ul>
+
+            <h3><span class="year-tag">2013</span> Fiscal Compact</h3>
+            <p>Formally the Treaty on Stability, Coordination and Governance:</p>
+            <ul>
+                <li>Required national laws to include a "balanced budget rule"</li>
+                <li>Structural deficit targets: &le; 0.5% of GDP (for high-debt countries) or &le; 1% (for low-debt ones)</li>
+            </ul>
+            <p><strong>Purpose:</strong> To restore credibility and avoid another sovereign debt crisis.</p>
+        </div>
+
+        <div class="section">
+            <h2>5. The General Escape Clause</h2>
+            <p><span class="year-tag">2011 reform</span> <span class="year-tag">activated 2020</span></p>
+            <ul>
+                <li>Allows temporary suspension of the rules in exceptional circumstances (e.g. recession, war, pandemic)</li>
+                <li>First triggered in March 2020 due to COVID-19, letting countries run large deficits to support economies</li>
+                <li>Remained active until 2024, covering the pandemic and energy crisis periods</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>6. The 2024–2025 Reform (New EU Fiscal Framework)</h2>
+            <div class="highlight-box">
+                <strong>Adopted in April 2024 — the most significant overhaul since the euro crisis. The new rules start applying in 2025.</strong>
+            </div>
+            <h3>Key changes:</h3>
+            <ul>
+                <li><strong>Simpler, more country-specific system</strong> — replaces one-size-fits-all formulas</li>
+                <li><strong>End of the 1/20 debt rule</strong> — now each country gets a tailored debt-reduction path based on its situation</li>
+                <li><strong>National Medium-Term Fiscal-Structural Plans:</strong> Each government submits a 4–7-year plan showing how it will reduce debt while supporting investment and reforms. These plans replace the older "Stability" and "Convergence" programmes.</li>
+                <li>Deficit (3%) and debt (60%) limits remain, but adjustment paths are more flexible</li>
+                <li>Longer correction periods allowed (up to 7 years) if countries commit to credible reforms and investments</li>
+                <li>Focus on sustainability and growth, linking fiscal policy to green, digital, and defence priorities</li>
+                <li>First plans under the new system are due in September 2025</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>7. The Modern Balance (Post-2025 Outlook)</h2>
+            <ul>
+                <li>The EU now aims for a balance between discipline and investment</li>
+                <li>Fiscal rules remain — but they are now less mechanical and more strategic</li>
+                <li>The Commission and Council will still monitor compliance and can reopen an Excessive Deficit Procedure if debt paths are off-track</li>
+                <li>"Escape clauses" can be used again for future emergencies (e.g. defence spending or major shocks)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Notable Cases of Rule Breaches</h2>
+
+            <h3>Germany and France (early 2000s)</h3>
+            <p><strong>What happened:</strong> Both countries exceeded the 3% deficit limit several years in a row (2002–2005) after economic slowdown.</p>
+            <p><strong>Why it mattered:</strong> These were the eurozone's two largest economies — their non-compliance undermined the credibility of the Stability and Growth Pact (SGP).</p>
+            <div class="info-box">
+                <p><strong>EU response:</strong> The European Commission recommended sanctions, but the Council refused to impose them. This political clash led to the 2005 reform of the SGP, introducing more flexibility for economic downturns.</p>
+            </div>
+            <p><strong>Outcome:</strong> No fines imposed. The episode exposed how the rules were politically unenforceable against big member states.</p>
+
+            <h3>Greece (2004–2018)</h3>
+            <p><strong>What happened:</strong> Greece repeatedly violated the deficit and debt limits, later revealing falsified deficit statistics (deficit &gt; 10% of GDP in 2009).</p>
+            <p><strong>Crisis impact:</strong> Triggered the eurozone sovereign debt crisis (2010–2012).</p>
+            <div class="warning-box">
+                <p><strong>EU response:</strong></p>
+                <ul>
+                    <li>Greece entered multiple bailout programmes (2010, 2012, 2015) under the European Stability Mechanism (ESM) and IMF</li>
+                    <li>Extremely strict austerity and reform conditions were imposed</li>
+                    <li>Remained under enhanced surveillance until 2018</li>
+                </ul>
+            </div>
+            <p><strong>Outcome:</strong> Massive recession, but eventual exit from bailout and slow debt reduction.</p>
+            <p><strong>Significance:</strong> Sparked the creation of the Six-Pack, Two-Pack, and Fiscal Compact reforms to prevent similar crises.</p>
+
+            <h3>Portugal (2010–2014)</h3>
+            <p><strong>What happened:</strong> Deficit exceeded 10% of GDP; debt rose above 100%.</p>
+            <p><strong>EU response:</strong> Entered an EU-IMF bailout in 2011. Required major fiscal tightening and structural reforms. Placed under an Excessive Deficit Procedure (EDP).</p>
+            <p><strong>Outcome:</strong> Left the bailout in 2014. EDP lifted in 2017 after deficit dropped below 3%. Economic recovery followed, though debt remains high.</p>
+
+            <h3>Ireland (2008–2013)</h3>
+            <p><strong>What happened:</strong> Banking crisis caused the deficit to explode (peaking at ~32% of GDP in 2010).</p>
+            <p><strong>EU response:</strong> EU-IMF financial assistance programme from 2010 to 2013. Subjected to EDP and strict adjustment measures.</p>
+            <p><strong>Outcome:</strong> Successfully completed bailout and returned to growth. Debt remains high but manageable; compliance restored.</p>
+
+            <h3>Spain (2009–2019)</h3>
+            <p><strong>What happened:</strong> Post-2008 financial crisis caused deficits &gt; 10% of GDP.</p>
+            <p><strong>EU response:</strong> Subjected to EDP and required to reduce deficit gradually. Received banking-sector rescue funds (not full sovereign bailout).</p>
+            <p><strong>Outcome:</strong> Deficit reduced below 3% by 2018. EDP closed in 2019.</p>
+
+            <h3>Italy (ongoing monitoring)</h3>
+            <p><strong>What happened:</strong> Chronic high debt (~140% of GDP) and repeated breaches of structural balance rules.</p>
+            <p><strong>EU response:</strong> Often under threat of EDP but never formally fined. 2018–2019: the Commission warned of sanctions over Rome's expansionary budgets.</p>
+            <p><strong>Outcome:</strong> Italy made temporary adjustments to avoid formal action. Still viewed as high-risk under the new rules due to persistent debt.</p>
+
+            <h3>Hungary and Poland (2010s)</h3>
+            <p><strong>What happened:</strong> Both exceeded the 3% deficit limit at times in the early 2010s.</p>
+            <p><strong>EU response:</strong> Hungary was placed under EDP in 2004 and threatened with suspension of EU funds in 2012 — the first time this mechanism was used. Poland was also under EDP from 2009 to 2015.</p>
+            <p><strong>Outcome:</strong> Both countries brought deficits below 3%. Sanctions were avoided once compliance restored.</p>
+
+            <h3>Romania (2020–present)</h3>
+            <p><strong>What happened:</strong> Deficit persistently above 3% of GDP even before COVID-19 (around 9% in 2020).</p>
+            <p><strong>EU response:</strong> Placed under EDP in 2020, which is still ongoing as of 2025. Required to implement a medium-term fiscal adjustment plan.</p>
+            <p><strong>Outcome:</strong> Progress slow; continues to face EU pressure under the new framework.</p>
+        </div>
+    </div>
+
+    <!-- ════════════════ TAB 3: UK FISCAL RULES ════════════════ -->
+    <div id="tab-uk" class="tab-panel">
+
+        <div class="section">
+            <h2>The UK's Position in the EU Fiscal Framework (1973–2020)</h2>
+            <div class="info-box">
+                <p><strong>Key point:</strong> The UK was never part of the eurozone, so it was not bound by the full Stability and Growth Pact (SGP) sanctions regime.</p>
+            </div>
+            <p>However, as an EU member, it was still expected to avoid excessive deficits and report fiscal data under the EU's "Excessive Deficit Procedure" (EDP) surveillance system.</p>
+            <h3>This meant:</h3>
+            <ul>
+                <li>The 3% deficit and 60% debt Maastricht thresholds still applied as reference values</li>
+                <li>But the UK could not be fined, unlike euro members</li>
+                <li>The UK still had to submit annual reports to the European Commission on public finances and forecasts</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>When the UK Broke EU Fiscal Limits</h2>
+            <p>The UK breached the 3% deficit rule several times:</p>
+
+            <h3>Early 2000s</h3>
+            <p>After the early 2000s slowdown, UK deficit rose above 3% briefly (no formal EDP).</p>
+
+            <h3>2008–2010: Financial Crisis</h3>
+            <div class="warning-box">
+                <p>During the financial crisis, the deficit soared to nearly <strong>10% of GDP</strong>.</p>
+            </div>
+            <ul>
+                <li>The European Commission formally opened an Excessive Deficit Procedure against the UK in 2008</li>
+                <li>The UK was told to reduce its deficit "below 3% by 2014–15"</li>
+                <li>In practice, the EDP was mostly symbolic — no penalties were possible, and fiscal policy remained a domestic matter</li>
+                <li>The EDP for the UK was closed in 2017, after deficit fell below 3%</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>The UK's Own Domestic Fiscal Rules (pre-Brexit)</h2>
+            <p>The UK had its own national fiscal framework, independent of the EU's rules. These domestic rules changed over time depending on the government:</p>
+
+            <h3>a) Gordon Brown's "Golden Rule" (1997–2008)</h3>
+            <p><strong>Rule 1:</strong> The government should borrow only to invest — current spending should be balanced over the economic cycle.</p>
+            <p><strong>Rule 2:</strong> Sustainable investment rule — public debt should remain at a "stable and prudent level," roughly below 40% of GDP.</p>
+            <div class="highlight-box">
+                <p><strong>Purpose:</strong> To allow countercyclical fiscal policy while maintaining long-term discipline.</p>
+                <p><strong>Outcome:</strong> Initially achieved, but abandoned after 2008 financial crisis.</p>
+            </div>
+
+            <h3>b) Coalition and Conservative Governments (2010–2019)</h3>
+            <ul>
+                <li>Post-crisis focus shifted to austerity and deficit reduction</li>
+                <li>Fiscal targets were set by the Office for Budget Responsibility (OBR), established in 2010</li>
+            </ul>
+            <p><strong>Key rules varied by year, but generally included:</strong></p>
+            <ul>
+                <li>Achieving a current budget surplus within five years</li>
+                <li>Reducing public debt as a share of GDP each year</li>
+                <li>Rules were frequently revised (2010, 2015, 2016, 2019) as economic conditions changed</li>
+            </ul>
+            <p>The UK continued to report to the EU under the EDP, but the real fiscal anchor was domestic law and the OBR's forecasts.</p>
+        </div>
+
+        <div class="section">
+            <h2>The UK's Fiscal Rules After Leaving the EU (2020–Present)</h2>
+
+            <h3>1. End of EU Oversight</h3>
+            <ul>
+                <li>From January 2020, the UK left the EU's fiscal surveillance system entirely</li>
+                <li>It no longer submits budget data to the European Commission under the Stability and Growth Pact</li>
+                <li>The Office for Budget Responsibility (OBR) and UK Treasury are now solely responsible for fiscal oversight and rules</li>
+            </ul>
+
+            <h3>2. Current Domestic Fiscal Framework (as of 2025)</h3>
+            <div class="info-box">
+                <p>The UK now operates under its own set of national fiscal rules, which are set by the Chancellor and monitored by the OBR.</p>
+                <p><strong>They can be changed by each government — there's no fixed constitutional or treaty-level framework.</strong></p>
+            </div>
+            <p><strong>Key rules under the current (2022–2025) fiscal policy framework are:</strong></p>
+            <ul>
+                <li>Public sector net debt (excluding Bank of England) must be falling as a share of GDP by the fifth year of the forecast period</li>
+                <li>Public sector borrowing (the deficit) must be below 3% of GDP by the fifth year</li>
+                <li>These rules are broadly inspired by the old EU thresholds, but are self-imposed rather than treaty obligations</li>
+                <li>The rules are assessed twice a year — at the Autumn Statement and Spring Budget — by the OBR</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>When the UK Has Broken Its Own Rules (Post-Brexit)</h2>
+            <p>Since Brexit, the UK has already breached or suspended its domestic fiscal targets several times:</p>
+
+            <h3><span class="year-tag">2020–2021</span> COVID-19 Pandemic</h3>
+            <div class="warning-box">
+                <p>COVID-19 led to record borrowing <strong>(~15% of GDP)</strong>. Fiscal rules were suspended.</p>
+            </div>
+
+            <h3><span class="year-tag">2022</span> The Truss "Mini-Budget"</h3>
+            <p>The Truss government's "mini-budget" caused market turmoil and led to emergency intervention; fiscal rules were reinstated and tightened under Jeremy Hunt.</p>
+
+            <h3><span class="year-tag">2023–2025</span> Ongoing Challenges</h3>
+            <p>High debt (~98% of GDP) means the UK is technically off-track for its "debt to fall in 5 years" rule.</p>
+            <div class="warning-box">
+                <p><strong>The OBR has said the government meets its rules only marginally and with uncertainty.</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════ TAB 4: QUIZ ════════════════ -->
+    <div id="tab-quiz" class="tab-panel">
+        <div class="quiz-header">
+            <h2>Interactive Scenario Analysis</h2>
+        </div>
+        <div class="score-display">
+            Score: <strong><span id="score">0</span> / <span id="total">5</span></strong>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+        <div id="quiz-content"></div>
+    </div>
+
+</div>
+
+<div class="site-footer">
+    Data interpolated from official ONS Public Sector Finance statistics &middot; Created for educational purposes &middot; Not affiliated with UK Government
+</div>
+
+<script>
+// ── TAB NAVIGATION ──
+function showTab(tabId, btnEl) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+    if (tabId === 'quiz') initQuiz();
+}
+
+// ── ACCORDION ──
+function toggleAccordion(header) {
+    const acc = header.parentElement;
+    acc.classList.toggle('open');
+}
+
+// ── DEBT CLOCK ──
+const metricsData = {
+    netDebt: {
+        debt_t0: { date: "2024-09-30T23:59:59Z", value: 2782400000000, label: "September 2024" },
+        debt_t1: { date: "2024-10-15T23:59:59Z", value: 2789300000000, label: "October 2024" },
+        name: "Public Sector Net Debt (excluding banks)",
+        uncertainty: 50000000,
+        format: "currency"
+    },
+    grossDebt: {
+        debt_t0: { date: "2024-09-30T23:59:59Z", value: 3102800000000, label: "September 2024" },
+        debt_t1: { date: "2024-10-15T23:59:59Z", value: 3111500000000, label: "October 2024" },
+        name: "Public Sector Gross Debt",
+        uncertainty: 75000000,
+        format: "currency"
+    },
+    debtGDP: {
+        debt_t0: { date: "2024-09-30T23:59:59Z", value: 97.2, label: "September 2024" },
+        debt_t1: { date: "2024-10-15T23:59:59Z", value: 97.5, label: "October 2024" },
+        name: "Public Sector Net Debt as % of GDP",
+        uncertainty: 0.1,
+        format: "percent"
+    }
+};
+
+let currentMetric = 'netDebt';
+let perSecondRate = 0;
+let baselineValue = 0;
+let baselineTime = 0;
+let clockInterval = null;
+
+function initializeClock() {
+    switchMetric('netDebt', document.querySelector('.metric-toggles button.active'));
+}
+
+function switchMetric(metricKey, buttonElement) {
+    if (clockInterval) clearInterval(clockInterval);
+    currentMetric = metricKey;
+    const data = metricsData[metricKey];
+
+    document.querySelectorAll('.metric-toggles button').forEach(b => b.classList.remove('active'));
+    if (buttonElement) buttonElement.classList.add('active');
+
+    const t0 = new Date(data.debt_t0.date).getTime();
+    const t1 = new Date(data.debt_t1.date).getTime();
+    perSecondRate = (data.debt_t1.value - data.debt_t0.value) / ((t1 - t0) / 1000);
+    baselineValue = data.debt_t0.value;
+    baselineTime = t0;
+
+    document.getElementById('metricName').textContent = data.name;
+    document.getElementById('activeMetric').textContent = data.name.split('(')[0].trim();
+
+    if (data.format === 'currency') {
+        const rateStr = '£' + Math.abs(perSecondRate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        document.getElementById('perSecond').textContent = 'Changing by ' + rateStr + ' per second ' + (perSecondRate >= 0 ? '↑' : '↓');
+        document.getElementById('rateDisplay').textContent = rateStr;
+        document.getElementById('confidenceRange').textContent = '± £' + (data.uncertainty / 1000000).toFixed(0) + ' million uncertainty (daily variation)';
+        document.getElementById('uncertaintyDisplay').textContent = '± £' + (data.uncertainty / 1000000).toFixed(0) + 'M';
+    } else {
+        const rateStr = Math.abs(perSecondRate).toFixed(4) + '%';
+        document.getElementById('perSecond').textContent = 'Changing by ' + rateStr + ' per second ' + (perSecondRate >= 0 ? '↑' : '↓');
+        document.getElementById('rateDisplay').textContent = rateStr;
+        document.getElementById('confidenceRange').textContent = '± ' + data.uncertainty + '% uncertainty (GDP revisions)';
+        document.getElementById('uncertaintyDisplay').textContent = '± ' + data.uncertainty + '%';
+    }
+
+    document.getElementById('lastUpdate').textContent = 'Last official data: ' + data.debt_t1.label;
+
+    updateClock();
+    clockInterval = setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+    const data = metricsData[currentMetric];
+    const now = Date.now();
+    const currentValue = baselineValue + (perSecondRate * ((now - baselineTime) / 1000));
+    if (data.format === 'currency') {
+        document.getElementById('debtDisplay').textContent = '£' + Math.round(currentValue).toLocaleString('en-GB');
+    } else {
+        document.getElementById('debtDisplay').textContent = currentValue.toFixed(2) + '%';
+    }
+}
+
+// ── QUIZ ──
+const quizData = [
+    {
+        type: "Policy Decision",
+        scenario: "Country Alpha (Eurozone Member)",
+        description: "Country Alpha is a eurozone member facing an economic recession. Current situation:",
+        data: { "GDP Growth": "-2.5%", "Current Deficit": "2.8% of GDP", "Public Debt": "58% of GDP", "Unemployment": "12%" },
+        question: "The government wants to implement a €10 billion stimulus package, which would push the deficit to 4.2% of GDP. As their economic advisor, what do you recommend?",
+        options: [
+            "Implement the full stimulus — the recession justifies breaking the 3% rule temporarily",
+            "Reduce the stimulus to keep deficit under 3% at all costs",
+            "Implement the stimulus but request activation of the General Escape Clause",
+            "Wait for EU permission before taking any action"
+        ],
+        correct: 2,
+        explanation: "The best approach is to implement the stimulus while requesting activation of the General Escape Clause. This clause exists precisely for situations like severe recessions. The country would breach the 3% rule, but the escape clause provides a legitimate framework for doing so temporarily. Simply breaking rules without procedure (option 1) damages credibility, while option 2 could worsen the recession. Option 4 would cause unnecessary delays when immediate action is needed."
+    },
+    {
+        type: "Rule Breach Analysis",
+        scenario: "Country Beta's Fiscal Crisis",
+        description: "Country Beta (Eurozone member) has the following fiscal position:",
+        data: { "Public Debt": "142% of GDP", "Annual Deficit": "5.8% of GDP", "Trend": "Debt rising for 3 consecutive years" },
+        question: "Under the current EU fiscal rules (2024 reform), what is the MOST likely immediate consequence for Country Beta?",
+        options: [
+            "Immediate fines of up to 0.5% of GDP",
+            "Requirement to submit a 4–7 year fiscal-structural plan with tailored debt reduction path",
+            "Automatic expulsion from the eurozone",
+            "EU takes control of the national budget"
+        ],
+        correct: 1,
+        explanation: "Under the 2024 reformed rules, Country Beta would need to submit a National Medium-Term Fiscal-Structural Plan showing how it will reduce debt over 4–7 years. The new system is more flexible and country-specific rather than imposing automatic fines. Expulsion from the eurozone is not a mechanism that exists, and the EU doesn't take control of budgets (though it did require this during the Greek bailout crisis). The emphasis is now on credible, tailored adjustment paths."
+    },
+    {
+        type: "UK Comparison",
+        scenario: "Post-Brexit UK Fiscal Policy",
+        description: "The UK government is planning its budget for 2025:",
+        data: { "Current Debt": "98% of GDP", "Projected Deficit": "3.2% of GDP in year 5", "OBR Assessment": "Debt projected to rise slightly over 5 years" },
+        question: "How does the UK's current fiscal rule framework differ from when it was in the EU?",
+        options: [
+            "UK rules are now stricter than EU rules were",
+            "UK can change its own rules but faces no external oversight from the OBR",
+            "UK rules are self-imposed and can be changed by government, monitored by OBR but with no EU oversight",
+            "UK has completely abandoned all fiscal rules since Brexit"
+        ],
+        correct: 2,
+        explanation: "The key difference is that UK fiscal rules are now entirely self-imposed and domestic. The government sets the rules (currently: debt falling by year 5, deficit below 3% by year 5), the OBR monitors them, but there's no external EU oversight or enforcement. The rules can be changed by any government — they're not treaty obligations. The rules aren't necessarily stricter (option 1), the OBR does provide oversight (option 2), and the UK hasn't abandoned rules entirely (option 4) — it just has full control over them."
+    },
+    {
+        type: "Historical Analysis",
+        scenario: "Learning from the 2000s",
+        description: "In the early 2000s, both Germany and France repeatedly broke the 3% deficit rule. The European Commission recommended sanctions, but the Council refused to impose them.",
+        data: { "Countries": "Germany and France", "Period": "2002–2005", "Rule broken": "3% deficit limit" },
+        question: "What was the most significant long-term consequence of this episode?",
+        options: [
+            "Germany and France were eventually fined in 2010",
+            "It led to the 2005 SGP reform adding more flexibility and economic judgment",
+            "It proved the rules were perfect and needed no changes",
+            "It resulted in Germany and France leaving the eurozone"
+        ],
+        correct: 1,
+        explanation: "The Germany-France episode in the early 2000s directly led to the 2005 reform of the Stability and Growth Pact. The incident exposed that the rules were too rigid and politically unenforceable against large member states. The reform added flexibility by allowing consideration of economic cycles and structural reforms. This was a pivotal moment showing that pure mechanical rules don't work — you need judgment and flexibility. Neither country was fined (option 1), and neither left the eurozone (option 4)."
+    },
+    {
+        type: "Policy Evaluation",
+        scenario: "Debt Reduction Strategy",
+        description: "Country Gamma (Eurozone member) must reduce its debt under the new 2024 EU framework:",
+        data: { "Current Debt": "125% of GDP", "Economic Growth": "1.5% annually", "Key Needs": "€50bn for green transition, aging infrastructure" },
+        question: "Under the 2024 reformed rules, what is Gamma's best strategy?",
+        options: [
+            "Cut all investment to reduce debt by the old 1/20 rule",
+            "Submit a 7-year plan linking debt reduction with green and infrastructure investment",
+            "Ignore EU rules since they're too flexible now",
+            "Request a bailout immediately"
+        ],
+        correct: 1,
+        explanation: "The 2024 reform specifically encourages longer adjustment periods (up to 7 years) if countries commit to credible reforms and investments, particularly in green and digital transitions. This is the core innovation — linking fiscal sustainability with growth priorities. The old 1/20 rule no longer applies (option 1), rules are still enforced even if more flexible (option 3), and Gamma doesn't need a bailout — it just needs time for adjustment (option 4). This scenario shows how modern fiscal policy tries to balance discipline with investment."
+    }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let selectedAnswer = null;
+
+function initQuiz() {
+    currentQuestion = 0;
+    score = 0;
+    selectedAnswer = null;
+    updateProgress();
+    updateScore();
+    displayQuestion();
+}
+
+function displayQuestion() {
+    const q = quizData[currentQuestion];
+    let dataHTML = '';
+    for (const [key, value] of Object.entries(q.data)) {
+        dataHTML += '<p><strong>' + key + ':</strong> ' + value + '</p>';
+    }
+    const optionsHTML = q.options.map((opt, i) =>
+        '<button class="option-btn" onclick="selectAnswer(' + i + ')">' + opt + '</button>'
+    ).join('');
+
+    document.getElementById('quiz-content').innerHTML =
+        '<div class="scenario-card">' +
+            '<span class="question-type">' + q.type + '</span>' +
+            '<h3>' + q.scenario + '</h3>' +
+            '<p>' + q.description + '</p>' +
+            '<div class="data-box">' + dataHTML + '</div>' +
+            '<p style="margin-top:14px;"><strong>' + q.question + '</strong></p>' +
+        '</div>' +
+        '<div class="options">' + optionsHTML + '</div>' +
+        '<button class="submit-btn" onclick="checkAnswer()" disabled>Submit Answer</button>' +
+        '<div class="feedback" id="feedback"></div>';
+    selectedAnswer = null;
+}
+
+function selectAnswer(index) {
+    selectedAnswer = index;
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.option-btn')[index].classList.add('selected');
+    document.querySelector('.submit-btn').disabled = false;
+}
+
+function checkAnswer() {
+    if (selectedAnswer === null) return;
+    const q = quizData[currentQuestion];
+    const isCorrect = selectedAnswer === q.correct;
+
+    document.querySelectorAll('.option-btn').forEach((btn, i) => {
+        btn.style.pointerEvents = 'none';
+        if (i === q.correct) btn.classList.add('correct');
+        else if (i === selectedAnswer && !isCorrect) btn.classList.add('incorrect');
+    });
+
+    if (isCorrect) { score++; updateScore(); }
+
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+    const nextLabel = currentQuestion < quizData.length - 1 ? 'Next Question →' : 'See Final Score →';
+    const nextFn = currentQuestion < quizData.length - 1 ? 'nextQuestion()' : 'showFinalScore()';
+    fb.innerHTML = '<h3>' + (isCorrect ? 'Correct' : 'Incorrect') + '</h3>' +
+        '<p>' + q.explanation + '</p>' +
+        '<button class="next-btn" onclick="' + nextFn + '">' + nextLabel + '</button>';
+    document.querySelector('.submit-btn').style.display = 'none';
+}
+
+function nextQuestion() {
+    currentQuestion++;
+    updateProgress();
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progress').style.width = ((currentQuestion) / quizData.length * 100) + '%';
+}
+
+function updateScore() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('total').textContent = quizData.length;
+}
+
+function showFinalScore() {
+    const pct = (score / quizData.length) * 100;
+    let message = '';
+    if (pct === 100) message = "Perfect score! You have an excellent understanding of fiscal rules.";
+    else if (pct >= 80) message = "Great work! You have a strong grasp of fiscal policy frameworks.";
+    else if (pct >= 60) message = "Good effort! Review the EU and UK tabs to strengthen your knowledge.";
+    else message = "Keep learning! Go through the EU and UK tabs for more details.";
+
+    document.getElementById('quiz-content').innerHTML =
+        '<div class="final-score">' +
+            '<h2>Quiz Complete</h2>' +
+            '<div class="big-score">' + score + ' / ' + quizData.length + '</div>' +
+            '<p>' + message + '</p>' +
+            '<button class="restart-btn" onclick="initQuiz()">Try Again</button>' +
+        '</div>';
+    document.getElementById('progress').style.width = '100%';
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', initializeClock);
+</script>
+</body>
+</html>

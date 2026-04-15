@@ -1,0 +1,3065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOREX Trading Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+            font-size: 2em;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .info-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: rgba(15, 52, 96, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #00d4ff;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .currency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .currency-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .currency-card:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+        }
+
+        .currency-pair {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .currency-rate {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin: 10px 0;
+        }
+
+        .rate-change {
+            font-size: 0.9em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .rate-up {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .rate-down {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .trade-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .btn-buy {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #000;
+            flex: 1;
+        }
+
+        .btn-buy:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-sell {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: #fff;
+            flex: 1;
+        }
+
+        .btn-sell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+        }
+
+        .btn-control {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+            padding: 12px 24px;
+            font-size: 1em;
+        }
+
+        .btn-control:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-control:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .portfolio-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .portfolio-pair {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .portfolio-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .news-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trade-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .trade-history-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #00d4ff;
+            animation: slideIn 0.3s ease;
+        }
+
+        .trade-history-item.buy {
+            border-left-color: #00ff88;
+        }
+
+        .trade-history-item.sell {
+            border-left-color: #ff4444;
+        }
+
+        .trade-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .trade-type-badge {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .trade-type-badge.buy {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .trade-type-badge.sell {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        .trade-history-pair {
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.05em;
+        }
+
+        .trade-history-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            font-size: 0.85em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .trade-history-detail {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .trade-history-detail-label {
+            color: #888;
+        }
+
+        .trade-history-detail-value {
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .trade-pl {
+            grid-column: 1 / -1;
+            font-weight: bold;
+            padding-top: 5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 5px;
+        }
+
+        .trade-day {
+            font-size: 0.75em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .news-feed {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ff9500;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .news-shock {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .news-time {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .news-content {
+            color: #e0e0e0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.7);
+        }
+
+        .modal-title {
+            font-size: 2em;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .summary-label {
+            color: #aaa;
+        }
+
+        .summary-value {
+            font-weight: bold;
+            color: #00d4ff;
+            font-size: 1.2em;
+        }
+
+        .profit-positive {
+            color: #00ff88;
+        }
+
+        .profit-negative {
+            color: #ff4444;
+        }
+
+        .performance-grade {
+            font-size: 3em;
+            text-align: center;
+            margin: 20px 0;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+
+        .paused-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 212, 255, 0.9);
+            color: #000;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: none;
+            z-index: 999;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+        }
+
+        .paused-overlay.active {
+            display: block;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .speed-control label {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .speed-control select {
+            padding: 8px 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(15, 52, 96, 0.8);
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .trade-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .trade-modal.active {
+            display: flex;
+        }
+
+        .trade-modal-content {
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .trade-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .trade-modal-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        .trade-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .trade-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+
+        .trade-info-label {
+            color: #aaa;
+        }
+
+        .trade-info-value {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .trade-input-group {
+            margin: 20px 0;
+        }
+
+        .trade-input-group label {
+            display: block;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .trade-input-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        .trade-input-group input[type="number"]:focus {
+            outline: none;
+            border-color: rgba(0, 212, 255, 0.6);
+        }
+
+        .trade-input-group input[type="range"] {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .amount-presets {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .preset-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .trade-summary {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 3px solid #ff9500;
+        }
+
+        .trade-summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .commission-note {
+            color: #ff9500;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .trade-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            font-size: 1em;
+        }
+
+        .event-notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff9500 0%, #ff6600 100%);
+            color: #000;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(255, 149, 0, 0.5);
+            z-index: 998;
+            animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 4.5s;
+            max-width: 350px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .event-notification.major {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255, 68, 68, 0.6);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .event-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .event-description {
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .currency-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .event-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        /* ===== QUIZ SYSTEM STYLES ===== */
+        .quiz-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 1100;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInQuiz 0.3s ease;
+        }
+        .quiz-modal.active { display: flex; }
+
+        @keyframes fadeInQuiz {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .quiz-content {
+            background: linear-gradient(135deg, #0a2444 0%, #0f1e3a 100%);
+            border-radius: 14px;
+            max-width: 460px;
+            width: 92%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.2), 0 10px 40px rgba(0,0,0,0.6);
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            animation: slideUpQuiz 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUpQuiz {
+            from { transform: translateY(40px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .quiz-header {
+            padding: 12px 18px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+        }
+
+        .quiz-type-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .quiz-type-badge.prediction { background: rgba(255, 149, 0, 0.2); color: #ff9500; border: 1px solid rgba(255, 149, 0, 0.4); }
+        .quiz-type-badge.knowledge { background: rgba(0, 212, 255, 0.15); color: #00d4ff; border: 1px solid rgba(0, 212, 255, 0.35); }
+        .quiz-type-badge.debrief { background: rgba(0, 255, 136, 0.15); color: #00ff88; border: 1px solid rgba(0, 255, 136, 0.35); }
+
+        .quiz-intel-reward {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #ffcc00;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quiz-body { padding: 16px 18px 8px; }
+
+        .quiz-context {
+            background: rgba(255, 149, 0, 0.08);
+            border: 1px solid rgba(255, 149, 0, 0.25);
+            border-radius: 7px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 0.82em;
+            color: #ffcc88;
+            line-height: 1.45;
+        }
+
+        .quiz-question {
+            font-size: 0.97em;
+            color: #fff;
+            line-height: 1.5;
+            margin-bottom: 14px;
+            font-weight: 500;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: 14px;
+        }
+
+        .quiz-option {
+            background: rgba(255,255,255,0.04);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 8px;
+            padding: 9px 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #ddd;
+            font-size: 0.87em;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quiz-option:hover:not(.locked) {
+            border-color: rgba(0, 212, 255, 0.55);
+            background: rgba(0, 212, 255, 0.08);
+            color: #fff;
+            transform: translateX(4px);
+        }
+
+        .quiz-option.selected {
+            border-color: rgba(0, 212, 255, 0.7);
+            background: rgba(0, 212, 255, 0.12);
+            color: #fff;
+        }
+
+        .quiz-option.correct {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.12);
+            color: #00ff88;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff6666;
+        }
+
+        .quiz-option.locked { cursor: default; }
+
+        .option-letter {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.78em;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .quiz-option.correct .option-letter { background: rgba(0, 255, 136, 0.3); color: #00ff88; }
+        .quiz-option.incorrect .option-letter { background: rgba(255, 68, 68, 0.3); color: #ff6666; }
+
+        .quiz-feedback {
+            display: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            margin-bottom: 10px;
+            font-size: 0.82em;
+            line-height: 1.45;
+            animation: fadeInFeedback 0.4s ease;
+        }
+        .quiz-feedback.show { display: block; }
+
+        @keyframes fadeInFeedback {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .quiz-feedback.correct-fb {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #b8ffe0;
+        }
+        .quiz-feedback.incorrect-fb {
+            background: rgba(255, 68, 68, 0.08);
+            border: 1px solid rgba(255, 68, 68, 0.25);
+            color: #ffb3b3;
+        }
+
+        .quiz-intel-reveal {
+            display: none;
+            background: linear-gradient(135deg, rgba(255, 204, 0, 0.1), rgba(255, 149, 0, 0.08));
+            border: 1px solid rgba(255, 204, 0, 0.35);
+            border-radius: 8px;
+            padding: 9px 12px;
+            margin-bottom: 10px;
+            color: #ffdd66;
+            font-size: 0.82em;
+            animation: fadeInFeedback 0.5s ease 0.2s both;
+        }
+        .quiz-intel-reveal.show { display: block; }
+        .quiz-intel-reveal strong { color: #ffcc00; display: block; margin-bottom: 3px; font-size: 0.95em; }
+
+        .quiz-footer {
+            padding: 0 18px 14px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-quiz-continue {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 7px;
+            font-weight: bold;
+            font-size: 0.88em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+        .btn-quiz-continue.show { display: inline-block; }
+        .btn-quiz-continue:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4); }
+
+        /* Intel indicator in header */
+        .intel-indicator {
+            background: rgba(255, 204, 0, 0.12);
+            border: 1px solid rgba(255, 204, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px 20px;
+        }
+        .intel-indicator .info-value { color: #ffcc00; }
+
+        /* Score tracker */
+        .quiz-score-bar {
+            display: flex;
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .score-pip {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .score-pip.correct { background: #00ff88; border-color: #00ff88; }
+        .score-pip.incorrect { background: #ff4444; border-color: #ff4444; }
+
+        /* Hint system */
+        .quiz-hint-btn {
+            background: none;
+            border: 1px dashed rgba(255, 204, 0, 0.4);
+            color: #ffcc00;
+            font-size: 0.78em;
+            padding: 4px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .quiz-hint-btn:hover { background: rgba(255, 204, 0, 0.08); border-color: rgba(255, 204, 0, 0.7); }
+        .quiz-hint-box {
+            display: none;
+            background: rgba(255, 204, 0, 0.07);
+            border: 1px solid rgba(255, 204, 0, 0.25);
+            border-radius: 7px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 0.82em;
+            color: #ffe080;
+            line-height: 1.45;
+            animation: fadeInFeedback 0.3s ease;
+        }
+        .quiz-hint-box.show { display: block; }
+
+        /* Debrief special styling */
+        .debrief-trades {
+            max-height: 160px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+        .debrief-trade-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            color: #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ===== SCENARIO SELECTION SCREEN ===== */
+        #scenarioScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .scenario-container {
+            max-width: 900px;
+            width: 100%;
+        }
+        .scenario-title {
+            text-align: center;
+            font-size: 2em;
+            color: #00d4ff;
+            margin-bottom: 6px;
+            text-shadow: 0 0 20px rgba(0,212,255,0.4);
+        }
+        .scenario-subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .scenario-card {
+            background: rgba(15, 52, 96, 0.5);
+            border: 2px solid rgba(0,212,255,0.2);
+            border-radius: 14px;
+            padding: 22px 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .scenario-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.25s;
+            border-radius: 12px;
+        }
+        .scenario-card.free-play::before { background: linear-gradient(135deg, rgba(0,212,255,0.07), transparent); }
+        .scenario-card.rate-hike::before { background: linear-gradient(135deg, rgba(0,255,136,0.07), transparent); }
+        .scenario-card.political::before { background: linear-gradient(135deg, rgba(255,68,68,0.07), transparent); }
+        .scenario-card.inflation::before { background: linear-gradient(135deg, rgba(255,149,0,0.07), transparent); }
+
+        .scenario-card:hover { transform: translateY(-4px); border-color: rgba(0,212,255,0.5); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        .scenario-card:hover::before { opacity: 1; }
+        .scenario-card.rate-hike:hover { border-color: rgba(0,255,136,0.5); }
+        .scenario-card.political:hover { border-color: rgba(255,68,68,0.5); }
+        .scenario-card.inflation:hover { border-color: rgba(255,149,0,0.5); }
+
+        .scenario-icon { font-size: 2.2em; margin-bottom: 10px; }
+        .scenario-name { font-size: 1.1em; font-weight: bold; color: #fff; margin-bottom: 6px; }
+        .scenario-desc { font-size: 0.82em; color: #aaa; line-height: 1.5; margin-bottom: 12px; }
+        .scenario-tag {
+            display: inline-block;
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .tag-free { background: rgba(0,212,255,0.15); color: #00d4ff; }
+        .tag-scenario { background: rgba(255,149,0,0.15); color: #ff9500; }
+        .scenario-difficulty {
+            position: absolute;
+            top: 14px; right: 14px;
+            font-size: 0.7em;
+            color: #666;
+        }
+
+        /* ===== THEORY SIDEBAR ===== */
+        .theory-sidebar {
+            position: fixed;
+            top: 0; right: 0;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(180deg, #0a1e3a 0%, #0d1f3c 100%);
+            border-left: 1px solid rgba(0,212,255,0.2);
+            z-index: 500;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 30px rgba(0,0,0,0.5);
+        }
+        .theory-sidebar.open { transform: translateX(0); }
+        .theory-toggle {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            padding: 12px 8px;
+            cursor: pointer;
+            z-index: 501;
+            color: #00d4ff;
+            font-size: 0.75em;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .theory-toggle:hover { background: rgba(0,212,255,0.15); }
+        .theory-header {
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid rgba(0,212,255,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .theory-header h3 { color: #00d4ff; font-size: 1em; margin: 0; }
+        .theory-close {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.3em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .theory-close:hover { color: #fff; }
+        .theory-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0,212,255,0.1);
+        }
+        .theory-tab {
+            flex: 1;
+            padding: 8px 4px;
+            font-size: 0.72em;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .theory-tab.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+        .theory-tab:hover { color: #aaa; }
+        .theory-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .theory-content::-webkit-scrollbar { width: 4px; }
+        .theory-content::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+        .theory-section { display: none; }
+        .theory-section.active { display: block; }
+        .theory-concept {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(0,212,255,0.12);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .theory-concept-title {
+            color: #00d4ff;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .theory-concept-body {
+            font-size: 0.78em;
+            color: #bbb;
+            line-height: 1.55;
+        }
+        .theory-formula {
+            background: rgba(0,212,255,0.06);
+            border-left: 2px solid #00d4ff;
+            padding: 6px 10px;
+            margin: 6px 0;
+            font-size: 0.8em;
+            color: #00d4ff;
+            border-radius: 0 4px 4px 0;
+            font-family: monospace;
+        }
+        .theory-example {
+            background: rgba(255,149,0,0.06);
+            border-left: 2px solid #ff9500;
+            padding: 6px 10px;
+            margin: 6px 0;
+            font-size: 0.76em;
+            color: #ffcc88;
+            border-radius: 0 4px 4px 0;
+            line-height: 1.4;
+        }
+
+        /* ===== MOVEMENT EXPLANATION PANEL ===== */
+        .movement-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            max-width: 380px;
+            background: linear-gradient(135deg, #0a2030 0%, #0d1f3c 100%);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            z-index: 600;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            transform: translateY(120%);
+            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        .movement-panel.show { transform: translateY(0); }
+        .movement-panel::-webkit-scrollbar { width: 3px; }
+        .movement-panel::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+        .movement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .movement-title {
+            font-size: 0.82em;
+            font-weight: bold;
+            color: #00d4ff;
+            letter-spacing: 0.5px;
+        }
+        .movement-close {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .movement-close:hover { color: #fff; }
+        .movement-event {
+            font-size: 0.82em;
+            color: #ffcc88;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .movement-pair-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            gap: 10px;
+        }
+        .movement-pair-row:last-child { border-bottom: none; }
+        .movement-pair-label {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #fff;
+            min-width: 75px;
+        }
+        .movement-change {
+            font-size: 0.78em;
+            font-weight: bold;
+            min-width: 55px;
+            text-align: right;
+        }
+        .movement-up { color: #00ff88; }
+        .movement-down { color: #ff4444; }
+        .movement-reason {
+            font-size: 0.74em;
+            color: #999;
+            line-height: 1.4;
+            flex: 1;
+        }
+        .movement-theory-link {
+            font-size: 0.72em;
+            color: rgba(0,212,255,0.6);
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            line-height: 1.4;
+        }
+
+        /* ===== SCENARIO BANNER ===== */
+        .scenario-banner {
+            background: linear-gradient(135deg, rgba(255,149,0,0.12), rgba(255,68,68,0.08));
+            border: 1px solid rgba(255,149,0,0.3);
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .scenario-banner.active { display: block; }
+        .scenario-banner-title { font-size: 0.82em; font-weight: bold; color: #ff9500; margin-bottom: 3px; }
+        .scenario-banner-desc { font-size: 0.76em; color: #ccc; line-height: 1.4; }
+
+        /* Theory toggle hidden when sidebar open */
+        .theory-sidebar.open ~ .theory-toggle { right: 320px; }
+
+        @media (max-width: 768px) {
+            .theory-sidebar { width: 90vw; }
+            .movement-panel { left: 10px; right: 10px; max-width: none; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">The FOREX Simulator</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_forex_pw';
+  var valid = ['FOREX-Tr4!d2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['FOREX-Tr4!d2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_forex_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <div class="container">
+        <header>
+            <h1>⚡ FOREX Trading Simulator ⚡</h1>
+            <div class="game-info">
+                <div class="info-card">
+                    <div class="info-label">Balance</div>
+                    <div class="info-value" id="balance">$10,000.00</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Portfolio Value</div>
+                    <div class="info-value" id="portfolioValue">$0.00</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Total Profit/Loss</div>
+                    <div class="info-value" id="totalPL">$0.00</div>
+                </div>
+                <div class="info-card intel-indicator">
+                    <div class="info-label">🔍 Market Intel</div>
+                    <div class="info-value" id="intelCount">0</div>
+                    <div class="quiz-score-bar" id="quizScoreBar"></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Day</div>
+                    <div class="info-value" id="day">1</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="scenario-banner" id="scenarioBanner">
+            <div class="scenario-banner-title" id="scenarioBannerTitle"></div>
+            <div class="scenario-banner-desc" id="scenarioBannerDesc"></div>
+        </div>
+
+        <div class="main-grid">
+            <div>
+                <div class="panel">
+                    <h2 class="panel-title">💱 Currency Markets</h2>
+                    <div class="currency-grid" id="currencyGrid"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <h2 class="panel-title">💼 Your Portfolio</h2>
+                    <div id="portfolio"></div>
+                </div>
+
+                <div class="panel" style="margin-top: 20px;">
+                    <h2 class="panel-title">📜 Trade History</h2>
+                    <div class="trade-history" id="tradeHistory"></div>
+                </div>
+
+                <div class="panel" style="margin-top: 20px;">
+                    <h2 class="panel-title">📰 Market News</h2>
+                    <div class="news-feed" id="newsFeed"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="speed-control">
+                <label for="speedSelect">⚡ Simulation Speed:</label>
+                <select id="speedSelect">
+                    <option value="1000">Very Fast (1s)</option>
+                    <option value="2000">Fast (2s)</option>
+                    <option value="3000" selected>Normal (3s)</option>
+                    <option value="5000">Slow (5s)</option>
+                    <option value="10000">Very Slow (10s)</option>
+                </select>
+            </div>
+            <button class="btn-control" id="pauseBtn">⏸ Pause</button>
+            <button class="btn-control" onclick="simulator.toggleTheory()" style="background: linear-gradient(135deg,#16213e,#0f3460); border: 1px solid rgba(0,212,255,0.3);">📖 Theory</button>
+            <button class="btn-control" id="endBtn">🏁 End Game</button>
+        </div>
+    </div>
+
+    <!-- ===== SCENARIO SELECTION SCREEN ===== -->
+    <div id="scenarioScreen">
+        <div class="scenario-container">
+            <div class="scenario-title">⚡ FOREX Trading Simulator</div>
+            <div class="scenario-subtitle">Choose your trading environment</div>
+            <div class="scenario-grid">
+                <div class="scenario-card free-play" onclick="simulator.startScenario('free')">
+                    <div class="scenario-difficulty">★☆☆ Any level</div>
+                    <div class="scenario-icon">🌐</div>
+                    <div class="scenario-name">Free Play</div>
+                    <div class="scenario-desc">Trade across all currency pairs with randomised global market events. Great for exploring how FOREX works.</div>
+                    <span class="scenario-tag tag-free">FREE PLAY</span>
+                </div>
+                <div class="scenario-card rate-hike" onclick="simulator.startScenario('rateHike')">
+                    <div class="scenario-difficulty">★★☆ Intermediate</div>
+                    <div class="scenario-icon">🏛️</div>
+                    <div class="scenario-name">Interest Rate Shock</div>
+                    <div class="scenario-desc">The Fed launches an aggressive rate hiking cycle while the ECB holds. Navigate the resulting capital flows and currency divergence.</div>
+                    <span class="scenario-tag tag-scenario">SCENARIO</span>
+                </div>
+                <div class="scenario-card political" onclick="simulator.startScenario('political')">
+                    <div class="scenario-difficulty">★★★ Advanced</div>
+                    <div class="scenario-icon">⚡</div>
+                    <div class="scenario-name">Political Instability</div>
+                    <div class="scenario-desc">Snap elections, government collapses, and geopolitical shocks rock currency markets. Safe havens surge; emerging pairs crumble.</div>
+                    <span class="scenario-tag tag-scenario">SCENARIO</span>
+                </div>
+                <div class="scenario-card inflation" onclick="simulator.startScenario('inflation')">
+                    <div class="scenario-difficulty">★★☆ Intermediate</div>
+                    <div class="scenario-icon">📈</div>
+                    <div class="scenario-name">Inflation Crisis</div>
+                    <div class="scenario-desc">Inflation spikes globally but hits different economies at different speeds. Central banks respond unevenly — creating trading opportunities.</div>
+                    <span class="scenario-tag tag-scenario">SCENARIO</span>
+                </div>
+            </div>
+            <div style="text-align:center; font-size:0.78em; color:#555;">All scenarios include in-game questions, theory sidebar &amp; movement explanations</div>
+        </div>
+    </div>
+
+    <!-- ===== THEORY SIDEBAR ===== -->
+    <div class="theory-sidebar" id="theorySidebar">
+        <div class="theory-header">
+            <h3>📖 Theory Reference</h3>
+            <button class="theory-close" onclick="simulator.toggleTheory()">×</button>
+        </div>
+        <div class="theory-tabs">
+            <button class="theory-tab active" onclick="simulator.theoryTab('rates')">Interest<br>Rates</button>
+            <button class="theory-tab" onclick="simulator.theoryTab('demand')">Currency<br>Demand</button>
+            <button class="theory-tab" onclick="simulator.theoryTab('parity')">Parity<br>Theory</button>
+            <button class="theory-tab" onclick="simulator.theoryTab('macro')">Macro<br>Factors</button>
+        </div>
+        <div class="theory-content">
+            <div class="theory-section active" id="theory-rates">
+                <div class="theory-concept">
+                    <div class="theory-concept-title">🏛️ Interest Rate Parity (IRP)</div>
+                    <div class="theory-concept-body">When a central bank raises interest rates, its currency typically <strong style="color:#00ff88">strengthens</strong>. Higher rates offer better returns on assets denominated in that currency, attracting foreign capital inflows.</div>
+                    <div class="theory-formula">↑ Interest rates → ↑ Capital inflows → ↑ Currency demand → ↑ Exchange rate</div>
+                    <div class="theory-example">🇺🇸 Example: When the Fed raised rates from 0% to 5.25% in 2022–23, the US Dollar Index surged ~15%, hitting 20-year highs against most major currencies.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">🕊️ Hawkish vs Dovish Policy</div>
+                    <div class="theory-concept-body"><strong style="color:#00ff88">Hawkish</strong>: central bank signals rate rises or inflation-fighting stance → currency strengthens.<br><br><strong style="color:#ff4444">Dovish</strong>: central bank signals rate cuts or stimulus → currency weakens.</div>
+                    <div class="theory-example">💬 Key phrase to watch: "We are prepared to raise rates further" = hawkish. "We stand ready to ease policy" = dovish.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">🔄 Carry Trade</div>
+                    <div class="theory-concept-body">Borrow in a low-rate currency (e.g. JPY at 0.1%) and invest in a high-rate currency (e.g. AUD at 4.5%). Profit = interest rate differential, minus any currency movement losses.</div>
+                    <div class="theory-formula">Carry Trade Return = (r_high − r_low) ± currency change</div>
+                    <div class="theory-example">⚠️ Risk: If the low-rate currency suddenly strengthens (e.g. JPY spike), carry trade positions unwind rapidly, causing volatile moves.</div>
+                </div>
+            </div>
+            <div class="theory-section" id="theory-demand">
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📊 What Drives Currency Demand?</div>
+                    <div class="theory-concept-body">Currencies are demanded for three main reasons:<br><br>
+                    <strong style="color:#00d4ff">1. Trade</strong> — importers must buy foreign currency to pay for goods.<br><br>
+                    <strong style="color:#00d4ff">2. Investment</strong> — investors buy foreign assets (stocks, bonds, property).<br><br>
+                    <strong style="color:#00d4ff">3. Speculation</strong> — traders bet on future currency movements.</div>
+                    <div class="theory-formula">Strong exports → ↑ foreign demand for domestic currency → ↑ exchange rate</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">🛡️ Safe Haven Currencies</div>
+                    <div class="theory-concept-body">During crises, investors flee to perceived "safe" currencies. These typically have large current account surpluses and stable institutions.</div>
+                    <div class="theory-example">🇯🇵 JPY — Japan is the world's largest creditor nation<br>🇨🇭 CHF — Switzerland's political neutrality and sound banking<br>🇺🇸 USD — global reserve currency status</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">⛏️ Commodity Currencies</div>
+                    <div class="theory-concept-body">Some currencies move closely with commodity prices because their economies are major exporters of raw materials.</div>
+                    <div class="theory-example">🇦🇺 AUD → iron ore, coal (China demand-driven)<br>🇨🇦 CAD → oil prices (WTI crude correlation ~0.8)<br>🇳🇿 NZD → dairy and agricultural products</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📉 Current Account & Trade Balance</div>
+                    <div class="theory-concept-body">A country with a <strong style="color:#00ff88">current account surplus</strong> (exports &gt; imports) sees net inflows of foreign currency — supporting its exchange rate. A <strong style="color:#ff4444">deficit</strong> means more currency flows out, potentially weakening it.</div>
+                    <div class="theory-formula">Trade surplus → ↑ Demand for domestic currency → Appreciation pressure</div>
+                </div>
+            </div>
+            <div class="theory-section" id="theory-parity">
+                <div class="theory-concept">
+                    <div class="theory-concept-title">⚖️ Purchasing Power Parity (PPP)</div>
+                    <div class="theory-concept-body">In the long run, exchange rates should equalise the price of a identical basket of goods across countries. If UK inflation is higher than US inflation, £ should weaken against $ over time.</div>
+                    <div class="theory-formula">E = P_domestic / P_foreign</div>
+                    <div class="theory-example">🍔 The Big Mac Index (The Economist): compares burger prices globally to identify over/undervalued currencies. A Big Mac costing £4 in UK vs $5 in US implies GBP/USD should be ~0.80.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📐 Uncovered Interest Rate Parity (UIRP)</div>
+                    <div class="theory-concept-body">If a currency has higher interest rates, the market expects it to <em>depreciate</em> over time by the rate differential — so that returns are equalised. In practice, this "forward premium puzzle" often doesn't hold in the short run.</div>
+                    <div class="theory-formula">Expected depreciation ≈ domestic rate − foreign rate</div>
+                    <div class="theory-example">💡 Why it matters: Markets often overshoot — higher-rate currencies can keep appreciating before eventually correcting, creating momentum trading opportunities.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📏 Real vs Nominal Exchange Rates</div>
+                    <div class="theory-concept-body">The <strong style="color:#00d4ff">nominal</strong> rate is what you see quoted (e.g. GBP/USD = 1.27). The <strong style="color:#00ff88">real</strong> rate adjusts for inflation differences — it tells you about actual purchasing power and trade competitiveness.</div>
+                    <div class="theory-formula">Real rate = Nominal rate × (P_foreign / P_domestic)</div>
+                </div>
+            </div>
+            <div class="theory-section" id="theory-macro">
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📊 GDP Growth & Currencies</div>
+                    <div class="theory-concept-body">Strong economic growth generally attracts foreign investment, increasing demand for the domestic currency. It also signals future interest rate rises, further boosting the currency.</div>
+                    <div class="theory-example">⚡ Watch for: GDP beat vs. expectations matters more than the absolute number. A 2.5% print when 1.8% was expected moves markets more than a 3% print when 3% was expected.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">💼 Employment & Labour Markets</div>
+                    <div class="theory-concept-body">Low unemployment signals economic strength and wage growth, which can drive inflation — prompting central banks to raise rates. Non-Farm Payrolls (US) is one of the most-watched monthly releases globally.</div>
+                    <div class="theory-formula">Strong jobs → Wage growth → Inflation risk → Rate hike expectations → ↑ Currency</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">🌍 Political Risk & Uncertainty</div>
+                    <div class="theory-concept-body">Elections, referenda, geopolitical conflicts, and policy instability increase currency volatility. Markets dislike uncertainty — currencies of politically unstable countries typically weaken as capital flees to safer alternatives.</div>
+                    <div class="theory-example">📉 Case study: GBP fell 15% in the weeks around the 2016 Brexit referendum result, as uncertainty about future trade relationships spooked investors.</div>
+                </div>
+                <div class="theory-concept">
+                    <div class="theory-concept-title">📈 Inflation & Exchange Rates</div>
+                    <div class="theory-concept-body">High inflation erodes a currency's purchasing power (bad for the currency long-term). But short-term, high inflation can strengthen a currency if it means the central bank will raise rates to combat it.</div>
+                    <div class="theory-formula">Short run: High inflation → Rate hike expectations → ↑ Currency<br>Long run: High inflation → PPP depreciation → ↓ Currency</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="theory-toggle" id="theoryToggle" onclick="simulator.toggleTheory()" style="display:none;">📖 THEORY</button>
+
+    <!-- ===== MOVEMENT EXPLANATION PANEL ===== -->
+    <div class="movement-panel" id="movementPanel">
+        <div class="movement-header">
+            <span class="movement-title">📊 Why Did Rates Move?</span>
+            <button class="movement-close" onclick="simulator.closeMovementPanel()">×</button>
+        </div>
+        <div id="movementContent"></div>
+    </div>
+
+    <div class="paused-overlay" id="pausedOverlay">⏸ GAME PAUSED</div>
+
+    <!-- ===== QUIZ MODAL ===== -->
+    <div class="quiz-modal" id="quizModal">
+        <div class="quiz-content">
+            <div class="quiz-header">
+                <span class="quiz-type-badge" id="quizTypeBadge">Knowledge Check</span>
+                <span class="quiz-intel-reward">🔍 Correct = Market Intel</span>
+            </div>
+            <div class="quiz-body">
+                <div class="quiz-context" id="quizContext" style="display:none;"></div>
+                <div class="quiz-question" id="quizQuestion"></div>
+                <button class="quiz-hint-btn" id="quizHintBtn" onclick="simulator.showHint()" style="display:none;">💡 Show Hint</button>
+                <div class="quiz-hint-box" id="quizHintBox"></div>
+                <div class="quiz-options" id="quizOptions"></div>
+                <div class="quiz-feedback" id="quizFeedback"></div>
+                <div class="quiz-intel-reveal" id="quizIntelReveal"></div>
+            </div>
+            <div class="quiz-footer">
+                <button class="btn-quiz-continue" id="quizContinueBtn" onclick="simulator.closeQuiz()">▶ Continue Trading</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="trade-modal" id="tradeModal">
+        <div class="trade-modal-content">
+            <div class="trade-modal-header">
+                <h3 class="trade-modal-title" id="tradeModalTitle">Trade EUR/USD</h3>
+                <button class="close-modal" onclick="simulator.closeTradeModal()">×</button>
+            </div>
+            
+            <div class="trade-info">
+                <div class="trade-info-row">
+                    <span class="trade-info-label">Current Rate:</span>
+                    <span class="trade-info-value" id="tradeRate">1.0850</span>
+                </div>
+                <div class="trade-info-row">
+                    <span class="trade-info-label">Your Balance:</span>
+                    <span class="trade-info-value" id="tradeBalance">$10,000.00</span>
+                </div>
+                <div class="trade-info-row" id="tradeHoldingsRow" style="display: none;">
+                    <span class="trade-info-label">Your Holdings:</span>
+                    <span class="trade-info-value" id="tradeHoldings">0.00 units</span>
+                </div>
+            </div>
+
+            <div class="trade-input-group">
+                <label for="tradeAmount">Amount (units):</label>
+                <input type="number" id="tradeAmount" min="0" step="0.01" value="100">
+                <div class="amount-presets">
+                    <button class="preset-btn" onclick="simulator.setTradeAmount(50)">50</button>
+                    <button class="preset-btn" onclick="simulator.setTradeAmount(100)">100</button>
+                    <button class="preset-btn" onclick="simulator.setTradeAmount(500)">500</button>
+                    <button class="preset-btn" onclick="simulator.setTradeAmount(1000)">1000</button>
+                </div>
+            </div>
+
+            <div class="trade-summary">
+                <div class="trade-summary-row">
+                    <span>Total Cost/Revenue:</span>
+                    <strong id="tradeTotalCost">$108.50</strong>
+                </div>
+                <div class="trade-summary-row">
+                    <span>Commission (0.1%):</span>
+                    <strong id="tradeCommission">$0.11</strong>
+                </div>
+                <div class="trade-summary-row">
+                    <span>Final Amount:</span>
+                    <strong id="tradeFinalAmount">$108.61</strong>
+                </div>
+                <div class="commission-note">* All trades include a 0.1% transaction fee</div>
+            </div>
+
+            <div class="trade-actions">
+                <button class="btn-control" onclick="simulator.closeTradeModal()" style="background: #666;">Cancel</button>
+                <button class="btn-confirm btn-control" id="confirmTradeBtn" onclick="simulator.confirmTrade()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="summaryModal">
+        <div class="modal-content">
+            <h2 class="modal-title">📊 Trading Summary</h2>
+            <div id="summaryContent"></div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn-control" onclick="location.reload()">🔄 Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ForexSimulator {
+            constructor() {
+                this.balance = 10000;
+                this.portfolio = {};
+                this.tradeHistory = [];
+                this.day = 1;
+                this.isPaused = false;
+                this.isGameOver = false;
+                this.initialBalance = 10000;
+                this.tickSpeed = 3000;
+                this.commissionRate = 0.001;
+                this.totalCommissions = 0;
+                this.scenarioMode = 'free';
+                this.lastMovementEvent = null;
+                
+                // Currency base data with correlations
+                this.currencies = {
+                    'EUR/USD': { rate: 1.0850, volatility: 0.003, baseCurrency: 'USD' },
+                    'GBP/USD': { rate: 1.2650, volatility: 0.004, baseCurrency: 'USD' },
+                    'USD/JPY': { rate: 149.50, volatility: 0.005, baseCurrency: 'USD' },
+                    'AUD/USD': { rate: 0.6520, volatility: 0.004, baseCurrency: 'USD' },
+                    'USD/CAD': { rate: 1.3750, volatility: 0.003, baseCurrency: 'USD' },
+                    'USD/CHF': { rate: 0.9050, volatility: 0.003, baseCurrency: 'USD' }
+                };
+
+                // Correlation matrix (how currencies move together)
+                this.correlations = {
+                    'EUR/USD': { 'GBP/USD': 0.7, 'AUD/USD': 0.5, 'USD/JPY': -0.6, 'USD/CAD': -0.4, 'USD/CHF': -0.5 },
+                    'GBP/USD': { 'EUR/USD': 0.7, 'AUD/USD': 0.6, 'USD/JPY': -0.5, 'USD/CAD': -0.3, 'USD/CHF': -0.4 },
+                    'USD/JPY': { 'EUR/USD': -0.6, 'GBP/USD': -0.5, 'AUD/USD': -0.4, 'USD/CAD': 0.5, 'USD/CHF': 0.6 },
+                    'AUD/USD': { 'EUR/USD': 0.5, 'GBP/USD': 0.6, 'USD/JPY': -0.4, 'USD/CAD': -0.3, 'USD/CHF': -0.3 },
+                    'USD/CAD': { 'EUR/USD': -0.4, 'GBP/USD': -0.3, 'USD/JPY': 0.5, 'AUD/USD': -0.3, 'USD/CHF': 0.4 },
+                    'USD/CHF': { 'EUR/USD': -0.5, 'GBP/USD': -0.4, 'USD/JPY': 0.6, 'AUD/USD': -0.3, 'USD/CAD': 0.4 }
+                };
+
+                // Enhanced market events with regional targeting
+                this.scheduledEvents = [
+                    { day: 5, region: 'USD', type: 'major', title: '🏛️ Fed Interest Rate Decision', message: 'Federal Reserve announces policy decision', impact: 0.02 },
+                    { day: 8, region: 'EUR', type: 'major', title: '🇪🇺 ECB Monetary Policy', message: 'European Central Bank policy statement released', impact: 0.018 },
+                    { day: 12, region: 'USD', type: 'data', title: '📊 US CPI Release', message: 'Inflation data shows unexpected movement', impact: 0.015 },
+                    { day: 15, region: 'GBP', type: 'major', title: '🇬🇧 Bank of England Decision', message: 'BoE announces rate decision', impact: 0.016 },
+                    { day: 18, region: 'USD', type: 'data', title: '💼 US Employment Report', message: 'Non-farm payrolls exceed expectations', impact: 0.012 },
+                    { day: 22, region: 'JPY', type: 'major', title: '🇯🇵 Bank of Japan Policy', message: 'BoJ maintains ultra-loose policy', impact: 0.014 },
+                    { day: 25, region: 'AUD', type: 'data', title: '🇦🇺 Australian GDP Data', message: 'Strong economic growth reported', impact: 0.01 }
+                ];
+
+                this.randomShocks = [
+                    { region: 'USD', type: 'positive', message: '🚀 Fed signals dovish policy ahead', impact: 0.015 },
+                    { region: 'USD', type: 'negative', message: '📉 Unexpected US inflation spike', impact: -0.012 },
+                    { region: 'EUR', type: 'positive', message: '💼 Strong Eurozone manufacturing data', impact: 0.01 },
+                    { region: 'EUR', type: 'negative', message: '⚠️ European debt concerns resurface', impact: -0.015 },
+                    { region: 'GBP', type: 'positive', message: '📈 UK services sector booms', impact: 0.012 },
+                    { region: 'GBP', type: 'negative', message: '🏦 Brexit trade friction intensifies', impact: -0.013 },
+                    { region: 'JPY', type: 'positive', message: '💹 Japanese exports surge', impact: 0.011 },
+                    { region: 'AUD', type: 'negative', message: '⛏️ Commodity prices tumble', impact: -0.01 },
+                    { region: 'global', type: 'negative', message: '🌍 Geopolitical tensions escalate', impact: -0.018 },
+                    { region: 'global', type: 'positive', message: '🤝 Major trade agreement signed', impact: 0.014 }
+                ];
+
+                this.speculation = [
+                    { region: 'USD', message: '💭 Analysts predict Fed rate hike next quarter' },
+                    { region: 'EUR', message: '🔮 Euro expected to strengthen on ECB policy' },
+                    { region: 'JPY', message: '📊 Yen showing technical breakout signals' },
+                    { region: 'GBP', message: '⚡ Pound volatility expected around BoE meeting' },
+                    { region: 'AUD', message: '🎯 Australian dollar reaches key resistance' },
+                    { region: 'global', message: '💡 Smart money accumulating safe-haven positions' },
+                    { region: 'global', message: '📉 Technical indicators suggest correction ahead' },
+                    { region: 'USD', message: '🌐 Dollar index approaching critical levels' }
+                ];
+
+                this.scenarioScripts = {
+                    rateHike: [
+                        { day: 3, region: 'USD', type: 'major', title: '🏛️ Fed Shock: +75bps Rate Hike', message: 'Federal Reserve delivers surprise 75 basis point hike — largest in 28 years', impact: 0.025, explanation: { event: '🏛️ Fed surprise 75bps rate hike', theory: 'Interest Rate Parity: Higher US rates attract foreign capital seeking better returns, increasing demand for USD and strengthening it against all pairs.', pairs: { 'EUR/USD': { dir: -1, reason: 'Euro weakens as USD strengthens from capital inflows' }, 'GBP/USD': { dir: -1, reason: 'Sterling falls as dollar surges on rate differential' }, 'USD/JPY': { dir: 1, reason: 'Dollar rises vs Yen; Japan\'s near-zero rates make JPY unattractive' }, 'AUD/USD': { dir: -1, reason: 'Aussie dollar drops; higher US rates reduce appetite for risk assets' } } } },
+                        { day: 7, region: 'EUR', type: 'major', title: '🇪🇺 ECB Stays Put', message: 'ECB holds rates at 0% citing growth concerns — stark contrast to Fed', impact: -0.02, explanation: { event: '🇪🇺 ECB holds rates — policy divergence widens', theory: 'Policy Divergence: When the Fed raises rates while the ECB holds, the interest rate differential widens. Capital flows from low-yield EUR to high-yield USD, causing EUR/USD to fall sharply.', pairs: { 'EUR/USD': { dir: -1, reason: 'ECB/Fed policy gap widens → EUR sell-off accelerates' }, 'USD/CHF': { dir: 1, reason: 'CHF safe haven demand rises as European uncertainty grows' } } } },
+                        { day: 12, region: 'USD', type: 'data', title: '💼 US Jobs Boom', message: 'NFP surges 450k — labour market roaring; validates Fed\'s hawkish stance', impact: 0.015, explanation: { event: '💼 US Non-Farm Payrolls surge 450k', theory: 'Labour Market Signal: Strong employment data confirms the Fed can continue hiking without triggering recession. Markets price in more future hikes, pushing the dollar higher across the board.', pairs: { 'USD/JPY': { dir: 1, reason: 'USD strengthens further; BOJ still ultra-dovish, yen hit hard' }, 'EUR/USD': { dir: -1, reason: 'EUR drops again as US economic strength contrasts with Eurozone weakness' } } } },
+                        { day: 18, region: 'EUR', type: 'major', title: '🇪🇺 ECB Emergency Hike', message: 'ECB forced into emergency 50bps hike as inflation surges to 9.1%', impact: 0.018, explanation: { event: '🇪🇺 ECB emergency rate hike — 50bps', theory: 'Policy Catch-Up: The ECB is now forced to hike to fight inflation, narrowing the Fed/ECB rate differential. EUR/USD bounces as the policy gap shrinks — this is classic "buy the rumour, sell the news" behaviour in reverse.', pairs: { 'EUR/USD': { dir: 1, reason: 'EUR recovers sharply as ECB finally acts; rate differential narrows' }, 'USD/JPY': { dir: -1, reason: 'Dollar weakens slightly as focus shifts from US to Eurozone' } } } },
+                        { day: 24, region: 'USD', type: 'major', title: '🏛️ Fed Signals Pause', message: 'Fed Chair signals hiking cycle nearing end — markets celebrate', impact: -0.02, explanation: { event: '🏛️ Fed signals rate hike pause', theory: 'Forward Guidance: Central bank signals about future policy are often more powerful than actual decisions. A Fed pause signal means the rate differential stops widening — reducing the USD\'s relative advantage and triggering a reversal.', pairs: { 'EUR/USD': { dir: 1, reason: 'EUR rallies as USD loses its rate hike momentum advantage' }, 'AUD/USD': { dir: 1, reason: 'Risk currencies recover as US rate fears ease' }, 'GBP/USD': { dir: 1, reason: 'GBP bounces from lows as dollar retreats across the board' } } } }
+                    ],
+                    political: [
+                        { day: 2, region: 'GBP', type: 'major', title: '🇬🇧 UK Government Collapses', message: 'Prime Minister resigns amid no-confidence vote — snap election called', impact: -0.025, explanation: { event: '🇬🇧 UK government collapses — snap election called', theory: 'Political Risk Premium: Currency markets price in a "risk premium" for political uncertainty. Investors don\'t know what policies the next government will pursue, so they sell the currency and move to safer alternatives until clarity emerges.', pairs: { 'GBP/USD': { dir: -1, reason: 'Sterling crashes as investors flee political uncertainty' }, 'USD/CHF': { dir: -1, reason: 'CHF strengthens as global safe-haven demand rises' }, 'USD/JPY': { dir: -1, reason: 'JPY safe-haven demand surges alongside CHF' } } } },
+                        { day: 6, region: 'global', type: 'major', title: '🌍 Geopolitical Crisis Erupts', message: 'Major territorial conflict breaks out — global markets in risk-off panic', impact: -0.025, explanation: { event: '🌍 Major geopolitical conflict breaks out', theory: 'Risk-Off Flight to Safety: Geopolitical crises trigger "risk-off" episodes where investors sell risky assets globally. Safe-haven currencies (USD, JPY, CHF) surge while commodity and emerging market currencies fall. Oil prices spike, hurting oil-importing nations.', pairs: { 'USD/JPY': { dir: -1, reason: 'Yen surges on massive safe-haven buying — classic crisis response' }, 'EUR/USD': { dir: -1, reason: 'EUR falls as European proximity to conflict raises risk perception' }, 'AUD/USD': { dir: -1, reason: 'Aussie falls hard — a risk-sensitive, commodity-linked currency' } } } },
+                        { day: 11, region: 'EUR', type: 'major', title: '🇪🇺 Eurozone Member Crisis', message: 'Major Eurozone nation announces debt cannot be serviced — contagion fears mount', impact: -0.022, explanation: { event: '🇪🇺 Eurozone sovereign debt crisis', theory: 'Sovereign Risk Contagion: When one Eurozone member struggles with debt, markets fear others may follow (2010 Greek crisis playbook). The EUR weakens as investors question the currency union\'s stability. Spreads on peripheral bond yields widen dramatically.', pairs: { 'EUR/USD': { dir: -1, reason: 'EUR sell-off — existential question marks over Eurozone unity' }, 'USD/CHF': { dir: -1, reason: 'Swiss franc surges; CHF is Europe\'s safe haven of choice in crises' } } } },
+                        { day: 17, region: 'GBP', type: 'data', title: '🇬🇧 Election Result: Hung Parliament', message: 'No majority government — coalition talks begin; uncertainty deepens for GBP', impact: -0.015, explanation: { event: '🇬🇧 UK election produces hung parliament', theory: 'Uncertainty Premium Persists: A hung parliament means prolonged negotiations and unclear policy direction. Markets hate uncertainty above all — GBP stays weak until a stable government forms. This is why currencies often recover sharply once elections are resolved, even if the "wrong" party wins.', pairs: { 'GBP/USD': { dir: -1, reason: 'GBP stays under pressure — no policy clarity in sight' }, 'EUR/GBP': { dir: 1, reason: 'EUR strengthens vs GBP despite its own problems' } } } },
+                        { day: 23, region: 'global', type: 'major', title: '🕊️ Peace Deal Announced', message: 'Diplomatic breakthrough — ceasefire agreement ends geopolitical conflict', impact: 0.02, explanation: { event: '🕊️ Geopolitical ceasefire agreed', theory: 'Risk-On Recovery: When geopolitical risk fades, the "risk-off" trade unwinds rapidly. Safe havens are sold as investors rotate back into higher-yielding currencies and risk assets. This is one of the fastest reversals in currency markets.', pairs: { 'AUD/USD': { dir: 1, reason: 'Risk currencies surge as fear premium collapses' }, 'USD/JPY': { dir: 1, reason: 'JPY safe-haven premium unwinds — yen weakens as dollar recovers' }, 'EUR/USD': { dir: 1, reason: 'EUR recovers as geopolitical risk premium in Europe fades' } } } }
+                    ],
+                    inflation: [
+                        { day: 3, region: 'USD', type: 'data', title: '📈 US CPI Shock: 9.1%', message: 'US inflation surges to 40-year high — far above 8.1% forecast', impact: 0.02, explanation: { event: '📈 US CPI prints 9.1% — 40-year high', theory: 'Inflation Surprise & Rate Expectations: A higher-than-expected inflation print immediately raises market expectations of central bank rate hikes. In the short run, this strengthens the USD (higher future rates). In the long run, persistently high inflation erodes purchasing power and can weaken currencies via PPP.', pairs: { 'USD/JPY': { dir: 1, reason: 'USD surges on aggressive Fed rate hike expectations' }, 'EUR/USD': { dir: -1, reason: 'EUR falls as US/Europe inflation differential favours dollar' } } } },
+                        { day: 8, region: 'GBP', type: 'data', title: '🇬🇧 UK Inflation Hits 11.1%', message: 'UK inflation worst in G7 — Bank of England under intense pressure', impact: 0.015, explanation: { event: '🇬🇧 UK CPI hits 11.1% — worst in G7', theory: 'Stagflation Risk: The UK faces "stagflation" — high inflation AND slowing growth. This puts the BoE in a dilemma: raise rates to fight inflation (good for GBP short-term) but risk recession (bad for GBP long-term). Markets price in the worst of both worlds.', pairs: { 'GBP/USD': { dir: -1, reason: 'GBP falls on stagflation fears despite rate hike expectations' }, 'EUR/GBP': { dir: 1, reason: 'EUR gains vs GBP as UK economic outlook deteriorates' } } } },
+                        { day: 13, region: 'AUD', type: 'data', title: '🇦🇺 RBA Surprise 50bps Hike', message: 'Reserve Bank of Australia doubles expected hike to combat rising prices', impact: 0.018, explanation: { event: '🇦🇺 RBA surprises with 50bps rate hike', theory: 'Positive Surprise Premium: When a central bank does MORE than expected, the currency gets a double boost — first from the actual rate rise, then from the "they\'re serious about inflation" signal. AUD/USD rallies sharply as Australia suddenly offers much better yields.', pairs: { 'AUD/USD': { dir: 1, reason: 'AUD surges on RBA hawkish surprise — yield differential improves dramatically' }, 'AUD/JPY': { dir: 1, reason: 'Classic carry trade opportunity emerges: buy high-yield AUD, short low-yield JPY' } } } },
+                        { day: 19, region: 'EUR', type: 'data', title: '🇪🇺 Eurozone CPI: 10.7%', message: 'Eurozone inflation at record high — but ECB still hesitant to hike aggressively', impact: -0.015, explanation: { event: '🇪🇺 Eurozone inflation hits record 10.7%', theory: 'Central Bank Credibility: The ECB\'s slowness to hike despite surging inflation undermines confidence. If a central bank is "behind the curve" on inflation, markets lose faith that they\'ll restore price stability — weakening the currency despite high inflation prints.', pairs: { 'EUR/USD': { dir: -1, reason: 'EUR weakens — ECB perceived as behind the curve vs other central banks' }, 'USD/CHF': { dir: -1, reason: 'CHF strengthens as European inflation fears drive safe-haven flows' } } } },
+                        { day: 25, region: 'USD', type: 'data', title: '📉 US Inflation Turns', message: 'US CPI falls to 6.5% — peak inflation narrative takes hold; Fed may pause', impact: -0.018, explanation: { event: '📉 US CPI drops to 6.5% — peak inflation signal', theory: 'Turning Point Dynamics: When inflation peaks and turns, markets rapidly price in the end of rate hikes. This removes the key support for the USD — the expectation of ever-higher rates. Currency markets often move dramatically at these turning points.', pairs: { 'EUR/USD': { dir: 1, reason: 'EUR rallies as USD loses its inflation-driven rate-hike advantage' }, 'GBP/USD': { dir: 1, reason: 'Sterling recovers as dollar weakens across the board' }, 'AUD/USD': { dir: 1, reason: 'Risk currencies bounce hard on US peak inflation narrative' } } } }
+                    ]
+                };
+
+                this.priceHistory = {};
+                for (let pair in this.currencies) {
+                    this.priceHistory[pair] = [this.currencies[pair].rate];
+                }
+
+                // Trade modal state
+                this.currentTradePair = null;
+                this.currentTradeType = null;
+
+                // ===== QUIZ SYSTEM =====
+                this.quizActive = false;
+                this.quizCorrectCount = 0;
+                this.quizTotalCount = 0;
+                this.intelCount = 0;
+                this.pendingEventAfterQuiz = null;
+                this.quizScoreLog = []; // 'correct' | 'incorrect'
+                this.recentTradesForDebrief = [];
+                this.debriefInterval = 15; // every 15 days (was 10)
+                this.lastDebriefDay = 0;
+                this.usedKnowledgeIds = new Set();
+
+                this.knowledgeQuestions = [
+                    {
+                        id: 'k1',
+                        trigger: 'USD',
+                        question: 'The Federal Reserve raises US interest rates. What is the most likely immediate effect on the US Dollar (USD)?',
+                        hint: 'Think about what happens to a savings account when interest rates go up — do people want to put more or less money in it?',
+                        options: ['USD weakens as borrowing becomes cheaper', 'USD strengthens as higher rates attract foreign capital', 'USD has no immediate reaction to rate changes', 'USD weakens due to reduced consumer spending'],
+                        correct: 1,
+                        explanation: 'Higher interest rates make US assets more attractive to foreign investors seeking better returns. This increases demand for USD, causing it to appreciate. This is a core principle of interest rate parity in international finance.',
+                        intel: '🏛️ Hot tip: With a likely Fed hike on the horizon, watch GBP/USD and EUR/USD — both may fall against a strengthening dollar.'
+                    },
+                    {
+                        id: 'k2',
+                        trigger: 'EUR',
+                        question: 'The Eurozone releases strong GDP growth data, beating all forecasts. What typically happens to the Euro (EUR)?',
+                        hint: 'A healthy, growing economy tends to attract investors. Would they want more or less of that country\'s currency?',
+                        options: ['EUR falls as growth causes inflation fears', 'EUR strengthens as strong growth signals a healthy economy', 'EUR is unaffected — GDP data only matters for stocks', 'EUR weakens as exports become more expensive'],
+                        correct: 1,
+                        explanation: 'Strong economic growth data boosts confidence in a currency. It signals healthy demand, productive capacity, and often anticipates future interest rate rises by the ECB — all of which attract capital inflows and strengthen the EUR.',
+                        intel: '📈 Insider view: Eurozone momentum looks strong. EUR/USD could push higher over the next few days — consider your position.'
+                    },
+                    {
+                        id: 'k3',
+                        trigger: 'JPY',
+                        question: 'Global financial markets experience a sharp "risk-off" selloff. Investors panic and flee equities. What typically happens to the Japanese Yen (JPY)?',
+                        hint: 'In a storm, people run to shelter. Which currencies are considered the "safest" places to park money when markets panic?',
+                        options: ['JPY weakens as Japan is vulnerable to global downturns', 'JPY strengthens as it is considered a "safe haven" currency', 'JPY is not correlated with global risk sentiment', 'JPY weakens due to the carry trade unwinding'],
+                        correct: 1,
+                        explanation: 'The Japanese Yen is a classic safe-haven currency. During market stress, investors sell risky assets and buy JPY (and also CHF and USD). Japan\'s large current account surplus and status as a major creditor nation underpin this safe-haven demand.',
+                        intel: '⚠️ Geopolitical tension is rising. USD/JPY may fall sharply if risk-off sentiment takes hold — a strong yen play could be profitable.'
+                    },
+                    {
+                        id: 'k4',
+                        trigger: 'GBP',
+                        question: 'UK inflation rises significantly above the Bank of England\'s 2% target. What is the likely market response for GBP?',
+                        hint: 'When inflation rises above target, central banks usually react by changing interest rates. What direction would that be, and how does that affect the currency?',
+                        options: ['GBP falls as high inflation erodes purchasing power', 'GBP initially strengthens as markets anticipate a rate hike', 'GBP is unaffected — inflation is a domestic issue only', 'GBP collapses due to hyperinflation fears'],
+                        correct: 1,
+                        explanation: 'When inflation exceeds targets, central banks typically raise rates to cool the economy. Markets anticipate this and buy GBP before the rate rise happens. However, if inflation persists without decisive action, confidence can erode — this is why the BoE\'s response matters enormously.',
+                        intel: '🇬🇧 BoE likely to act hawkishly on inflation. GBP/USD could firm up — watch for a buying opportunity in the next 3 days.'
+                    },
+                    {
+                        id: 'k5',
+                        trigger: 'AUD',
+                        question: 'China, Australia\'s largest trading partner, announces a major economic slowdown. What is the most likely effect on the Australian Dollar (AUD)?',
+                        hint: 'Australia exports huge amounts of iron ore and coal — mostly to China. If China buys less, what happens to the money flowing into Australia?',
+                        options: ['AUD strengthens as Australia becomes a safe haven', 'AUD weakens as demand for Australian commodities falls', 'AUD is unaffected as Australia exports services, not goods', 'AUD strengthens as the RBA will cut rates to stimulate'],
+                        correct: 1,
+                        explanation: 'Australia is a major commodity exporter — iron ore, coal, and LNG go primarily to China. A Chinese slowdown reduces demand for these exports, weakening Australia\'s terms of trade and reducing AUD demand. The AUD is often called a "commodity currency" for this reason.',
+                        intel: '⛏️ Commodity demand softening. AUD/USD looks vulnerable — a short-term sell of AUD could outperform this week.'
+                    },
+                    {
+                        id: 'k6',
+                        trigger: 'global',
+                        question: 'What does a "carry trade" involve in FOREX markets?',
+                        hint: 'Imagine borrowing money cheaply in one country and depositing it in a bank in another country that pays higher interest. The profit is the difference.',
+                        options: ['Physically transporting currency between countries', 'Borrowing in a low-interest currency and investing in a high-interest currency', 'Trading currency futures contracts on the CME', 'Buying and immediately selling the same currency pair'],
+                        correct: 1,
+                        explanation: 'A carry trade involves borrowing in a currency with low interest rates (historically JPY or CHF) and investing in higher-yielding currencies (e.g. AUD or NZD). Profit comes from the interest rate differential. The risk is currency movements that can wipe out the interest gain.',
+                        intel: '💹 JPY carry trades are building up — if markets turn volatile, a sharp JPY spike could be coming as positions unwind.'
+                    },
+                    {
+                        id: 'k7',
+                        trigger: 'USD',
+                        question: 'The US publishes better-than-expected Non-Farm Payrolls (NFP) data, showing strong job creation. What typically happens next?',
+                        hint: 'More jobs = stronger economy. If the economy is strong, does the Fed need to cut interest rates to stimulate it? What does that mean for the dollar?',
+                        options: ['USD weakens as more jobs means more spending and imports', 'USD strengthens as strong jobs data reduces Fed rate cut expectations', 'USD is unaffected — the Fed only cares about inflation', 'USD weakens as strong jobs = higher wages = higher inflation'],
+                        correct: 1,
+                        explanation: 'Strong NFP data signals a robust labour market, which reduces the urgency for the Fed to cut rates. Higher-for-longer rates support the USD. NFP is one of the most market-moving data releases globally — FOREX traders watch it very closely on the first Friday of each month.',
+                        intel: '💼 Jobs data beat. Dollar strength expected to persist — USD pairs like USD/JPY could push higher this week.'
+                    },
+                    {
+                        id: 'k8',
+                        trigger: 'global',
+                        question: 'Which of the following best describes "purchasing power parity" (PPP) in exchange rate theory?',
+                        hint: 'Think about the price of a burger. If it costs £4 in the UK and $5 in the US, PPP suggests something about what the exchange rate should be.',
+                        options: ['Exchange rates are set purely by central bank decisions', 'In the long run, exchange rates should adjust so a basket of goods costs the same across countries', 'Exchange rates are determined solely by trade flows', 'PPP states that currencies always return to their historic average'],
+                        correct: 1,
+                        explanation: 'PPP theory holds that exchange rates should adjust over time to equalise the real price of goods internationally. The Economist\'s "Big Mac Index" is a fun illustration of this. In practice, PPP works better as a long-run guide than a short-term predictor — capital flows and sentiment dominate in the short run.',
+                        intel: '🌍 The dollar looks overvalued on PPP measures. In the medium term, a correction is plausible — consider building EUR or GBP positions.'
+                    }
+                ];
+
+                this.predictionQuestions = [
+                    {
+                        eventDay: 5,
+                        badge: '🏛️ Fed Decision Preview',
+                        context: 'The Federal Reserve is about to announce its interest rate decision. Markets are split on whether rates will rise or fall.',
+                        question: 'Before the Fed announcement — which currency pair do you predict will move the most?',
+                        hint: 'The Fed controls US dollar policy. Which pairs involve the USD and a currency most sensitive to US rate changes?',
+                        options: ['EUR/USD — the Euro will move sharply against the Dollar', 'USD/JPY — the Yen will react strongly to US rate signals', 'GBP/USD — Sterling tends to follow Fed decisions closely', 'AUD/USD — Commodity currencies are most Fed-sensitive'],
+                        correct: 1,
+                        explanation: 'USD/JPY is historically the most sensitive pair to Fed decisions. The JPY is a safe-haven currency and carry trade vehicle, so US rate signals cause large, rapid moves in this pair. EUR/USD is also very sensitive, but USD/JPY typically leads initial reactions.',
+                        intel: '🎯 Pre-Fed insight: Position in USD/JPY before the announcement — the move will likely be fast and significant.'
+                    },
+                    {
+                        eventDay: 8,
+                        badge: '🇪🇺 ECB Preview',
+                        context: 'The European Central Bank is meeting today. Economists are divided on whether the ECB will signal rate cuts ahead.',
+                        question: 'If the ECB surprises with a dovish signal (hinting at rate CUTS), what should happen to EUR/USD?',
+                        hint: '"Dovish" means lower interest rates. Lower rates = lower returns on Euro savings. Would investors want to hold more or fewer Euros?',
+                        options: ['EUR/USD rises — rate cuts boost the economy and the Euro', 'EUR/USD falls — lower rates make Euro-denominated assets less attractive', 'EUR/USD is unchanged — the ECB rarely moves markets', 'EUR/USD rises temporarily then falls sharply'],
+                        correct: 1,
+                        explanation: 'A dovish ECB signal means lower future returns on Euro assets, reducing demand for EUR. Capital flows toward higher-yielding alternatives, causing EUR to weaken against USD. This is a direct application of uncovered interest rate parity — lower rates = weaker currency.',
+                        intel: '📉 Dovish ECB risk is high. If they signal cuts, EUR/USD could drop quickly — a short-term sell of EUR could be profitable.'
+                    },
+                    {
+                        eventDay: 15,
+                        badge: '🇬🇧 BoE Decision Preview',
+                        context: 'The Bank of England is set to announce its latest decision. UK inflation remains stubbornly above target.',
+                        question: 'With UK inflation above target, what is the most likely BoE action and its effect on GBP?',
+                        hint: 'Central banks have a job to keep inflation near 2%. If inflation is too high, they raise rates to cool spending. Higher rates attract investors — what does that do to the currency?',
+                        options: ['BoE cuts rates to help consumers → GBP strengthens', 'BoE holds or raises rates to fight inflation → GBP strengthens', 'BoE holds rates → GBP weakens due to uncertainty', 'BoE raises rates → GBP weakens as growth is threatened'],
+                        correct: 1,
+                        explanation: 'When inflation is above target, a central bank\'s credibility depends on acting hawkishly (holding or raising rates). This signals commitment to price stability, boosting confidence in the currency. Even a "hold" can strengthen GBP if it dispels fears of premature rate cuts.',
+                        intel: '🇬🇧 Hawkish BoE expected. GBP/USD may firm up after the announcement — consider a buy position pre-decision.'
+                    },
+                    {
+                        eventDay: 22,
+                        badge: '🇯🇵 BoJ Preview',
+                        context: 'The Bank of Japan is meeting. The BoJ has long maintained ultra-low (even negative) interest rates, unlike other major central banks.',
+                        question: 'The BoJ has kept rates near zero while other central banks raised rates. What has this caused over recent years?',
+                        hint: 'If Japan pays near-zero interest but other countries pay 5%, where would a global investor prefer to keep their money? What does that mean for demand for yen?',
+                        options: ['JPY to strengthen as Japanese savers earn no interest', 'JPY to weaken significantly as investors borrow cheap JPY for carry trades', 'JPY to be very stable as the BoJ controls the market', 'USD/JPY to fall as dollar demand declines'],
+                        correct: 1,
+                        explanation: 'Japan\'s ultra-low rates made JPY a prime carry trade currency — investors borrowed in JPY at near-zero cost and invested in higher-yielding currencies. This massive outflow of JPY weakened the currency substantially. USD/JPY reached 30-year highs as a result. Any BoJ hawkish shift could trigger a violent JPY reversal.',
+                        intel: '🇯🇵 Carry trade alert: Watch USD/JPY closely. Any BoJ hawkish surprise could cause rapid JPY strengthening — be careful with JPY short positions.'
+                    }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.renderCurrencies();
+                this.renderPortfolio();
+                this.renderTradeHistory();
+                this.updateHeader();
+                // Game starts via startScenario() — scenario screen is shown on load
+
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('endBtn').addEventListener('click', () => this.endGame());
+                document.getElementById('speedSelect').addEventListener('change', (e) => {
+                    this.tickSpeed = parseInt(e.target.value);
+                    if (!this.isGameOver && !this.quizActive) this.restartGameLoop();
+                });
+                document.getElementById('tradeAmount').addEventListener('input', () => this.updateTradeCalculation());
+            }
+
+            startScenario(mode) {
+                this.scenarioMode = mode;
+                document.getElementById('scenarioScreen').style.display = 'none';
+                document.getElementById('theoryToggle').style.display = 'block';
+
+                const scenarioMeta = {
+                    free:      { title: null, desc: null },
+                    rateHike:  { title: '🏛️ Scenario: Interest Rate Shock', desc: 'The Fed is hiking aggressively while the ECB holds. Watch interest rate differentials drive currency movements over 30 days.' },
+                    political: { title: '⚡ Scenario: Political Instability', desc: 'Government collapses, geopolitical crises, and election uncertainty rock markets. Safe havens surge; risk currencies suffer.' },
+                    inflation: { title: '📈 Scenario: Inflation Crisis', desc: 'Inflation is surging globally but hitting each economy differently. Central bank responses — fast or slow — will be the key driver.' }
+                };
+                const meta = scenarioMeta[mode];
+                if (meta.title) {
+                    document.getElementById('scenarioBanner').classList.add('active');
+                    document.getElementById('scenarioBannerTitle').textContent = meta.title;
+                    document.getElementById('scenarioBannerDesc').textContent = meta.desc;
+                }
+
+                const startMsg = mode === 'free'
+                    ? '🎮 Free Play started! Watch for market events and trade strategically. Open 📖 Theory for key concepts.'
+                    : `🎮 ${meta.title} — scenario active. Events are scripted for maximum learning. Use 📖 Theory sidebar for support.`;
+                this.addNews(startMsg, false);
+                this.startGameLoop();
+            }
+
+            // ===== THEORY SIDEBAR =====
+            toggleTheory() {
+                const sidebar = document.getElementById('theorySidebar');
+                sidebar.classList.toggle('open');
+            }
+
+            theoryTab(tab) {
+                document.querySelectorAll('.theory-tab').forEach((t, i) => {
+                    const tabs = ['rates','demand','parity','macro'];
+                    t.classList.toggle('active', tabs[i] === tab);
+                });
+                document.querySelectorAll('.theory-section').forEach(s => {
+                    s.classList.toggle('active', s.id === `theory-${tab}`);
+                });
+            }
+
+            // ===== MOVEMENT EXPLANATION PANEL =====
+            showMovementPanel(eventTitle, explanationData) {
+                if (!explanationData) return;
+                this.lastMovementEvent = explanationData;
+                const content = document.getElementById('movementContent');
+
+                // Build pair rows from current actual changes
+                let pairsHTML = '';
+                const pairData = explanationData.pairs || {};
+                for (const [pair, info] of Object.entries(pairData)) {
+                    const actualChange = this.currencies[pair] ? (this.currencies[pair].lastChange || 0) * 100 : 0;
+                    const changeClass = actualChange >= 0 ? 'movement-up' : 'movement-down';
+                    const changeStr = `${actualChange >= 0 ? '▲' : '▼'} ${Math.abs(actualChange).toFixed(2)}%`;
+                    pairsHTML += `
+                        <div class="movement-pair-row">
+                            <span class="movement-pair-label">${pair}</span>
+                            <span class="movement-change ${changeClass}">${changeStr}</span>
+                            <span class="movement-reason">${info.reason}</span>
+                        </div>`;
+                }
+
+                content.innerHTML = `
+                    <div class="movement-event">📰 ${explanationData.event}</div>
+                    ${pairsHTML}
+                    <div class="movement-theory-link">📖 <strong>Theory link:</strong> ${explanationData.theory}</div>
+                `;
+
+                const panel = document.getElementById('movementPanel');
+                panel.classList.add('show');
+                // Auto-hide after 18 seconds
+                clearTimeout(this._movementTimer);
+                this._movementTimer = setTimeout(() => this.closeMovementPanel(), 18000);
+            }
+
+            closeMovementPanel() {
+                document.getElementById('movementPanel').classList.remove('show');
+                clearTimeout(this._movementTimer);
+            }
+
+            startGameLoop() {
+                this.gameLoop = setInterval(() => {
+                    if (!this.isPaused && !this.isGameOver && !this.quizActive) {
+                        this.tick();
+                    }
+                }, this.tickSpeed);
+            }
+
+            restartGameLoop() {
+                clearInterval(this.gameLoop);
+                this.startGameLoop();
+            }
+
+            tick() {
+                this.day++;
+
+                // Check for prediction question BEFORE the scheduled event fires
+                const predQ = this.predictionQuestions.find(q => q.eventDay === this.day);
+                if (predQ) {
+                    this.showPredictionQuestion(predQ);
+                    return;
+                }
+
+                // Check for debrief every N days
+                if (this.day - this.lastDebriefDay >= this.debriefInterval && this.tradeHistory.length > 0) {
+                    this.showDebriefQuestion();
+                    return;
+                }
+
+                // Check for scenario scripted events (if in scenario mode)
+                if (this.scenarioMode !== 'free') {
+                    const script = this.scenarioScripts[this.scenarioMode] || [];
+                    const scriptedEvent = script.find(e => e.day === this.day);
+                    if (scriptedEvent) {
+                        this.triggerScheduledEvent(scriptedEvent);
+                        if (scriptedEvent.explanation) {
+                            setTimeout(() => this.showMovementPanel(scriptedEvent.title, scriptedEvent.explanation), 600);
+                        }
+                        this.renderCurrencies();
+                        this.renderPortfolio();
+                        this.updateHeader();
+                        if (this.day >= 30) this.endGame();
+                        return;
+                    }
+                }
+
+                // Check for free-play scheduled events
+                const scheduledEvent = this.scheduledEvents.find(e => e.day === this.day);
+                if (scheduledEvent) {
+                    this.triggerScheduledEvent(scheduledEvent);
+                } else {
+                    if (Math.random() < 0.25) {
+                        this.triggerRandomShock();
+                    } else if (Math.random() < 0.35) {
+                        this.addSpeculation();
+                    } else {
+                        this.updatePricesWithCorrelations();
+                    }
+                }
+
+                this.renderCurrencies();
+                this.renderPortfolio();
+                this.updateHeader();
+                if (this.day >= 30) this.endGame();
+            }
+
+            updatePricesWithCorrelations() {
+                // Pick a primary mover
+                const pairs = Object.keys(this.currencies);
+                const primaryPair = pairs[Math.floor(Math.random() * pairs.length)];
+                const primaryMove = (Math.random() - 0.5) * 2 * this.currencies[primaryPair].volatility;
+                
+                // Apply primary move
+                this.currencies[primaryPair].rate *= (1 + primaryMove);
+                this.currencies[primaryPair].lastChange = primaryMove;
+                
+                // Apply correlated moves to other pairs
+                for (let pair in this.currencies) {
+                    if (pair !== primaryPair) {
+                        const correlation = this.correlations[primaryPair][pair] || 0;
+                        const correlatedMove = primaryMove * correlation + (Math.random() - 0.5) * this.currencies[pair].volatility;
+                        this.currencies[pair].rate *= (1 + correlatedMove);
+                        this.currencies[pair].lastChange = correlatedMove;
+                    }
+                    this.priceHistory[pair].push(this.currencies[pair].rate);
+                }
+            }
+
+            triggerScheduledEvent(event) {
+                this.showEventNotification(event.title, event.message, event.type === 'major');
+                
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const impact = event.impact * direction;
+                
+                this.applyRegionalShock(event.region, impact);
+                this.addNews(`${event.title}: ${event.message}`, true);
+
+                // Generate movement explanation for free-play events
+                if (this.scenarioMode === 'free' && !event.explanation) {
+                    setTimeout(() => this.showAutoMovementPanel(event, impact), 600);
+                }
+
+                // 25% chance of a knowledge question on scheduled events
+                if (Math.random() < 0.25) {
+                    setTimeout(() => this.showKnowledgeQuestion(event.region), 800);
+                }
+            }
+
+            triggerRandomShock() {
+                const shock = this.randomShocks[Math.floor(Math.random() * this.randomShocks.length)];
+                const impact = shock.type === 'positive' ? Math.abs(shock.impact) : -Math.abs(shock.impact);
+                
+                this.applyRegionalShock(shock.region, impact);
+                this.addNews(shock.message, true);
+
+                // 15% chance of a knowledge quiz on random shocks
+                if (Math.random() < 0.15) {
+                    setTimeout(() => this.showKnowledgeQuestion(shock.region), 800);
+                }
+            }
+
+            showAutoMovementPanel(event, impact) {
+                const isPositive = impact > 0;
+                const regionTheory = {
+                    USD: isPositive
+                        ? 'Interest Rate Parity: Positive USD news signals potential rate hikes, attracting foreign capital and strengthening the dollar. Pairs like EUR/USD and GBP/USD fall as USD demand rises.'
+                        : 'Risk Sentiment: Negative USD news reduces rate hike expectations, weakening the dollar. EUR/USD and GBP/USD typically rise as the dollar loses ground.',
+                    EUR: isPositive
+                        ? 'Economic Fundamentals: Positive Eurozone data boosts confidence in the ECB\'s ability to raise rates, increasing demand for EUR from investors seeking better yields.'
+                        : 'Capital Flight: Negative EUR news triggers capital outflows from European assets. EUR/USD falls as investors move funds to perceived safer alternatives.',
+                    GBP: isPositive
+                        ? 'UK Economic Strength: Positive UK data raises expectations of BoE rate hikes. Sterling strengthens as yield-seeking capital flows into UK assets.'
+                        : 'Brexit & Political Risk: Sterling remains sensitive to political and economic uncertainty, weakening as investors price in a risk premium.',
+                    JPY: isPositive
+                        ? 'Safe Haven Dynamics: Positive JPY moves often reflect global risk aversion — investors buying yen as a safe haven during uncertainty.'
+                        : 'Carry Trade Flows: When risk appetite is high, investors sell low-yielding JPY to fund higher-yielding currency positions — weakening the yen.',
+                    AUD: isPositive
+                        ? 'Commodity Currency: AUD strengthens with rising commodity prices (iron ore, coal) and Chinese demand. Risk-on sentiment also boosts the "high-yield" AUD.'
+                        : 'China Dependency: AUD is vulnerable to Chinese economic weakness and falling commodity prices, reflecting Australia\'s export structure.',
+                    global: isPositive
+                        ? 'Risk-On Sentiment: Positive global news boosts risk appetite. High-yield currencies (AUD, GBP) outperform; safe havens (JPY, CHF) weaken.'
+                        : 'Risk-Off Flight: Global shocks trigger safe-haven demand. JPY and CHF surge; commodity and emerging market currencies fall hardest.'
+                };
+
+                const pairs = {};
+                for (const pair in this.currencies) {
+                    const change = this.currencies[pair].lastChange || 0;
+                    if (Math.abs(change) > 0.003) {
+                        pairs[pair] = { reason: change > 0 ? 'Moved up with the event' : 'Moved down with the event' };
+                    }
+                }
+
+                this.showMovementPanel(event.title, {
+                    event: event.message,
+                    theory: regionTheory[event.region] || regionTheory.global,
+                    pairs: pairs
+                });
+            }
+
+            applyRegionalShock(region, impact) {
+                for (let pair in this.currencies) {
+                    let pairImpact = 0;
+                    
+                    if (region === 'global') {
+                        // Global events affect all pairs
+                        pairImpact = impact * (0.5 + Math.random() * 0.5);
+                    } else if (region === 'USD') {
+                        // USD events: inverse for USD as quote currency, normal for USD as base
+                        if (pair.startsWith('USD/')) {
+                            pairImpact = impact;
+                        } else if (pair.endsWith('/USD')) {
+                            pairImpact = -impact;
+                        }
+                    } else {
+                        // Regional currency events
+                        const pairPrefix = pair.substring(0, 3);
+                        if (pairPrefix === region) {
+                            pairImpact = impact;
+                        } else if (pair.includes(region)) {
+                            pairImpact = impact * 0.5;
+                        }
+                    }
+                    
+                    // Add some randomness
+                    pairImpact += (Math.random() - 0.5) * this.currencies[pair].volatility;
+                    
+                    this.currencies[pair].rate *= (1 + pairImpact);
+                    this.currencies[pair].lastChange = pairImpact;
+                    this.priceHistory[pair].push(this.currencies[pair].rate);
+                }
+            }
+
+            showEventNotification(title, message, isMajor) {
+                const notification = document.createElement('div');
+                notification.className = `event-notification ${isMajor ? 'major' : ''}`;
+                notification.innerHTML = `
+                    <div class="event-title">${title}</div>
+                    <div class="event-description">${message}</div>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+
+            addSpeculation() {
+                const spec = this.speculation[Math.floor(Math.random() * this.speculation.length)];
+                this.addNews(spec.message, false);
+            }
+
+            addNews(message, isShock) {
+                const newsFeed = document.getElementById('newsFeed');
+                const newsItem = document.createElement('div');
+                newsItem.className = `news-item ${isShock ? 'news-shock' : ''}`;
+                newsItem.innerHTML = `
+                    <div class="news-time">Day ${this.day}</div>
+                    <div class="news-content">${message}</div>
+                `;
+                newsFeed.insertBefore(newsItem, newsFeed.firstChild);
+                
+                if (newsFeed.children.length > 10) {
+                    newsFeed.removeChild(newsFeed.lastChild);
+                }
+            }
+
+            openTradeModal(pair, type) {
+                this.currentTradePair = pair;
+                this.currentTradeType = type;
+                
+                document.getElementById('tradeModalTitle').textContent = `${type === 'buy' ? '🟢 Buy' : '🔴 Sell'} ${pair}`;
+                document.getElementById('tradeRate').textContent = this.currencies[pair].rate.toFixed(4);
+                document.getElementById('tradeBalance').textContent = `$${this.balance.toFixed(2)}`;
+                
+                // Show holdings for sell
+                if (type === 'sell' && this.portfolio[pair]) {
+                    document.getElementById('tradeHoldingsRow').style.display = 'flex';
+                    document.getElementById('tradeHoldings').textContent = `${this.portfolio[pair].amount.toFixed(2)} units`;
+                } else {
+                    document.getElementById('tradeHoldingsRow').style.display = 'none';
+                }
+                
+                // Set default amount
+                let defaultAmount = 100;
+                if (type === 'sell' && this.portfolio[pair]) {
+                    defaultAmount = Math.min(100, this.portfolio[pair].amount);
+                }
+                document.getElementById('tradeAmount').value = defaultAmount;
+                
+                this.updateTradeCalculation();
+                
+                document.getElementById('tradeModal').classList.add('active');
+            }
+
+            closeTradeModal() {
+                document.getElementById('tradeModal').classList.remove('active');
+                this.currentTradePair = null;
+                this.currentTradeType = null;
+            }
+
+            setTradeAmount(amount) {
+                document.getElementById('tradeAmount').value = amount;
+                this.updateTradeCalculation();
+            }
+
+            updateTradeCalculation() {
+                if (!this.currentTradePair) return;
+                
+                const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+                const rate = this.currencies[this.currentTradePair].rate;
+                const cost = amount * rate;
+                const commission = cost * this.commissionRate;
+                const total = cost + commission;
+                
+                document.getElementById('tradeTotalCost').textContent = `$${cost.toFixed(2)}`;
+                document.getElementById('tradeCommission').textContent = `$${commission.toFixed(2)}`;
+                document.getElementById('tradeFinalAmount').textContent = `$${total.toFixed(2)}`;
+            }
+
+            confirmTrade() {
+                const amount = parseFloat(document.getElementById('tradeAmount').value);
+                
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid amount!');
+                    return;
+                }
+                
+                if (this.currentTradeType === 'buy') {
+                    this.executeBuy(this.currentTradePair, amount);
+                } else {
+                    this.executeSell(this.currentTradePair, amount);
+                }
+                
+                this.closeTradeModal();
+            }
+
+            executeBuy(pair, amount) {
+                const cost = this.currencies[pair].rate * amount;
+                const commission = cost * this.commissionRate;
+                const total = cost + commission;
+                
+                if (total > this.balance) {
+                    alert('Insufficient balance!');
+                    return;
+                }
+                
+                this.balance -= total;
+                this.totalCommissions += commission;
+                
+                if (!this.portfolio[pair]) {
+                    this.portfolio[pair] = { amount: 0, avgPrice: 0 };
+                }
+                
+                const totalAmount = this.portfolio[pair].amount + amount;
+                this.portfolio[pair].avgPrice = ((this.portfolio[pair].avgPrice * this.portfolio[pair].amount) + (this.currencies[pair].rate * amount)) / totalAmount;
+                this.portfolio[pair].amount = totalAmount;
+                
+                // Record trade in history
+                this.tradeHistory.unshift({
+                    day: this.day,
+                    pair: pair,
+                    type: 'buy',
+                    amount: amount,
+                    rate: this.currencies[pair].rate,
+                    cost: cost,
+                    commission: commission,
+                    total: total
+                });
+                
+                this.renderPortfolio();
+                this.renderTradeHistory();
+                this.updateHeader();
+                this.addNews(`✅ Bought ${amount.toFixed(2)} units of ${pair} at ${this.currencies[pair].rate.toFixed(4)} (Commission: $${commission.toFixed(2)})`, false);
+            }
+
+            executeSell(pair, amount) {
+                if (!this.portfolio[pair] || this.portfolio[pair].amount < amount) {
+                    alert('Insufficient holdings!');
+                    return;
+                }
+                
+                const revenue = this.currencies[pair].rate * amount;
+                const commission = revenue * this.commissionRate;
+                const total = revenue - commission;
+                
+                // Calculate P/L for this trade
+                const avgBuyPrice = this.portfolio[pair].avgPrice;
+                const costBasis = avgBuyPrice * amount;
+                const pl = revenue - costBasis - commission;
+                
+                this.balance += total;
+                this.totalCommissions += commission;
+                this.portfolio[pair].amount -= amount;
+                
+                if (this.portfolio[pair].amount === 0) {
+                    delete this.portfolio[pair];
+                }
+                
+                // Record trade in history with P/L
+                this.tradeHistory.unshift({
+                    day: this.day,
+                    pair: pair,
+                    type: 'sell',
+                    amount: amount,
+                    rate: this.currencies[pair].rate,
+                    revenue: revenue,
+                    commission: commission,
+                    total: total,
+                    avgBuyPrice: avgBuyPrice,
+                    pl: pl
+                });
+                
+                this.renderPortfolio();
+                this.renderTradeHistory();
+                this.updateHeader();
+                this.addNews(`💰 Sold ${amount.toFixed(2)} units of ${pair} at ${this.currencies[pair].rate.toFixed(4)} (Commission: $${commission.toFixed(2)})`, false);
+            }
+
+            // ===== QUIZ SYSTEM METHODS =====
+
+            showPredictionQuestion(predQ) {
+                this.quizActive = true;
+                clearInterval(this.gameLoop); // Stop the loop while quiz is open
+
+                const badge = document.getElementById('quizTypeBadge');
+                badge.textContent = predQ.badge || '🔮 Prediction';
+                badge.className = 'quiz-type-badge prediction';
+
+                const ctx = document.getElementById('quizContext');
+                ctx.style.display = 'block';
+                ctx.textContent = predQ.context;
+
+                document.getElementById('quizQuestion').textContent = predQ.question;
+                document.getElementById('quizFeedback').className = 'quiz-feedback';
+                document.getElementById('quizFeedback').innerHTML = '';
+                document.getElementById('quizIntelReveal').className = 'quiz-intel-reveal';
+                document.getElementById('quizIntelReveal').style.opacity = '1';
+                // Hint
+                this._currentHint = predQ.hint || null;
+                const hintBtn = document.getElementById('quizHintBtn');
+                const hintBox = document.getElementById('quizHintBox');
+                hintBtn.style.display = this._currentHint ? 'inline-block' : 'none';
+                hintBox.className = 'quiz-hint-box';
+                // Always show continue button so students can skip
+                document.getElementById('quizContinueBtn').className = 'btn-quiz-continue show';
+                document.getElementById('quizContinueBtn').textContent = '⏭ Skip Question';
+
+                this.renderQuizOptions(predQ, () => {
+                    // After quiz closes, fire the actual event
+                    const scheduledEvent = this.scheduledEvents.find(e => e.day === this.day);
+                    if (scheduledEvent) {
+                        this.triggerScheduledEvent(scheduledEvent);
+                        this.renderCurrencies();
+                        this.renderPortfolio();
+                        this.updateHeader();
+                    }
+                });
+
+                document.getElementById('quizModal').classList.add('active');
+            }
+
+            showKnowledgeQuestion(region) {
+                if (this.quizActive) return; // Don't stack quizzes
+
+                // Pick a relevant question not yet used
+                let candidates = this.knowledgeQuestions.filter(q =>
+                    (q.trigger === region || q.trigger === 'global') &&
+                    !this.usedKnowledgeIds.has(q.id)
+                );
+                if (candidates.length === 0) {
+                    candidates = this.knowledgeQuestions.filter(q => !this.usedKnowledgeIds.has(q.id));
+                }
+                if (candidates.length === 0) return; // All used
+
+                const q = candidates[Math.floor(Math.random() * candidates.length)];
+                this.usedKnowledgeIds.add(q.id);
+
+                this.quizActive = true;
+                clearInterval(this.gameLoop); // Stop the loop while quiz is open
+
+                const badge = document.getElementById('quizTypeBadge');
+                badge.textContent = '📚 Knowledge Check';
+                badge.className = 'quiz-type-badge knowledge';
+
+                const ctx = document.getElementById('quizContext');
+                ctx.style.display = 'none';
+
+                document.getElementById('quizQuestion').textContent = q.question;
+                document.getElementById('quizFeedback').className = 'quiz-feedback';
+                document.getElementById('quizFeedback').innerHTML = '';
+                document.getElementById('quizIntelReveal').className = 'quiz-intel-reveal';
+                document.getElementById('quizIntelReveal').style.opacity = '1';
+                // Hint
+                this._currentHint = q.hint || null;
+                document.getElementById('quizHintBtn').style.display = this._currentHint ? 'inline-block' : 'none';
+                document.getElementById('quizHintBox').className = 'quiz-hint-box';
+                // Always show skip button
+                document.getElementById('quizContinueBtn').className = 'btn-quiz-continue show';
+                document.getElementById('quizContinueBtn').textContent = '⏭ Skip Question';
+
+                this.renderQuizOptions(q, null);
+                document.getElementById('quizModal').classList.add('active');
+            }
+
+            showDebriefQuestion() {
+                if (this.quizActive) return;
+                if (this.tradeHistory.length === 0) return;
+
+                this.lastDebriefDay = this.day;
+                this.quizActive = true;
+                clearInterval(this.gameLoop); // Stop the loop while quiz is open
+
+                // Analyse recent trades for the debrief
+                const recentTrades = this.tradeHistory.slice(0, 5);
+                const sells = recentTrades.filter(t => t.type === 'sell');
+                const profitableSells = sells.filter(t => t.pl > 0);
+                const loosingSells = sells.filter(t => t.pl < 0);
+                const totalPL = sells.reduce((s, t) => s + (t.pl || 0), 0);
+
+                const debriefQuestions = [
+                    {
+                        question: `You've made ${recentTrades.length} trades in recent days. Looking at your recent activity, which trading behaviour best describes you?`,
+                        options: [
+                            'Trend follower — I buy when prices are rising',
+                            'Contrarian — I buy when prices are falling (buy the dip)',
+                            'News trader — I react to market events and headlines',
+                            'I\'m not sure — I\'ve been experimenting'
+                        ],
+                        correct: -1, // No wrong answer — reflective
+                        explanation: `Understanding your trading style matters. Trend-following works in strong momentum markets. Contrarian trading is riskier but can deliver big returns. News trading requires quick reactions and understanding of fundamentals. Most professional traders combine approaches.`,
+                        intel: null
+                    },
+                    {
+                        question: sells.length > 0
+                            ? `You've closed ${sells.length} position${sells.length > 1 ? 's' : ''} recently with a net P/L of ${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}. What's the biggest lesson from this?`
+                            : `You've made ${recentTrades.length} buy trades but haven't sold yet. What should a trader consider before holding positions too long?`,
+                        options: sells.length > 0 ? [
+                            'Always sell quickly to lock in small profits — never hold overnight',
+                            'Cut losses early but let profitable trades run — manage risk asymmetrically',
+                            'Always hold positions for maximum potential profit regardless of losses',
+                            'The timing of trades doesn\'t matter — only the currency pair matters'
+                        ] : [
+                            'Holding forever is fine — currencies always recover',
+                            'Set a mental stop-loss and target price before you buy, not after',
+                            'Only sell when you\'ve doubled your money',
+                            'Ignore market news and just hold based on your original view'
+                        ],
+                        correct: 1,
+                        explanation: sells.length > 0
+                            ? `"Cut losses short, let profits run" is one of the oldest trading maxims. Asymmetric risk management — risking $50 to make $150 — is what separates profitable traders from unprofitable ones over time. Emotional selling (panic or greed) is the enemy.`
+                            : `Setting entry and exit criteria BEFORE you trade removes emotion from decision-making. Define your stop-loss (maximum you'll lose) and target price BEFORE you buy. This is called a trading plan, and professionals never trade without one.`,
+                        intel: totalPL >= 0
+                            ? `🎯 Your recent performance is solid. Consider scaling up winning positions — the same currency pairs that worked before often continue trending.`
+                            : `📉 Recent losses are part of trading. Review which pairs caused losses — consider avoiding those and focusing on pairs where news analysis gives you an edge.`
+                    },
+                    {
+                        question: 'Which of the following is the most important risk management principle for FOREX trading?',
+                        options: [
+                            'Always invest your entire balance in one trade to maximise returns',
+                            'Diversify across multiple currency pairs and never risk more than 2–5% of capital per trade',
+                            'Only trade major currency pairs and always use maximum leverage',
+                            'Copy successful traders\' positions exactly and sell when they sell'
+                        ],
+                        correct: 1,
+                        explanation: 'The "2% rule" is a classic risk management principle: never risk more than 2–5% of your total capital on a single trade. Combined with diversification across pairs, this ensures that even a string of losses won\'t wipe out your account. Professional traders obsess over risk management before thinking about returns.',
+                        intel: '🛡️ Reminder: Diversification is your shield. Spread your positions across 2–3 pairs rather than concentrating in one. Your portfolio looks concentrated — consider rebalancing.'
+                    }
+                ];
+
+                const q = debriefQuestions[Math.floor(Math.random() * debriefQuestions.length)];
+
+                const badge = document.getElementById('quizTypeBadge');
+                badge.textContent = '📊 Trading Debrief';
+                badge.className = 'quiz-type-badge debrief';
+
+                // Build recent trade summary for context
+                const ctx = document.getElementById('quizContext');
+                ctx.style.display = 'block';
+                let tradeHTML = `<strong style="color:#ffcc88">Your last ${recentTrades.length} trades:</strong><div class="debrief-trades" style="margin-top:8px;">`;
+                recentTrades.forEach(t => {
+                    const pl = t.type === 'sell' ? ` | P/L: ${t.pl >= 0 ? '+' : ''}$${t.pl.toFixed(2)}` : '';
+                    const col = t.type === 'sell' ? (t.pl >= 0 ? '#00ff88' : '#ff6666') : '#00d4ff';
+                    tradeHTML += `<div class="debrief-trade-item"><span>${t.type.toUpperCase()} ${t.pair} @ ${t.rate.toFixed(4)} (Day ${t.day})</span><span style="color:${col}">${pl || '(open)'}</span></div>`;
+                });
+                tradeHTML += '</div>';
+                ctx.innerHTML = tradeHTML;
+
+                document.getElementById('quizQuestion').textContent = q.question;
+                document.getElementById('quizFeedback').className = 'quiz-feedback';
+                document.getElementById('quizFeedback').innerHTML = '';
+                document.getElementById('quizIntelReveal').className = 'quiz-intel-reveal';
+                document.getElementById('quizIntelReveal').style.opacity = '1';
+                // No hint for debrief (reflective questions)
+                this._currentHint = null;
+                document.getElementById('quizHintBtn').style.display = 'none';
+                document.getElementById('quizHintBox').className = 'quiz-hint-box';
+                // Always show skip button
+                document.getElementById('quizContinueBtn').className = 'btn-quiz-continue show';
+                document.getElementById('quizContinueBtn').textContent = '⏭ Skip Question';
+
+                this.renderQuizOptions(q, null);
+                document.getElementById('quizModal').classList.add('active');
+            }
+
+            showHint() {
+                const hintBox = document.getElementById('quizHintBox');
+                const hintBtn = document.getElementById('quizHintBtn');
+                hintBox.textContent = this._currentHint;
+                hintBox.className = 'quiz-hint-box show';
+                hintBtn.style.display = 'none';
+            }
+
+            renderQuizOptions(q, onCloseCallback) {
+                const container = document.getElementById('quizOptions');
+                container.innerHTML = '';
+                const letters = ['A', 'B', 'C', 'D'];
+
+                q.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-option';
+                    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+                    btn.addEventListener('click', () => {
+                        if (btn.classList.contains('locked')) return;
+                        this.handleQuizAnswer(q, i, onCloseCallback);
+                    });
+                    container.appendChild(btn);
+                });
+            }
+
+            handleQuizAnswer(q, selectedIndex, onCloseCallback) {
+                const options = document.querySelectorAll('.quiz-option');
+                options.forEach(o => o.classList.add('locked'));
+
+                const isReflective = q.correct === -1;
+                const isCorrect = isReflective || selectedIndex === q.correct;
+
+                // Highlight selected
+                options[selectedIndex].classList.add(isCorrect || isReflective ? 'correct' : 'incorrect');
+                options[selectedIndex].classList.add('selected');
+
+                // Show correct answer if wrong
+                if (!isCorrect && !isReflective) {
+                    options[q.correct].classList.add('correct');
+                }
+
+                // Feedback
+                const feedback = document.getElementById('quizFeedback');
+                this.quizTotalCount++;
+                if (isCorrect || isReflective) {
+                    this.quizCorrectCount++;
+                    this.quizScoreLog.push('correct');
+                    feedback.className = 'quiz-feedback correct-fb show';
+                    feedback.innerHTML = `<strong>✅ ${isReflective ? 'Good reflection!' : 'Correct!'}</strong> ${q.explanation}`;
+
+                    // Award market intel
+                    if (q.intel) {
+                        this.intelCount++;
+                        document.getElementById('intelCount').textContent = this.intelCount;
+                        const intel = document.getElementById('quizIntelReveal');
+                        intel.className = 'quiz-intel-reveal show';
+                        intel.innerHTML = `<strong>🔍 Market Intelligence Unlocked!</strong>${q.intel}`;
+                    }
+                } else {
+                    this.quizScoreLog.push('incorrect');
+                    feedback.className = 'quiz-feedback incorrect-fb show';
+                    feedback.innerHTML = `<strong>❌ Not quite.</strong> ${q.explanation}`;
+                    // Still show intel but as "missed" — don't add to count
+                    if (q.intel) {
+                        const intel = document.getElementById('quizIntelReveal');
+                        intel.className = 'quiz-intel-reveal show';
+                        intel.style.opacity = '0.5';
+                        intel.innerHTML = `<strong style="color:#aaa">🔍 Intelligence (answer correctly to unlock fully)</strong><span style="filter:blur(4px)">${q.intel}</span>`;
+                    }
+                }
+
+                // Update score pips
+                this.renderScorePips();
+
+                // Show continue button (update from Skip to Continue)
+                document.getElementById('quizContinueBtn').className = 'btn-quiz-continue show';
+                document.getElementById('quizContinueBtn').textContent = '▶ Continue Trading';
+
+                // Store callback
+                this._quizOnClose = onCloseCallback;
+            }
+
+            renderScorePips() {
+                const bar = document.getElementById('quizScoreBar');
+                bar.innerHTML = '';
+                this.quizScoreLog.slice(-8).forEach(result => {
+                    const pip = document.createElement('div');
+                    pip.className = `score-pip ${result}`;
+                    bar.appendChild(pip);
+                });
+            }
+
+            closeQuiz() {
+                document.getElementById('quizModal').classList.remove('active');
+                this.quizActive = false;
+                this.isPaused = false;
+
+                const cb = this._quizOnClose;
+                this._quizOnClose = null;
+                if (cb) cb();
+
+                // Restart the game loop (was cleared when quiz opened)
+                this.startGameLoop();
+
+                this.renderCurrencies();
+                this.renderPortfolio();
+                this.updateHeader();
+
+                if (this.day >= 30) {
+                    this.endGame();
+                }
+            }
+
+            renderCurrencies() {
+                const grid = document.getElementById('currencyGrid');
+                grid.innerHTML = '';
+                
+                for (let pair in this.currencies) {
+                    const currency = this.currencies[pair];
+                    const changePercent = (currency.lastChange || 0) * 100;
+                    const changeClass = changePercent >= 0 ? 'rate-up' : 'rate-down';
+                    const changeSymbol = changePercent >= 0 ? '▲' : '▼';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'currency-card';
+                    card.innerHTML = `
+                        <div class="currency-pair">${pair}</div>
+                        <div class="currency-rate">${currency.rate.toFixed(4)}</div>
+                        <div class="rate-change ${changeClass}">${changeSymbol} ${Math.abs(changePercent).toFixed(2)}%</div>
+                        <div class="trade-buttons">
+                            <button class="btn-buy" onclick="simulator.openTradeModal('${pair}', 'buy')">BUY</button>
+                            <button class="btn-sell" onclick="simulator.openTradeModal('${pair}', 'sell')">SELL</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                }
+            }
+
+            renderTradeHistory() {
+                const historyContainer = document.getElementById('tradeHistory');
+                historyContainer.innerHTML = '';
+                
+                if (this.tradeHistory.length === 0) {
+                    historyContainer.innerHTML = '<div class="empty-state">No trades yet. Start trading to see your history!</div>';
+                    return;
+                }
+                
+                // Show last 20 trades
+                const recentTrades = this.tradeHistory.slice(0, 20);
+                
+                recentTrades.forEach(trade => {
+                    const item = document.createElement('div');
+                    item.className = `trade-history-item ${trade.type}`;
+                    
+                    let detailsHTML = '';
+                    
+                    if (trade.type === 'buy') {
+                        detailsHTML = `
+                            <div class="trade-history-header">
+                                <span class="trade-history-pair">${trade.pair}</span>
+                                <span class="trade-type-badge buy">BUY</span>
+                            </div>
+                            <div class="trade-history-details">
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Amount:</span>
+                                    <span class="trade-history-detail-value">${trade.amount.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Rate:</span>
+                                    <span class="trade-history-detail-value">${trade.rate.toFixed(4)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Cost:</span>
+                                    <span class="trade-history-detail-value">$${trade.cost.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Commission:</span>
+                                    <span class="trade-history-detail-value">$${trade.commission.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail" style="grid-column: 1 / -1;">
+                                    <span class="trade-history-detail-label">Total Paid:</span>
+                                    <span class="trade-history-detail-value" style="color: #00d4ff; font-weight: bold;">$${trade.total.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div class="trade-day">Day ${trade.day}</div>
+                        `;
+                    } else {
+                        const plClass = trade.pl >= 0 ? 'profit-positive' : 'profit-negative';
+                        const plSymbol = trade.pl >= 0 ? '+' : '';
+                        detailsHTML = `
+                            <div class="trade-history-header">
+                                <span class="trade-history-pair">${trade.pair}</span>
+                                <span class="trade-type-badge sell">SELL</span>
+                            </div>
+                            <div class="trade-history-details">
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Amount:</span>
+                                    <span class="trade-history-detail-value">${trade.amount.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Rate:</span>
+                                    <span class="trade-history-detail-value">${trade.rate.toFixed(4)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Revenue:</span>
+                                    <span class="trade-history-detail-value">$${trade.revenue.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Commission:</span>
+                                    <span class="trade-history-detail-value">$${trade.commission.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Avg Buy Price:</span>
+                                    <span class="trade-history-detail-value">${trade.avgBuyPrice.toFixed(4)}</span>
+                                </div>
+                                <div class="trade-history-detail">
+                                    <span class="trade-history-detail-label">Net Received:</span>
+                                    <span class="trade-history-detail-value">$${trade.total.toFixed(2)}</span>
+                                </div>
+                                <div class="trade-pl ${plClass}">
+                                    <div class="trade-history-detail">
+                                        <span>Profit/Loss:</span>
+                                        <span style="font-size: 1.1em;">${plSymbol}$${trade.pl.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="trade-day">Day ${trade.day}</div>
+                        `;
+                    }
+                    
+                    item.innerHTML = detailsHTML;
+                    historyContainer.appendChild(item);
+                });
+            }
+
+            renderPortfolio() {
+                const portfolio = document.getElementById('portfolio');
+                portfolio.innerHTML = '';
+                
+                if (Object.keys(this.portfolio).length === 0) {
+                    portfolio.innerHTML = '<div class="empty-state">No positions yet. Start trading!</div>';
+                    return;
+                }
+                
+                for (let pair in this.portfolio) {
+                    const position = this.portfolio[pair];
+                    const currentValue = position.amount * this.currencies[pair].rate;
+                    const costBasis = position.amount * position.avgPrice;
+                    const pl = currentValue - costBasis;
+                    const plPercent = (pl / costBasis) * 100;
+                    const plClass = pl >= 0 ? 'profit-positive' : 'profit-negative';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'portfolio-item';
+                    item.innerHTML = `
+                        <div class="portfolio-pair">${pair}</div>
+                        <div class="portfolio-details">
+                            <div>Amount: ${position.amount.toFixed(2)}</div>
+                            <div>Avg Price: ${position.avgPrice.toFixed(4)}</div>
+                            <div>Current: ${this.currencies[pair].rate.toFixed(4)}</div>
+                            <div class="${plClass}">P/L: ${pl >= 0 ? '+' : ''}$${pl.toFixed(2)} (${plPercent.toFixed(1)}%)</div>
+                        </div>
+                    `;
+                    portfolio.appendChild(item);
+                }
+            }
+
+            updateHeader() {
+                document.getElementById('balance').textContent = `$${this.balance.toFixed(2)}`;
+                document.getElementById('day').textContent = this.day;
+                
+                let portfolioValue = 0;
+                for (let pair in this.portfolio) {
+                    portfolioValue += this.portfolio[pair].amount * this.currencies[pair].rate;
+                }
+                document.getElementById('portfolioValue').textContent = `$${portfolioValue.toFixed(2)}`;
+                
+                const totalValue = this.balance + portfolioValue;
+                const totalPL = totalValue - this.initialBalance;
+                const plElement = document.getElementById('totalPL');
+                plElement.textContent = `${totalPL >= 0 ? '+' : ''}$${totalPL.toFixed(2)}`;
+                plElement.className = 'info-value ' + (totalPL >= 0 ? 'profit-positive' : 'profit-negative');
+            }
+
+            togglePause() {
+                if (this.quizActive) return; // Don't let pause interfere with quiz
+                this.isPaused = !this.isPaused;
+                const btn = document.getElementById('pauseBtn');
+                const overlay = document.getElementById('pausedOverlay');
+                
+                if (this.isPaused) {
+                    btn.textContent = '▶️ Resume';
+                    overlay.classList.add('active');
+                } else {
+                    btn.textContent = '⏸ Pause';
+                    overlay.classList.remove('active');
+                }
+            }
+
+            endGame() {
+                this.isGameOver = true;
+                clearInterval(this.gameLoop);
+                
+                let portfolioValue = 0;
+                for (let pair in this.portfolio) {
+                    portfolioValue += this.portfolio[pair].amount * this.currencies[pair].rate;
+                }
+                
+                const finalValue = this.balance + portfolioValue;
+                const totalProfit = finalValue - this.initialBalance;
+                const netProfit = totalProfit; // Already accounts for commissions paid during trades
+                const returnPercent = (totalProfit / this.initialBalance) * 100;
+                
+                // Calculate trade statistics
+                const totalTrades = this.tradeHistory.length;
+                const buyTrades = this.tradeHistory.filter(t => t.type === 'buy').length;
+                const sellTrades = this.tradeHistory.filter(t => t.type === 'sell').length;
+                const profitableTrades = this.tradeHistory.filter(t => t.type === 'sell' && t.pl > 0).length;
+                const losingTrades = this.tradeHistory.filter(t => t.type === 'sell' && t.pl < 0).length;
+                const winRate = sellTrades > 0 ? (profitableTrades / sellTrades * 100).toFixed(1) : 0;
+                
+                let grade, gradeColor, performance;
+                if (returnPercent >= 50) {
+                    grade = 'S';
+                    gradeColor = '#FFD700';
+                    performance = 'Outstanding! You\'re a trading genius!';
+                } else if (returnPercent >= 30) {
+                    grade = 'A';
+                    gradeColor = '#00ff88';
+                    performance = 'Excellent work! Strong trading skills!';
+                } else if (returnPercent >= 15) {
+                    grade = 'B';
+                    gradeColor = '#00d4ff';
+                    performance = 'Good job! Above average returns!';
+                } else if (returnPercent >= 0) {
+                    grade = 'C';
+                    gradeColor = '#ff9500';
+                    performance = 'Decent performance, room for improvement.';
+                } else if (returnPercent >= -15) {
+                    grade = 'D';
+                    gradeColor = '#ff6600';
+                    performance = 'Tough market, better luck next time.';
+                } else {
+                    grade = 'F';
+                    gradeColor = '#ff4444';
+                    performance = 'Significant losses. Study the markets more!';
+                }
+                
+                const summaryContent = document.getElementById('summaryContent');
+                summaryContent.innerHTML = `
+                    <div class="performance-grade" style="color: ${gradeColor};">Grade: ${grade}</div>
+                    <p style="text-align: center; color: #aaa; margin-bottom: 30px;">${performance}</p>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">Initial Balance:</span>
+                        <span class="summary-value">$${this.initialBalance.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Final Cash Balance:</span>
+                        <span class="summary-value">$${this.balance.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Portfolio Value:</span>
+                        <span class="summary-value">$${portfolioValue.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Final Value:</span>
+                        <span class="summary-value">$${finalValue.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Commissions Paid:</span>
+                        <span class="summary-value" style="color: #ff9500;">$${this.totalCommissions.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Profit/Loss:</span>
+                        <span class="summary-value ${totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">
+                            ${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Return on Investment:</span>
+                        <span class="summary-value ${returnPercent >= 0 ? 'profit-positive' : 'profit-negative'}">
+                            ${returnPercent >= 0 ? '+' : ''}${returnPercent.toFixed(2)}%
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Days Traded:</span>
+                        <span class="summary-value">${this.day}</span>
+                    </div>
+                    
+                    <h3 style="color: #00d4ff; margin-top: 30px; margin-bottom: 15px; text-align: center;">📊 Trade Statistics</h3>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">Total Trades:</span>
+                        <span class="summary-value">${totalTrades}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Buy Orders:</span>
+                        <span class="summary-value">${buyTrades}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Sell Orders:</span>
+                        <span class="summary-value">${sellTrades}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Profitable Trades:</span>
+                        <span class="summary-value profit-positive">${profitableTrades}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Losing Trades:</span>
+                        <span class="summary-value profit-negative">${losingTrades}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Win Rate:</span>
+                        <span class="summary-value ${parseFloat(winRate) >= 50 ? 'profit-positive' : 'profit-negative'}">${winRate}%</span>
+                    </div>
+
+                    <h3 style="color: #ffcc00; margin-top: 30px; margin-bottom: 15px; text-align: center;">🔍 Knowledge Performance</h3>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">Questions Answered:</span>
+                        <span class="summary-value">${this.quizTotalCount}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Correct Answers:</span>
+                        <span class="summary-value profit-positive">${this.quizCorrectCount}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Knowledge Score:</span>
+                        <span class="summary-value" style="color:#ffcc00">${this.quizTotalCount > 0 ? Math.round(this.quizCorrectCount / this.quizTotalCount * 100) : 0}%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Market Intel Earned:</span>
+                        <span class="summary-value" style="color:#ffcc00">🔍 ${this.intelCount}</span>
+                    </div>
+                `;
+                
+                document.getElementById('summaryModal').classList.add('active');
+            }
+        }
+
+        const simulator = new ForexSimulator();
+    </script>
+</body>
+</html>

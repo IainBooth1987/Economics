@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free-Floating Exchange Rate Visualiser | BIZ-OMICS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 0;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+            border: 4px solid #FFD700;
+        }
+
+        .header {
+            background: #000000;
+            color: #FFD700;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 4px solid #FFD700;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .header .brand {
+            font-size: 0.9em;
+            color: #FFD700;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #000000;
+            border-bottom: 3px solid #FFD700;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 18px 15px;
+            text-align: center;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .tab.active {
+            background: #FFD700;
+            color: #000000;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.5s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #000000;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #FFD700;
+            padding-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .section h3 {
+            color: #000000;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .section p {
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .highlight-box {
+            background: #FFF9E6;
+            border-left: 5px solid #FFD700;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0;
+        }
+
+        .highlight-box strong {
+            color: #000000;
+        }
+
+        .highlight-box-green {
+            background: #e8f5e9;
+            border-left: 5px solid #27ae60;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0;
+        }
+
+        .highlight-box-green strong {
+            color: #27ae60;
+        }
+
+        .highlight-box-red {
+            background: #ffebee;
+            border-left: 5px solid #e74c3c;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0;
+        }
+
+        .highlight-box-red strong {
+            color: #e74c3c;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border: 2px solid #FFD700;
+            margin-bottom: 30px;
+        }
+
+        .controls h3 {
+            color: #000000;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .currency-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .currency-selector label {
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .currency-selector select {
+            padding: 10px;
+            border: 2px solid #FFD700;
+            background: white;
+            color: #000000;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .factor-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .factor-btn {
+            padding: 15px 20px;
+            border: 3px solid #000000;
+            background: white;
+            color: #000000;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .factor-btn:hover {
+            background: #FFD700;
+            color: #000000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .factor-btn.active {
+            background: #000000;
+            color: #FFD700;
+            border-color: #FFD700;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .reset-btn, .apply-btn, .clear-btn {
+            padding: 12px 25px;
+            border: 3px solid #000000;
+            background: #FFD700;
+            color: #000000;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .reset-btn:hover, .apply-btn:hover, .clear-btn:hover {
+            background: #000000;
+            color: #FFD700;
+            transform: translateY(-2px);
+        }
+
+        .diagram-container {
+            background: white;
+            border: 3px solid #000000;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            touch-action: none;
+        }
+
+        .exchange-rate-display {
+            background: #000000;
+            color: #FFD700;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            border: 3px solid #FFD700;
+        }
+
+        .exchange-rate-display h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .rate-change {
+            font-size: 2em;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .rate-arrow {
+            font-size: 3em;
+            margin: 0 10px;
+        }
+
+        .explanation {
+            background: #FFF9E6;
+            border-left: 5px solid #FFD700;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .explanation.active {
+            display: block;
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .explanation h4 {
+            color: #000000;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+
+        .explanation p {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .scenario-box {
+            background: #f8f9fa;
+            border: 3px solid #000000;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .scenario-box h4 {
+            color: #000000;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .scenario-step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #FFD700;
+        }
+
+        .challenge-mode {
+            background: #000000;
+            color: #FFD700;
+            padding: 25px;
+            margin: 20px 0;
+            border: 3px solid #FFD700;
+        }
+
+        .challenge-mode h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .challenge-question {
+            background: rgba(255, 215, 0, 0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px solid #FFD700;
+        }
+
+        .challenge-question p {
+            color: #FFFFFF;
+        }
+
+        .challenge-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .challenge-option {
+            padding: 12px;
+            background: #FFD700;
+            color: #000000;
+            border: 2px solid #FFD700;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .challenge-option:hover {
+            background: #000000;
+            color: #FFD700;
+        }
+
+        .challenge-option.correct {
+            background: #27ae60;
+            color: white;
+            border-color: #27ae60;
+        }
+
+        .challenge-option.incorrect {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+
+        .multiple-factors-selected {
+            background: #000000;
+            color: #FFD700;
+            padding: 15px;
+            margin: 15px 0;
+            border: 2px solid #FFD700;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tab {
+                font-size: 0.85em;
+                padding: 15px 10px;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .factor-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .control-buttons {
+                flex-direction: column;
+            }
+
+            .reset-btn, .apply-btn, .clear-btn {
+                width: 100%;
+            }
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-line {
+            width: 30px;
+            height: 3px;
+        }
+
+        .legend-text {
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Free Floating Exchange Rate Visualiser</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_freefloat_pw';
+  var valid = ['FreeFloat-6Hq2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['FreeFloat-6Hq2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_freefloat_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <div class="container">
+        <div class="header">
+            <h1>Free-Floating Exchange Rate Visualiser</h1>
+            <p class="subtitle">Interactive Supply & Demand Analysis</p>
+            <p class="brand">BIZ-OMICS | Economics Education</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('simulator')">Interactive Simulator</button>
+            <button class="tab" onclick="switchTab('guided')">Guided Scenarios</button>
+            <button class="tab" onclick="switchTab('challenge')">Challenge Mode</button>
+            <button class="tab" onclick="switchTab('theory')">Theory</button>
+        </div>
+
+        <!-- INTERACTIVE SIMULATOR TAB -->
+        <div id="simulator" class="tab-content active">
+            <div class="section">
+                <h2>Interactive Exchange Rate Simulator</h2>
+                
+                <div class="controls">
+                    <div class="currency-selector">
+                        <label for="currencyPair">Currency Pair:</label>
+                        <select id="currencyPair" onchange="updateCurrency()">
+                            <option value="GBP/USD">GBP/USD (Pound Sterling / US Dollar)</option>
+                            <option value="EUR/USD">EUR/USD (Euro / US Dollar)</option>
+                            <option value="GBP/EUR">GBP/EUR (Pound Sterling / Euro)</option>
+                            <option value="USD/JPY">USD/JPY (US Dollar / Japanese Yen)</option>
+                            <option value="AUD/USD">AUD/USD (Australian Dollar / US Dollar)</option>
+                        </select>
+                    </div>
+
+                    <h3>Select Economic Factors (Choose one or multiple):</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Click on the factors below to see their impact on the exchange rate. You can select multiple factors to see combined effects.</p>
+                    
+                    <div class="factor-buttons">
+                        <button class="factor-btn" data-factor="interest-increase" onclick="toggleFactor(this)">
+                            Interest Rates Increase
+                        </button>
+                        <button class="factor-btn" data-factor="interest-decrease" onclick="toggleFactor(this)">
+                            Interest Rates Decrease
+                        </button>
+                        <button class="factor-btn" data-factor="inflation-increase" onclick="toggleFactor(this)">
+                            Inflation Increases
+                        </button>
+                        <button class="factor-btn" data-factor="inflation-decrease" onclick="toggleFactor(this)">
+                            Inflation Decreases
+                        </button>
+                        <button class="factor-btn" data-factor="fdi-increase" onclick="toggleFactor(this)">
+                            FDI Inflows Increase
+                        </button>
+                        <button class="factor-btn" data-factor="fdi-decrease" onclick="toggleFactor(this)">
+                            FDI Outflows Increase
+                        </button>
+                        <button class="factor-btn" data-factor="trade-surplus" onclick="toggleFactor(this)">
+                            Current Account Surplus
+                        </button>
+                        <button class="factor-btn" data-factor="trade-deficit" onclick="toggleFactor(this)">
+                            Current Account Deficit
+                        </button>
+                        <button class="factor-btn" data-factor="speculation-positive" onclick="toggleFactor(this)">
+                            Positive Speculation
+                        </button>
+                        <button class="factor-btn" data-factor="speculation-negative" onclick="toggleFactor(this)">
+                            Negative Speculation
+                        </button>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="apply-btn" onclick="applyFactors()">Apply Selected Factors</button>
+                        <button class="clear-btn" onclick="clearSelection()">Clear Selection</button>
+                        <button class="reset-btn" onclick="resetDiagram()">Reset to Initial State</button>
+                    </div>
+
+                    <div id="multipleFactorsNotice" class="multiple-factors-selected" style="display: none;">
+                        <strong>Multiple Factors Selected:</strong> <span id="factorsList"></span>
+                    </div>
+                </div>
+
+                <div class="diagram-container">
+                    <canvas id="exchangeCanvas" width="900" height="600"></canvas>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #3498db;"></div>
+                            <span class="legend-text">Original Demand</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #e74c3c;"></div>
+                            <span class="legend-text">Original Supply</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-line" style="background: #2ecc71;"></div>
+                            <span class="legend-text">New Curve</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="exchangeRateDisplay" class="exchange-rate-display">
+                    <h3>Exchange Rate Impact</h3>
+                    <div class="rate-change">
+                        <span id="initialRate">£1 = $1.30</span>
+                        <span class="rate-arrow" id="rateArrow">→</span>
+                        <span id="newRate">£1 = $1.30</span>
+                    </div>
+                    <p id="rateDescription">Select a factor to see the impact</p>
+                </div>
+
+                <div id="explanation-interest-increase" class="explanation">
+                    <h4>Interest Rate Increase → Currency Appreciation</h4>
+                    <p><strong>The Mechanism:</strong> When the UK raises interest rates, it offers higher returns on UK financial assets (bonds, savings accounts). This attracts foreign investors seeking better returns, who must buy pounds to invest in UK assets. This increases demand for the currency, shifting the demand curve right (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate rises from E₁ to E₂, meaning the pound appreciates. More dollars are needed to buy one pound. The quantity of pounds traded increases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> In 2022, when the Bank of England raised rates aggressively to combat inflation, the pound strengthened against other currencies as hot money flowed into UK assets.</p>
+                </div>
+
+                <div id="explanation-interest-decrease" class="explanation">
+                    <h4>Interest Rate Decrease → Currency Depreciation</h4>
+                    <p><strong>The Mechanism:</strong> When interest rates fall, UK financial assets become less attractive. Foreign investors withdraw funds and domestic investors look abroad for better returns. Both groups sell pounds (to buy foreign currencies for investment elsewhere), reducing demand for the currency and shifting the demand curve left (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate falls from E₁ to E₂, meaning the pound depreciates. Fewer dollars are needed to buy one pound. The quantity of pounds traded decreases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> In 2020, during the pandemic, central banks slashed interest rates to near zero, causing their currencies to weaken as investors sought higher yields elsewhere.</p>
+                </div>
+
+                <div id="explanation-inflation-increase" class="explanation">
+                    <h4>Inflation Increase → Currency Depreciation</h4>
+                    <p><strong>The Mechanism:</strong> Higher inflation erodes purchasing power and makes UK exports less competitive (prices rise). Foreign consumers buy fewer UK goods, reducing demand for pounds. Additionally, investors fear currency devaluation, reducing financial inflows. Demand curve shifts left (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate falls from E₁ to E₂. The pound depreciates, making imports more expensive but potentially boosting export competitiveness. Quantity traded decreases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> In 2022, UK inflation reached 11%, significantly higher than the US. This contributed to pound weakness as purchasing power differentials widened.</p>
+                </div>
+
+                <div id="explanation-inflation-decrease" class="explanation">
+                    <h4>Inflation Decrease → Currency Appreciation</h4>
+                    <p><strong>The Mechanism:</strong> Lower inflation improves competitiveness of UK exports and preserves purchasing power. Foreign demand for UK goods rises, requiring more pounds. Investors gain confidence in currency stability, increasing financial inflows. Demand curve shifts right (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate rises from E₁ to E₂. The pound appreciates, increasing purchasing power abroad. Quantity traded increases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> Germany's historically low inflation contributed to the euro's strength from 2002-2007, as price stability attracted investment.</p>
+                </div>
+
+                <div id="explanation-fdi-increase" class="explanation">
+                    <h4>FDI Inflows Increase → Currency Appreciation</h4>
+                    <p><strong>The Mechanism:</strong> Foreign Direct Investment means foreign companies investing in UK businesses, factories, or infrastructure. These investors must buy large amounts of pounds to finance their investments, significantly increasing demand for the currency. Demand curve shifts right (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate rises from E₁ to E₂. The pound appreciates due to sustained demand. Quantity traded increases substantially from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> China's massive FDI inflows in the 2000s (over $100bn annually) contributed to upward pressure on the yuan, though the government managed this through intervention.</p>
+                </div>
+
+                <div id="explanation-fdi-decrease" class="explanation">
+                    <h4>FDI Outflows Increase → Currency Depreciation</h4>
+                    <p><strong>The Mechanism (Supply-Side Force):</strong> When UK companies invest abroad (FDI outflows), they sell pounds to buy foreign currencies for overseas investments. This is a <strong>supply-side effect</strong> - UK investors are supplying pounds to the forex market. However, the net effect can be modeled as reduced demand, shifting the demand curve left (D → D₁). Think of it this way: capital outflows mean fewer buyers wanting to hold pounds, which effectively reduces demand.</p>
+                    <p><strong>Alternative View:</strong> Some economists model this as an increase in the supply of pounds (S → S₁) since UK investors are actively selling pounds. Both approaches reach the same conclusion: depreciation.</p>
+                    <p><strong>Result:</strong> The exchange rate falls from E₁ to E₂. The pound depreciates as capital leaves the country. Quantity traded decreases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> Japanese companies' overseas expansion in the 1980s-90s created constant selling pressure on the yen as capital flowed abroad.</p>
+                </div>
+
+                <div id="explanation-trade-surplus" class="explanation">
+                    <h4>Current Account Surplus → Currency Appreciation</h4>
+                    <p><strong>The Mechanism:</strong> A current account surplus means UK exports exceed imports. Foreign buyers must purchase pounds to pay for UK exports, increasing demand for the currency. Demand curve shifts right (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate rises from E₁ to E₂. The pound appreciates due to strong export performance. Quantity traded increases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> Germany's persistent current account surpluses (6-8% of GDP) have supported euro strength, as the rest of the world needs euros to pay for German exports.</p>
+                </div>
+
+                <div id="explanation-trade-deficit" class="explanation">
+                    <h4>Current Account Deficit → Currency Depreciation</h4>
+                    <p><strong>The Mechanism (Clear Supply-Side Effect):</strong> A current account deficit means imports exceed exports. UK consumers and businesses must sell pounds to buy foreign currencies to pay for imports. This is a <strong>pure supply-side force</strong> - UK residents are actively supplying pounds to the forex market, increasing the supply of pounds. Supply curve shifts right (S → S₁).</p>
+                    <p><strong>The Asymmetry:</strong> Notice the difference: a current account surplus increases <em>demand</em> for pounds (foreigners buying our exports need pounds), while a current account deficit increases the <em>supply</em> of pounds (we're selling pounds to buy imports). This shows how trade flows affect both sides of the forex market differently.</p>
+                    <p><strong>Result:</strong> The exchange rate falls from E₁ to E₂. The pound depreciates, which may eventually help correct the trade imbalance by making exports cheaper and imports more expensive. Quantity traded increases from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> The US persistent trade deficit (around $600bn annually) creates constant selling pressure on the dollar, though this is offset by its reserve currency status.</p>
+                </div>
+
+                <div id="explanation-speculation-positive" class="explanation">
+                    <h4>Positive Speculation → Currency Appreciation</h4>
+                    <p><strong>The Mechanism:</strong> When traders expect the pound to strengthen (due to anticipated good economic news, political stability, etc.), they buy pounds now to profit from future appreciation. This "bandwagon effect" becomes self-fulfilling as increased buying drives up the price. Demand curve shifts right (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate rises from E₁ to E₂. The pound appreciates rapidly, potentially overshooting its fundamental value. Quantity traded increases dramatically from Q₁ to Q₂.</p>
+                    <p><strong>Real Example:</strong> In 2015, speculation that the UK would vote to remain in the EU pushed the pound to $1.50. The opposite speculation after the referendum result caused a rapid crash to $1.28.</p>
+                </div>
+
+                <div id="explanation-speculation-negative" class="explanation">
+                    <h4>Negative Speculation → Currency Depreciation</h4>
+                    <p><strong>The Mechanism:</strong> When traders expect the pound to weaken (anticipating bad economic news, political instability, etc.), they sell pounds immediately to avoid losses. This mass selling becomes self-fulfilling, driving down the price. Demand curve shifts left (D → D₁).</p>
+                    <p><strong>Result:</strong> The exchange rate falls from E₁ to E₂. The pound depreciates rapidly, potentially undershooting its fundamental value. Quantity traded decreases from Q₁ to Q₂ as sellers dominate.</p>
+                    <p><strong>Real Example:</strong> The 2016 Brexit referendum triggered negative speculation. The pound fell 15% in days as traders bet on UK economic uncertainty, reaching a 31-year low.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- GUIDED SCENARIOS TAB -->
+        <div id="guided" class="tab-content">
+            <div class="section">
+                <h2>Guided Economic Scenarios</h2>
+                <p>Follow these step-by-step scenarios to understand how real-world events affect exchange rates.</p>
+
+                <div class="scenario-box">
+                    <h4>Scenario 1: The Interest Rate Decision</h4>
+                    <div class="scenario-step">
+                        <strong>Step 1: The Situation</strong>
+                        <p>It's November 2023. The UK economy is experiencing high inflation at 6.7%. The Bank of England is meeting to decide whether to raise interest rates from 5.25% to 5.5%.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 2: The Decision</strong>
+                        <p>The Bank of England announces a rate increase to 5.5%. This makes UK financial assets more attractive to foreign investors seeking higher returns.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 3: Market Reaction</strong>
+                        <p>Within hours, foreign investors begin buying pounds to invest in UK bonds and savings accounts. This increased demand shifts the demand curve for pounds to the right.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 4: The Result</strong>
+                        <p>The GBP/USD exchange rate rises from £1 = $1.30 to £1 = $1.35. The pound has appreciated by approximately 3.8%.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 5: Economic Consequences</strong>
+                        <p><strong>Winners:</strong> UK consumers importing goods, UK tourists abroad, businesses importing raw materials.<br>
+                        <strong>Losers:</strong> UK exporters (goods become more expensive abroad), tourism industry (UK holidays more expensive for foreigners).</p>
+                    </div>
+                    <button class="apply-btn" onclick="loadScenario('interest-increase')">Load This Scenario</button>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 2: The Inflation Shock</h4>
+                    <div class="scenario-step">
+                        <strong>Step 1: The Situation</strong>
+                        <p>UK inflation unexpectedly spikes to 8%, while US inflation remains at 3%. This creates a significant inflation differential between the countries.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 2: Purchasing Power Effect</strong>
+                        <p>UK goods become relatively more expensive. Foreign consumers reduce purchases of UK exports. UK companies lose competitiveness in international markets.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 3: Investment Flows</strong>
+                        <p>Investors worry that high inflation will erode returns on UK assets. They begin withdrawing funds from UK investments, selling pounds to move capital elsewhere.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 4: The Result</strong>
+                        <p>Demand for pounds decreases (curve shifts left). The GBP/USD rate falls from £1 = $1.30 to £1 = $1.22. The pound has depreciated by approximately 6%.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 5: The Vicious Circle</strong>
+                        <p>Depreciation makes imports more expensive, potentially feeding back into higher inflation (imported inflation), creating a challenging policy dilemma for the Bank of England.</p>
+                    </div>
+                    <button class="apply-btn" onclick="loadScenario('inflation-increase')">Load This Scenario</button>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 3: The Trade War</h4>
+                    <div class="scenario-step">
+                        <strong>Step 1: The Situation</strong>
+                        <p>The UK runs a current account deficit of £90 billion (3.5% of GDP). The situation worsens as new tariffs reduce UK exports to the EU by 15%.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 2: Import Surge</strong>
+                        <p>Despite falling exports, UK consumers continue importing heavily. To pay for imports, UK businesses must sell pounds and buy foreign currencies (euros, dollars, yuan).</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 3: Market Mechanics</strong>
+                        <p>The selling of pounds to finance imports increases the supply of pounds in forex markets. The supply curve shifts right (S → S₁).</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 4: The Result</strong>
+                        <p>The GBP/USD rate falls from £1 = $1.30 to £1 = $1.24. The pound depreciates by approximately 4.6%.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Step 5: Self-Correction Mechanism</strong>
+                        <p>The weaker pound makes UK exports cheaper and imports more expensive, potentially reducing the trade deficit over time (J-curve effect). However, this takes 12-24 months to materialize.</p>
+                    </div>
+                    <button class="apply-btn" onclick="loadScenario('trade-deficit')">Load This Scenario</button>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 4: The Perfect Storm (Multiple Factors)</h4>
+                    <div class="scenario-step">
+                        <strong>The Crisis Setup</strong>
+                        <p>It's September 2022. The UK faces a confluence of negative factors: Political instability following a leadership change, inflation at 10%, falling FDI, and a growing current account deficit.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>The Triggering Event</strong>
+                        <p>The new government announces unfunded tax cuts worth £45 billion, spooking financial markets about fiscal sustainability. Speculation turns sharply negative.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>The Cascade Effect</strong>
+                        <p>Multiple factors combine:<br>
+                        • Negative speculation → demand ↓<br>
+                        • High inflation → demand ↓<br>
+                        • FDI withdrawal → demand ↓<br>
+                        • Trade deficit → supply ↑</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>The Result</strong>
+                        <p>The GBP/USD rate crashes from £1 = $1.30 to £1 = $1.03 in a matter of weeks—a historic 20% depreciation. The pound briefly falls below parity with the dollar for the first time ever.</p>
+                    </div>
+                    <div class="scenario-step">
+                        <strong>Policy Response</strong>
+                        <p>The Bank of England intervenes by raising interest rates aggressively (from 2.25% to 5.25% over 12 months) and the government U-turns on tax cuts. Confidence slowly returns, and the pound recovers to $1.20 by early 2023.</p>
+                    </div>
+                    <button class="apply-btn" onclick="loadMultipleScenario()">Load This Complex Scenario</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHALLENGE MODE TAB -->
+        <div id="challenge" class="tab-content">
+            <div class="section">
+                <h2>Challenge Mode: Test Your Understanding</h2>
+                
+                <div class="challenge-mode">
+                    <h3>Challenge 1: Identify the Factors</h3>
+                    <div class="challenge-question">
+                        <p><strong>Scenario:</strong> The GBP/USD exchange rate has fallen from £1 = $1.30 to £1 = $1.25 over the past month.</p>
+                        <p><strong>Question:</strong> Which factor(s) could explain this 3.8% depreciation?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge1')">Interest Rates Decreased</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge1')">Interest Rates Increased</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge1')">Inflation Increased</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge1')">FDI Inflows Increased</button>
+                        </div>
+                        <div id="challenge1-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="challenge-mode">
+                    <h3>Challenge 2: Predict the Outcome</h3>
+                    <div class="challenge-question">
+                        <p><strong>Scenario:</strong> The Bank of England raises interest rates from 5% to 5.5% while UK inflation falls from 6% to 4%.</p>
+                        <p><strong>Question:</strong> What will happen to the pound?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge2')">Strong Appreciation (both factors increase demand)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge2')">Strong Depreciation (conflicting forces cancel out)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge2')">No Change (market already priced this in)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge2')">Mild Depreciation (supply increases dominate)</button>
+                        </div>
+                        <div id="challenge2-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="challenge-mode">
+                    <h3>Challenge 3: Complex Analysis</h3>
+                    <div class="challenge-question">
+                        <p><strong>Scenario:</strong> The UK experiences: (1) Interest rates increase, (2) Current account deficit widens, (3) Positive speculation about economic recovery.</p>
+                        <p><strong>Question:</strong> What is the most likely net effect on the exchange rate?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge3')">Strong depreciation (deficit dominates)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge3')">Mild appreciation (2 positive factors outweigh 1 negative)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge3')">No change (all factors cancel out)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge3')">Extreme volatility (unpredictable)</button>
+                        </div>
+                        <div id="challenge3-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="challenge-mode">
+                    <h3>Challenge 4: Real-World Application</h3>
+                    <div class="challenge-question">
+                        <p><strong>Historical Event:</strong> In September 2022, the UK government announced £45 billion in unfunded tax cuts. The pound crashed from $1.15 to $1.03 in days.</p>
+                        <p><strong>Question:</strong> Which factor BEST explains this crash?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge4')">Interest rate cuts by the Bank of England</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge4')">Negative speculation about fiscal sustainability</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge4')">Sudden increase in imports</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge4')">Rising UK inflation</button>
+                        </div>
+                        <div id="challenge4-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="challenge-mode">
+                    <h3>Challenge 5: Policy Evaluation</h3>
+                    <div class="challenge-question">
+                        <p><strong>Scenario:</strong> The UK pound is depreciating rapidly (down 8% in 3 months) due to negative speculation and high inflation (7%). The Bank of England must act.</p>
+                        <p><strong>Question:</strong> Which policy response would most likely stabilise the currency WITHOUT worsening inflation?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge5')">Raise interest rates aggressively (demand↑, hot money inflows, but dampens inflation)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge5')">Lower interest rates to stimulate growth (would worsen both currency and inflation)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge5')">Do nothing and let the market adjust (depreciation worsens imported inflation)</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge5')">Increase government spending to boost confidence (fiscal expansion worsens inflation)</button>
+                        </div>
+                        <div id="challenge5-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="challenge-mode">
+                    <h3>Challenge 6: Supply vs Demand Identification</h3>
+                    <div class="challenge-question">
+                        <p><strong>Scenario:</strong> UK exporters are booming, selling more goods abroad. Foreign buyers need pounds to pay for these goods.</p>
+                        <p><strong>Question:</strong> What happens in the forex market?</p>
+                        <div class="challenge-options">
+                            <button class="challenge-option" onclick="checkAnswer(this, true, 'challenge6')">Demand curve shifts right → appreciation</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge6')">Supply curve shifts right → depreciation</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge6')">Demand curve shifts left → depreciation</button>
+                            <button class="challenge-option" onclick="checkAnswer(this, false, 'challenge6')">Supply curve shifts left → appreciation</button>
+                        </div>
+                        <div id="challenge6-feedback" style="margin-top: 15px; padding: 15px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THEORY TAB -->
+        <div id="theory" class="tab-content">
+            <div class="section">
+                <h2>Understanding Free-Floating Exchange Rates</h2>
+                
+                <div class="highlight-box">
+                    <strong>What is a Free-Floating Exchange Rate?</strong>
+                    <p>A free-floating exchange rate is determined purely by supply and demand in the foreign exchange (forex) market, without government intervention. The price of one currency in terms of another adjusts continuously based on market forces, reflecting changing economic conditions and expectations.</p>
+                </div>
+
+                <h3>How the Forex Market Works</h3>
+                <p>The foreign exchange market is the world's largest financial market, with over $7 trillion traded daily. It operates 24/7 across different time zones and involves:</p>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>Banks and financial institutions</strong> trading on behalf of clients</li>
+                    <li><strong>Multinational corporations</strong> buying currency for trade</li>
+                    <li><strong>Investment funds</strong> moving capital across borders</li>
+                    <li><strong>Speculators</strong> betting on currency movements</li>
+                    <li><strong>Central banks</strong> occasionally intervening (though not in a pure float)</li>
+                </ul>
+
+                <h3>Demand for a Currency</h3>
+                <p>Demand for pounds comes from anyone who needs to buy pounds. This includes:</p>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li>Foreign consumers buying UK exports (need pounds to pay UK companies)</li>
+                    <li>Foreign investors buying UK financial assets like bonds, stocks, property</li>
+                    <li>Foreign companies making FDI in the UK</li>
+                    <li>Tourists visiting the UK</li>
+                    <li>Speculators betting the pound will rise in value</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>Understanding Supply vs Demand Side Forces:</strong>
+                    <p>It's crucial to distinguish between <strong>demand-side</strong> and <strong>supply-side</strong> forces in the forex market, as they affect the curves differently:</p>
+                    <p><strong>Demand-Side Forces</strong> (shift the demand curve):</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>Foreign investors buying UK assets → demand increases (curve shifts right)</li>
+                        <li>Foreigners buying UK exports → demand increases (curve shifts right)</li>
+                        <li>Speculation that the pound will rise → demand increases (curve shifts right)</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Supply-Side Forces</strong> (shift the supply curve):</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>UK residents buying imports → supply increases (curve shifts right, more people selling pounds)</li>
+                        <li>UK investors buying foreign assets → supply increases (curve shifts right, capital outflows)</li>
+                        <li>UK companies making FDI abroad → supply increases (curve shifts right)</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>The Key Asymmetry:</strong> Notice that trade flows affect <em>both</em> sides differently. A current account surplus increases <strong>demand</strong> (foreigners need pounds to buy our exports), while a current account deficit increases <strong>supply</strong> (we need to sell pounds to buy imports). Understanding this asymmetry is essential for accurate forex analysis.</p>
+                </div>
+
+                <div class="highlight-box-green">
+                    <strong>Factors that Increase Demand (Shift Demand Right):</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.8;">
+                        <li>Higher interest rates (attracts hot money)</li>
+                        <li>Lower inflation (better value, more competitive exports)</li>
+                        <li>Increased FDI inflows</li>
+                        <li>Current account surplus (strong exports)</li>
+                        <li>Positive speculation/confidence</li>
+                        <li>Strong economic growth prospects</li>
+                    </ul>
+                </div>
+
+                <h3>Supply of a Currency</h3>
+                <p>Supply of pounds comes from anyone who needs to sell pounds. This includes:</p>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li>UK consumers buying imports (sell pounds to buy foreign currency)</li>
+                    <li>UK investors buying foreign assets</li>
+                    <li>UK companies making FDI abroad</li>
+                    <li>UK tourists travelling abroad</li>
+                    <li>Speculators betting the pound will fall in value</li>
+                </ul>
+
+                <div class="highlight-box-red">
+                    <strong>Factors that Increase Supply (Shift Supply Right):</strong>
+                    <ul style="margin-top: 10px; margin-left: 20px; line-height: 1.8;">
+                        <li>Current account deficit (imports > exports)</li>
+                        <li>Capital outflows (UK investors seeking opportunities abroad)</li>
+                        <li>Lower interest rates (encourages investment abroad)</li>
+                        <li>Negative speculation/lack of confidence</li>
+                    </ul>
+                </div>
+
+                <h3>Appreciation vs Depreciation</h3>
+                <p><strong>Appreciation:</strong> The currency becomes stronger - more expensive in terms of other currencies. £1 = $1.30 → £1 = $1.40 means the pound has appreciated.</p>
+                <p><strong>Depreciation:</strong> The currency becomes weaker - cheaper in terms of other currencies. £1 = $1.30 → £1 = $1.20 means the pound has depreciated.</p>
+
+                <div class="highlight-box">
+                    <strong>Real-World Context:</strong>
+                    <p>Exchange rates rarely move in isolation. They're influenced by multiple simultaneous factors. For example, during the 2022 mini-budget crisis, the pound experienced negative speculation, high inflation, and a widening current account deficit all at once, causing a dramatic 20% depreciation in weeks. Understanding how factors combine is crucial for analysis.</p>
+                </div>
+
+                <h3>Time Lags and Adjustments</h3>
+                <p>Exchange rate effects aren't instantaneous:</p>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>Immediate:</strong> Speculation and hot money flows (seconds to hours)</li>
+                    <li><strong>Short-term:</strong> Interest rate changes affect financial flows (days to weeks)</li>
+                    <li><strong>Medium-term:</strong> Inflation differentials affect competitiveness (months)</li>
+                    <li><strong>Long-term:</strong> Trade balance adjusts through J-curve effect (1-2 years)</li>
+                </ul>
+
+                <h3>Advantages of Free-Floating Exchange Rates</h3>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>Automatic adjustment:</strong> Corrects trade imbalances without government action</li>
+                    <li><strong>Monetary policy independence:</strong> Countries can set interest rates for domestic needs</li>
+                    <li><strong>No reserve depletion:</strong> Central banks don't need foreign currency reserves to defend the rate</li>
+                    <li><strong>Market efficiency:</strong> Reflects economic fundamentals accurately</li>
+                </ul>
+
+                <h3>Disadvantages of Free-Floating Exchange Rates</h3>
+                <ul style="margin-left: 25px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>Uncertainty:</strong> Makes trade and investment planning difficult</li>
+                    <li><strong>Speculation:</strong> Can cause excessive volatility unrelated to fundamentals</li>
+                    <li><strong>Competitive depreciation:</strong> May trigger "currency wars"</li>
+                    <li><strong>Imported inflation:</strong> Depreciation increases import prices</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('exchangeCanvas');
+        const ctx = canvas.getContext('2d');
+        let currentCurrency = 'GBP/USD';
+        let selectedFactors = new Set();
+        let activeExplanations = new Set();
+
+        // Factor configurations
+        const factorData = {
+            'interest-increase': {
+                shift: 'demand-right',
+                initialRate: 1.30,
+                newRate: 1.35,
+                description: 'Currency appreciates as higher returns attract foreign investment',
+                arrow: '↗'
+            },
+            'interest-decrease': {
+                shift: 'demand-left',
+                initialRate: 1.30,
+                newRate: 1.24,
+                description: 'Currency depreciates as lower returns reduce foreign investment',
+                arrow: '↘'
+            },
+            'inflation-increase': {
+                shift: 'demand-left',
+                initialRate: 1.30,
+                newRate: 1.22,
+                description: 'Currency depreciates due to loss of competitiveness and purchasing power',
+                arrow: '↘'
+            },
+            'inflation-decrease': {
+                shift: 'demand-right',
+                initialRate: 1.30,
+                newRate: 1.36,
+                description: 'Currency appreciates due to improved competitiveness',
+                arrow: '↗'
+            },
+            'fdi-increase': {
+                shift: 'demand-right',
+                initialRate: 1.30,
+                newRate: 1.37,
+                description: 'Currency appreciates as foreign investors buy currency for long-term investment',
+                arrow: '↗'
+            },
+            'fdi-decrease': {
+                shift: 'demand-left',
+                initialRate: 1.30,
+                newRate: 1.23,
+                description: 'Currency depreciates as domestic investors sell currency to invest abroad',
+                arrow: '↘'
+            },
+            'trade-surplus': {
+                shift: 'demand-right',
+                initialRate: 1.30,
+                newRate: 1.34,
+                description: 'Currency appreciates as foreign buyers need currency to pay for exports',
+                arrow: '↗'
+            },
+            'trade-deficit': {
+                shift: 'supply-right',
+                initialRate: 1.30,
+                newRate: 1.25,
+                description: 'Currency depreciates as domestic buyers sell currency to pay for imports',
+                arrow: '↘'
+            },
+            'speculation-positive': {
+                shift: 'demand-right',
+                initialRate: 1.30,
+                newRate: 1.38,
+                description: 'Currency appreciates sharply as traders buy expecting future gains',
+                arrow: '↗'
+            },
+            'speculation-negative': {
+                shift: 'demand-left',
+                initialRate: 1.30,
+                newRate: 1.20,
+                description: 'Currency depreciates sharply as traders sell fearing future losses',
+                arrow: '↘'
+            }
+        };
+
+        // Currency symbols
+        const currencySymbols = {
+            'GBP/USD': { base: '£', quote: '$' },
+            'EUR/USD': { base: '€', quote: '$' },
+            'GBP/EUR': { base: '£', quote: '€' },
+            'USD/JPY': { base: '$', quote: '¥' },
+            'AUD/USD': { base: 'A$', quote: '$' }
+        };
+
+        function switchTab(tabName) {
+            // Hide all tabs and deactivate buttons
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab and activate button
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function updateCurrency() {
+            currentCurrency = document.getElementById('currencyPair').value;
+            resetDiagram();
+        }
+
+        function toggleFactor(button) {
+            const factor = button.dataset.factor;
+            
+            if (selectedFactors.has(factor)) {
+                selectedFactors.delete(factor);
+                button.classList.remove('active');
+            } else {
+                selectedFactors.add(factor);
+                button.classList.add('active');
+            }
+
+            updateMultipleFactorsNotice();
+        }
+
+        function updateMultipleFactorsNotice() {
+            const notice = document.getElementById('multipleFactorsNotice');
+            const factorsList = document.getElementById('factorsList');
+            
+            if (selectedFactors.size > 1) {
+                const factorNames = Array.from(selectedFactors).map(f => 
+                    document.querySelector(`[data-factor="${f}"]`).textContent
+                ).join(', ');
+                factorsList.textContent = factorNames;
+                notice.style.display = 'block';
+            } else {
+                notice.style.display = 'none';
+            }
+        }
+
+        function clearSelection() {
+            selectedFactors.clear();
+            document.querySelectorAll('.factor-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            updateMultipleFactorsNotice();
+        }
+
+        function applyFactors() {
+            if (selectedFactors.size === 0) {
+                alert('Please select at least one factor to apply.');
+                return;
+            }
+
+            // Hide all explanations first
+            document.querySelectorAll('.explanation').forEach(exp => {
+                exp.classList.remove('active');
+            });
+
+            // Calculate combined effect
+            let totalShift = 0;
+            let demandShifts = 0;
+            let supplyShifts = 0;
+
+            selectedFactors.forEach(factor => {
+                const data = factorData[factor];
+                if (data.shift === 'demand-right') {
+                    demandShifts += 100;
+                } else if (data.shift === 'demand-left') {
+                    demandShifts -= 100;
+                } else if (data.shift === 'supply-right') {
+                    supplyShifts += 100;
+                }
+
+                // Show explanation for each selected factor
+                document.getElementById(`explanation-${factor}`).classList.add('active');
+            });
+
+            // Draw combined diagram
+            drawCombinedDiagram(demandShifts, supplyShifts);
+
+            // Update exchange rate display
+            updateExchangeRateDisplay(demandShifts, supplyShifts);
+        }
+
+        function drawCombinedDiagram(demandShift, supplyShift) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const padding = 60;
+            const width = canvas.width - 2 * padding;
+            const height = canvas.height - 2 * padding;
+            
+            // Draw axes
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, padding + height);
+            ctx.lineTo(padding + width, padding + height);
+            ctx.stroke();
+            
+            // Labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            const symbols = currencySymbols[currentCurrency];
+            ctx.fillText(`Quantity of ${currentCurrency.split('/')[0]}`, padding + width / 2, canvas.height - 20);
+            
+            ctx.save();
+            ctx.translate(20, padding + height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(`Exchange Rate (${symbols.base}1 = ${symbols.quote}X)`, 0, 0);
+            ctx.restore();
+            
+            // Original curves
+            const origDemandStart = {x: padding + 50, y: padding + 50};
+            const origDemandEnd = {x: padding + width - 50, y: padding + height - 50};
+            
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(origDemandStart.x, origDemandStart.y);
+            ctx.lineTo(origDemandEnd.x, origDemandEnd.y);
+            ctx.stroke();
+            
+            // Label for original demand
+            ctx.fillStyle = '#3498db';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('D', origDemandEnd.x + 10, origDemandEnd.y);
+            
+            const origSupplyStart = {x: padding + 50, y: padding + height - 50};
+            const origSupplyEnd = {x: padding + width - 50, y: padding + 50};
+            
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(origSupplyStart.x, origSupplyStart.y);
+            ctx.lineTo(origSupplyEnd.x, origSupplyEnd.y);
+            ctx.stroke();
+            
+            // Label for original supply
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('S', origSupplyEnd.x + 10, origSupplyEnd.y);
+            
+            // Original equilibrium
+            const origX = padding + width / 2;
+            const origY = padding + height / 2;
+            ctx.fillStyle = '#34495e';
+            ctx.beginPath();
+            ctx.arc(origX, origY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Dashed lines for original equilibrium
+            ctx.strokeStyle = '#95a5a6';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(origX, origY);
+            ctx.lineTo(padding, origY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(origX, origY);
+            ctx.lineTo(origX, padding + height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Labels for original equilibrium
+            ctx.fillStyle = '#34495e';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('E₁', padding - 10, origY + 5);
+            ctx.textAlign = 'center';
+            ctx.fillText('Q₁', origX, canvas.height - 35);
+            
+            // Draw new curves
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 3;
+            
+            let newDemandStart, newDemandEnd, newSupplyStart, newSupplyEnd;
+            let newX, newY;
+            
+            if (demandShift !== 0) {
+                newDemandStart = {x: origDemandStart.x + demandShift, y: origDemandStart.y};
+                newDemandEnd = {x: origDemandEnd.x + demandShift, y: origDemandEnd.y};
+                
+                ctx.beginPath();
+                ctx.moveTo(newDemandStart.x, newDemandStart.y);
+                ctx.lineTo(newDemandEnd.x, newDemandEnd.y);
+                ctx.stroke();
+                
+                // Label for new demand
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('D₁', newDemandEnd.x + 10, newDemandEnd.y);
+                
+                // Arrow
+                if (demandShift > 0) {
+                    drawArrow(origDemandStart.x + 60, origDemandStart.y + 100, origDemandStart.x + 120, origDemandStart.y + 100, '#2ecc71');
+                } else {
+                    drawArrow(origDemandStart.x - 60, origDemandStart.y + 100, origDemandStart.x - 120, origDemandStart.y + 100, '#2ecc71');
+                }
+            }
+            
+            if (supplyShift !== 0) {
+                newSupplyStart = {x: origSupplyStart.x + supplyShift, y: origSupplyStart.y};
+                newSupplyEnd = {x: origSupplyEnd.x + supplyShift, y: origSupplyEnd.y};
+                
+                ctx.beginPath();
+                ctx.moveTo(newSupplyStart.x, newSupplyStart.y);
+                ctx.lineTo(newSupplyEnd.x, newSupplyEnd.y);
+                ctx.stroke();
+                
+                // Label for new supply
+                ctx.fillStyle = '#2ecc71';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('S₁', newSupplyEnd.x + 10, newSupplyEnd.y);
+                
+                // Arrow
+                drawArrow(origSupplyEnd.x + 60, origSupplyEnd.y + 100, origSupplyEnd.x + 120, origSupplyEnd.y + 100, '#2ecc71');
+            }
+            
+            // Calculate new equilibrium
+            const demandCurve = demandShift !== 0 ? 
+                {start: newDemandStart, end: newDemandEnd} : 
+                {start: origDemandStart, end: origDemandEnd};
+                
+            const supplyCurve = supplyShift !== 0 ? 
+                {start: newSupplyStart, end: newSupplyEnd} : 
+                {start: origSupplyStart, end: origSupplyEnd};
+            
+            const intersection = lineIntersection(demandCurve.start, demandCurve.end, supplyCurve.start, supplyCurve.end);
+            newX = intersection.x;
+            newY = intersection.y;
+            
+            // New equilibrium point
+            ctx.fillStyle = '#2ecc71';
+            ctx.beginPath();
+            ctx.arc(newX, newY, 6, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Dashed lines for new equilibrium
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(newX, newY);
+            ctx.lineTo(padding, newY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(newX, newY);
+            ctx.lineTo(newX, padding + height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Labels for new equilibrium
+            ctx.fillStyle = '#2ecc71';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('E₂', padding - 10, newY + 5);
+            ctx.textAlign = 'center';
+            ctx.fillText('Q₂', newX, canvas.height - 35);
+        }
+
+        function updateExchangeRateDisplay(demandShift, supplyShift) {
+            const symbols = currencySymbols[currentCurrency];
+            const initialRate = 1.30;
+            
+            // Calculate net effect (simplified)
+            let rateChange = 0;
+            if (demandShift > 0) rateChange += 0.05 * (demandShift / 100);
+            if (demandShift < 0) rateChange -= 0.06 * (Math.abs(demandShift) / 100);
+            if (supplyShift > 0) rateChange -= 0.05 * (supplyShift / 100);
+            
+            const newRate = initialRate + rateChange;
+            
+            document.getElementById('initialRate').textContent = `${symbols.base}1 = ${symbols.quote}${initialRate.toFixed(2)}`;
+            document.getElementById('newRate').textContent = `${symbols.base}1 = ${symbols.quote}${newRate.toFixed(2)}`;
+            
+            const arrow = document.getElementById('rateArrow');
+            const description = document.getElementById('rateDescription');
+            
+            if (rateChange > 0) {
+                arrow.textContent = '↗';
+                arrow.style.color = '#27ae60';
+                description.textContent = `Currency APPRECIATES by ${((rateChange/initialRate)*100).toFixed(1)}% - becomes stronger`;
+                description.style.color = '#27ae60';
+            } else if (rateChange < 0) {
+                arrow.textContent = '↘';
+                arrow.style.color = '#e74c3c';
+                description.textContent = `Currency DEPRECIATES by ${((Math.abs(rateChange)/initialRate)*100).toFixed(1)}% - becomes weaker`;
+                description.style.color = '#e74c3c';
+            } else {
+                arrow.textContent = '→';
+                arrow.style.color = '#FFD700';
+                description.textContent = 'Forces balance out - no net change';
+                description.style.color = '#FFD700';
+            }
+        }
+
+        function lineIntersection(p1, p2, p3, p4) {
+            const denominator = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+            
+            const x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) / denominator;
+            const y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) / denominator;
+            
+            return {x: x, y: y};
+        }
+
+        function drawArrow(fromX, fromY, toX, toY, color) {
+            const headlen = 15;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function resetDiagram() {
+            selectedFactors.clear();
+            document.querySelectorAll('.factor-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.explanation').forEach(exp => {
+                exp.classList.remove('active');
+            });
+            updateMultipleFactorsNotice();
+            
+            // Draw initial diagram
+            drawCombinedDiagram(0, 0);
+            
+            const symbols = currencySymbols[currentCurrency];
+            document.getElementById('initialRate').textContent = `${symbols.base}1 = ${symbols.quote}1.30`;
+            document.getElementById('newRate').textContent = `${symbols.base}1 = ${symbols.quote}1.30`;
+            document.getElementById('rateArrow').textContent = '→';
+            document.getElementById('rateArrow').style.color = '#FFD700';
+            document.getElementById('rateDescription').textContent = 'Select factors to see the impact';
+            document.getElementById('rateDescription').style.color = '#000';
+        }
+
+        function loadScenario(factor) {
+            switchTab('simulator');
+            document.querySelector('.tab[onclick="switchTab(\'simulator\')"]').classList.add('active');
+            
+            clearSelection();
+            const button = document.querySelector(`[data-factor="${factor}"]`);
+            button.classList.add('active');
+            selectedFactors.add(factor);
+            applyFactors();
+        }
+
+        function loadMultipleScenario() {
+            switchTab('simulator');
+            document.querySelector('.tab[onclick="switchTab(\'simulator\')"]').classList.add('active');
+            
+            clearSelection();
+            ['speculation-negative', 'inflation-increase', 'fdi-decrease', 'trade-deficit'].forEach(factor => {
+                const button = document.querySelector(`[data-factor="${factor}"]`);
+                button.classList.add('active');
+                selectedFactors.add(factor);
+            });
+            applyFactors();
+        }
+
+        function checkAnswer(button, isCorrect, challengeId) {
+            const options = button.parentElement.querySelectorAll('.challenge-option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt === button) {
+                    if (isCorrect) {
+                        opt.classList.add('correct');
+                    } else {
+                        opt.classList.add('incorrect');
+                    }
+                }
+            });
+
+            // Use provided challengeId or extract from heading
+            let feedbackId;
+            if (challengeId) {
+                feedbackId = `${challengeId}-feedback`;
+            } else {
+                const challengeNum = button.closest('.challenge-mode').querySelector('h3').textContent.match(/\d+/)[0];
+                feedbackId = `challenge${challengeNum}-feedback`;
+            }
+            
+            const feedback = document.getElementById(feedbackId);
+            
+            if (isCorrect) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#27ae60';
+                feedback.style.color = 'white';
+                feedback.style.padding = '15px';
+                
+                // Special feedback for policy evaluation question
+                if (challengeId === 'challenge5') {
+                    feedback.innerHTML = '<strong>✓ Excellent Evaluation!</strong> Raising interest rates achieves both objectives: it increases demand for pounds (attracting hot money inflows → appreciation) AND reduces inflation by dampening consumer spending and borrowing. This dual benefit makes it the optimal policy choice, though it has the trade-off of potentially slowing economic growth.';
+                } else {
+                    feedback.innerHTML = '<strong>✓ Correct!</strong> Well done. This demonstrates your understanding of exchange rate determinants.';
+                }
+            } else {
+                feedback.style.display = 'block';
+                feedback.style.background = '#e74c3c';
+                feedback.style.color = 'white';
+                feedback.style.padding = '15px';
+                
+                // Special feedback for policy evaluation question
+                if (challengeId === 'challenge5') {
+                    feedback.innerHTML = '<strong>✗ Incorrect.</strong> Consider the dual objectives: stabilising the currency (stopping depreciation) AND not worsening inflation. Which policy increases demand for pounds while also reducing inflationary pressure?';
+                } else {
+                    feedback.innerHTML = '<strong>✗ Incorrect.</strong> Review the theory tab and try to understand why this factor would have this effect.';
+                }
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                resetDiagram();
+            }
+        });
+
+        // Initial draw
+        window.addEventListener('load', () => {
+            resetDiagram();
+        });
+
+        // Responsive canvas
+        window.addEventListener('resize', () => {
+            const container = document.querySelector('.diagram-container');
+            if (container.offsetWidth < canvas.width) {
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+            }
+        });
+    </script>
+</body>
+</html>

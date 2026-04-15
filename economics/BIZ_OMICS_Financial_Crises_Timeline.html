@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS | Global Financial Crises — Interactive Timeline Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #1a2744;
+            --navy-dark: #0f1a30;
+            --navy-mid: #233060;
+            --gold: #c9a227;
+            --gold-light: #e8c158;
+            --gold-dim: rgba(201,162,39,0.18);
+            --white: #f5f0e8;
+            --muted: #9ba8be;
+            --card-bg: rgba(255,255,255,0.05);
+            --card-border: rgba(201,162,39,0.25);
+
+            /* Crisis accent colours */
+            --nixon-accent: #e8c158;
+            --nixon-bg: rgba(232,193,88,0.08);
+
+            --tequila-accent: #2ecc71;
+            --tequila-bg: rgba(46,204,113,0.08);
+
+            --asian-accent: #e74c3c;
+            --asian-bg: rgba(231,76,60,0.08);
+
+            /* Tag colours */
+            --tag-background: #3498db;
+            --tag-trigger:    #e67e22;
+            --tag-collapse:   #e74c3c;
+            --tag-contagion:  #c0392b;
+            --tag-intervention: #27ae60;
+            --tag-aftermath:  #9b59b6;
+            --tag-recovery:   #1abc9c;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy-dark);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========================================================
+           TOP HEADER / BRAND BAR
+        ======================================================== */
+        .brand-bar {
+            background: var(--navy);
+            border-bottom: 3px solid var(--gold);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+
+        .brand-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        .brand-logo span {
+            color: var(--white);
+            font-weight: 300;
+            font-size: 0.85rem;
+            display: block;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(to right, var(--gold), #e74c3c);
+            z-index: 300;
+            transition: width 0.2s ease;
+        }
+
+        /* ========================================================
+           HERO SECTION
+        ======================================================== */
+        .hero {
+            background: linear-gradient(160deg, var(--navy) 0%, var(--navy-dark) 60%, #0a1020 100%);
+            padding: 4rem 2rem 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 20% 50%, rgba(201,162,39,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 35% at 80% 50%, rgba(52,152,219,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-eyebrow {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 5vw, 3.6rem);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--gold);
+        }
+
+        .hero-subtitle {
+            max-width: 620px;
+            margin: 0 auto 2.5rem;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        /* ========================================================
+           TAB SWITCHER
+        ======================================================== */
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.4rem;
+            border: 2px solid var(--card-border);
+            border-radius: 50px;
+            background: var(--card-bg);
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .tab-btn:hover {
+            border-color: var(--gold);
+            color: var(--white);
+        }
+
+        .tab-btn.active {
+            color: var(--navy-dark);
+            font-weight: 600;
+            border-color: transparent;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        }
+
+        .tab-btn[data-tab="nixon"].active  { background: var(--nixon-accent); }
+        .tab-btn[data-tab="tequila"].active { background: var(--tequila-accent); }
+        .tab-btn[data-tab="asian"].active   { background: var(--asian-accent); }
+
+        .tab-icon { font-size: 1.1rem; }
+
+        /* ========================================================
+           CRISIS PANELS
+        ======================================================== */
+        .crisis-panel {
+            display: none;
+            animation: fadePanel 0.4s ease;
+        }
+
+        .crisis-panel.active { display: block; }
+
+        @keyframes fadePanel {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Crisis intro banner */
+        .crisis-banner {
+            padding: 2.5rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        #panel-nixon  .crisis-banner { background: var(--nixon-bg); }
+        #panel-tequila .crisis-banner { background: var(--tequila-bg); }
+        #panel-asian  .crisis-banner { background: var(--asian-bg); }
+
+        .crisis-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        #panel-nixon  .crisis-title { color: var(--nixon-accent); }
+        #panel-tequila .crisis-title { color: var(--tequila-accent); }
+        #panel-asian  .crisis-title  { color: var(--asian-accent); }
+
+        .crisis-subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Key stats row */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .stat-pill {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.9rem 1.4rem;
+            text-align: center;
+            min-width: 130px;
+        }
+
+        .stat-pill .stat-num {
+            display: block;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        #panel-nixon  .stat-num { color: var(--nixon-accent); }
+        #panel-tequila .stat-num { color: var(--tequila-accent); }
+        #panel-asian  .stat-num  { color: var(--asian-accent); }
+
+        .stat-pill .stat-label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+
+        /* ========================================================
+           TIMELINE LAYOUT
+        ======================================================== */
+        .timeline-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3rem 2rem 4rem;
+            position: relative;
+        }
+
+        .timeline-spine {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            transform: translateX(-50%);
+            border-radius: 3px;
+            z-index: 0;
+        }
+
+        #panel-nixon  .timeline-spine { background: linear-gradient(to bottom, var(--nixon-accent), transparent); }
+        #panel-tequila .timeline-spine { background: linear-gradient(to bottom, var(--tequila-accent), transparent); }
+        #panel-asian  .timeline-spine  { background: linear-gradient(to bottom, var(--asian-accent), transparent); }
+
+        /* Individual event cards */
+        .t-item {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 48px 1fr;
+            align-items: start;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .t-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* odd = card on LEFT */
+        .t-item:nth-child(odd)  .t-card { grid-column: 1; justify-self: end; }
+        .t-item:nth-child(odd)  .t-dot  { grid-column: 2; }
+        .t-item:nth-child(odd)  .t-blank { grid-column: 3; }
+
+        /* even = card on RIGHT */
+        .t-item:nth-child(even) .t-blank { grid-column: 1; }
+        .t-item:nth-child(even) .t-dot  { grid-column: 2; }
+        .t-item:nth-child(even) .t-card { grid-column: 3; justify-self: start; }
+
+        .t-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.4rem 1.6rem;
+            width: min(440px, 100%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .t-card:hover {
+            border-color: var(--gold);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+            transform: translateY(-3px);
+        }
+
+        .t-dot {
+            justify-self: center;
+            align-self: start;
+            margin-top: 1.3rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid var(--navy-dark);
+            z-index: 2;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .t-blank { /* empty column placeholder */ }
+
+        /* dot colours per crisis */
+        #panel-nixon  .t-dot { background: var(--nixon-accent); box-shadow: 0 0 10px rgba(232,193,88,0.5); }
+        #panel-tequila .t-dot { background: var(--tequila-accent); box-shadow: 0 0 10px rgba(46,204,113,0.5); }
+        #panel-asian  .t-dot  { background: var(--asian-accent); box-shadow: 0 0 10px rgba(231,76,60,0.5); }
+
+        .t-dot.pulse-dot {
+            animation: dotPulse 2s infinite;
+        }
+
+        @keyframes dotPulse {
+            0%,100% { box-shadow: 0 0 8px currentColor; }
+            50%      { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+        }
+
+        /* Card internals */
+        .card-date {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .card-tag {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #fff;
+            margin-bottom: 0.6rem;
+        }
+
+        .tag-background   { background: var(--tag-background); }
+        .tag-trigger      { background: var(--tag-trigger); }
+        .tag-collapse     { background: var(--tag-collapse); }
+        .tag-contagion    { background: var(--tag-contagion); }
+        .tag-intervention { background: var(--tag-intervention); }
+        .tag-aftermath    { background: var(--tag-aftermath); }
+        .tag-recovery     { background: var(--tag-recovery); }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-body {
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: #b0bccc;
+        }
+
+        /* Expandable stats */
+        .card-stats {
+            display: none;
+            margin-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 0.9rem;
+        }
+
+        .t-card.open .card-stats {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to   { opacity: 1; max-height: 600px; }
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.82rem;
+            gap: 1rem;
+        }
+
+        .stat-row:last-child { border-bottom: none; }
+
+        .stat-key { color: var(--muted); flex-shrink: 0; }
+        .stat-val { color: var(--white); font-weight: 600; text-align: right; }
+
+        /* Click hint */
+        .t-card::after {
+            content: '▼ click for data';
+            display: block;
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-align: right;
+            margin-top: 0.6rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .t-card.open::after { content: '▲ collapse'; }
+        .t-card:hover::after { opacity: 1; }
+
+        /* ========================================================
+           LEGEND
+        ======================================================== */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 1.5rem 2rem 2.5rem;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ========================================================
+           CONNECTIONS BANNER (cross-crisis links)
+        ======================================================== */
+        .connections-section {
+            background: var(--navy);
+            border-top: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--card-border);
+            padding: 2.5rem 2rem;
+        }
+
+        .connections-section h2 {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+        }
+
+        .connections-grid {
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .connection-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 1.2rem 1.4rem;
+        }
+
+        .connection-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .connection-card p {
+            font-size: 0.87rem;
+            line-height: 1.6;
+            color: #9ba8be;
+        }
+
+        /* ========================================================
+           FOOTER
+        ======================================================== */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--card-border);
+            background: var(--navy-dark);
+        }
+
+        .footer strong { color: var(--gold); }
+
+        /* Print button */
+        .print-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gold);
+            color: var(--navy-dark);
+            border: none;
+            border-radius: 50px;
+            padding: 0.6rem 1.4rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .print-btn:hover { background: var(--gold-light); }
+
+        /* ========================================================
+           MOBILE RESPONSIVE
+        ======================================================== */
+        @media (max-width: 680px) {
+            .timeline-spine { left: 22px; }
+
+            .t-item {
+                grid-template-columns: 44px 1fr;
+            }
+
+            .t-item:nth-child(odd) .t-card,
+            .t-item:nth-child(even) .t-card {
+                grid-column: 2;
+                grid-row: 1;
+                justify-self: stretch;
+            }
+
+            .t-item:nth-child(odd) .t-dot,
+            .t-item:nth-child(even) .t-dot {
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            .t-blank { display: none; }
+            .t-card { width: 100%; }
+
+            .brand-bar { flex-direction: column; gap: 0.4rem; text-align: center; }
+        }
+
+        /* ========================================================
+           PRINT STYLES
+        ======================================================== */
+        @media print {
+            .brand-bar,
+            .tab-nav,
+            .progress-bar,
+            .print-btn,
+            .connections-section,
+            .t-card::after,
+            .legend { display: none !important; }
+
+            body { background: white; color: #111; font-family: Georgia, serif; }
+
+            .hero {
+                background: white;
+                padding: 1rem 0;
+                border-bottom: 2px solid #c9a227;
+            }
+
+            .hero::before { display: none; }
+
+            .hero h1 { color: #1a2744; font-size: 2rem; }
+            .hero h1 em { color: #c9a227; }
+            .hero-eyebrow { color: #c9a227; }
+            .hero-subtitle { color: #555; }
+
+            .crisis-panel { display: block !important; }
+
+            .crisis-banner {
+                background: #f9f6ef;
+                page-break-before: always;
+                border: 1px solid #c9a227;
+                border-radius: 0;
+            }
+
+            .crisis-title { color: #1a2744 !important; }
+            .stat-num { color: #1a2744 !important; }
+            .stat-pill { border: 1px solid #ccc; background: #f9f6ef; }
+            .stat-label { color: #555; }
+
+            .timeline-spine { display: none; }
+
+            .t-item {
+                display: block;
+                break-inside: avoid;
+                margin-bottom: 1rem;
+                page-break-inside: avoid;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .t-card {
+                background: white;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+                width: 100%;
+                cursor: default;
+                box-shadow: none;
+            }
+
+            .t-dot, .t-blank { display: none; }
+
+            .card-date { color: #888; }
+            .card-body { color: #333; }
+            .card-title { color: #1a2744; }
+            .card-stats { display: block !important; border-top: 1px solid #ccc; }
+            .stat-row { border-bottom: 1px dotted #ccc; }
+            .stat-key { color: #555; }
+            .stat-val { color: #111; }
+
+            .footer { display: none; }
+
+            @page {
+                margin: 15mm;
+            }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">BIZ-OMICS Financial Crises Timeline</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_fincrises_pw';
+  var valid = ['FinCrises-2Xd!2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['FinCrises-2Xd!2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_fincrises_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- BRAND BAR -->
+<header class="brand-bar">
+    <div class="brand-logo">
+        BIZ-OMICS
+        <span>biz-omics.co.uk</span>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <p class="hero-eyebrow">AQA A-Level Economics · International Finance</p>
+    <h1>Global Financial Crises<br><em>Interactive Timeline Hub</em></h1>
+    <p class="hero-subtitle">Three landmark episodes that reshaped the international monetary system — from the end of gold convertibility to contagion across emerging markets.</p>
+
+    <nav class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="nixon" onclick="switchTab('nixon')" role="tab" aria-selected="true">
+            <span class="tab-icon">💵</span> Nixon Shock (1971)
+        </button>
+        <button class="tab-btn" data-tab="tequila" onclick="switchTab('tequila')" role="tab" aria-selected="false">
+            <span class="tab-icon">🇲🇽</span> Tequila Crisis (1994–95)
+        </button>
+        <button class="tab-btn" data-tab="asian" onclick="switchTab('asian')" role="tab" aria-selected="false">
+            <span class="tab-icon">🏛️</span> Asian Crisis (1997–98)
+        </button>
+    </nav>
+</section>
+
+<!-- ============================================================
+     PANEL 1: NIXON SHOCK
+============================================================ -->
+<section class="crisis-panel active" id="panel-nixon" role="tabpanel">
+    <div class="crisis-banner">
+        <h2 class="crisis-title">💥 The Nixon Shock &amp; End of Bretton Woods</h2>
+        <p class="crisis-subtitle">August 15, 1971 — The day President Nixon unilaterally closed the gold window and shattered the post-war monetary order.</p>
+        <div class="stats-row">
+            <div class="stat-pill"><span class="stat-num">$35/oz</span><span class="stat-label">Gold price under Bretton Woods</span></div>
+            <div class="stat-pill"><span class="stat-num">10%</span><span class="stat-label">Import surcharge imposed</span></div>
+            <div class="stat-pill"><span class="stat-num">1976</span><span class="stat-label">IMF formalises floating rates</span></div>
+            <div class="stat-pill"><span class="stat-num">$7T+</span><span class="stat-label">Daily FOREX volume today</span></div>
+        </div>
+    </div>
+
+    <div class="timeline-wrap">
+        <div class="timeline-spine"></div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">July 1944</div>
+                <span class="card-tag tag-background">Background</span>
+                <div class="card-title">🧭 Bretton Woods Agreement</div>
+                <div class="card-body">44 Allied nations establish a new international monetary system. Currencies pegged to the US dollar; the dollar convertible to gold at $35/oz. IMF and World Bank founded.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">US Gold Share (1944):</span><span class="stat-val">~70% of world total</span></div>
+                    <div class="stat-row"><span class="stat-key">Gold Peg Rate:</span><span class="stat-val">$35 per troy ounce</span></div>
+                    <div class="stat-row"><span class="stat-key">Exchange Rate Bands:</span><span class="stat-val">±1% around parity</span></div>
+                    <div class="stat-row"><span class="stat-key">Nations Attending:</span><span class="stat-val">44 Allied nations</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1945 – 1960s</div>
+                <span class="card-tag tag-background">Dollar Dominance</span>
+                <div class="card-title">📈 The Golden Age of the Dollar</div>
+                <div class="card-body">US economy dominates global output. The dollar is "as good as gold." By the 1960s, Vietnam War spending and the Great Society strain US finances, and dollars pile up abroad.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">US Share of Industrial Output:</span><span class="stat-val">~50% (1945)</span></div>
+                    <div class="stat-row"><span class="stat-key">Vietnam War Cost (peak year):</span><span class="stat-val">$30B+ annually</span></div>
+                    <div class="stat-row"><span class="stat-key">Offshore Dollar Holdings:</span><span class="stat-val">Exceeded US gold by 1960s</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1960s – Early 1970s</div>
+                <span class="card-tag tag-trigger">System Strain</span>
+                <div class="card-title">⚠️ The Triffin Dilemma &amp; Gold Drain</div>
+                <div class="card-body">Economist Robert Triffin identifies the fatal flaw: to supply global liquidity, the US must run deficits — but deficits undermine the dollar's credibility. France leads demands to convert dollars to gold.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">US Gold Reserves (1949):</span><span class="stat-val">$25 billion</span></div>
+                    <div class="stat-row"><span class="stat-key">US Gold Reserves (1971):</span><span class="stat-val">$10 billion</span></div>
+                    <div class="stat-row"><span class="stat-key">Overseas Dollar Claims:</span><span class="stat-val">3× US gold holdings</span></div>
+                    <div class="stat-row"><span class="stat-key">US Inflation (1970):</span><span class="stat-val">5.7%</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">15 August 1971</div>
+                <span class="card-tag tag-collapse">The Shock</span>
+                <div class="card-title">💥 Nixon Closes the Gold Window</div>
+                <div class="card-body">In a surprise Sunday-evening TV address, Nixon suspends dollar–gold convertibility, imposes a 90-day wage-price freeze, and levies a 10% import surcharge. No allied governments were consulted.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Gold Convertibility:</span><span class="stat-val">Suspended (permanent)</span></div>
+                    <div class="stat-row"><span class="stat-key">Wage-Price Freeze:</span><span class="stat-val">90-day freeze on wages, rents</span></div>
+                    <div class="stat-row"><span class="stat-key">Import Surcharge:</span><span class="stat-val">10% additional tariff</span></div>
+                    <div class="stat-row"><span class="stat-key">Advance Consultation:</span><span class="stat-val">None — unilateral</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">December 1971</div>
+                <span class="card-tag tag-aftermath">Failed Fix</span>
+                <div class="card-title">🤝 Smithsonian Agreement</div>
+                <div class="card-body">G10 finance ministers meet in Washington to salvage a fixed-rate system. The dollar is devalued against gold to $38/oz; other currencies revalued upward. Nixon calls it "the greatest monetary agreement in history." It collapses within 14 months.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">New Gold Price:</span><span class="stat-val">$38 per ounce (from $35)</span></div>
+                    <div class="stat-row"><span class="stat-key">Exchange Rate Bands:</span><span class="stat-val">Widened to ±2.25%</span></div>
+                    <div class="stat-row"><span class="stat-key">Duration Before Collapse:</span><span class="stat-val">~14 months</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">March 1973</div>
+                <span class="card-tag tag-aftermath">New Era</span>
+                <div class="card-title">🌊 Free-Floating Exchange Rates Begin</div>
+                <div class="card-body">Major industrial nations abandon fixed parities. Currency values now determined by market supply and demand. Central banks can pursue independent monetary policy. The modern FOREX market is born.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">System:</span><span class="stat-val">Managed float / free float</span></div>
+                    <div class="stat-row"><span class="stat-key">IMF Formalises Floating:</span><span class="stat-val">Jamaica Accords, 1976</span></div>
+                    <div class="stat-row"><span class="stat-key">Daily FOREX Volume (2024):</span><span class="stat-val">$7.5 trillion</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1976 – Present</div>
+                <span class="card-tag tag-recovery">Legacy</span>
+                <div class="card-title">📈 Long-Run Legacy</div>
+                <div class="card-body">Floating rates bring monetary-policy independence and automatic trade adjustment — but also currency volatility, speculative bubbles, and persistent global imbalances. All three of today's crises are downstream consequences.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Positive:</span><span class="stat-val">Independent monetary policy</span></div>
+                    <div class="stat-row"><span class="stat-key">Positive:</span><span class="stat-val">Automatic BOP adjustment</span></div>
+                    <div class="stat-row"><span class="stat-key">Negative:</span><span class="stat-val">Speculative currency crises</span></div>
+                    <div class="stat-row"><span class="stat-key">Negative:</span><span class="stat-val">Persistent trade imbalances</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-background)"></div> Background/Setup</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-trigger)"></div> Trigger/Pressure</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-collapse)"></div> Critical Event</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-aftermath)"></div> Aftermath</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-recovery)"></div> Legacy/Recovery</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     PANEL 2: TEQUILA CRISIS
+============================================================ -->
+<section class="crisis-panel" id="panel-tequila" role="tabpanel">
+    <div class="crisis-banner">
+        <h2 class="crisis-title">🇲🇽 La Crisis del Tequila — Mexican Peso Crisis</h2>
+        <p class="crisis-subtitle">December 1994 — A "controlled" 15% devaluation that snowballed into complete currency collapse and regional contagion.</p>
+        <div class="stats-row">
+            <div class="stat-pill"><span class="stat-num">100%</span><span class="stat-label">Peso devaluation (3.47 → 7.2/USD)</span></div>
+            <div class="stat-pill"><span class="stat-num">$50B</span><span class="stat-label">US-led bailout package</span></div>
+            <div class="stat-pill"><span class="stat-num">−6.2%</span><span class="stat-label">GDP growth 1995</span></div>
+            <div class="stat-pill"><span class="stat-num">50%</span><span class="stat-label">Peak inflation rate</span></div>
+        </div>
+    </div>
+
+    <div class="timeline-wrap">
+        <div class="timeline-spine"></div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1988 – 1993</div>
+                <span class="card-tag tag-background">Background</span>
+                <div class="card-title">🏦 Foundations of the Peso Peg</div>
+                <div class="card-body">Mexico adopts a crawling-band peg to the dollar. Large current-account deficits (up to 8% of GDP) are financed by short-term foreign capital inflows, creating dangerous vulnerabilities masked by NAFTA optimism.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Current Account Deficit:</span><span class="stat-val">Up to 8% of GDP</span></div>
+                    <div class="stat-row"><span class="stat-key">Capital Inflows:</span><span class="stat-val">Mostly short-term, volatile</span></div>
+                    <div class="stat-row"><span class="stat-key">Exchange Rate Regime:</span><span class="stat-val">Crawling peg band to USD</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1 January 1994</div>
+                <span class="card-tag tag-trigger">Catalyst</span>
+                <div class="card-title">🤝 NAFTA Takes Effect</div>
+                <div class="card-body">North American Free Trade Agreement launches, attracting $30B+ in foreign investment and creating false confidence. On the same day, the Zapatista uprising in Chiapas shakes investor sentiment — the first crack in the facade.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Foreign Investment Inflows:</span><span class="stat-val">$30B+ (1994)</span></div>
+                    <div class="stat-row"><span class="stat-key">Zapatista Uprising:</span><span class="stat-val">Launched NAFTA's first day</span></div>
+                    <div class="stat-row"><span class="stat-key">Market Signal:</span><span class="stat-val">Political risk rising</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">23 March 1994</div>
+                <span class="card-tag tag-collapse">Political Crisis</span>
+                <div class="card-title">💀 Assassination of Colosio</div>
+                <div class="card-body">PRI presidential candidate Luis Donaldo Colosio is shot in Tijuana. Mexican stocks crash 10%. Capital flight accelerates as political risk premium soars and foreign investors begin questioning Mexico's stability.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Stock Market (immediate):</span><span class="stat-val">−10% in days</span></div>
+                    <div class="stat-row"><span class="stat-key">Peso (immediate):</span><span class="stat-val">Weakened sharply</span></div>
+                    <div class="stat-row"><span class="stat-key">Capital Flight Began:</span><span class="stat-val">Accelerated Q2 1994</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">Throughout 1994</div>
+                <span class="card-tag tag-trigger">Capital Flight</span>
+                <div class="card-title">📉 The Tesobono Trap</div>
+                <div class="card-body">To retain investor confidence, Mexico issues Tesobonos — short-term bonds indexed to the dollar. This shores up short-run financing but creates a time bomb: $30B of dollar-denominated debt maturing in early 1995.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Tesobonos Issued:</span><span class="stat-val">$30 billion total</span></div>
+                    <div class="stat-row"><span class="stat-key">Maturity Profile:</span><span class="stat-val">Mostly Jan–Mar 1995</span></div>
+                    <div class="stat-row"><span class="stat-key">Capital Outflows (1994):</span><span class="stat-val">$10B+</span></div>
+                    <div class="stat-row"><span class="stat-key">Reserve Disclosure:</span><span class="stat-val">Opaque — not publicly disclosed</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">20 December 1994</div>
+                <span class="card-tag tag-collapse">Crisis Erupts</span>
+                <div class="card-title">💥 The Fatal Devaluation</div>
+                <div class="card-body">President Zedillo announces a "controlled" 15% peso devaluation. Markets panic immediately — the move signals weakness and triggers massive speculation. Reserves burn at $4B in 48 hours. On 22 December, Mexico is forced to float.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Initial Devaluation Target:</span><span class="stat-val">15% ("controlled")</span></div>
+                    <div class="stat-row"><span class="stat-key">Reserves Lost (48 hrs):</span><span class="stat-val">$4 billion</span></div>
+                    <div class="stat-row"><span class="stat-key">Eventual Exchange Rate:</span><span class="stat-val">3.47 → 7.2+ per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">Stock Market (IPC):</span><span class="stat-val">−35% in peso terms</span></div>
+                    <div class="stat-row"><span class="stat-key">Bond Yields:</span><span class="stat-val">Exceeded 40%</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">January 1995</div>
+                <span class="card-tag tag-contagion">Contagion</span>
+                <div class="card-title">🌊 The "Tequila Effect" Spreads</div>
+                <div class="card-body">Panic spreads to Argentina, Brazil, and other emerging markets. Investors flee anything that looks risky. Argentine bank deposits fall 18% and the peso-dollar convertibility board comes under severe pressure.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Argentine Deposit Outflows:</span><span class="stat-val">−18% in weeks</span></div>
+                    <div class="stat-row"><span class="stat-key">Brazilian Real:</span><span class="stat-val">Under speculative attack</span></div>
+                    <div class="stat-row"><span class="stat-key">Emerging Market Bond Spreads:</span><span class="stat-val">Jumped 200–400 bps</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">January–February 1995</div>
+                <span class="card-tag tag-intervention">Bailout</span>
+                <div class="card-title">🏦 Clinton's $50B Rescue</div>
+                <div class="card-body">The US Treasury and IMF assemble an unprecedented $50B package — using the Exchange Stabilisation Fund (bypassing a hostile Congress) and oil-export revenues as collateral. Harsh austerity and structural reforms required in return.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">US Contribution:</span><span class="stat-val">$20B (ESF)</span></div>
+                    <div class="stat-row"><span class="stat-key">IMF Contribution:</span><span class="stat-val">$17.8B</span></div>
+                    <div class="stat-row"><span class="stat-key">Collateral:</span><span class="stat-val">Mexican oil revenues</span></div>
+                    <div class="stat-row"><span class="stat-key">Conditions:</span><span class="stat-val">Austerity + privatisation + bank reform</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">1995 – 1997</div>
+                <span class="card-tag tag-recovery">Recovery</span>
+                <div class="card-title">🚀 Mexico's Remarkable Comeback</div>
+                <div class="card-body">A competitive peso fuels an export boom. Mexico repays all US loans by 1997 — three years ahead of schedule. The crisis becomes a template for IMF intervention and the importance of reserve transparency.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">US Loan Repaid:</span><span class="stat-val">1997 (3 years early)</span></div>
+                    <div class="stat-row"><span class="stat-key">GDP Growth (1996):</span><span class="stat-val">+5.1%</span></div>
+                    <div class="stat-row"><span class="stat-key">Key Driver:</span><span class="stat-val">Export boom via NAFTA + weak peso</span></div>
+                    <div class="stat-row"><span class="stat-key">Policy Change:</span><span class="stat-val">Floating rate + central bank independence</span></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-background)"></div> Background</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-trigger)"></div> Trigger</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-collapse)"></div> Collapse</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-contagion)"></div> Contagion</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-intervention)"></div> Intervention</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-recovery)"></div> Recovery</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     PANEL 3: ASIAN CRISIS
+============================================================ -->
+<section class="crisis-panel" id="panel-asian" role="tabpanel">
+    <div class="crisis-banner">
+        <h2 class="crisis-title">🏛️ Asian Financial Crisis 1997–98</h2>
+        <p class="crisis-subtitle">When fixed pegs, speculative attacks and contagion brought down the "Asian Miracle" economies — and ultimately toppled Suharto.</p>
+        <div class="stats-row">
+            <div class="stat-pill"><span class="stat-num">$600B+</span><span class="stat-label">Regional market cap lost</span></div>
+            <div class="stat-pill"><span class="stat-num">$117B</span><span class="stat-label">Combined IMF bailouts</span></div>
+            <div class="stat-pill"><span class="stat-num">−13.1%</span><span class="stat-label">Indonesia GDP 1998</span></div>
+            <div class="stat-pill"><span class="stat-num">82%</span><span class="stat-label">Peak Indonesian inflation</span></div>
+        </div>
+    </div>
+
+    <div class="timeline-wrap">
+        <div class="timeline-spine"></div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">Late 1980s – Mid-1990s</div>
+                <span class="card-tag tag-background">Background</span>
+                <div class="card-title">🧭 The "Asian Miracle" Era</div>
+                <div class="card-body">Thailand, Indonesia, Malaysia, Korea post 8–12% annual growth — the "Asian Tigers." Dollar pegs attract massive foreign capital, but create dangerous current-account deficits and short-term foreign debt.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Thailand GDP Growth:</span><span class="stat-val">8–12% annually</span></div>
+                    <div class="stat-row"><span class="stat-key">Indonesia Capital Inflows:</span><span class="stat-val">$20B+ per year</span></div>
+                    <div class="stat-row"><span class="stat-key">Korea Investment Rate:</span><span class="stat-val">40% of GDP</span></div>
+                    <div class="stat-row"><span class="stat-key">Thailand Current Account:</span><span class="stat-val">−8% of GDP</span></div>
+                </div>
+            </div>
+            <div class="t-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">May 1997</div>
+                <span class="card-tag tag-trigger">Speculative Attack</span>
+                <div class="card-title">⚠️ Soros Attacks the Thai Baht</div>
+                <div class="card-body">George Soros and other hedge funds build massive short positions against the baht. The Bank of Thailand burns through $23B in reserves defending the 25-baht-per-dollar peg. Short positions exceed $15B.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Reserves Spent Defending:</span><span class="stat-val">$23 billion</span></div>
+                    <div class="stat-row"><span class="stat-key">Short Positions Against Baht:</span><span class="stat-val">$15+ billion</span></div>
+                    <div class="stat-row"><span class="stat-key">Bangkok Office Vacancy Rate:</span><span class="stat-val">25%</span></div>
+                    <div class="stat-row"><span class="stat-key">External Debt (Thailand):</span><span class="stat-val">$93B (50% of GDP)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">2 July 1997</div>
+                <span class="card-tag tag-collapse">Peg Abandoned</span>
+                <div class="card-title">💥 Thailand Floats — and Falls</div>
+                <div class="card-body">Central bank governor Rerngchai Marakanond announces the baht will float. It crashes from 25 to 29 per dollar on day one — bankrupting companies with dollar-denominated debt overnight.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Baht (Day 1):</span><span class="stat-val">25 → 29 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">Baht (eventual low):</span><span class="stat-val">~56 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">SET Stock Index (July):</span><span class="stat-val">−25% in one month</span></div>
+                    <div class="stat-row"><span class="stat-key">Finance Companies Closed:</span><span class="stat-val">56 of 91</span></div>
+                    <div class="stat-row"><span class="stat-key">Corporate Debt Defaults:</span><span class="stat-val">$70B+</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">July – August 1997</div>
+                <span class="card-tag tag-contagion">Contagion</span>
+                <div class="card-title">🌊 Dominoes Fall Across the Region</div>
+                <div class="card-body">Philippines abandons the peso peg (11 July). Malaysia's Mahathir blames "rogue speculators." Indonesia widens rupiah trading bands, then abandons them. $600B in regional market cap evaporates.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Philippine Peso:</span><span class="stat-val">26 → 40 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">Malaysian Ringgit:</span><span class="stat-val">2.5 → 4.8 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">Rupiah Trading Band:</span><span class="stat-val">8% → 12% → Float</span></div>
+                    <div class="stat-row"><span class="stat-key">Regional Market Cap Lost:</span><span class="stat-val">$600B+</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">October 1997</div>
+                <span class="card-tag tag-collapse">Chaebol Crisis</span>
+                <div class="card-title">🇰🇷 Korea's Industrial Giants Collapse</div>
+                <div class="card-body">Korea's over-leveraged conglomerates (chaebol) — Kia, Hanbo, Sammi, Jinro — fail in rapid succession. Foreign banks refuse to roll over $120B in short-term loans, triggering a national liquidity crisis. The won halves in value.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Won Exchange Rate:</span><span class="stat-val">900 → 1,800 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">Major Chaebol Failures:</span><span class="stat-val">Kia, Hanbo, Sammi, Jinro</span></div>
+                    <div class="stat-row"><span class="stat-key">Short-term Foreign Debt:</span><span class="stat-val">$120 billion</span></div>
+                    <div class="stat-row"><span class="stat-key">KOSPI Index (from peak):</span><span class="stat-val">−60%</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-blank"></div>
+            <div class="t-dot"></div>
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">December 1997</div>
+                <span class="card-tag tag-intervention">IMF Bailout</span>
+                <div class="card-title">🏦 Record-Breaking Rescues</div>
+                <div class="card-body">The IMF's largest-ever bailout goes to Korea ($57B). Indonesia receives $43B, Thailand $17.2B. Each package demands harsh conditions: bank closures, budget cuts, structural reform — and is criticised for deepening recessions.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Korea Package:</span><span class="stat-val">$57B (IMF record at the time)</span></div>
+                    <div class="stat-row"><span class="stat-key">Indonesia Package:</span><span class="stat-val">$43B + 16 bank closures</span></div>
+                    <div class="stat-row"><span class="stat-key">Thailand Package:</span><span class="stat-val">$17.2B + bank reforms</span></div>
+                    <div class="stat-row"><span class="stat-key">Conditions Required:</span><span class="stat-val">Austerity + liberalisation</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="t-item">
+            <div class="t-card" onclick="toggleCard(this)">
+                <div class="card-date">May 1998</div>
+                <span class="card-tag tag-collapse">Political Fallout</span>
+                <div class="card-title">🔥 Indonesia's Total Meltdown</div>
+                <div class="card-body">The rupiah falls from 2,400 to 16,800 per dollar. GDP contracts 13.1%. Riots erupt in Jakarta, targeting ethnic Chinese businesses. President Suharto — ruler for 32 years — resigns on 21 May 1998.</div>
+                <div class="card-stats">
+                    <div class="stat-row"><span class="stat-key">Rupiah Collapse:</span><span class="stat-val">2,400 → 16,800 per USD</span></div>
+                    <div class="stat-row"><span class="stat-key">GDP Contraction 1998:</span><span class="stat-val">−13.1%</span></div>
+                    <div class="stat-row"><span class="stat-key">Peak Inflation:</span><span class="stat-val">82% year-on-year</span></div>
+                    <div class="stat-row"><span class="stat-key">Suharto Resignation:</span><span class="stat-val">21 May 1998 (after 32 years)</span></div>
+                </div>
+            </div>
+            <div class="t-dot pulse-dot"></div>
+            <div class="t-blank"></div>
+        </div>
+
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-background)"></div> Background</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-trigger)"></div> Speculative Attack</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-collapse)"></div> Collapse</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-contagion)"></div> Contagion</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--tag-intervention)"></div> IMF Intervention</div>
+    </div>
+</section>
+
+<!-- ============================================================
+     CROSS-CRISIS CONNECTIONS
+============================================================ -->
+<section class="connections-section">
+    <h2>🔗 Connecting the Crises — Common Threads</h2>
+    <div class="connections-grid">
+        <div class="connection-card">
+            <h3>📌 The Peg Problem</h3>
+            <p>All three crises involve fixed or semi-fixed exchange rate regimes that became unsustainable. Bretton Woods (1971), the peso crawling band (1994), and Asia's dollar pegs (1997) all eventually collapsed under speculative pressure once markets judged the peg as inconsistent with fundamentals.</p>
+        </div>
+        <div class="connection-card">
+            <h3>📌 Short-Term Capital Flows</h3>
+            <p>Hot money — short-term, volatile foreign capital attracted by higher yields — played a central role in both the build-up and the sudden stop of all three crises. Mexico's Tesobonos and Asia's short-term bank borrowing illustrate how maturity mismatches amplify vulnerability.</p>
+        </div>
+        <div class="connection-card">
+            <h3>📌 Contagion and Confidence</h3>
+            <p>Market psychology and herd behaviour spread crises far beyond the original epicentre. The "Tequila Effect" hit Argentina; the Asian crisis reached Korea and Russia. Each collapse damaged confidence in similar economies, regardless of their actual fundamentals.</p>
+        </div>
+        <div class="connection-card">
+            <h3>📌 IMF Conditionality Debate</h3>
+            <p>The IMF's response to both Mexico (1994) and Asia (1997–98) attached harsh austerity conditions that critics argue deepened the recessions. This sparked a major rethink of IMF doctrine and influenced the development of precautionary credit lines in the 2000s.</p>
+        </div>
+        <div class="connection-card">
+            <h3>📌 Legacy: Reserve Accumulation</h3>
+            <p>A key lesson from all three crises was the importance of adequate foreign exchange reserves as a buffer. After 1998, Asian economies dramatically increased reserve holdings — partly explaining global "savings glut" dynamics ahead of the 2008 financial crisis.</p>
+        </div>
+        <div class="connection-card">
+            <h3>📌 AQA Exam Application</h3>
+            <p>These cases are rich for Paper 4 (EC04) evaluation questions: comparative advantage, exchange rate systems, managed vs. floating rates, the role of international institutions (IMF/World Bank), financial globalisation, and the arguments for/against capital controls.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <strong>BIZ-OMICS</strong> — biz-omics.co.uk &nbsp;|&nbsp;
+    AQA A-Level Economics Interactive Resource &nbsp;|&nbsp;
+    For educational use only
+</footer>
+
+<script>
+    /* -------------------------------------------------- */
+    /* TAB SWITCHING                                       */
+    /* -------------------------------------------------- */
+    function switchTab(id) {
+        document.querySelectorAll('.crisis-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
+
+        document.getElementById('panel-' + id).classList.add('active');
+        const btn = document.querySelector(`.tab-btn[data-tab="${id}"]`);
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+
+        // Scroll smoothly to just below the brand bar
+        document.getElementById('panel-' + id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Re-trigger scroll animation for newly revealed items
+        setTimeout(checkVisibility, 100);
+    }
+
+    /* -------------------------------------------------- */
+    /* CARD EXPAND / COLLAPSE                              */
+    /* -------------------------------------------------- */
+    function toggleCard(el) {
+        el.classList.toggle('open');
+    }
+
+    /* -------------------------------------------------- */
+    /* SCROLL-TRIGGERED FADE IN                           */
+    /* -------------------------------------------------- */
+    function checkVisibility() {
+        const items = document.querySelectorAll('.crisis-panel.active .t-item');
+        items.forEach((item, i) => {
+            const rect = item.getBoundingClientRect();
+            if (rect.top < window.innerHeight - 60) {
+                setTimeout(() => item.classList.add('visible'), i * 60);
+            }
+        });
+    }
+
+    window.addEventListener('scroll', checkVisibility, { passive: true });
+    window.addEventListener('load', checkVisibility);
+
+    /* -------------------------------------------------- */
+    /* PROGRESS BAR                                        */
+    /* -------------------------------------------------- */
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.pageYOffset;
+        const docHeight = document.body.scrollHeight - window.innerHeight;
+        document.getElementById('progressBar').style.width = ((scrollTop / docHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* -------------------------------------------------- */
+    /* KEYBOARD NAVIGATION                                 */
+    /* -------------------------------------------------- */
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.t-card.open').forEach(c => c.classList.remove('open'));
+        }
+    });
+
+    // Initial check
+    setTimeout(checkVisibility, 200);
+</script>
+</body>
+</html>

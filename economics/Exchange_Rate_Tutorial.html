@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Rate Tutorial | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0d1b2a;
+            --navy-mid: #1a2f45;
+            --navy-light: #243d57;
+            --gold: #e8b84b;
+            --gold-pale: rgba(232,184,75,0.12);
+            --teal: #2dd4bf;
+            --teal-dim: rgba(45,212,191,0.12);
+            --rose: #f87171;
+            --rose-dim: rgba(248,113,113,0.12);
+            --text: #e8edf3;
+            --text-muted: #7a91a8;
+            --border: rgba(255,255,255,0.08);
+            --card: #152033;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            min-height: 100vh;
+            color: var(--text);
+            padding: 20px;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(232,184,75,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 110%, rgba(45,212,191,0.05) 0%, transparent 60%);
+        }
+        .container {
+            max-width: 1100px; margin: 0 auto;
+            background: var(--card); border-radius: 20px;
+            border: 1px solid var(--border); overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, var(--navy-mid), var(--navy-light));
+            padding: 36px 40px 28px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden;
+        }
+        header::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold),var(--teal),var(--gold)); }
+        .brand { display:inline-flex; align-items:center; gap:10px; margin-bottom:14px; }
+        .brand-mark { width:36px; height:36px; background:var(--gold); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'DM Mono',monospace; font-size:0.7em; font-weight:500; color:var(--navy); letter-spacing:-0.5px; }
+        .brand-name { font-family:'Fraunces',serif; font-size:1.05em; font-weight:700; color:var(--gold); letter-spacing:1.5px; text-transform:uppercase; }
+        h1 { font-family:'Fraunces',serif; font-size:2.2em; font-weight:700; color:var(--text); line-height:1.1; margin-bottom:8px; }
+        .subtitle { color:var(--text-muted); font-size:1em; }
+
+        /* STATS BAR */
+        .stats-bar { display:flex; align-items:center; padding:16px 40px; background:var(--navy); border-bottom:1px solid var(--border); gap:0; flex-wrap:wrap; }
+        .stat { flex:1; text-align:center; min-width:80px; padding:8px 0; }
+        .stat+.stat { border-left:1px solid var(--border); }
+        .stat-value { font-family:'DM Mono',monospace; font-size:1.7em; font-weight:500; color:var(--teal); line-height:1; }
+        .stat-label { font-size:0.72em; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; }
+        .stat-streak .stat-value { color:var(--gold); }
+        .reset-btn { padding:7px 16px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text-muted); font-size:0.8em; cursor:pointer; transition:all 0.2s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+        .reset-btn:hover { border-color:var(--rose); color:var(--rose); }
+
+        /* MILESTONE TOAST */
+        #milestone-toast { position:fixed; top:30px; left:50%; transform:translateX(-50%) translateY(-150px); background:linear-gradient(135deg,var(--navy-light),var(--navy-mid)); border:2px solid var(--gold); border-radius:16px; padding:18px 30px; text-align:center; z-index:9999; box-shadow:0 20px 50px rgba(0,0,0,0.5); transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1); min-width:280px; }
+        #milestone-toast.show { transform:translateX(-50%) translateY(0); }
+        #milestone-toast .t-emoji { font-size:2.5em; display:block; margin-bottom:8px; }
+        #milestone-toast .t-title { font-family:'Fraunces',serif; font-size:1.3em; color:var(--gold); }
+        #milestone-toast .t-sub { font-size:0.85em; color:var(--text-muted); margin-top:4px; }
+
+        /* TABS */
+        .tabs { display:flex; background:var(--navy); border-bottom:1px solid var(--border); overflow-x:auto; scrollbar-width:none; }
+        .tabs::-webkit-scrollbar { display:none; }
+        .tab { flex:1; min-width:120px; padding:16px 10px; text-align:center; cursor:pointer; background:transparent; border:none; font-size:0.86em; font-weight:600; color:var(--text-muted); transition:all 0.25s; border-bottom:3px solid transparent; font-family:'DM Sans',sans-serif; }
+        .tab:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+        .tab.active { color:var(--gold); border-bottom-color:var(--gold); background:rgba(232,184,75,0.05); }
+        .tab-content { display:none; padding:36px 40px; animation:fadeSlide 0.3s ease; }
+        .tab-content.active { display:block; }
+        @keyframes fadeSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+
+        /* THEORY */
+        .theory-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
+        .theory-card.wide { grid-column:span 2; }
+        .theory-card { background:var(--navy-mid); padding:22px 26px; border-radius:12px; border:1px solid var(--border); border-left:3px solid var(--teal); }
+        .theory-card h3 { font-family:'Fraunces',serif; color:var(--teal); margin-bottom:12px; font-size:1.1em; }
+        .theory-card p { line-height:1.65; color:var(--text); margin-bottom:8px; font-size:0.95em; }
+        .theory-card ul { margin-left:18px; margin-top:8px; }
+        .theory-card li { margin-bottom:6px; line-height:1.5; font-size:0.95em; }
+        .example-box { background:var(--teal-dim); border:1px solid rgba(45,212,191,0.25); padding:13px 16px; border-radius:8px; margin-top:12px; font-size:0.9em; line-height:1.65; }
+        .example-box strong { color:var(--teal); }
+
+        /* INTERACTIVE WIDGETS */
+        .interactive-widget { background:var(--navy); border-radius:10px; padding:18px; margin-top:14px; border:1px solid var(--border); }
+        .widget-label { font-size:0.78em; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:12px; }
+        .slider-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+        .slider-row label { font-size:0.88em; color:var(--text-muted); min-width:110px; }
+        input[type="range"] { flex:1; accent-color:var(--gold); cursor:pointer; }
+        .slider-val { font-family:'DM Mono',monospace; color:var(--gold); font-size:0.88em; min-width:65px; text-align:right; }
+        .widget-result { background:var(--navy-mid); border-radius:8px; padding:12px 14px; font-family:'DM Mono',monospace; font-size:0.88em; line-height:1.75; border:1px solid var(--border); white-space:pre-line; }
+        .widget-result .hi { color:var(--gold); } .widget-result .up { color:var(--teal); } .widget-result .dn { color:var(--rose); }
+        .spread-diagram { display:flex; margin-top:12px; border-radius:8px; overflow:hidden; border:1px solid var(--border); font-size:0.85em; }
+        .spread-seg { flex:1; padding:11px; text-align:center; }
+        .spread-seg.bid { background:var(--rose-dim); } .spread-seg.spr { background:var(--gold-pale,rgba(232,184,75,0.1)); border-left:1px solid var(--border); border-right:1px solid var(--border); } .spread-seg.ask { background:var(--teal-dim); }
+        .seg-label { font-size:0.72em; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:4px; }
+        .seg-val { font-family:'DM Mono',monospace; font-size:1.1em; font-weight:500; }
+        .bid .seg-val { color:var(--rose); } .spr .seg-val { color:var(--gold); font-size:0.9em; } .ask .seg-val { color:var(--teal); }
+
+        /* LIVE RATES */
+        .rates-notice { background:rgba(232,184,75,0.1); border:1px solid rgba(232,184,75,0.3); border-radius:8px; padding:10px 16px; font-size:0.85em; color:var(--gold); margin-bottom:18px; }
+        .currency-pair { background:var(--navy-mid); border-radius:12px; margin-bottom:12px; border:1px solid var(--border); overflow:hidden; }
+        .pair-header { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid var(--border); }
+        .pair-name { font-size:1.05em; font-weight:700; } .pair-meta { font-size:0.78em; color:var(--text-muted); margin-top:3px; }
+        .rate-section { display:flex; gap:12px; padding:14px 20px; flex-wrap:wrap; align-items:center; }
+        .bid-ask-container { display:flex; gap:8px; flex-wrap:wrap; }
+        .bid-box,.ask-box { background:var(--navy); padding:9px 14px; border-radius:8px; min-width:100px; border:1px solid var(--border); }
+        .bid-label,.ask-label { font-size:0.7em; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+        .bid-price { font-family:'DM Mono',monospace; font-size:1.2em; font-weight:500; color:var(--rose); }
+        .ask-price { font-family:'DM Mono',monospace; font-size:1.2em; font-weight:500; color:var(--teal); }
+        .spread-info { background:var(--navy); padding:9px 14px; border-radius:8px; border:1px solid var(--border); }
+        .spread-label { font-size:0.7em; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+        .spread-value { font-family:'DM Mono',monospace; font-size:1.05em; font-weight:500; color:var(--gold); }
+        .change { padding:4px 9px; border-radius:6px; font-weight:600; font-size:0.82em; font-family:'DM Mono',monospace; }
+        .change.positive { background:var(--teal-dim); color:var(--teal); } .change.negative { background:var(--rose-dim); color:var(--rose); }
+
+        /* PRACTICE */
+        .settings-panel { background:var(--navy-mid); padding:20px 24px; border-radius:12px; margin-bottom:22px; border:1px solid var(--border); }
+        .settings-panel h3 { font-family:'Fraunces',serif; color:var(--teal); margin-bottom:14px; font-size:1.05em; }
+        .settings-row { display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px; }
+        .setting-group { flex:1; min-width:150px; }
+        .setting-group label { display:block; margin-bottom:5px; color:var(--text-muted); font-size:0.8em; text-transform:uppercase; letter-spacing:0.5px; }
+        .setting-group select { width:100%; padding:9px 11px; background:var(--navy); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.93em; font-family:'DM Sans',sans-serif; cursor:pointer; }
+        .setting-group select:focus { outline:2px solid var(--gold); outline-offset:2px; }
+        .diff-toggle { display:flex; gap:5px; }
+        .diff-btn { flex:1; padding:8px 8px; border-radius:7px; border:1px solid var(--border); background:var(--navy); color:var(--text-muted); font-size:0.82em; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; }
+        .diff-easy { background:var(--teal-dim); border-color:var(--teal); color:var(--teal); }
+        .diff-medium { background:rgba(232,184,75,0.12); border-color:var(--gold); color:var(--gold); }
+        .diff-hard { background:var(--rose-dim); border-color:var(--rose); color:var(--rose); }
+        .problem-container { background:var(--navy-mid); padding:26px; border-radius:12px; margin-bottom:22px; border:1px solid var(--border); }
+        .problem-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+        .problem-number { font-family:'DM Mono',monospace; font-size:0.83em; color:var(--text-muted); }
+        .diff-badge { padding:4px 11px; border-radius:20px; font-size:0.76em; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
+        .badge-easy { background:var(--teal-dim); color:var(--teal); border:1px solid rgba(45,212,191,0.3); }
+        .badge-medium { background:rgba(232,184,75,0.12); color:var(--gold); border:1px solid rgba(232,184,75,0.3); }
+        .badge-hard { background:var(--rose-dim); color:var(--rose); border:1px solid rgba(248,113,113,0.3); }
+        .badge-bidask { background:rgba(232,184,75,0.12); color:var(--gold); border:1px solid rgba(232,184,75,0.3); }
+        .badge-cross { background:var(--rose-dim); color:var(--rose); border:1px solid rgba(248,113,113,0.3); }
+        .context-badge { display:inline-block; background:rgba(232,184,75,0.1); border:1px solid rgba(232,184,75,0.25); color:var(--gold); font-size:0.74em; padding:3px 10px; border-radius:20px; margin-bottom:12px; font-weight:600; }
+        .problem-text { font-size:1.02em; line-height:1.8; margin-bottom:20px; color:var(--text); }
+        .answer-section { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .answer-section input[type="number"] { flex:1; min-width:170px; padding:12px 14px; font-size:1.05em; font-family:'DM Mono',monospace; border:2px solid var(--border); border-radius:10px; background:var(--navy); color:var(--text); transition:border-color 0.2s; }
+        .answer-section input[type="number"]:focus { outline:none; border-color:var(--gold); }
+        .answer-section input.input-err { border-color:var(--rose); animation:shake 0.3s; }
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+        .inline-err { color:var(--rose); font-size:0.83em; margin-top:-8px; margin-bottom:10px; }
+        .hidden { display:none; }
+        button { font-family:'DM Sans',sans-serif; cursor:pointer; border:none; transition:all 0.2s; }
+        .btn-primary { padding:11px 20px; background:var(--gold); color:var(--navy); border-radius:10px; font-weight:700; font-size:0.93em; }
+        .btn-primary:hover { background:#f0c85a; transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,184,75,0.3); }
+        .btn-secondary { padding:11px 18px; background:var(--navy-light); color:var(--text); border-radius:10px; font-weight:600; font-size:0.88em; border:1px solid var(--border); }
+        .btn-secondary:hover { border-color:var(--teal); color:var(--teal); }
+        .btn-hint { padding:9px 16px; background:rgba(232,184,75,0.1); color:var(--gold); border-radius:10px; font-weight:600; font-size:0.86em; border:1px solid rgba(232,184,75,0.2); }
+        .btn-hint:hover { background:rgba(232,184,75,0.18); }
+        .btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+        .hints-container { margin-top:16px; }
+        .hint { background:rgba(30,58,138,0.12); padding:13px 15px; border-radius:8px; margin-bottom:8px; border-left:3px solid var(--navy-light); display:none; }
+        .hint.revealed { display:block; animation:slideDown 0.3s ease; border-left-color:var(--gold); background:rgba(232,184,75,0.08); }
+        @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        .hint-label { font-weight:700; color:var(--gold); margin-bottom:5px; font-size:0.8em; text-transform:uppercase; letter-spacing:0.5px; }
+        .result { padding:14px 18px; border-radius:10px; margin-top:16px; font-size:0.97em; font-weight:500; line-height:1.5; }
+        .result.correct { background:var(--teal-dim); border:1px solid rgba(45,212,191,0.3); color:var(--teal); }
+        .result.incorrect { background:var(--rose-dim); border:1px solid rgba(248,113,113,0.3); color:var(--rose); }
+        .method { background:var(--navy); padding:20px 22px; border-radius:10px; margin-top:14px; border:1px solid var(--border); }
+        .method h4 { font-family:'Fraunces',serif; color:var(--teal); margin-bottom:11px; font-size:1.05em; }
+        .method p { margin-bottom:8px; line-height:1.65; font-size:0.93em; }
+        .method code { font-family:'DM Mono',monospace; background:var(--navy-mid); padding:2px 6px; border-radius:4px; font-size:0.88em; }
+
+        @media(max-width:768px){
+            body{padding:10px} header{padding:22px 18px 18px} h1{font-size:1.6em}
+            .stats-bar{padding:12px 14px} .tab-content{padding:18px 14px}
+            .theory-grid{grid-template-columns:1fr} .theory-card.wide{grid-column:span 1}
+            .tab{padding:11px 7px;font-size:0.76em;min-width:80px}
+            .settings-row{flex-direction:column} .answer-section{flex-direction:column}
+            .btn-group{flex-direction:column} .btn-group button{width:100%}
+        }
+        @media print{body{background:white;color:black}.container{box-shadow:none;border:1px solid #ccc}.tabs,.stats-bar,button{display:none}.tab-content{display:block!important;padding:20px}}
+        button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Exchange Rate Tutorial</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_erratetutor_pw';
+  var valid = ['ExRateTut-5Nr2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['ExRateTut-5Nr2026','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_erratetutor_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+    <div id="milestone-toast">
+        <span class="t-emoji" id="t-emoji">🔥</span>
+        <div class="t-title" id="t-title">5 in a row!</div>
+        <div class="t-sub" id="t-sub">You're on fire!</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="brand-mark">B·O</div>
+                <div class="brand-name">BIZ-OMICS</div>
+            </div>
+            <h1>Exchange Rate Tutorial</h1>
+            <p class="subtitle">Currency conversions · Bid-ask spreads · Cross rates · A-Level &amp; GCSE</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat"><div class="stat-value" id="st-attempted">0</div><div class="stat-label">Attempted</div></div>
+            <div class="stat"><div class="stat-value" id="st-correct">0</div><div class="stat-label">Correct</div></div>
+            <div class="stat"><div class="stat-value" id="st-accuracy">0%</div><div class="stat-label">Accuracy</div></div>
+            <div class="stat stat-streak"><div class="stat-value" id="st-streak">0</div><div class="stat-label">🔥 Streak</div></div>
+            <div style="padding-left:14px;display:flex;align-items:center;">
+                <button class="reset-btn" onclick="confirmReset()">↺ Reset</button>
+            </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+            <button class="tab active" onclick="switchTab('theory',this)" role="tab" aria-selected="true">📚 Theory</button>
+            <button class="tab" onclick="switchTab('rates',this)" role="tab" aria-selected="false">💱 Rates</button>
+            <button class="tab" onclick="switchTab('basic',this)" role="tab" aria-selected="false">🎯 Basic</button>
+            <button class="tab" onclick="switchTab('bidask',this)" role="tab" aria-selected="false">📊 Bid-Ask</button>
+            <button class="tab" onclick="switchTab('cross',this)" role="tab" aria-selected="false">🔀 Cross Rates</button>
+        </div>
+
+        <!-- THEORY TAB -->
+        <div id="theory-tab" class="tab-content active" role="tabpanel">
+            <div class="theory-grid">
+                <div class="theory-card wide">
+                    <h3>What is an Exchange Rate?</h3>
+                    <p>An exchange rate is the price of one currency expressed in terms of another. It tells you how much of one currency is needed to obtain one unit of another.</p>
+                    <div class="example-box"><strong>Example:</strong> £1 = $1.27 means one British pound buys 1.27 US dollars.</div>
+                    <div class="interactive-widget">
+                        <div class="widget-label">🎛 Interactive — explore appreciation &amp; depreciation</div>
+                        <div class="slider-row"><label>£/$ Rate</label><input type="range" id="rsl-rate" min="1.00" max="1.60" step="0.01" value="1.27" oninput="updRateWidget()"><span class="slider-val" id="rsv-rate">1.27</span></div>
+                        <div class="slider-row"><label>Amount (£)</label><input type="range" id="rsl-amt" min="100" max="10000" step="100" value="1000" oninput="updRateWidget()"><span class="slider-val" id="rsv-amt">£1,000</span></div>
+                        <div class="widget-result" id="rate-result">Loading…</div>
+                    </div>
+                </div>
+                <div class="theory-card">
+                    <h3>Direct vs Indirect Quotes</h3>
+                    <p><strong>Direct:</strong> How much home currency buys 1 unit of foreign currency.</p>
+                    <p><strong>Indirect:</strong> How much foreign currency you get for 1 home currency unit.</p>
+                    <ul>
+                        <li>GBP, EUR, AUD, NZD → indirect (1 GBP = x USD)</li>
+                        <li>JPY, CHF, most others → direct (1 USD = x JPY)</li>
+                    </ul>
+                </div>
+                <div class="theory-card">
+                    <h3>Conversion Rules</h3>
+                    <p><strong>TO foreign currency</strong> → Multiply by rate</p>
+                    <p><strong>FROM foreign currency</strong> → Divide by rate</p>
+                    <div class="example-box"><strong>£500 → $ (rate 1.27):</strong> 500 × 1.27 = <strong>$635</strong><br><strong>$635 → £ (rate 1.27):</strong> 635 ÷ 1.27 = <strong>£500</strong></div>
+                </div>
+                <div class="theory-card wide">
+                    <h3>Bid-Ask Spreads</h3>
+                    <p>Dealers quote two prices. The <strong>spread</strong> is their profit margin.</p>
+                    <ul>
+                        <li><strong>Bid:</strong> Rate at which the dealer <em>buys</em> foreign currency from you (lower)</li>
+                        <li><strong>Ask:</strong> Rate at which the dealer <em>sells</em> foreign currency to you (higher)</li>
+                    </ul>
+                    <div class="interactive-widget">
+                        <div class="widget-label">🎛 Interactive — adjust the spread</div>
+                        <div class="slider-row"><label>Mid Rate (£/$)</label><input type="range" id="ssl-mid" min="1.15" max="1.50" step="0.01" value="1.27" oninput="updSpreadWidget()"><span class="slider-val" id="ssv-mid">1.2700</span></div>
+                        <div class="slider-row"><label>Spread %</label><input type="range" id="ssl-spr" min="0.05" max="2.0" step="0.05" value="0.20" oninput="updSpreadWidget()"><span class="slider-val" id="ssv-spr">0.20%</span></div>
+                        <div class="spread-diagram">
+                            <div class="spread-seg bid"><div class="seg-label">Bid (sell)</div><div class="seg-val" id="sd-bid">—</div></div>
+                            <div class="spread-seg spr"><div class="seg-label">Spread</div><div class="seg-val" id="sd-spr">—</div></div>
+                            <div class="spread-seg ask"><div class="seg-label">Ask (buy)</div><div class="seg-val" id="sd-ask">—</div></div>
+                        </div>
+                        <div class="widget-result" style="margin-top:10px;" id="spread-result">…</div>
+                    </div>
+                </div>
+                <div class="theory-card">
+                    <h3>Cross Rates</h3>
+                    <p>Calculate a rate between two currencies via a third (usually USD).</p>
+                    <p><strong>Formula:</strong> EUR/GBP = (EUR/USD) ÷ (GBP/USD)</p>
+                    <div class="example-box"><strong>EUR/USD = 1.10, GBP/USD = 1.27</strong><br>EUR/GBP = 1.10 ÷ 1.27 = <strong>0.866</strong><br>So 1 EUR = £0.866</div>
+                </div>
+                <div class="theory-card">
+                    <h3>Real-World Applications</h3>
+                    <ul>
+                        <li><strong>International trade:</strong> UK firms paying overseas invoices</li>
+                        <li><strong>Tourism:</strong> Exchanging at airports &amp; bureaux de change</li>
+                        <li><strong>Investment:</strong> Currency risk on foreign assets</li>
+                        <li><strong>Central banks:</strong> Intervention to manage competitiveness</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE RATES TAB -->
+        <div id="rates-tab" class="tab-content" role="tabpanel">
+            <div class="rates-notice">⚠️ <strong>Simulated rates only</strong> — figures are randomly generated for learning purposes and do not reflect real market data.</div>
+            <div id="rates-container"></div>
+        </div>
+
+        <!-- BASIC PRACTICE TAB -->
+        <div id="basic-tab" class="tab-content" role="tabpanel">
+            <div class="settings-panel">
+                <h3>⚙️ Practice Settings</h3>
+                <div class="settings-row">
+                    <div class="setting-group">
+                        <label>Home Currency</label>
+                        <select id="basic-home">
+                            <option value="GBP">GBP — British Pound ★</option>
+                            <option value="USD">USD — US Dollar</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Foreign Currency</label>
+                        <select id="basic-foreign">
+                            <option value="random">Random</option>
+                            <option value="EUR">EUR — Euro</option>
+                            <option value="USD">USD — US Dollar</option>
+                            <option value="JPY">JPY — Japanese Yen</option>
+                            <option value="CHF">CHF — Swiss Franc</option>
+                            <option value="CAD">CAD — Canadian Dollar</option>
+                            <option value="AUD">AUD — Australian Dollar</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Difficulty</label>
+                        <div class="diff-toggle" id="basic-diff-toggle">
+                            <button class="diff-btn diff-easy" onclick="setDiff('basic','easy',this)">Easy</button>
+                            <button class="diff-btn" onclick="setDiff('basic','medium',this)">Medium</button>
+                            <button class="diff-btn" onclick="setDiff('basic','hard',this)">Hard</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="generateBasic()">Generate Problem</button>
+            </div>
+            <div id="basic-prob" class="problem-container hidden">
+                <div class="problem-header">
+                    <span class="problem-number" id="basic-num">Problem #1</span>
+                    <span class="diff-badge badge-easy" id="basic-badge">Easy</span>
+                </div>
+                <div id="basic-ctx"></div>
+                <div class="problem-text" id="basic-text"></div>
+                <div class="answer-section">
+                    <input type="number" id="basic-ans" placeholder="Enter your answer" step="0.01" aria-label="Your answer">
+                    <button class="btn-primary" onclick="checkAns('basic')">Check Answer</button>
+                </div>
+                <div class="inline-err hidden" id="basic-err">Please enter a valid number.</div>
+                <div class="btn-group">
+                    <button class="btn-hint" onclick="showHint('basic',1)">💡 Hint 1</button>
+                    <button class="btn-hint" onclick="showHint('basic',2)">💡 Hint 2</button>
+                    <button class="btn-secondary" onclick="revealAns('basic')">📖 Reveal Method</button>
+                </div>
+                <div class="hints-container" id="basic-hints">
+                    <div class="hint" id="basic-hint-1"><div class="hint-label">Hint 1</div><div id="basic-h1"></div></div>
+                    <div class="hint" id="basic-hint-2"><div class="hint-label">Hint 2</div><div id="basic-h2"></div></div>
+                </div>
+                <div id="basic-result"></div>
+            </div>
+        </div>
+
+        <!-- BID-ASK PRACTICE TAB -->
+        <div id="bidask-tab" class="tab-content" role="tabpanel">
+            <div class="settings-panel">
+                <h3>⚙️ Bid-Ask Settings</h3>
+                <div class="settings-row">
+                    <div class="setting-group">
+                        <label>Currency Pair (vs GBP)</label>
+                        <select id="bidask-foreign">
+                            <option value="random">Random</option>
+                            <option value="EUR">GBP/EUR</option>
+                            <option value="USD">GBP/USD</option>
+                            <option value="JPY">GBP/JPY</option>
+                            <option value="CHF">GBP/CHF</option>
+                            <option value="CAD">GBP/CAD</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Difficulty</label>
+                        <div class="diff-toggle" id="bidask-diff-toggle">
+                            <button class="diff-btn diff-easy" onclick="setDiff('bidask','easy',this)">Easy</button>
+                            <button class="diff-btn" onclick="setDiff('bidask','medium',this)">Medium</button>
+                            <button class="diff-btn" onclick="setDiff('bidask','hard',this)">Hard</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="generateBidAsk()">Generate Problem</button>
+            </div>
+            <div id="bidask-prob" class="problem-container hidden">
+                <div class="problem-header">
+                    <span class="problem-number" id="bidask-num">Problem #1</span>
+                    <span class="diff-badge badge-bidask" id="bidask-badge">Bid-Ask</span>
+                </div>
+                <div id="bidask-ctx"></div>
+                <div class="problem-text" id="bidask-text"></div>
+                <div class="answer-section">
+                    <input type="number" id="bidask-ans" placeholder="Enter your answer" step="0.01" aria-label="Your answer">
+                    <button class="btn-primary" onclick="checkAns('bidask')">Check Answer</button>
+                </div>
+                <div class="inline-err hidden" id="bidask-err">Please enter a valid number.</div>
+                <div class="btn-group">
+                    <button class="btn-hint" onclick="showHint('bidask',1)">💡 Hint 1</button>
+                    <button class="btn-hint" onclick="showHint('bidask',2)">💡 Hint 2</button>
+                    <button class="btn-secondary" onclick="revealAns('bidask')">📖 Reveal Method</button>
+                </div>
+                <div class="hints-container" id="bidask-hints">
+                    <div class="hint" id="bidask-hint-1"><div class="hint-label">Hint 1</div><div id="bidask-h1"></div></div>
+                    <div class="hint" id="bidask-hint-2"><div class="hint-label">Hint 2</div><div id="bidask-h2"></div></div>
+                </div>
+                <div id="bidask-result"></div>
+            </div>
+        </div>
+
+        <!-- CROSS RATES TAB -->
+        <div id="cross-tab" class="tab-content" role="tabpanel">
+            <div class="settings-panel">
+                <h3>⚙️ Cross Rate Settings</h3>
+                <div class="settings-row">
+                    <div class="setting-group">
+                        <label>Difficulty</label>
+                        <div class="diff-toggle" id="cross-diff-toggle">
+                            <button class="diff-btn diff-easy" onclick="setDiff('cross','easy',this)">Easy</button>
+                            <button class="diff-btn" onclick="setDiff('cross','medium',this)">Medium</button>
+                            <button class="diff-btn" onclick="setDiff('cross','hard',this)">Hard</button>
+                        </div>
+                    </div>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.87em;margin:10px 0 14px;">Calculate exchange rates between two currencies using their rates against a third currency (usually USD).</p>
+                <button class="btn-primary" onclick="generateCross()">Generate Problem</button>
+            </div>
+            <div id="cross-prob" class="problem-container hidden">
+                <div class="problem-header">
+                    <span class="problem-number" id="cross-num">Problem #1</span>
+                    <span class="diff-badge badge-cross" id="cross-badge">Cross Rate</span>
+                </div>
+                <div id="cross-ctx"></div>
+                <div class="problem-text" id="cross-text"></div>
+                <div class="answer-section">
+                    <input type="number" id="cross-ans" placeholder="Enter your answer" step="0.0001" aria-label="Your answer">
+                    <button class="btn-primary" onclick="checkAns('cross')">Check Answer</button>
+                </div>
+                <div class="inline-err hidden" id="cross-err">Please enter a valid number.</div>
+                <div class="btn-group">
+                    <button class="btn-hint" onclick="showHint('cross',1)">💡 Hint 1</button>
+                    <button class="btn-hint" onclick="showHint('cross',2)">💡 Hint 2</button>
+                    <button class="btn-secondary" onclick="revealAns('cross')">📖 Reveal Method</button>
+                </div>
+                <div class="hints-container" id="cross-hints">
+                    <div class="hint" id="cross-hint-1"><div class="hint-label">Hint 1</div><div id="cross-h1"></div></div>
+                    <div class="hint" id="cross-hint-2"><div class="hint-label">Hint 2</div><div id="cross-h2"></div></div>
+                </div>
+                <div id="cross-result"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ── CURRENCY DATA (rateVsUSD = units of currency per 1 USD)
+const FX = {
+    USD:{ name:'US Dollar',       sym:'$',   flag:'🇺🇸', r:1,      dec:4 },
+    GBP:{ name:'British Pound',   sym:'£',   flag:'🇬🇧', r:0.786,  dec:4 },
+    EUR:{ name:'Euro',            sym:'€',   flag:'🇪🇺', r:0.921,  dec:4 },
+    JPY:{ name:'Japanese Yen',    sym:'¥',   flag:'🇯🇵', r:149.4,  dec:2 },
+    CHF:{ name:'Swiss Franc',     sym:'CHF', flag:'🇨🇭', r:0.881,  dec:4 },
+    CAD:{ name:'Canadian Dollar', sym:'C$',  flag:'🇨🇦', r:1.353,  dec:4 },
+    AUD:{ name:'Australian Dollar',sym:'A$', flag:'🇦🇺', r:1.538,  dec:4 },
+};
+// cross rate: units of toCcy per 1 unit of fromCcy
+const xr = (from, to) => FX[to].r / FX[from].r;
+
+// ── DIFFICULTY
+const DS = {
+    easy:  { lo:100,  hi:1000,  rnd:100,  tol:0.01 },
+    medium:{ lo:500,  hi:10000, rnd:500,  tol:0.005 },
+    hard:  { lo:1000, hi:100000,rnd:1000, tol:0.002 },
+};
+const selDiff = { basic:'easy', bidask:'easy', cross:'easy' };
+
+function setDiff(type, level, btn) {
+    selDiff[type] = level;
+    btn.parentElement.querySelectorAll('.diff-btn').forEach(b => b.className = 'diff-btn');
+    btn.classList.add('diff-'+level);
+    const bd = document.getElementById(type+'-badge');
+    if (bd) { bd.textContent = level.charAt(0).toUpperCase()+level.slice(1); bd.className = 'diff-badge badge-'+level; }
+}
+
+// ── STATS
+let stats = { attempted:0, correct:0, streak:0, pn:{basic:0,bidask:0,cross:0} };
+function loadStats(){ try{ const s=localStorage.getItem('bizo_er'); if(s) stats=JSON.parse(s); }catch(e){} updStats(); }
+function saveStats(){ try{ localStorage.setItem('bizo_er', JSON.stringify(stats)); }catch(e){} }
+function updStats(){
+    document.getElementById('st-attempted').textContent = stats.attempted;
+    document.getElementById('st-correct').textContent = stats.correct;
+    document.getElementById('st-accuracy').textContent = (stats.attempted>0 ? Math.round(stats.correct/stats.attempted*100) : 0)+'%';
+    document.getElementById('st-streak').textContent = stats.streak;
+}
+function confirmReset(){
+    if(confirm('Reset all progress? This cannot be undone.')) {
+        stats={attempted:0,correct:0,streak:0,pn:{basic:0,bidask:0,cross:0}};
+        saveStats(); updStats();
+    }
+}
+
+// ── MILESTONES
+const milestones=[
+    {n:3, emoji:'✨', title:'3 in a row!', sub:'Great start — keep it up!'},
+    {n:5, emoji:'🔥', title:'5 in a row!', sub:"You're on fire!"},
+    {n:10, emoji:'🏆', title:'10 in a row!', sub:'Outstanding — exam ready!'},
+    {n:15, emoji:'🌟', title:'15 in a row!', sub:'Incredible streak — absolute master!'},
+];
+function checkMilestone(streak){
+    const m = milestones.find(m=>m.n===streak); if(!m) return;
+    document.getElementById('t-emoji').textContent=m.emoji;
+    document.getElementById('t-title').textContent=m.title;
+    document.getElementById('t-sub').textContent=m.sub;
+    const t=document.getElementById('milestone-toast');
+    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── TAB SWITCHING
+function switchTab(name, btn){
+    document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-selected','false');});
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    document.getElementById(name+'-tab').classList.add('active');
+}
+
+// ── HELPERS
+function f(n, dec){ return new Intl.NumberFormat('en-GB',{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(n); }
+function randInt(lo,hi,rnd){ return Math.round((lo+Math.random()*(hi-lo))/rnd)*rnd; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randCcy(excl=[]){ return pick(Object.keys(FX).filter(c=>!excl.includes(c))); }
+
+// ── EXAM CONTEXTS — GBP Basic
+const basicCtx=[
+    {label:'Import/Export', fn:(amt,fromSym,toName)=>
+        `A UK manufacturer imports components from overseas. The invoice total is <strong>${fromSym}${f(amt,2)}</strong>. Using the exchange rate below, calculate the cost in ${toName}.`},
+    {label:'Tourism', fn:(amt,fromSym,toName)=>
+        `A British family is travelling abroad and wishes to exchange <strong>${fromSym}${f(amt,2)}</strong>. How much will they receive in ${toName} at the rate shown?`},
+    {label:'Business Payment', fn:(amt,fromSym,toName)=>
+        `A London-based firm has received a payment of <strong>${fromSym}${f(amt,2)}</strong> from an overseas client. Using the rate provided, convert this amount to ${toName}.`},
+    {label:'Investment', fn:(amt,fromSym,toName)=>
+        `An investor wishes to purchase foreign assets worth <strong>${fromSym}${f(amt,2)}</strong>. Calculate the equivalent in ${toName} at the rate given.`},
+];
+// Bid-Ask contexts
+const baCtx=[
+    {label:'Import/Export',
+        buy:(amt,sym)=>`A UK retailer needs to pay a European supplier <strong>${sym}${f(amt,2)}</strong>. Using the bureau de change rates below, calculate the cost in sterling.`,
+        sell:(amt,sym)=>`A UK exporter has received <strong>${sym}${f(amt,2)}</strong> from an overseas customer and wishes to convert it to pounds. Using the rates below, calculate the sterling received.`},
+    {label:'Tourism',
+        buy:(amt,sym)=>`A British tourist needs <strong>${sym}${f(amt,2)}</strong> spending money. Using the rates shown, calculate how much sterling they must hand over.`,
+        sell:(amt,sym)=>`A returning British tourist has <strong>${sym}${f(amt,2)}</strong> left over. Using the rates shown, calculate how much sterling they receive when converting back.`},
+];
+
+// ── CURRENT PROBLEMS
+const probs = { basic:null, bidask:null, cross:null };
+
+// ── BASIC CONVERSION
+function generateBasic(){
+    const homeCode = document.getElementById('basic-home').value;
+    const foreignSel = document.getElementById('basic-foreign').value;
+    let fCode = foreignSel==='random' ? randCcy([homeCode]) : foreignSel;
+    if(fCode===homeCode) fCode=randCcy([homeCode]);
+    const hc=FX[homeCode], fc=FX[fCode];
+    const diff=selDiff.basic, ds=DS[diff];
+    const convertTo=Math.random()>0.5;
+    const amount=randInt(ds.lo,ds.hi,ds.rnd);
+    const rate=xr(homeCode,fCode);
+    const ctx=pick(basicCtx);
+    let ans, method, h1, h2, probHTML;
+    const rateStr=`1 ${homeCode} = ${f(rate,fc.dec)} ${fCode}`;
+
+    if(convertTo){
+        ans = amount*rate;
+        probHTML = ctx.fn(amount, hc.sym, fc.name) + `<br><br>Exchange rate: <strong>${rateStr}</strong>`;
+        method=`<h4>Method: Converting ${homeCode} → ${fCode}</h4><p><strong>Formula:</strong> Foreign Amount = Home Amount × Rate</p><p><code>${fc.sym} = ${f(amount,2)} × ${f(rate,fc.dec)}</code></p><p>Answer: <strong>${fc.sym}${f(ans,fc.dec)}</strong></p>`;
+        h1=`You are converting TO ${fc.name}. Should you multiply or divide?`; h2=`Multiply: ${f(amount,2)} × ${f(rate,fc.dec)} = ?`;
+    } else {
+        ans = amount/rate;
+        probHTML = ctx.fn(amount, fc.sym, hc.name) + `<br><br>Exchange rate: <strong>${rateStr}</strong>`;
+        method=`<h4>Method: Converting ${fCode} → ${homeCode}</h4><p><strong>Formula:</strong> Home Amount = Foreign Amount ÷ Rate</p><p><code>${hc.sym} = ${f(amount,2)} ÷ ${f(rate,fc.dec)}</code></p><p>Answer: <strong>${hc.sym}${f(ans,2)}</strong></p>`;
+        h1=`You are converting FROM ${fc.name}. Should you multiply or divide?`; h2=`Divide: ${f(amount,2)} ÷ ${f(rate,fc.dec)} = ?`;
+    }
+    stats.pn.basic++;
+    document.getElementById('basic-num').textContent=`Problem #${stats.pn.basic}`;
+    document.getElementById('basic-ctx').innerHTML=`<span class="context-badge">📋 ${ctx.label}</span>`;
+    document.getElementById('basic-text').innerHTML=probHTML;
+    document.getElementById('basic-h1').textContent=h1;
+    document.getElementById('basic-h2').textContent=h2;
+    document.getElementById('basic-badge').textContent=diff.charAt(0).toUpperCase()+diff.slice(1);
+    document.getElementById('basic-badge').className=`diff-badge badge-${diff}`;
+    probs.basic={ans, method, dec:convertTo?fc.dec:2, tol:ds.tol};
+    resetUI('basic');
+}
+
+// ── BID-ASK
+function generateBidAsk(){
+    const sel=document.getElementById('bidask-foreign').value;
+    const homeCode='GBP', hc=FX[homeCode];
+    let fCode=sel==='random'?randCcy([homeCode]):sel;
+    const fc=FX[fCode];
+    const diff=selDiff.bidask, ds=DS[diff];
+    const mid=xr(homeCode,fCode);
+    const sp=mid*(0.001+Math.random()*0.002);
+    const bid=mid-sp/2, ask=mid+sp/2;
+    const buying=Math.random()>0.5;
+    const amount=randInt(ds.lo,ds.hi,ds.rnd);
+    const ctx=pick(baCtx);
+    const ratesHTML=`<div style="margin:12px 0;padding:11px 14px;background:var(--navy);border-radius:8px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:0.88em;"><span style="color:var(--rose);">Bid (bank buys ${fCode}): ${f(bid,fc.dec)}</span> &nbsp;|&nbsp; <span style="color:var(--teal);">Ask (bank sells ${fCode}): ${f(ask,fc.dec)}</span></div>`;
+    let ans, method, h1, h2, probHTML;
+
+    if(buying){
+        ans=amount/ask;
+        probHTML=ctx.buy(amount,fc.sym)+ratesHTML;
+        method=`<h4>Method: Buying Foreign Currency (${fCode})</h4><p>When you <strong>buy</strong> foreign currency, the bank <strong>sells</strong> it at the <strong>ASK</strong> rate (higher).</p><p><code>${hc.sym} cost = ${fc.sym}${f(amount,2)} ÷ ${f(ask,fc.dec)}</code></p><p>Answer: <strong>${hc.sym}${f(ans,2)}</strong></p><p style="margin-top:8px;padding:9px;background:var(--teal-dim);border-radius:6px;font-size:0.9em;"><strong>Why ASK?</strong> The bank sells to you at the higher rate — this is their profit.</p>`;
+        h1=`You are BUYING ${fCode}. The bank SELLS it. Which rate does the bank use — Bid or Ask?`;
+        h2=`The bank uses the ASK rate (${f(ask,fc.dec)}). Divide: ${f(amount,2)} ÷ ${f(ask,fc.dec)} = ?`;
+    } else {
+        ans=amount/bid;
+        probHTML=ctx.sell(amount,fc.sym)+ratesHTML;
+        method=`<h4>Method: Selling Foreign Currency (${fCode})</h4><p>When you <strong>sell</strong> foreign currency, the bank <strong>buys</strong> it at the <strong>BID</strong> rate (lower).</p><p><code>${hc.sym} received = ${fc.sym}${f(amount,2)} ÷ ${f(bid,fc.dec)}</code></p><p>Answer: <strong>${hc.sym}${f(ans,2)}</strong></p><p style="margin-top:8px;padding:9px;background:var(--rose-dim);border-radius:6px;font-size:0.9em;"><strong>Why BID?</strong> The bank buys from you at the lower rate — you receive less; they profit from the spread.</p>`;
+        h1=`You are SELLING ${fCode}. The bank BUYS it. Which rate does the bank use — Bid or Ask?`;
+        h2=`The bank uses the BID rate (${f(bid,fc.dec)}). Divide: ${f(amount,2)} ÷ ${f(bid,fc.dec)} = ?`;
+    }
+    stats.pn.bidask++;
+    document.getElementById('bidask-num').textContent=`Problem #${stats.pn.bidask}`;
+    document.getElementById('bidask-ctx').innerHTML=`<span class="context-badge">📋 ${ctx.label}</span>`;
+    document.getElementById('bidask-text').innerHTML=probHTML;
+    document.getElementById('bidask-h1').textContent=h1;
+    document.getElementById('bidask-h2').textContent=h2;
+    probs.bidask={ans, method, dec:2, tol:ds.tol};
+    resetUI('bidask');
+}
+
+// ── CROSS RATE
+function generateCross(){
+    const diff=selDiff.cross;
+    const nonUSD=Object.keys(FX).filter(c=>c!=='USD');
+    let c1, c2;
+    if(diff==='hard'){ c1='GBP'; c2=randCcy(['USD','GBP']); }
+    else { c1=pick(nonUSD); c2=pick(nonUSD.filter(c=>c!==c1)); }
+    const r1=FX[c1].r, r2=FX[c2].r;
+    const cross=r2/r1;
+    const probHTML=`Calculate the ${c1}/${c2} cross rate.<br><br><div style="margin:10px 0;padding:11px 14px;background:var(--navy);border-radius:8px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:0.88em;">${FX[c1].flag} 1 USD = ${f(r1,FX[c1].dec)} ${c1}<br>${FX[c2].flag} 1 USD = ${f(r2,FX[c2].dec)} ${c2}</div>How many ${FX[c2].sym} do you get per 1 ${FX[c1].sym}?`;
+    const method=`<h4>Method: Calculating Cross Rates</h4><p><strong>Formula:</strong> ${c1}/${c2} = (${c2}/USD) ÷ (${c1}/USD)</p><p><code>${c1}/${c2} = ${f(r2,FX[c2].dec)} ÷ ${f(r1,FX[c1].dec)}</code></p><p>Answer: <strong>${f(cross,4)}</strong></p><p>Interpretation: 1 ${FX[c1].sym} = ${f(cross,4)} ${FX[c2].sym}</p>`;
+    const ds=DS[diff];
+    stats.pn.cross++;
+    document.getElementById('cross-num').textContent=`Problem #${stats.pn.cross}`;
+    document.getElementById('cross-ctx').innerHTML=`<span class="context-badge">📋 Cross Rate Calculation</span>`;
+    document.getElementById('cross-text').innerHTML=probHTML;
+    document.getElementById('cross-h1').textContent=`To find ${c1}/${c2}: divide the ${c2}/USD rate by the ${c1}/USD rate.`;
+    document.getElementById('cross-h2').textContent=`${f(r2,FX[c2].dec)} ÷ ${f(r1,FX[c1].dec)} = ?`;
+    document.getElementById('cross-badge').textContent=diff.charAt(0).toUpperCase()+diff.slice(1);
+    document.getElementById('cross-badge').className=`diff-badge badge-${diff}`;
+    probs.cross={ans:cross, method, dec:4, tol:ds.tol};
+    resetUI('cross');
+}
+
+// ── CHECK / REVEAL
+function checkAns(type){
+    const inp=document.getElementById(type+'-ans');
+    const errEl=document.getElementById(type+'-err');
+    const val=parseFloat(inp.value);
+    if(isNaN(val)){ inp.classList.add('input-err'); errEl.classList.remove('hidden'); setTimeout(()=>{inp.classList.remove('input-err');errEl.classList.add('hidden');},2000); return; }
+    errEl.classList.add('hidden');
+    const p=probs[type];
+    const tol=Math.max(Math.abs(p.ans)*p.tol, 0.005);
+    const ok=Math.abs(val-p.ans)<=tol;
+    stats.attempted++;
+    if(ok){ stats.correct++; stats.streak++; checkMilestone(stats.streak); }
+    else { stats.streak=0; }
+    saveStats(); updStats();
+    const rc=document.getElementById(type+'-result'); rc.innerHTML='';
+    const rd=document.createElement('div'); rd.className=ok?'result correct':'result incorrect';
+    rd.innerHTML=ok?`✓ Correct! The answer is <strong>${f(p.ans,p.dec)}</strong>`:`✗ Not quite. Your answer: ${f(val,p.dec)} | Correct: <strong>${f(p.ans,p.dec)}</strong><br><small style="opacity:0.8">Use the hints or click Reveal Method.</small>`;
+    rc.appendChild(rd);
+}
+function revealAns(type){
+    const p=probs[type]; const rc=document.getElementById(type+'-result'); rc.innerHTML='';
+    const cd=document.createElement('div'); cd.className='result correct'; cd.innerHTML=`Answer: <strong>${f(p.ans,p.dec)}</strong>`;
+    const md=document.createElement('div'); md.className='method'; md.innerHTML=p.method;
+    rc.appendChild(cd); rc.appendChild(md);
+}
+function showHint(type,n){ document.getElementById(`${type}-hint-${n}`).classList.add('revealed'); }
+
+function resetUI(type){
+    document.getElementById(type+'-ans').value='';
+    document.getElementById(type+'-result').innerHTML='';
+    document.querySelectorAll(`#${type}-hints .hint`).forEach(h=>h.classList.remove('revealed'));
+    document.getElementById(type+'-prob').classList.remove('hidden');
+    document.getElementById(type+'-err').classList.add('hidden');
+}
+
+// Alias functions for keyboard shortcut compatibility
+function checkBasicAnswer(){ checkAns('basic'); }
+function checkBidAskAnswer(){ checkAns('bidask'); }
+function checkCrossAnswer(){ checkAns('cross'); }
+
+// ── KEYBOARD SHORTCUTS
+document.addEventListener('keydown', function(e){
+    if(e.key==='Enter' && e.target.tagName==='INPUT'){
+        const id=document.querySelector('.tab-content.active')?.id;
+        if(id==='basic-tab') checkAns('basic');
+        else if(id==='bidask-tab') checkAns('bidask');
+        else if(id==='cross-tab') checkAns('cross');
+    }
+});
+
+// ── LIVE RATES (Simulated)
+function buildRates(){
+    const pairs=[['GBP','EUR'],['GBP','USD'],['GBP','JPY'],['USD','EUR'],['USD','CHF'],['USD','CAD']];
+    const c=document.getElementById('rates-container');
+    pairs.forEach(([from,to])=>{
+        const rate=xr(from,to), sp=rate*(0.001+Math.random()*0.001);
+        const bid=rate-sp/2, ask=rate+sp/2, dec=FX[to].dec;
+        const cv=((Math.random()-0.5)*0.4).toFixed(2);
+        const div=document.createElement('div'); div.className='currency-pair';
+        div.innerHTML=`<div class="pair-header"><div><div class="pair-name">${FX[from].flag} ${from}/${to} ${FX[to].flag}</div><div class="pair-meta">${FX[from].name} to ${FX[to].name}</div></div><div class="change ${parseFloat(cv)>=0?'positive':'negative'}" id="chg-${from}-${to}">${parseFloat(cv)>=0?'+':''}${cv}%</div></div><div class="rate-section"><div class="bid-ask-container"><div class="bid-box"><div class="bid-label">Bid (Sell)</div><div class="bid-price" id="bid-${from}-${to}">${f(bid,dec)}</div></div><div class="ask-box"><div class="ask-label">Ask (Buy)</div><div class="ask-price" id="ask-${from}-${to}">${f(ask,dec)}</div></div></div><div class="spread-info"><div class="spread-label">Spread</div><div class="spread-value" id="spr-${from}-${to}">${f(sp,dec)}</div></div></div>`;
+        c.appendChild(div);
+    });
+}
+function tickRates(){
+    [['GBP','EUR'],['GBP','USD'],['GBP','JPY'],['USD','EUR'],['USD','CHF'],['USD','CAD']].forEach(([from,to])=>{
+        FX[from].r*=(1+(Math.random()-0.5)*0.0003);
+        const rate=xr(from,to), sp=rate*(0.001+Math.random()*0.001), dec=FX[to].dec;
+        const setEl=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+        setEl(`bid-${from}-${to}`, f(rate-sp/2,dec));
+        setEl(`ask-${from}-${to}`, f(rate+sp/2,dec));
+        setEl(`spr-${from}-${to}`, f(sp,dec));
+        const cv=((Math.random()-0.5)*0.4).toFixed(2);
+        const ce=document.getElementById(`chg-${from}-${to}`);
+        if(ce){ ce.textContent=(parseFloat(cv)>=0?'+':'')+cv+'%'; ce.className='change '+(parseFloat(cv)>=0?'positive':'negative'); }
+    });
+}
+
+// ── INTERACTIVE THEORY WIDGETS
+function updRateWidget(){
+    const rate=parseFloat(document.getElementById('rsl-rate').value);
+    const amt=parseInt(document.getElementById('rsl-amt').value);
+    document.getElementById('rsv-rate').textContent=f(rate,2);
+    document.getElementById('rsv-amt').textContent='£'+amt.toLocaleString('en-GB');
+    const usd=amt*rate, base=1000*1.27, diff=usd-base, pct=((rate-1.27)/1.27*100).toFixed(1);
+    const dirWord=rate>1.27?'<span class="up">appreciated</span>':rate<1.27?'<span class="dn">depreciated</span>':'unchanged';
+    const chgSpan=diff>=0?`<span class="up">$${f(Math.abs(diff),2)} more than at £/$1.27</span>`:`<span class="dn">$${f(Math.abs(diff),2)} less than at £/$1.27</span>`;
+    document.getElementById('rate-result').innerHTML=`£${amt.toLocaleString('en-GB')} converts to <span class="hi">$${f(usd,2)}</span>\nThe pound has ${dirWord} by ${Math.abs(pct)}%\nResult: ${chgSpan}`;
+}
+function updSpreadWidget(){
+    const mid=parseFloat(document.getElementById('ssl-mid').value);
+    const sprPct=parseFloat(document.getElementById('ssl-spr').value)/100;
+    document.getElementById('ssv-mid').textContent=f(mid,4);
+    document.getElementById('ssv-spr').textContent=f(parseFloat(document.getElementById('ssl-spr').value),2)+'%';
+    const sp=mid*sprPct, bid=mid-sp/2, ask=mid+sp/2;
+    document.getElementById('sd-bid').textContent=f(bid,4);
+    document.getElementById('sd-spr').textContent=f(sp,4);
+    document.getElementById('sd-ask').textContent=f(ask,4);
+    const diff=Math.abs(1000/bid-1000/ask);
+    document.getElementById('spread-result').innerHTML=`Selling £1,000 foreign → receive at BID: <span class="hi">£${f(1000/bid,2)}</span>\nBuying £1,000 foreign → pay at ASK: <span class="hi">£${f(1000/ask,2)}</span>\nDealer earns approx <span class="hi">£${f(diff,2)}</span> per £1,000 from spread`;
+}
+
+// ── INIT
+loadStats();
+buildRates();
+updRateWidget();
+updSpreadWidget();
+setInterval(tickRates, 3500);
+</script>
+</body>
+</html>
