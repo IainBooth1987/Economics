@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Phillips Machine Economic Simulator | BIZ-OMICS</title>
+    <meta name="description" content="Interactive Phillips Machine simulator for A-Level Economics - explore fiscal and monetary policy impacts on the economy">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy: #0d1b3e;
+            --navy-mid: #1a2744;
+            --navy-light: #243460;
+            --gold: #c9a84c;
+            --gold-light: #e8c96a;
+            --gold-pale: #f5e8c0;
+            --text-dark: #1a1a2e;
+            --text-mid: #4a4a6a;
+            --bg-light: #f8f7f2;
+            --danger: #c0392b;
+            --success: #1e7e45;
+            --warning: #d68910;
+            --teal: #0e8fa0;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        /* ============================================================
+           HEADER
+        ============================================================ */
+        .header {
+            background: var(--navy);
+            border-bottom: 3px solid var(--gold);
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6em;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.04em;
+            text-shadow: 0 2px 8px rgba(201,168,76,0.3);
+        }
+        .logo span { color: var(--white); font-weight: 400; font-size: 0.65em; display: block; letter-spacing: 0.08em; font-family: 'DM Sans', sans-serif; }
+        .header-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .header-btn {
+            background: transparent;
+            border: 1.5px solid var(--gold);
+            color: var(--gold);
+            padding: 7px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82em;
+            transition: all 0.25s ease;
+            letter-spacing: 0.02em;
+        }
+        .header-btn:hover {
+            background: var(--gold);
+            color: var(--navy);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(201,168,76,0.4);
+        }
+        .header-btn.print-btn {
+            background: var(--gold);
+            color: var(--navy);
+        }
+        .header-btn.print-btn:hover {
+            background: var(--gold-light);
+        }
+
+        /* ============================================================
+           LAYOUT
+        ============================================================ */
+        .container {
+            max-width: 1400px;
+            margin: 16px auto;
+            background: var(--white);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            color: var(--navy);
+            font-size: 2em;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-mid);
+            margin-bottom: 16px;
+            font-size: 0.95em;
+            font-style: italic;
+        }
+
+        /* ============================================================
+           TABS (THEORY)
+        ============================================================ */
+        .theory-panel {
+            background: var(--bg-light);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            margin-bottom: 18px;
+            overflow: hidden;
+            display: none;
+        }
+        .theory-tabs {
+            display: flex;
+            background: var(--navy);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .theory-tabs::-webkit-scrollbar { display: none; }
+        .theory-tab {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .theory-tab.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+        }
+        .theory-tab:hover { color: var(--gold-light); }
+        .theory-content { padding: 18px 20px; display: none; }
+        .theory-content.active { display: block; }
+        .theory-content h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--navy);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--gold);
+            padding-left: 10px;
+        }
+        .theory-content h4 { color: var(--navy-mid); margin: 12px 0 6px; font-size: 0.95em; }
+        .theory-content p { line-height: 1.7; color: var(--text-mid); margin-bottom: 8px; font-size: 0.9em; }
+        .theory-content ul { margin: 6px 0 10px 18px; }
+        .theory-content li { line-height: 1.7; color: var(--text-mid); font-size: 0.9em; margin-bottom: 3px; }
+        .theory-content strong { color: var(--navy); }
+        .theory-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+        @media (max-width: 700px) { .theory-grid { grid-template-columns: 1fr; } }
+        .theory-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 14px;
+            border-left: 4px solid var(--gold);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .theory-card h4 { color: var(--navy); margin-bottom: 6px; font-size: 0.9em; }
+        .theory-card p { font-size: 0.85em; margin: 0; }
+        .exam-tip {
+            background: linear-gradient(135deg, var(--gold-pale), #fdf8ec);
+            border: 1.5px solid var(--gold);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 12px;
+        }
+        .exam-tip strong { color: var(--navy); display: block; margin-bottom: 4px; font-size: 0.88em; }
+        .exam-tip p { font-size: 0.85em; margin: 0; color: var(--text-mid); }
+
+        /* ============================================================
+           CONCEPT SPOTLIGHT
+        ============================================================ */
+        .spotlight-bar {
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-height: 56px;
+        }
+        .spotlight-icon { font-size: 1.4em; flex-shrink: 0; margin-top: 2px; }
+        .spotlight-text { flex: 1; }
+        .spotlight-text strong { color: var(--gold); display: block; font-size: 0.88em; margin-bottom: 2px; }
+        .spotlight-text p { color: rgba(255,255,255,0.85); font-size: 0.85em; margin: 0; line-height: 1.5; }
+
+        /* ============================================================
+           MAIN LAYOUT
+        ============================================================ */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 968px) { .main-layout { grid-template-columns: 1fr; } }
+
+        /* ============================================================
+           MACHINE VISUAL
+        ============================================================ */
+        .machine-visual {
+            background: linear-gradient(145deg, #f4f5f7, #e8e9ec);
+            border-radius: 12px;
+            padding: 15px;
+            position: relative;
+            min-height: 560px;
+            border: 3px solid #d0d3d8;
+        }
+
+        /* TANKS */
+        .tank {
+            position: absolute;
+            border: 4px solid var(--navy);
+            border-radius: 14px;
+            background: linear-gradient(to bottom, #eef0f3, #d8dce2);
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        .tank.highlighted {
+            border-color: var(--gold);
+            box-shadow: 0 0 28px rgba(201,168,76,0.8), 0 0 50px rgba(201,168,76,0.3);
+            animation: dramatic-pulse 1s ease-in-out;
+            z-index: 2;
+        }
+        @keyframes dramatic-pulse {
+            0%, 100% { transform: scale(1); border-width: 4px; }
+            30% { transform: scale(1.05); border-width: 5px; }
+            60% { transform: scale(1.08); border-width: 6px; }
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+        .water {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
+            border-radius: 0 0 10px 10px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+        #water-consumption { background: linear-gradient(to top, #1e7e45, #27ae60); }
+        #water-investment  { background: linear-gradient(to top, #b8770a, #e6990d); }
+        #water-government  { background: linear-gradient(to top, #0d6eae, #3498db); }
+        #water-net-exports { background: linear-gradient(to top, #7d3c98, #9b59b6); }
+        #water-gdp         { background: linear-gradient(to top, var(--navy), var(--navy-light)); }
+
+        .water.shock { animation: shockWave 1s ease-in-out; filter: brightness(0.7) saturate(1.5); }
+        .water.increase { animation: fillUp 0.8s ease-out; }
+        .water.decrease { animation: drainDown 0.8s ease-out; }
+
+        @keyframes shockWave {
+            0%, 100% { transform: scaleY(1); }
+            25% { transform: scaleY(0.85); filter: brightness(0.5); }
+            50% { transform: scaleY(1.1); filter: brightness(1.2); }
+            75% { transform: scaleY(0.95); }
+        }
+        @keyframes fillUp { 0% { transform: scaleY(0.8); } 50% { transform: scaleY(1.05); } 100% { transform: scaleY(1); } }
+        @keyframes drainDown { 0% { transform: scaleY(1.1); } 100% { transform: scaleY(1); } }
+
+        .water::before {
+            content: '';
+            position: absolute;
+            top: -5px; left: 0; right: 0;
+            height: 10px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.7), rgba(255,255,255,0.2));
+            animation: wave 2s ease-in-out infinite;
+            border-radius: 5px;
+            filter: blur(1px);
+        }
+        @keyframes wave {
+            0%, 100% { transform: translateX(0) scaleX(1); opacity: 0.8; }
+            25% { transform: translateX(8px) scaleX(0.95); opacity: 1; }
+            50% { transform: translateX(12px) scaleX(0.98); opacity: 0.9; }
+            75% { transform: translateX(4px) scaleX(1.02); opacity: 0.85; }
+        }
+
+        .tank-label {
+            position: absolute;
+            top: -28px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--navy);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+            z-index: 3;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            letter-spacing: 0.02em;
+        }
+        .tank-value {
+            position: absolute;
+            bottom: 8px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            color: var(--navy);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 3;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        .multiplier-ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            animation: rippleOut 1.2s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes rippleOut {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        /* ============================================================
+           CONTROLS PANEL
+        ============================================================ */
+        .controls-panel { display: flex; flex-direction: column; gap: 14px; }
+        .control-section {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            border: 1.5px solid #e8e9ec;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .control-section:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .shock-section { background: linear-gradient(135deg, var(--danger), #a93226); border-color: var(--danger); color: white; }
+        .policy-section { background: linear-gradient(135deg, var(--success), #196436); border-color: var(--success); color: white; }
+        .fiscal-section { background: linear-gradient(135deg, var(--warning), #ba7a08); border-color: var(--warning); color: white; }
+        .control-group { margin-bottom: 10px; }
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: inherit;
+            font-size: 0.98em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+        .tooltip-icon {
+            cursor: help;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 17px; height: 17px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            font-size: 11px;
+            font-weight: 700;
+            position: relative;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .tooltip-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 120%; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13,27,62,0.97);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 400;
+            z-index: 1000;
+            pointer-events: none;
+            width: max-content;
+            max-width: 280px;
+            white-space: normal;
+            border: 1px solid var(--gold);
+        }
+        .slider-container { margin: 8px 0; }
+        .slider-container label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: inherit;
+            font-size: 0.88em;
+        }
+        .slider {
+            width: 100%; height: 8px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            -webkit-appearance: none;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: 3px solid currentColor;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+        .slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .slider::-moz-range-thumb {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: 3px solid currentColor;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .value-display { font-size: 14px; font-weight: 700; min-width: 70px; text-align: right; }
+        .shock-btn {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.45);
+            padding: 9px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.25s ease;
+            margin: 5px 0;
+            width: 100%;
+            font-size: 0.85em;
+            text-align: left;
+        }
+        .shock-btn:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .reset-btn {
+            background: white;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 11px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.25s ease;
+            margin: 10px auto;
+            display: block;
+            font-size: 0.95em;
+        }
+        .reset-btn:hover { background: var(--danger); color: white; transform: translateY(-2px); }
+
+        /* ============================================================
+           TIMER BAR
+        ============================================================ */
+        .timer-bar {
+            display: none;
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            align-items: center;
+            gap: 14px;
+        }
+        .timer-bar.active { display: flex; }
+        .timer-display {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6em;
+            color: var(--gold);
+            min-width: 60px;
+            font-weight: 700;
+        }
+        .timer-display.urgent { color: #e74c3c; animation: pulse 0.6s ease-in-out infinite; }
+        .timer-track {
+            flex: 1;
+            height: 10px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            background: var(--gold);
+            border-radius: 5px;
+            transition: width 1s linear;
+        }
+        .timer-fill.urgent { background: #e74c3c; }
+        .timer-label { color: rgba(255,255,255,0.7); font-size: 0.82em; min-width: 90px; }
+
+        /* ============================================================
+           SCORE PANEL
+        ============================================================ */
+        .score-panel {
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .score-item { text-align: center; }
+        .score-item .score-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5em;
+            color: var(--gold);
+            font-weight: 700;
+            display: block;
+        }
+        .score-item .score-label { color: rgba(255,255,255,0.65); font-size: 0.75em; margin-top: 2px; }
+        .score-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.15); }
+
+        /* ============================================================
+           CHARTS
+        ============================================================ */
+        .charts-section {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 16px;
+            animation: slideDown 0.4s ease-out;
+        }
+        .charts-section.visible { display: grid; }
+        @media (max-width: 768px) { .charts-section { grid-template-columns: 1fr; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            border: 1.5px solid #e8e9ec;
+            height: 270px;
+        }
+        .chart-container h3 {
+            color: var(--navy);
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        canvas { max-width: 100%; height: auto !important; }
+
+        /* ============================================================
+           CHALLENGE MODE
+        ============================================================ */
+        .challenge-mode {
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            color: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 18px;
+            box-shadow: 0 8px 24px rgba(13,27,62,0.4);
+            border: 2px solid var(--gold);
+        }
+        .challenge-mode h2 {
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3em;
+            color: var(--gold);
+        }
+        .challenge-mode > p { font-size: 0.88em; margin-bottom: 12px; opacity: 0.8; }
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 700px) { .scenario-grid { grid-template-columns: 1fr; } }
+        .scenario-card {
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-size: 0.82em;
+        }
+        .scenario-card:hover {
+            background: rgba(201,168,76,0.2);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+        .scenario-card .sc-title { font-weight: 700; color: var(--gold); margin-bottom: 3px; font-size: 0.95em; }
+        .scenario-card .sc-diff { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 0.78em; font-weight: 600; margin-bottom: 4px; }
+        .sc-diff.easy { background: rgba(39,174,96,0.3); color: #4cd48a; }
+        .sc-diff.medium { background: rgba(241,196,15,0.3); color: #f5d36e; }
+        .sc-diff.hard { background: rgba(231,76,60,0.3); color: #f08070; }
+        .sc-diff.historic { background: rgba(100,181,246,0.3); color: #90caf9; }
+        .scenario-card .sc-desc { color: rgba(255,255,255,0.65); line-height: 1.4; font-size: 0.9em; }
+        .challenge-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .challenge-btn {
+            flex: 1; min-width: 120px;
+            padding: 9px 14px;
+            border: 2px solid var(--gold);
+            background: rgba(201,168,76,0.15);
+            color: var(--gold);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85em;
+            transition: all 0.25s;
+        }
+        .challenge-btn:hover { background: var(--gold); color: var(--navy); transform: translateY(-1px); }
+        .challenge-content {
+            background: rgba(255,255,255,0.07);
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 12px;
+            border: 1px solid rgba(201,168,76,0.3);
+        }
+        .challenge-question { font-size: 0.92em; font-weight: 500; margin-bottom: 10px; line-height: 1.55; }
+        .challenge-task {
+            background: rgba(201,168,76,0.2);
+            padding: 9px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            border-left: 4px solid var(--gold);
+            font-size: 0.88em;
+            color: var(--gold);
+        }
+        .challenge-hints { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.08); border-radius: 6px; font-size: 0.86em; line-height: 1.7; }
+        .challenge-progress { text-align: center; font-size: 0.82em; margin-top: 10px; opacity: 0.75; }
+        .debrief-box {
+            background: rgba(255,255,255,0.1);
+            border: 1.5px solid rgba(201,168,76,0.4);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            line-height: 1.7;
+            display: none;
+        }
+        .debrief-box.visible { display: block; }
+        .debrief-box strong { color: var(--gold); }
+
+        /* ============================================================
+           EXPORT SECTION
+        ============================================================ */
+        .export-section {
+            text-align: center;
+            margin-top: 14px;
+            padding: 14px;
+            background: var(--gold-pale);
+            border-radius: 10px;
+            border: 1.5px solid var(--gold);
+        }
+        .export-section h3 { font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 6px; font-size: 1em; }
+        .export-section p { font-size: 0.85em; color: var(--text-mid); margin-bottom: 10px; }
+        .export-btn {
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            color: var(--gold);
+            border: 1.5px solid var(--gold);
+            padding: 10px 22px;
+            border-radius: 22px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            margin: 4px;
+            transition: all 0.25s;
+            font-size: 0.88em;
+        }
+        .export-btn:hover { background: var(--gold); color: var(--navy); transform: translateY(-2px); }
+
+        /* ============================================================
+           MODAL
+        ============================================================ */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            z-index: 999;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-backdrop.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            z-index: 1000;
+            max-width: 620px; width: calc(100% - 40px);
+            max-height: 85vh;
+            overflow-y: auto;
+            display: none;
+            animation: slideUp 0.3s ease;
+            border-top: 5px solid var(--gold);
+        }
+        .modal.active { display: block; }
+        @keyframes slideUp { from { transform: translate(-50%, -40%); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
+        .modal h2 { font-family: 'Playfair Display', serif; color: var(--navy); margin-bottom: 14px; font-size: 1.3em; }
+        .modal h3 { color: var(--navy-mid); margin: 16px 0 8px; font-size: 1em; font-family: 'Playfair Display', serif; }
+        .modal p, .modal li { line-height: 1.75; color: var(--text-mid); margin-bottom: 10px; font-size: 0.92em; }
+        .modal ul { margin-left: 22px; }
+        .modal strong { color: var(--navy); }
+        .modal-close {
+            background: var(--navy);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 10px 26px;
+            border-radius: 22px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            margin-top: 18px;
+            transition: all 0.25s;
+        }
+        .modal-close:hover { background: var(--gold); color: var(--navy); }
+
+        /* ============================================================
+           POLICY MESSAGE TOAST
+        ============================================================ */
+        .policy-message {
+            position: fixed;
+            top: 68px; right: 18px;
+            background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+            color: var(--gold);
+            padding: 14px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            z-index: 1001;
+            max-width: 420px;
+            transform: translateX(480px);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: 600;
+            font-size: 0.9em;
+            border: 2px solid var(--gold);
+        }
+        .policy-message.show { transform: translateX(0); }
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 14px;
+            margin-top: 18px;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82em;
+        }
+        .footer a { color: var(--gold); text-decoration: none; font-weight: 600; border-bottom: 1px solid rgba(201,168,76,0.4); transition: border-color 0.25s; }
+        .footer a:hover { border-bottom-color: var(--gold); }
+
+        /* ============================================================
+           MISC
+        ============================================================ */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+        .chart-toggle-row { text-align: center; margin-top: 14px; }
+
+        /* ============================================================
+           PRINT STYLESHEET
+        ============================================================ */
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: white !important; font-family: 'Georgia', serif !important; color: #000 !important; }
+            .header { display: none !important; }
+            .machine-visual, .controls-panel, .charts-section, .challenge-mode,
+            .export-section, .reset-btn, .chart-toggle-row, .timer-bar,
+            .score-panel, .theory-tabs, .spotlight-bar, .footer, .policy-message,
+            .modal-backdrop, .modal { display: none !important; }
+            .theory-panel { display: block !important; border: 1px solid #ccc !important; }
+            .theory-tabs { display: none !important; }
+            .theory-content { display: block !important; page-break-inside: avoid; }
+            .theory-content h3 { color: #000 !important; border-left: 3px solid #000 !important; }
+            .theory-content p, .theory-content li { color: #222 !important; }
+            .theory-card { border-left: 3px solid #000 !important; }
+            .container { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+            h1 { font-size: 1.6em !important; color: #000 !important; }
+            .subtitle { color: #333 !important; }
+            .print-header { display: block !important; }
+            .theory-grid { grid-template-columns: 1fr 1fr !important; }
+            @page { margin: 2cm; }
+        }
+        .print-header {
+            display: none;
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .print-header .ph-brand { font-size: 1.4em; font-weight: 700; letter-spacing: 0.06em; }
+        .print-header .ph-title { font-size: 1em; margin-top: 4px; }
+        .print-header .ph-url { font-size: 0.85em; color: #555; margin-top: 2px; }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:"SFMono-Regular",Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:"SFMono-Regular",Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">The Phillips Machine</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = "bizomics_phillipsmachine_pw";
+  var valid = ["PHILLIPSMONIAC2026","BIZOMICS-MCR-X9K4","BIZOMICS-PREMIUM-2026","GSALEconomics"];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById("bz-gate");
+    if(g) g.style.display = "none";
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById("bz-gate-inp");
+  var err = document.getElementById("bz-gate-err");
+  var val = inp.value.trim();
+  var valid = ["PHILLIPSMONIAC2026","BIZOMICS-MCR-X9K4","BIZOMICS-PREMIUM-2026","GSALEconomics"];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem("bizomics_phillipsmachine_pw", val);
+    document.getElementById("bz-gate").style.display = "none";
+  } else {
+    inp.classList.remove("shake");
+    void inp.offsetWidth;
+    inp.classList.add("shake");
+    err.textContent = "Incorrect password. Check your purchase email.";
+    inp.value = "";
+    setTimeout(function(){ err.textContent = ""; }, 3000);
+  }
+}
+document.addEventListener("DOMContentLoaded", function(){
+  var inp = document.getElementById("bz-gate-inp");
+  if(inp) inp.addEventListener("keydown", function(e){ if(e.key === "Enter") bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-content">
+        <div class="logo">
+            BIZ-OMICS
+            <span>A-Level Economics &amp; Business Studies</span>
+        </div>
+        <div class="header-buttons">
+            <button class="header-btn" onclick="showModal('help-modal')">📚 How to Use</button>
+            <button class="header-btn" onclick="showModal('about-modal')">ℹ️ About MONIAC</button>
+            <button class="header-btn" onclick="toggleTheoryPanel()">🎓 Theory</button>
+            <button class="header-btn print-btn" onclick="window.print()">🖨️ Print</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- PRINT HEADER (print only) -->
+    <div class="print-header">
+        <div class="ph-brand">BIZ-OMICS</div>
+        <div class="ph-title">The Phillips Machine (MONIAC) — Economic Theory Notes</div>
+        <div class="ph-url">biz-omics.co.uk | A-Level Economics</div>
+    </div>
+
+    <h1>The Phillips Machine Economic Simulator</h1>
+    <p class="subtitle">Interactive Digital MONIAC — Hydraulic Computer Model of the Economy</p>
+
+    <!-- THEORY PANEL -->
+    <div class="theory-panel" id="theory-panel">
+        <div class="theory-tabs" id="theory-tabs">
+            <div class="theory-tab active" onclick="switchTheoryTab(0)">🏛️ The MONIAC</div>
+            <div class="theory-tab" onclick="switchTheoryTab(1)">📊 AD Components</div>
+            <div class="theory-tab" onclick="switchTheoryTab(2)">🏦 Fiscal Policy</div>
+            <div class="theory-tab" onclick="switchTheoryTab(3)">💷 Monetary Policy</div>
+            <div class="theory-tab" onclick="switchTheoryTab(4)">📉 Phillips Curve</div>
+        </div>
+
+        <!-- TAB 0: THE MONIAC -->
+        <div class="theory-content active" id="theory-tab-0">
+            <h3>The Phillips Machine (MONIAC) — Historical Context</h3>
+            <p><strong>Bill Phillips</strong> (1914–1975) was a New Zealand economist who studied at the London School of Economics. In 1949, while still a student, he built the <strong>Monetary National Income Analogue Computer (MONIAC)</strong> — a 2-metre tall hydraulic machine that used coloured water flowing through transparent pipes to represent money circulating through the economy.</p>
+            <p>The machine was revolutionary: it made abstract macroeconomic relationships <em>visible and physical</em>. Policymakers could physically manipulate valves representing tax rates and interest rates, and watch how the water (money) redistributed itself across tanks representing consumption, investment, government spending, and exports.</p>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>🗺️ Where are MONIACs today?</h4>
+                    <p>Approximately 14 original machines were built. Surviving examples are held at: the Science Museum (London), the Reserve Bank of New Zealand, Leeds University, Cambridge, and the Ford Motor Company.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>⚙️ How it worked</h4>
+                    <p>Water flowed from a top reservoir through valves (representing policy levers) into tanks for each GDP component. Overflow pipes modelled saving, taxation, and imports — the economy's leakages. The water level in the GDP tank showed total output.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>📡 Why it mattered</h4>
+                    <p>Pre-dating computers, the MONIAC could solve simultaneous equations for the whole economy in real time. The LSE used it for teaching for decades; the Reserve Bank of New Zealand used it for actual policy simulations.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🔗 Specification Coverage</h4>
+                    <p>Covers: Macroeconomic objectives · Aggregate demand &amp; supply · Fiscal &amp; monetary policy · The national economy in a global context — across A-Level Economics specifications.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: AD COMPONENTS -->
+        <div class="theory-content" id="theory-tab-1">
+            <h3>Aggregate Demand: AD = C + I + G + (X−M)</h3>
+            <p>Aggregate demand is the total demand for goods and services produced in an economy at a given price level over a given time period. Each component has distinct determinants that are reflected in the water tanks of this simulator.</p>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>🟢 Consumption (C) — largest component (~60–70% of UK GDP)</h4>
+                    <p><strong>Determinants:</strong> Disposable income (income after tax), interest rates (cost of borrowing), consumer confidence, wealth effects, availability of credit. The MPC (Marginal Propensity to Consume) determines how much of each extra £1 of income is spent.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🟡 Investment (I) — most volatile component</h4>
+                    <p><strong>Determinants:</strong> Interest rates (cost of borrowing capital), corporate profitability (influenced by corporate tax), business confidence, accelerator effect, technological change. Investment is critical for long-run productive capacity.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🔵 Government Spending (G) — direct injection</h4>
+                    <p><strong>Determinants:</strong> Government policy decisions, automatic stabilisers (e.g. unemployment benefits rise in recession), fiscal rules, national debt levels. G is an injection into the circular flow — a policy lever for demand management.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🟣 Net Exports (X−M) — trade balance</h4>
+                    <p><strong>Determinants:</strong> Exchange rate (stronger £ → dearer exports, cheaper imports), relative inflation rates, income levels abroad, trade barriers. A trade deficit (M &gt; X) is a leakage from AD; a surplus is an injection.</p>
+                </div>
+            </div>
+            <div class="exam-tip">
+                <strong>💡 Examiner's Note — The Multiplier Effect</strong>
+                <p>When G increases by £1B, the final increase in GDP is greater than £1B — this is the <strong>multiplier</strong>. The size depends on the MPC: Multiplier = 1 ÷ (1 − MPC). With MPC = 0.6, multiplier = 2.5. Watch for the multiplier ripple animation on the GDP tank when you increase government spending significantly.</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: FISCAL POLICY -->
+        <div class="theory-content" id="theory-tab-2">
+            <h3>Fiscal Policy — Government Spending &amp; Taxation</h3>
+            <p>Fiscal policy is the use of government spending (G) and taxation (T) to influence aggregate demand, income distribution, and resource allocation.</p>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>📈 Expansionary Fiscal Policy</h4>
+                    <p>↑ G or ↓ T → ↑ AD → ↑ real GDP (short run) → ↓ unemployment. Risk: may cause ↑ inflation if economy near full capacity. Creates a budget deficit (T &lt; G). Used in recessions (e.g. UK 2008–2010 stimulus).</p>
+                </div>
+                <div class="theory-card">
+                    <h4>📉 Contractionary Fiscal Policy</h4>
+                    <p>↓ G or ↑ T → ↓ AD → ↓ inflationary pressure. Risk: may cause ↑ unemployment, ↓ growth. Creates a budget surplus. Used to control inflation or reduce national debt (e.g. UK austerity 2010–2016).</p>
+                </div>
+                <div class="theory-card">
+                    <h4>⚠️ Crowding Out</h4>
+                    <p>When government borrowing to fund higher G pushes up interest rates, this can reduce private sector investment (I). If crowding out is complete, ↑G is offset by ↓I and GDP does not rise — a key argument against fiscal stimulus.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🕐 Time Lags</h4>
+                    <p>Fiscal policy suffers from: <strong>recognition lag</strong> (identifying the problem), <strong>implementation lag</strong> (parliamentary process), and <strong>impact lag</strong> (time for spending to reach the economy). Total lag can be 12–24 months.</p>
+                </div>
+            </div>
+            <div class="exam-tip">
+                <strong>💡 Examiner's Note — Budget Balance vs Debt</strong>
+                <p>The <strong>budget balance</strong> is the annual difference (T − G). <strong>National debt</strong> is the cumulative stock of past deficits. A government can run a deficit while reducing the debt-to-GDP ratio if growth is fast enough — as shown in the debt-to-GDP indicator in this simulator.</p>
+            </div>
+        </div>
+
+        <!-- TAB 3: MONETARY POLICY -->
+        <div class="theory-content" id="theory-tab-3">
+            <h3>Monetary Policy — Interest Rates &amp; the Bank of England</h3>
+            <p>Monetary policy is the use of interest rates (and other tools) to control the money supply and influence inflation, output, and employment. In the UK, it is set by the Monetary Policy Committee (MPC) of the Bank of England, which has an inflation target of <strong>2% CPI</strong>.</p>
+            <h4>The Transmission Mechanism of Monetary Policy</h4>
+            <p>A change in the base rate works through multiple channels:</p>
+            <ul>
+                <li><strong>Consumer spending:</strong> ↑ rates → ↑ mortgage costs → ↓ disposable income → ↓ C</li>
+                <li><strong>Business investment:</strong> ↑ rates → ↑ cost of borrowing capital → ↓ I (very sensitive)</li>
+                <li><strong>Exchange rate:</strong> ↑ rates → ↑ hot money inflows → ↑ £ → ↓ export competitiveness → ↓ X, ↑ M → ↓ NX</li>
+                <li><strong>Asset prices:</strong> ↑ rates → ↓ house/equity prices → negative wealth effect → ↓ C</li>
+                <li><strong>Expectations:</strong> Signalling credible commitment to low inflation can anchor expectations</li>
+            </ul>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>🏦 Quantitative Easing (QE)</h4>
+                    <p>When rates near zero, the Bank of England can create money to buy government bonds — pushing down long-term rates and increasing the money supply. Used extensively 2009–2021. Risk: asset price inflation, inequality.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>⚙️ Limitations of Monetary Policy</h4>
+                    <p>Works with long lags (6–18 months). May be ineffective in liquidity trap (near-zero rates). Cannot target specific sectors. Independent MPC may conflict with government fiscal priorities. Cannot solve supply-side problems.</p>
+                </div>
+            </div>
+            <div class="exam-tip">
+                <strong>💡 Examiner's Note — Conflicts &amp; Trade-offs</strong>
+                <p>Higher interest rates to control inflation may worsen unemployment. Lower rates to stimulate growth may fuel inflation. This is the core tension shown in the Phillips Curve — and why policymakers rarely have a single clear answer.</p>
+            </div>
+        </div>
+
+        <!-- TAB 4: PHILLIPS CURVE -->
+        <div class="theory-content" id="theory-tab-4">
+            <h3>The Phillips Curve — Inflation vs Unemployment</h3>
+            <p>In 1958, Bill Phillips published research showing a statistical relationship between <strong>wage inflation</strong> and <strong>unemployment</strong> in the UK over nearly a century. This became the basis of the <em>Phillips Curve</em> — suggesting a trade-off: policymakers could choose lower unemployment at the cost of higher inflation.</p>
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h4>📊 Short-Run Phillips Curve (SRPC)</h4>
+                    <p>Shows inverse relationship between inflation and unemployment in the short run. Moving along the SRPC: expansionary policy → lower unemployment, higher inflation. Contractionary policy → higher unemployment, lower inflation.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>📐 Long-Run Phillips Curve (LRPC)</h4>
+                    <p>Friedman &amp; Phelps (1968): in the long run, the SRPC shifts up as expectations adjust. The LRPC is <strong>vertical</strong> at the NAIRU (Non-Accelerating Inflation Rate of Unemployment) — there is no long-run trade-off.</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🌪️ Stagflation (1970s)</h4>
+                    <p>The 1973 oil shock caused both high inflation AND high unemployment simultaneously — the SRPC shifted outward. This contradicted the simple Phillips Curve and supported expectations-augmented models. Unemployment: 5.7%, Inflation: 24% (UK, 1975).</p>
+                </div>
+                <div class="theory-card">
+                    <h4>🎯 NAIRU &amp; Expectations</h4>
+                    <p>The NAIRU is the unemployment rate consistent with stable inflation. Attempts to push unemployment below NAIRU through demand management cause accelerating inflation as workers demand higher wages to offset expected price rises.</p>
+                </div>
+            </div>
+            <div class="exam-tip">
+                <strong>💡 Critical Thinking — Is the Phillips Curve dead?</strong>
+                <p>Post-2008 the relationship appeared to break down — UK unemployment fell below 4% by 2019 yet inflation remained below target. Explanations include: weaker wage bargaining power, globalisation suppressing prices, anchored expectations from credible inflation targeting. This remains a live debate in macroeconomics.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONCEPT SPOTLIGHT -->
+    <div class="spotlight-bar" id="spotlight-bar">
+        <div class="spotlight-icon">🏛️</div>
+        <div class="spotlight-text">
+            <strong id="spotlight-title">Phillips Machine Active</strong>
+            <p id="spotlight-body">Adjust any policy lever or trigger an economic shock — a contextual explanation will appear here, linking each change to A-Level exam theory.</p>
+        </div>
+    </div>
+
+    <!-- SCORE PANEL -->
+    <div class="score-panel">
+        <div class="score-item">
+            <span class="score-value" id="score-total">0</span>
+            <div class="score-label">Total Score</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-item">
+            <span class="score-value" id="score-challenges">0</span>
+            <div class="score-label">Challenges Won</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-item">
+            <span class="score-value" id="score-streak">0</span>
+            <div class="score-label">Win Streak</div>
+        </div>
+        <div class="score-divider"></div>
+        <div class="score-item">
+            <span class="score-value" id="score-efficiency">—</span>
+            <div class="score-label">Last Efficiency</div>
+        </div>
+    </div>
+
+    <!-- TIMER BAR -->
+    <div class="timer-bar" id="timer-bar">
+        <div class="timer-display" id="timer-display">3:00</div>
+        <div class="timer-track">
+            <div class="timer-fill" id="timer-fill" style="width:100%"></div>
+        </div>
+        <div class="timer-label" id="timer-label">Time Remaining</div>
+    </div>
+
+    <!-- MAIN LAYOUT: Machine + Controls -->
+    <div class="main-layout">
+        <div class="machine-visual" id="machine-visual">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--navy);font-family:'Playfair Display',serif;">Initialising simulation…</div>
+        </div>
+        <div class="controls-panel">
+            <!-- Monetary Policy -->
+            <div class="control-section policy-section">
+                <div class="control-group">
+                    <h3>💷 Monetary Policy <span class="tooltip-icon" data-tooltip="Bank of England sets interest rates to control inflation. Target: 2% CPI.">?</span></h3>
+                    <div class="slider-container">
+                        <label for="interest-rate">
+                            <span>Interest Rate <span class="tooltip-icon" data-tooltip="↑ rates → ↓ borrowing → ↓ consumption & investment → ↓ AD. Also strengthens £ → ↓ net exports.">?</span></span>
+                            <span class="value-display" id="interest-rate-display">4.25%</span>
+                        </label>
+                        <input type="range" id="interest-rate" class="slider" min="0" max="15" step="0.25" value="4.25">
+                    </div>
+                </div>
+            </div>
+            <!-- Fiscal Policy -->
+            <div class="control-section fiscal-section">
+                <div class="control-group">
+                    <h3>🏛️ Fiscal Policy <span class="tooltip-icon" data-tooltip="Government uses spending and taxation to manage aggregate demand and the economic cycle.">?</span></h3>
+                    <div class="slider-container">
+                        <label for="government-spending">
+                            <span>Gov Spending <span class="tooltip-icon" data-tooltip="Direct injection into AD. Multiplier effect amplifies initial impact. Increases budget deficit if taxes unchanged.">?</span></span>
+                            <span class="value-display" id="gov-spending-display">£490B</span>
+                        </label>
+                        <input type="range" id="government-spending" class="slider" min="200" max="900" step="10" value="490">
+                    </div>
+                    <div class="slider-container">
+                        <label for="tax-rate">
+                            <span>Income Tax <span class="tooltip-icon" data-tooltip="↑ tax → ↓ disposable income → ↓ consumption (C). Also affects MPC and the size of the multiplier.">?</span></span>
+                            <span class="value-display" id="tax-rate-display">20%</span>
+                        </label>
+                        <input type="range" id="tax-rate" class="slider" min="10" max="50" step="1" value="20">
+                    </div>
+                    <div class="slider-container">
+                        <label for="corporate-tax">
+                            <span>Corporate Tax <span class="tooltip-icon" data-tooltip="↑ corp tax → ↓ post-tax profits → ↓ business investment (I). Key supply-side lever.">?</span></span>
+                            <span class="value-display" id="corporate-tax-display">25%</span>
+                        </label>
+                        <input type="range" id="corporate-tax" class="slider" min="10" max="40" step="1" value="25">
+                    </div>
+                </div>
+            </div>
+            <!-- Economic Shocks -->
+            <div class="control-section shock-section">
+                <div class="control-group">
+                    <h3>⚡ Economic Shocks <span class="tooltip-icon" data-tooltip="Simulate external events that shift aggregate demand or supply, forcing a policy response.">?</span></h3>
+                    <button class="shock-btn" onclick="triggerShock('recession')">📉 Recession</button>
+                    <button class="shock-btn" onclick="triggerShock('boom')">📈 Economic Boom</button>
+                    <button class="shock-btn" onclick="triggerShock('financial_crisis')">💥 Financial Crisis</button>
+                    <button class="shock-btn" onclick="triggerShock('supply_shock')">⛽ Oil Price Shock</button>
+                </div>
+            </div>
+            <!-- Consumer Confidence -->
+            <div class="control-section">
+                <div class="control-group">
+                    <h3>😊 Consumer Confidence <span class="tooltip-icon" data-tooltip="Affects households' willingness to consume vs save. Low confidence → higher savings ratio → lower C.">?</span></h3>
+                    <div class="slider-container">
+                        <label for="consumption-sensitivity">
+                            <span>Confidence Level</span>
+                            <span class="value-display" id="confidence-display">1.0×</span>
+                        </label>
+                        <input type="range" id="consumption-sensitivity" class="slider" min="0.5" max="1.5" step="0.05" value="1.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS TOGGLE -->
+    <div class="chart-toggle-row">
+        <button class="header-btn" onclick="toggleCharts()" id="chart-toggle-btn">📊 Show Charts</button>
+    </div>
+    <div class="charts-section" id="charts-section">
+        <div class="chart-container">
+            <h3>📊 GDP Over Time</h3>
+            <canvas id="gdp-chart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3>🎯 Phillips Curve — Inflation vs Unemployment
+                <span class="tooltip-icon" data-tooltip="Each dot is one simulated time period. The scatter shows the short-run Phillips Curve relationship — but note it can shift with supply shocks and changing expectations." style="background:rgba(13,27,62,0.1);color:var(--navy);">?</span>
+            </h3>
+            <canvas id="phillips-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- CHALLENGE MODE -->
+    <div class="challenge-mode">
+        <h2>🎯 Challenge Mode</h2>
+        <p>Named historical scenarios and policy challenges. Score points for accuracy, speed, and efficiency of moves.</p>
+
+        <div id="scenario-select">
+            <div class="scenario-grid">
+                <div class="scenario-card" onclick="loadScenario('great_recession')">
+                    <div class="sc-title">🔥 Great Recession</div>
+                    <div class="sc-diff historic">Historic</div>
+                    <div class="sc-desc">2008 financial crisis. Restore growth without runaway debt.</div>
+                </div>
+                <div class="scenario-card" onclick="loadScenario('stagflation_70s')">
+                    <div class="sc-title">⛽ 1970s Stagflation</div>
+                    <div class="sc-diff hard">Hard</div>
+                    <div class="sc-desc">Oil shocks + high unemployment. The policymaker's nightmare.</div>
+                </div>
+                <div class="scenario-card" onclick="loadScenario('post_covid')">
+                    <div class="sc-title">💉 Post-COVID Recovery</div>
+                    <div class="sc-diff historic">Historic</div>
+                    <div class="sc-desc">Reopen the economy. Tame the inflationary surge of 2022.</div>
+                </div>
+                <div class="scenario-card" onclick="loadScenario('triple_target')">
+                    <div class="sc-title">🎯 Triple Target</div>
+                    <div class="sc-diff hard">Hard</div>
+                    <div class="sc-desc">High GDP, low inflation, low unemployment — all at once.</div>
+                </div>
+                <div class="scenario-card" onclick="loadScenario('debt_crisis')">
+                    <div class="sc-title">💸 Debt Crisis</div>
+                    <div class="sc-diff hard">Hard</div>
+                    <div class="sc-desc">110% debt-to-GDP. Reduce it without causing a recession.</div>
+                </div>
+                <div class="scenario-card" onclick="selectChallengeLevel('easy')">
+                    <div class="sc-title">🟢 Quick Challenge</div>
+                    <div class="sc-diff easy">Easy</div>
+                    <div class="sc-desc">A single-objective warm-up challenge for getting started.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="challenge-content" id="challenge-content" style="display:none">
+            <div class="challenge-question" id="challenge-question"></div>
+            <div class="challenge-task" id="challenge-task"></div>
+            <div class="challenge-hints" id="challenge-hints"></div>
+            <div class="debrief-box" id="debrief-box"></div>
+            <div class="challenge-buttons">
+                <button class="challenge-btn" id="hint-btn" onclick="revealHint()">💡 Show Hints</button>
+                <button class="challenge-btn" onclick="checkSolution()">✓ Check Solution</button>
+                <button class="challenge-btn" onclick="skipChallenge()">⏭️ New Scenario</button>
+            </div>
+            <div class="challenge-progress" id="challenge-progress"></div>
+        </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="export-section">
+        <h3>💾 Export Your Results</h3>
+        <p>Save your current economic scenario for portfolio work or further analysis</p>
+        <button class="export-btn" onclick="exportData()">📥 Download Data (JSON)</button>
+        <button class="export-btn" onclick="window.print()">🖨️ Print Theory Notes</button>
+    </div>
+
+    <button class="reset-btn" onclick="confirmReset()">🔄 Reset Simulation</button>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+    © 2026 <a href="https://biz-omics.co.uk" target="_blank" rel="noopener">BIZ-OMICS</a> |
+    A-Level Economics &amp; Business Studies | All Major Specifications
+</div>
+
+<!-- MODAL BACKDROP -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeAllModals()"></div>
+
+<!-- HELP MODAL -->
+<div class="modal" id="help-modal">
+    <h2>📚 How to Use the Phillips Machine</h2>
+    <h3>The Tanks</h3>
+    <ul>
+        <li><strong>Consumption (green):</strong> Household spending — the largest GDP component</li>
+        <li><strong>Investment (amber):</strong> Business capital spending — most sensitive to interest rates</li>
+        <li><strong>Government (blue):</strong> Public expenditure — the direct fiscal policy lever</li>
+        <li><strong>Net Exports (purple):</strong> Trade balance. The red zero-line is marked on the tank — water <em>below</em> this line = trade deficit, water <em>above</em> = trade surplus.</li>
+        <li><strong>GDP (navy):</strong> The sum of all components — total economic output</li>
+    </ul>
+    <h3>Challenge Mode</h3>
+    <p>Choose a named scenario (historical or policy challenge). You are timed — score points based on how close you get to targets, how few moves you make, and how quickly you solve it. A policy debrief appears after every check.</p>
+    <h3>Theory Panel</h3>
+    <p>Click 🎓 Theory in the header to open five tabs of exam-relevant theory: MONIAC history, AD components, fiscal policy, monetary policy, and the Phillips Curve.</p>
+    <h3>Concept Spotlight</h3>
+    <p>The dark bar below the theory panel updates in real time as you move sliders or trigger shocks — connecting each action to exam-relevant economic theory.</p>
+    <button class="modal-close" onclick="closeAllModals()">Got it!</button>
+</div>
+
+<!-- ABOUT MODAL -->
+<div class="modal" id="about-modal">
+    <h2>ℹ️ About the MONIAC</h2>
+    <h3>Historical Background</h3>
+    <p>The Phillips Machine — formally the <em>Monetary National Income Analogue Computer</em> (MONIAC) — was built in 1949 by New Zealand economist <strong>Bill Phillips</strong> while a student at the London School of Economics. Standing nearly 2 metres tall, it used coloured water flowing through transparent pipes to demonstrate macroeconomic relationships physically.</p>
+    <h3>The Phillips Curve Connection</h3>
+    <p>Bill Phillips is doubly famous: for the MONIAC (1949) and for his 1958 paper establishing the empirical relationship between wage inflation and unemployment — the <strong>Phillips Curve</strong>. This simulator brings both contributions together.</p>
+    <h3>The Original Machine Today</h3>
+    <p>Around 14 original machines were built. Working examples survive at the Science Museum (London), Leeds University, Cambridge, the Reserve Bank of New Zealand, and the Ford Motor Company. The Leeds machine is particularly notable given GSAL's connection to the city.</p>
+    <h3>Specification Coverage</h3>
+    <ul>
+        <li>Macroeconomic objectives (inflation, unemployment, growth, balance of payments)</li>
+        <li>Aggregate demand and its components</li>
+        <li>Fiscal and monetary policy</li>
+        <li>The national economy in a global context</li>
+    </ul>
+    <button class="modal-close" onclick="closeAllModals()">Close</button>
+</div>
+
+<!-- POLICY MESSAGE TOAST -->
+<div class="policy-message" id="policy-message"></div>
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ============================================================================
+// STATE
+// ============================================================================
+// ── UK 2025 baseline values (ONS / OBR data, annual £ billions) ──────────────
+// GDP ~£2,560B  |  C ~£1,510B (59%)  |  G ~£490B (19%)
+// I (GFCF) ~£450B (17.5%)  |  Net Exports ~-£35B (trade deficit ~1.4% GDP)
+// Unemployment ~4.7%  |  CPI ~2.8%  |  Debt/GDP ~98%  |  Base rate ~4.25%
+// ─────────────────────────────────────────────────────────────────────────────
+let interestRate = 4.25, governmentSpending = 490, taxRate = 20, corporateTax = 25, consumerConfidence = 1.0;
+let consumption = 1510, investment = 450, netExports = -35, inflation = 2.8, unemployment = 4.7, taxes = 0, debtToGDP = 98;
+let gdpHistory = [], inflationHistory = [], unemploymentHistory = [], timeLabels = [], timeStep = 0;
+let gdpChart = null, phillipsChart = null;
+let currentChallenge = null, hintRevealed = false, challengesCompleted = 0;
+let totalScore = 0, winStreak = 0, challengeMoves = 0, challengeStartTime = null;
+// Note: currentChallenge is re-assigned in scenario/challenge functions below
+let timerInterval = null, timerSecondsLeft = 180;
+let prevGovSpending = 200;
+let updateTimer = null;
+
+// ============================================================================
+// SPOTLIGHT MESSAGES — contextual theory explanations
+// ============================================================================
+const spotlights = {
+    interest_up: { icon: '💷', title: 'Interest Rate Increased — Transmission Mechanism', body: 'Higher rates raise the cost of borrowing → households cut consumption (C) and firms reduce investment (I). The exchange rate also strengthens → exports become less competitive → net exports (X−M) fall. AD shifts left.' },
+    interest_down: { icon: '💷', title: 'Interest Rate Cut — Expansionary Monetary Policy', body: 'Lower borrowing costs stimulate consumption (C) and business investment (I). The weaker exchange rate makes exports cheaper → net exports improve. AD shifts right. Classic MPC response to below-target growth.' },
+    gov_up: { icon: '🏛️', title: 'Government Spending Increased — Keynesian Multiplier', body: 'An injection of £G into the economy triggers the multiplier: each £ spent becomes income for someone else, who spends a fraction (the MPC), generating further rounds of spending. Final ΔY = ΔG × (1 ÷ (1 − MPC)).' },
+    gov_down: { icon: '🏛️', title: 'Government Spending Cut — Fiscal Austerity', body: 'Reduces aggregate demand directly. Risk of a negative multiplier effect — contraction greater than the initial cut. Budget balance improves (T − G rises), reducing the deficit and slowing debt accumulation.' },
+    tax_up: { icon: '💸', title: 'Income Tax Increased — Disposable Income Falls', body: 'Higher income tax reduces disposable income (Yd = Y − T) → lower consumption (C). Also reduces the Keynesian multiplier: Multiplier = 1 ÷ (1 − MPC(1−t)). Revenue rises, improving budget balance.' },
+    tax_down: { icon: '💸', title: 'Income Tax Cut — Supply-Side & Demand-Side Effects', body: 'Increases disposable income → ↑ consumption (C). May also incentivise work (supply-side). However reduces government revenue — may worsen budget deficit, increasing debt-to-GDP ratio over time.' },
+    corp_up: { icon: '🏭', title: 'Corporate Tax Increased — Investment Hit', body: 'Reduces post-tax profits → less retained earnings available for investment (I). May also deter FDI. Investment is the most volatile GDP component — highly sensitive to profitability expectations.' },
+    corp_down: { icon: '🏭', title: 'Corporate Tax Cut — Supply-Side Stimulus', body: 'Boosts post-tax profitability → incentivises business investment (I). A supply-side policy — increases productive capacity in the long run. Risk: reduces tax revenue, potentially widening the deficit.' },
+    confidence_up: { icon: '😊', title: 'Consumer Confidence Rising — Animal Spirits', body: 'Keynes called this "animal spirits" — the psychological willingness to consume. ↑ confidence → ↓ savings ratio → ↑ consumption (C). A key driver of short-run business cycles. Hard to predict or control with conventional policy.' },
+    confidence_down: { icon: '😟', title: 'Consumer Confidence Falling — Precautionary Saving', body: 'Falling confidence triggers precautionary saving — households rebuild buffers. ↓ C reduces AD. This is a paradox of thrift: individually rational, but collectively contractionary. Government may need to step in to maintain demand.' },
+    shock_recession: { icon: '📉', title: 'Demand-Side Shock — Recession', body: 'A sharp fall in aggregate demand — often triggered by a collapse in confidence or credit. AD shifts left → output falls, unemployment rises, inflation falls. Policy response: expansionary fiscal policy (↑G, ↓T) and/or lower interest rates.' },
+    shock_boom: { icon: '📈', title: 'Positive Demand Shock — Economic Boom', body: 'Surge in confidence drives AD rightward. If the economy is near capacity, this creates inflationary pressure rather than output gains. Policy response: contractionary measures — raise rates, cut spending. Risk of overheating.' },
+    shock_financial_crisis: { icon: '💥', title: 'Financial Crisis — Credit Crunch', body: 'Bank failures freeze credit → investment collapses, confidence plummets. Represents 2008: UK GDP fell 6%, unemployment doubled. Conventional monetary policy was insufficient → QE and fiscal stimulus deployed. Debt-to-GDP rose sharply.' },
+    shock_supply_shock: { icon: '⛽', title: 'Negative Supply Shock — Stagflation Risk', body: '↑ oil prices raise production costs → AS shifts left → higher inflation AND lower output simultaneously. This creates stagflation — the policymaker\'s dilemma. Higher rates to fight inflation worsen unemployment; lower rates worsen inflation.' }
+};
+
+function setSpotlight(key) {
+    const s = spotlights[key];
+    if (!s) return;
+    document.getElementById('spotlight-icon') && (document.getElementById('spotlight-icon').textContent = s.icon);
+    document.querySelector('.spotlight-icon').textContent = s.icon;
+    document.getElementById('spotlight-title').textContent = s.title;
+    document.getElementById('spotlight-body').textContent = s.body;
+}
+
+// ============================================================================
+// THEORY TABS
+// ============================================================================
+function switchTheoryTab(index) {
+    document.querySelectorAll('.theory-tab').forEach((t, i) => {
+        t.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.theory-content').forEach((c, i) => {
+        c.classList.toggle('active', i === index);
+    });
+}
+
+function toggleTheoryPanel() {
+    const p = document.getElementById('theory-panel');
+    p.style.display = p.style.display === 'none' || p.style.display === '' ? 'block' : 'none';
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+function initSimulation() {
+    createTanks();
+    initCharts();
+    updateDisplay();
+    const sliders = ['interest-rate','government-spending','tax-rate','corporate-tax','consumption-sensitivity'];
+    sliders.forEach(id => document.getElementById(id).addEventListener('input', onSliderChange));
+    showPolicyMessage('💡 Welcome! Adjust the policy controls to see how the economy responds.');
+}
+
+function onSliderChange(e) {
+    const prev = {
+        ir: interestRate,
+        gs: governmentSpending,
+        tr: taxRate,
+        ct: corporateTax,
+        cc: consumerConfidence
+    };
+    updateFromInputs();
+    challengeMoves++;
+
+    // Determine which slider changed and set spotlight
+    if (e.target.id === 'interest-rate') {
+        setSpotlight(interestRate > prev.ir ? 'interest_up' : 'interest_down');
+    } else if (e.target.id === 'government-spending') {
+        const diff = Math.abs(governmentSpending - prev.gs);
+        if (diff > 30) triggerMultiplierRipple();
+        setSpotlight(governmentSpending > prev.gs ? 'gov_up' : 'gov_down');
+    } else if (e.target.id === 'tax-rate') {
+        setSpotlight(taxRate > prev.tr ? 'tax_up' : 'tax_down');
+    } else if (e.target.id === 'corporate-tax') {
+        setSpotlight(corporateTax > prev.ct ? 'corp_up' : 'corp_down');
+    } else if (e.target.id === 'consumption-sensitivity') {
+        setSpotlight(consumerConfidence > prev.cc ? 'confidence_up' : 'confidence_down');
+    }
+
+    clearTimeout(updateTimer);
+    updateTimer = setTimeout(() => updateDisplay(), 80);
+}
+
+function updateFromInputs() {
+    interestRate = parseFloat(document.getElementById('interest-rate').value);
+    governmentSpending = parseInt(document.getElementById('government-spending').value);
+    taxRate = parseFloat(document.getElementById('tax-rate').value);
+    corporateTax = parseFloat(document.getElementById('corporate-tax').value);
+    consumerConfidence = parseFloat(document.getElementById('consumption-sensitivity').value);
+}
+
+// ============================================================================
+// MULTIPLIER RIPPLE ANIMATION
+// ============================================================================
+function triggerMultiplierRipple() {
+    const gdpTank = document.getElementById('tank-gdp');
+    if (!gdpTank) return;
+    const rect = gdpTank.getBoundingClientRect();
+    const container = document.getElementById('machine-visual');
+    const cRect = container.getBoundingClientRect();
+    const ripple = document.createElement('div');
+    ripple.className = 'multiplier-ripple';
+    ripple.style.width = '40px';
+    ripple.style.height = '40px';
+    ripple.style.left = (rect.left - cRect.left + rect.width / 2 - 20) + 'px';
+    ripple.style.top = (rect.top - cRect.top + rect.height / 2 - 20) + 'px';
+    container.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 1300);
+}
+
+// ============================================================================
+// TANK CREATION
+// ============================================================================
+function createTanks() {
+    const container = document.getElementById('machine-visual');
+    container.innerHTML = '';
+    const configs = [
+        { id: 'consumption',  label: 'Consumption (C)',    x: '5%',  y: '15%', w: '18%', h: '50%' },
+        { id: 'investment',   label: 'Investment (I)',     x: '28%', y: '15%', w: '18%', h: '50%' },
+        { id: 'government',   label: 'Gov Spending (G)',   x: '51%', y: '15%', w: '18%', h: '50%' },
+        { id: 'net-exports',  label: 'Net Exports (X−M)',  x: '74%', y: '15%', w: '18%', h: '50%' },
+        { id: 'gdp',          label: 'GDP (Total Output)', x: '28%', y: '72%', w: '40%', h: '23%' }
+    ];
+    const tooltipTexts = {
+        'consumption': 'Household spending — ~60% of UK GDP. Driven by disposable income, interest rates, and confidence.',
+        'investment': 'Business capital spending — most volatile component. Very sensitive to interest rates and corporate tax.',
+        'government': 'Public expenditure — direct injection into AD. Policy lever for demand management.',
+        'net-exports': 'Trade balance (X−M). RED LINE = zero. Below = trade deficit, above = trade surplus. Affected by exchange rates.',
+        'gdp': 'GDP = C + I + G + (X−M). Total economic output. Changes in any component flow here via the multiplier.'
+    };
+
+    configs.forEach(cfg => {
+        const tank = document.createElement('div');
+        tank.className = 'tank';
+        tank.id = 'tank-' + cfg.id;
+        Object.assign(tank.style, { left: cfg.x, top: cfg.y, width: cfg.w, height: cfg.h });
+
+        const label = document.createElement('div');
+        label.className = 'tank-label';
+        label.textContent = cfg.label;
+
+        const water = document.createElement('div');
+        water.className = 'water';
+        water.id = 'water-' + cfg.id;
+
+        const val = document.createElement('div');
+        val.className = 'tank-value';
+        val.id = 'value-' + cfg.id;
+
+        const info = document.createElement('div');
+        info.textContent = 'ℹ️';
+        info.title = tooltipTexts[cfg.id];
+        Object.assign(info.style, { position: 'absolute', right: '5px', top: '5px', fontSize: '14px', cursor: 'help', zIndex: '4' });
+
+        tank.appendChild(label);
+        tank.appendChild(water);
+        tank.appendChild(val);
+        tank.appendChild(info);
+
+        if (cfg.id === 'net-exports') {
+            const zl = document.createElement('div');
+            Object.assign(zl.style, {
+                position: 'absolute', left: '0', right: '0', bottom: '50%',
+                height: '3px', background: 'linear-gradient(90deg,transparent,#c0392b,transparent)',
+                zIndex: '2', boxShadow: '0 0 8px rgba(192,57,43,0.7)'
+            });
+            const zlLabel = document.createElement('div');
+            zlLabel.textContent = '£0 Zero Line';
+            Object.assign(zlLabel.style, {
+                position: 'absolute', right: '8px', top: '-18px',
+                fontSize: '9px', color: '#c0392b', fontWeight: '700',
+                background: 'rgba(255,255,255,0.93)', padding: '2px 7px',
+                borderRadius: '8px', whiteSpace: 'nowrap'
+            });
+            zl.appendChild(zlLabel);
+            tank.appendChild(zl);
+        }
+
+        container.appendChild(tank);
+    });
+
+    addFlowIndicators(container);
+}
+
+function addFlowIndicators(container) {
+    const flows = [
+        { from: 'consumption', color: '#1e7e45', sx: '14%', sy: '60%' },
+        { from: 'investment',  color: '#b8770a', sx: '37%', sy: '60%' },
+        { from: 'government',  color: '#0d6eae', sx: '60%', sy: '60%' },
+        { from: 'net-exports', color: '#7d3c98', sx: '83%', sy: '60%' }
+    ];
+    flows.forEach(f => {
+        const pipe = document.createElement('div');
+        Object.assign(pipe.style, {
+            position: 'absolute', left: f.sx, top: f.sy,
+            width: '2px', height: '11%',
+            background: `linear-gradient(to bottom, ${f.color}, ${f.color}70)`,
+            opacity: '0.6', borderRadius: '2px'
+        });
+
+        const particle = document.createElement('div');
+        const kfName = 'flowDown_' + f.from.replace('-','_');
+        Object.assign(particle.style, {
+            position: 'absolute', left: f.sx, top: f.sy,
+            width: '8px', height: '8px',
+            background: f.color, borderRadius: '50%',
+            boxShadow: `0 0 10px ${f.color}`,
+            animation: `${kfName} 2s ease-in-out infinite`,
+            opacity: '0.8', marginLeft: '-3px'
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `@keyframes ${kfName} { 0%{transform:translateY(0) scale(1);opacity:0} 10%{opacity:.8} 90%{opacity:.8} 100%{transform:translateY(70px) scale(0.5);opacity:0} }`;
+        document.head.appendChild(style);
+
+        container.appendChild(pipe);
+        container.appendChild(particle);
+    });
+}
+
+// ============================================================================
+// ECONOMIC CALCULATIONS
+// ============================================================================
+// ============================================================================
+// ECONOMIC MODEL — calibrated to UK 2025 ONS/OBR data
+//
+// At DEFAULT settings the model reproduces UK 2025 approximate actuals:
+//   C  = £1,510B  (59% GDP — ONS 2025)
+//   I  = £450B    (17.5% GDP — GFCF ONS)
+//   G  = £490B    (19% GDP)
+//   NX = -£35B    (trade deficit ~1.4% GDP — ONS Q4 2024)
+//   GDP = £2,415B (below potential — reflects sluggish 2025 growth of 1%)
+//   Potential GDP = £2,560B
+//
+// Policy sensitivities (per unit — broadly OBR/BoE transmission estimates):
+//   +1pp interest rate → C: -£80B  I: -£45B  NX: -£8B
+//   +£100B gov spending → GDP: +£100B direct (students can observe multiplier)
+//   +1pp income tax    → C: -£9B
+//   +1pp corporate tax → I: -£12B
+// ============================================================================
+function calculateEconomy() {
+
+    // ── CONSUMPTION (linear delta from UK 2025 baseline) ─────────────────────
+    // At rate=4.25, tax=20, conf=1.0 → C = £1,510B
+    consumption = (1510 - (interestRate - 4.25) * 80 - (taxRate - 20) * 9) * consumerConfidence;
+    consumption = Math.max(400, consumption);
+
+    // ── INVESTMENT (linear delta from UK 2025 baseline) ──────────────────────
+    // At rate=4.25, corpTax=25 → I = £450B
+    investment = 450 - (interestRate - 4.25) * 45 - (corporateTax - 25) * 12;
+    investment = Math.max(80, investment);
+
+    // ── NET EXPORTS ──────────────────────────────────────────────────────────
+    // UK persistent structural deficit. Higher rates → stronger £ → worse NX.
+    // At rate=4.25 → NX = -£35B (ONS Q4 2024 annual equivalent)
+    netExports = -35 - (interestRate - 4.25) * 8;
+
+    // ── GDP ──────────────────────────────────────────────────────────────────
+    const gdp = consumption + investment + governmentSpending + netExports;
+
+    // ── INFLATION & UNEMPLOYMENT (output gap model) ───────────────────────────
+    // Potential output = £2,560B (ONS/OBR 2025 estimate)
+    // Inflation: 0.1pp per 1pp output gap (moderate Phillips relationship)
+    // Unemployment: Okun's Law ~0.5pp per 1pp output gap
+    const outputGapPct = (gdp - 2560) / 2560 * 100; // output gap as %
+    inflation    = Math.max(0, 2.8 + outputGapPct * 0.1 + (Math.random() - 0.5) * 0.3);
+    unemployment = Math.max(1.5, 4.5 - outputGapPct * 0.05 + (Math.random() - 0.5) * 0.15);
+
+    // ── FISCAL POSITION ───────────────────────────────────────────────────────
+    taxes = Math.round((consumption * 0.8 * (taxRate / 100)) + (investment * 0.3 * (corporateTax / 100)));
+    const budgetBalance = taxes - governmentSpending;
+    debtToGDP = Math.max(0, Math.min(200, debtToGDP - (budgetBalance / gdp) * 3));
+
+    if (timeStep % 3 === 0) {
+        gdpHistory.push(Math.round(gdp));
+        inflationHistory.push(parseFloat(inflation.toFixed(2)));
+        unemploymentHistory.push(parseFloat(unemployment.toFixed(2)));
+        timeLabels.push('T' + Math.floor(timeStep / 3));
+        if (gdpHistory.length > 15) { gdpHistory.shift(); inflationHistory.shift(); unemploymentHistory.shift(); timeLabels.shift(); }
+    }
+    timeStep++;
+    return { gdp, consumption, investment, netExports, inflation, unemployment };
+}
+
+// ============================================================================
+// DISPLAY
+// ============================================================================
+function updateDisplay() {
+    const r = calculateEconomy();
+    // Tank scales: set so default UK 2025 values sit at ~55-65% of each tank
+    // This leaves meaningful headroom both up and down for policy changes
+    updateTank('consumption', consumption, 2200);     // C: default £1,510B / max £2,200B = 69%
+    updateTank('investment',  investment,  750);      // I: default £450B   / max £750B   = 60%
+    updateTank('government',  governmentSpending, 900); // G: default £490B / max £900B   = 54%
+    updateTank('net-exports', netExports + 200, 400); // NX: offset +200 so -200 is 0%, 0 is 50%, +200 is 100%
+    updateTank('gdp',         r.gdp, 3200);           // GDP: default ~£2,415B / max £3,200B = 75%
+
+    document.getElementById('interest-rate-display').textContent   = interestRate.toFixed(1) + '%';
+    document.getElementById('gov-spending-display').textContent    = '£' + governmentSpending + 'B';
+    document.getElementById('tax-rate-display').textContent        = taxRate + '%';
+    document.getElementById('corporate-tax-display').textContent   = corporateTax + '%';
+    document.getElementById('confidence-display').textContent      = consumerConfidence.toFixed(2) + '×';
+    updateCharts();
+}
+
+function updateTank(id, value, maxValue) {
+    const pct = Math.min(100, Math.max(0, (value / maxValue) * 100));
+    const waterEl = document.getElementById('water-' + id);
+    const valEl   = document.getElementById('value-' + id);
+    if (waterEl) {
+        const prev = parseFloat(waterEl.style.height) || 0;
+        const diff = pct - prev;
+        waterEl.classList.remove('increase','decrease','shock');
+        if (Math.abs(diff) > 2) waterEl.classList.add(diff > 0 ? 'increase' : 'decrease');
+        if (Math.abs(diff) > 5) highlightTank(id, 1500);
+        waterEl.style.height = pct + '%';
+        setTimeout(() => waterEl.classList.remove('increase','decrease'), 800);
+    }
+    if (valEl) {
+        if (id === 'net-exports') valEl.textContent = '£' + Math.round(value - 200) + 'B';
+        else valEl.textContent = '£' + Math.round(value) + 'B';
+    }
+}
+
+function highlightTank(id, dur = 2000) {
+    const t = document.getElementById('tank-' + id);
+    if (t) { t.classList.add('highlighted'); setTimeout(() => t.classList.remove('highlighted'), dur); }
+}
+
+// ============================================================================
+// CHARTS
+// ============================================================================
+function initCharts() {
+    const gCtx = document.getElementById('gdp-chart').getContext('2d');
+    const pCtx = document.getElementById('phillips-chart').getContext('2d');
+
+    gdpChart = new Chart(gCtx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{ label: 'GDP (£B)', data: gdpHistory, borderColor: '#0d1b3e', backgroundColor: 'rgba(13,27,62,0.1)', tension: 0.4, fill: true }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: true } },
+            scales: {
+                y: { beginAtZero: false, title: { display: true, text: 'GDP (£ Billions)' } },
+                x: { title: { display: true, text: 'Time Period' } }
+            }
+        }
+    });
+
+    phillipsChart = new Chart(pCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Economy State',
+                data: [],
+                backgroundColor: 'rgba(201,168,76,0.7)',
+                borderColor: '#0d1b3e',
+                pointRadius: 6, pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true },
+                title: { display: true, text: 'Each dot = one simulated period — not a fixed law', font: { size: 10, style: 'italic' }, color: '#666', padding: { top: 4, bottom: 8 } },
+                tooltip: { callbacks: {
+                    label: ctx => `Unemployment: ${ctx.parsed.x.toFixed(1)}%  |  Inflation: ${ctx.parsed.y.toFixed(1)}%`,
+                    afterLabel: () => 'SRPC: inverse relationship in the short run'
+                }}
+            },
+            scales: {
+                y: { beginAtZero: true, max: 10, title: { display: true, text: 'Inflation (%)' } },
+                x: { beginAtZero: true, max: 12, title: { display: true, text: 'Unemployment (%)' } }
+            }
+        }
+    });
+}
+
+function updateCharts() {
+    if (gdpChart) { gdpChart.data.labels = timeLabels; gdpChart.data.datasets[0].data = gdpHistory; gdpChart.update('none'); }
+    if (phillipsChart) {
+        phillipsChart.data.datasets[0].data = inflationHistory.map((inf, i) => ({ x: unemploymentHistory[i], y: inf }));
+        phillipsChart.update('none');
+    }
+}
+
+function toggleCharts() {
+    const sec = document.getElementById('charts-section');
+    const btn = document.getElementById('chart-toggle-btn');
+    const showing = sec.classList.toggle('visible');
+    btn.textContent = showing ? '📊 Hide Charts' : '📊 Show Charts';
+    if (showing) setTimeout(() => { gdpChart && gdpChart.update(); phillipsChart && phillipsChart.update(); }, 120);
+}
+
+// ============================================================================
+// ECONOMIC SHOCKS
+// ============================================================================
+function triggerShock(type) {
+    const shocks = {
+        recession: {
+            apply() { consumerConfidence = 0.65; document.getElementById('consumption-sensitivity').value = 0.65; },
+            msg: '📉 RECESSION: Consumer confidence collapsed! Spending plummeting.',
+            tanks: ['consumption','investment','gdp'],
+            spotlight: 'shock_recession'
+        },
+        boom: {
+            apply() { consumerConfidence = 1.35; document.getElementById('consumption-sensitivity').value = 1.35; },
+            msg: '📈 ECONOMIC BOOM: Consumer spending surging! Investment soaring!',
+            tanks: ['consumption','investment','gdp'],
+            spotlight: 'shock_boom'
+        },
+        financial_crisis: {
+            apply() {
+                consumerConfidence = 0.6; document.getElementById('consumption-sensitivity').value = 0.6;
+                interestRate = Math.min(15, interestRate + 3.0); document.getElementById('interest-rate').value = interestRate;
+            },
+            msg: '💥 FINANCIAL CRISIS: Credit markets frozen! Confidence shattered!',
+            tanks: ['consumption','investment','gdp'],
+            spotlight: 'shock_financial_crisis'
+        },
+        supply_shock: {
+            apply() {
+                inflation = Math.min(12, inflation + 3.5);
+                consumerConfidence = Math.max(0.5, consumerConfidence - 0.2);
+                document.getElementById('consumption-sensitivity').value = consumerConfidence;
+            },
+            msg: '⛽ OIL PRICE SHOCK: Energy costs soaring! Stagflation risk rises!',
+            tanks: ['consumption','net-exports'],
+            spotlight: 'shock_supply_shock'
+        }
+    };
+    const s = shocks[type];
+    if (!s) return;
+    s.apply();
+    setSpotlight(s.spotlight);
+    showPolicyMessage(s.msg);
+    s.tanks.forEach((t, i) => {
+        setTimeout(() => {
+            const w = document.getElementById('water-' + t);
+            if (w) { w.classList.add('shock'); setTimeout(() => w.classList.remove('shock'), 1000); }
+            highlightTank(t, 2000);
+        }, i * 200);
+    });
+    updateDisplay();
+    setTimeout(() => updateDisplay(), 120);
+}
+
+// ============================================================================
+// CHALLENGE / SCENARIO SYSTEM
+// ============================================================================
+const scenarios = {
+    great_recession: {
+        title: '🔥 Great Recession (2008)',
+        difficulty: 'historic',
+        question: 'The financial crisis has frozen credit markets. Consumer confidence has collapsed (0.6×) and interest rates have been cut to near-zero. Your task: restore GDP growth without allowing debt-to-GDP to exceed 110%.',
+        task: 'Achieve GDP > £2,300B while keeping debt-to-GDP below 110%.',
+        hints: [
+            '💡 With interest rates near-zero, fiscal stimulus (↑G) is the primary tool — this is the Keynesian response.',
+            '💡 But ↑G widens the deficit → ↑ debt-to-GDP. Balance the stimulus carefully.',
+            '💡 Historical context: UK ran a deficit of 10% of GDP in 2009–10 to combat the recession.'
+        ],
+        setup() { consumerConfidence = 0.6; document.getElementById('consumption-sensitivity').value = 0.6; interestRate = 0.5; document.getElementById('interest-rate').value = 0.5; debtToGDP = 95; },
+        conditions: { gdp: { min: 2300 }, debtToGDP: { max: 110 } },
+        debrief: {
+            success: '✅ Well done. You replicated the Keynesian demand-management response to 2008. Higher G boosted AD despite near-zero rates. The key tension: stimulus works but raises debt — exactly the political debate of 2009–2012.',
+            failure: '❌ The 2008 crisis showed the limits of monetary policy at the zero lower bound. Fiscal policy was essential — but debt accumulation created long-term constraints. Consider: is austerity or stimulus the right response to a financial crisis?'
+        }
+    },
+    stagflation_70s: {
+        title: '⛽ 1970s Stagflation',
+        difficulty: 'hard',
+        question: 'The 1973 OPEC oil embargo has triggered a negative supply shock. Inflation has surged above 6% while unemployment is also rising. Conventional demand management cannot solve both problems simultaneously.',
+        task: 'Reduce inflation below 4.0% AND unemployment below 6.0%.',
+        hints: [
+            '💡 Stagflation breaks the simple Phillips Curve — you cannot solve both with demand policy alone.',
+            '💡 Higher interest rates fight inflation but worsen unemployment. Lower rates do the reverse.',
+            '💡 There is no easy answer — this is why Friedman\'s expectations-augmented Phillips Curve became dominant.'
+        ],
+        setup() { inflation = 6.5; consumerConfidence = 0.72; document.getElementById('consumption-sensitivity').value = 0.72; interestRate = 6.0; document.getElementById('interest-rate').value = 6.0; },
+        conditions: { inflation: { max: 4.0 }, unemployment: { max: 6.0 } },
+        debrief: {
+            success: '✅ Impressive. In practice, stagflation was solved by Volcker in the US (1980s) through severe monetary tightening — accepting high unemployment to break inflationary expectations. The LRPC was restored.',
+            failure: '❌ Stagflation is the ultimate policy dilemma. The 1970s showed demand management has limits when the problem is supply-side. Thatcher\'s 1980s solution: tight monetary policy + supply-side reforms, accepting deep recession as the cost.'
+        }
+    },
+    post_covid: {
+        title: '💉 Post-COVID Recovery (2021–22)',
+        difficulty: 'historic',
+        question: 'COVID-19 disrupted supply chains and triggered massive fiscal stimulus. As the economy reopens, consumer demand surges — but inflation is rising rapidly toward 10%. You must cool inflation without triggering a recession.',
+        task: 'Bring inflation below 4.0% while keeping GDP above £2,200B.',
+        hints: [
+            '💡 The post-COVID inflation was largely supply-side — normalising supply chains helps, but policy can only target demand.',
+            '💡 Raise interest rates to cool demand — but be careful not to over-tighten and cause a recession.',
+            '💡 Historical context: Bank of England raised rates from 0.1% (Jan 2022) to 5.25% (Aug 2023).'
+        ],
+        setup() { inflation = 8.0; consumerConfidence = 1.25; document.getElementById('consumption-sensitivity').value = 1.25; governmentSpending = 680; document.getElementById('government-spending').value = 680; interestRate = 0.25; document.getElementById('interest-rate').value = 0.25; },
+        conditions: { inflation: { max: 4.0 }, gdp: { min: 2200 } },
+        debrief: {
+            success: '✅ You replicated the post-COVID monetary tightening challenge. Raising rates to curb inflation risks tipping a recovering economy into recession — the "soft landing" debate of 2022–23. The UK narrowly avoided recession but growth stagnated.',
+            failure: '❌ The post-COVID inflation was unusually persistent — partly supply-side, partly demand-driven by fiscal stimulus. Monetary policy works with a lag of 12–18 months, making calibration difficult. The Bank of England faced significant criticism for acting "too late, then too fast".'
+        }
+    },
+    triple_target: {
+        title: '🎯 Triple Target',
+        difficulty: 'hard',
+        question: 'The Prime Minister has set ambitious simultaneous targets. Achieve strong growth, low inflation, and low unemployment — the "Goldilocks" economy. Can you find the optimal policy mix?',
+        task: 'GDP > £2,600B, inflation < 2.5%, unemployment < 4.5% — all simultaneously.',
+        hints: [
+            '💡 This requires very careful calibration — aggressive fiscal expansion will cause inflation before unemployment falls far enough.',
+            '💡 Moderate interest rates keep investment flowing; moderate government spending adds demand.',
+            '💡 Consumer confidence around 1.0–1.1× keeps consumption stable without overheating.'
+        ],
+        setup() {},
+        conditions: { gdp: { min: 2600 }, inflation: { max: 2.5 }, unemployment: { max: 4.5 } },
+        debrief: {
+            success: '✅ Excellent policy management! You found the narrow window — sometimes called "Goldilocks" conditions. In practice, achieving all macro objectives simultaneously is extremely rare. The UK last came close in the mid-1990s to mid-2000s "Great Moderation".',
+            failure: '❌ The triple target reveals why macroeconomic management is so difficult. The Phillips Curve implies a trade-off between inflation and unemployment. High GDP risks overheating. Perfect policy balance exists only in theory — real policymakers must prioritise.'
+        }
+    },
+    debt_crisis: {
+        title: '💸 Debt Crisis',
+        difficulty: 'hard',
+        question: 'Government debt has reached 130% of GDP and bond markets are nervous. A credit downgrade would raise borrowing costs for the whole economy. You must reduce the debt-to-GDP ratio — but fiscal austerity risks recession.',
+        task: 'Reduce debt-to-GDP below 110% while keeping unemployment below 7.0%.',
+        hints: [
+            '💡 Raising taxes or cutting spending improves the budget balance — but shrinks GDP, which can worsen the ratio.',
+            '💡 The denominator matters: strong GDP growth can reduce debt-to-GDP even without cutting the deficit.',
+            '💡 Historical context: UK debt-to-GDP reached ~100% in 2020 and is currently ~98% (ONS 2025).'
+        ],
+        setup() { debtToGDP = 130; governmentSpending = 750; document.getElementById('government-spending').value = 750; },
+        conditions: { debtToGDP: { max: 110 }, unemployment: { max: 7.0 } },
+        debrief: {
+            success: '✅ Well managed. Reducing debt-to-GDP requires either fiscal surplus (painful) or strong growth (difficult when cutting). You found the balance — the "expansionary austerity" debate of 2010s in miniature.',
+            failure: '❌ Debt reduction through austerity risks a negative multiplier spiral: cut spending → lower GDP → lower tax revenue → worse deficit. The IMF famously underestimated this multiplier in 2012. Growth-friendly consolidation (slower cuts + supply-side reform) is now the consensus approach.'
+        }
+    }
+};
+
+const quickChallenges = [
+    { title: 'Inflation Target', difficulty: 'easy', question: 'Inflation has risen to 4.5%, above the Bank of England\'s 2% target. Use monetary policy to bring it back under control.', task: 'Reduce inflation to below 3.0%.', hints: ['💡 Higher interest rates cool demand and reduce inflationary pressure.', '💡 Raise the base rate from its current 4.25% — try 6–8% and observe the effect on C and I.'], conditions: { inflation: { max: 3.0 } }, debrief: { success: '✅ Correct. The Bank of England\'s primary tool for inflation is the base rate — raising it reduces consumption and investment, cooling AD and reducing demand-pull inflation.', failure: '❌ Reducing inflation requires contractionary monetary policy — raising interest rates reduces the cost-push pressure on wages and cools spending.' } },
+    { title: 'Stimulate Growth', difficulty: 'easy', question: 'GDP has fallen below potential. The Chancellor wants to use fiscal policy to boost aggregate demand back toward £2,560B.', task: 'Increase GDP above £2,560B.', hints: ['💡 ↑ Government spending directly increases G in AD = C + I + G + (X−M).', '💡 Consider the multiplier effect — each £1 of G adds more than £1 to GDP.'], conditions: { gdp: { min: 2560 } }, debrief: { success: '✅ Good. Expansionary fiscal policy shifts AD rightward. The multiplier amplifies the initial stimulus — each £1 of G generates more than £1 of GDP increase.', failure: '❌ Fiscal stimulus — increasing G or cutting T — is the Keynesian tool for boosting GDP. Higher G increases AD directly; lower T raises disposable income and boosts C.' } }
+];
+
+function loadScenario(key) {
+    const sc = scenarios[key];
+    if (!sc) return;
+    resetSimulation();
+    sc.setup();
+    updateDisplay();
+
+    currentChallenge = {
+        title: sc.title,
+        difficulty: sc.difficulty,
+        question: sc.question,
+        task: sc.task,
+        hints: sc.hints,
+        conditions: sc.conditions,
+        debrief: sc.debrief
+    };
+    startChallengeUI();
+}
+
+function selectChallengeLevel(diff) {
+    const pool = quickChallenges.filter(c => c.difficulty === diff);
+    if (!pool.length) return;
+    const sc = pool[Math.floor(Math.random() * pool.length)];
+    currentChallenge = { title: sc.title, difficulty: sc.difficulty, question: sc.question, task: sc.task, hints: sc.hints, conditions: sc.conditions, debrief: sc.debrief };
+    resetSimulation();
+    startChallengeUI();
+}
+
+function startChallengeUI() {
+    hintRevealed = false;
+    challengeMoves = 0;
+    challengeStartTime = Date.now();
+
+    document.getElementById('challenge-content').style.display = 'block';
+    document.getElementById('challenge-question').textContent = currentChallenge.question;
+    document.getElementById('challenge-task').innerHTML = '🎯 ' + currentChallenge.task;
+    document.getElementById('challenge-hints').innerHTML = '';
+    document.getElementById('hint-btn').textContent = '💡 Show Hints';
+    document.getElementById('hint-btn').style.opacity = '1';
+    document.getElementById('debrief-box').classList.remove('visible');
+    document.getElementById('debrief-box').innerHTML = '';
+
+    const diffEmoji = { easy: '🟢', medium: '🟡', hard: '🔴', historic: '🔵' };
+    document.getElementById('challenge-progress').textContent =
+        (diffEmoji[currentChallenge.difficulty] || '⚪') + ' ' + currentChallenge.difficulty.toUpperCase() +
+        ' | Challenges completed: ' + challengesCompleted;
+
+    showPolicyMessage('🎯 ' + currentChallenge.title + ' — challenge loaded!');
+    startTimer(currentChallenge.difficulty === 'easy' ? 120 : 180);
+}
+
+function revealHint() {
+    if (!currentChallenge || hintRevealed) return;
+    document.getElementById('challenge-hints').innerHTML = '<strong>💡 Hints:</strong><br>' +
+        currentChallenge.hints.map(h => '<div style="margin:6px 0;">' + h + '</div>').join('');
+    hintRevealed = true;
+    document.getElementById('hint-btn').textContent = '✓ Hints Revealed';
+    document.getElementById('hint-btn').style.opacity = '0.55';
+    document.getElementById('hint-btn').style.cursor = 'default';
+}
+
+function checkSolution() {
+    if (!currentChallenge) return;
+    stopTimer();
+
+    const gdp = Math.round(consumption + investment + governmentSpending + netExports);
+    const state = {
+        gdp,
+        inflation: parseFloat(inflation.toFixed(1)),
+        unemployment: parseFloat(unemployment.toFixed(1)),
+        consumption: Math.round(consumption),
+        investment: Math.round(investment),
+        netExports: Math.round(netExports),
+        budgetBalance: Math.round(taxes - governmentSpending),
+        debtToGDP: Math.round(debtToGDP)
+    };
+
+    let results = [];
+    let passed = true;
+    for (const [metric, cond] of Object.entries(currentChallenge.conditions)) {
+        const val = state[metric];
+        const display = Number.isInteger(val) ? val : val.toFixed(1);
+        let ok = true;
+        let msg = '';
+        if (cond.min !== undefined && val < cond.min) { ok = false; msg = '❌ ' + fmtMetric(metric) + ': ' + display + ' (need ≥ ' + cond.min + ')'; }
+        else if (cond.max !== undefined && val > cond.max) { ok = false; msg = '❌ ' + fmtMetric(metric) + ': ' + display + ' (need ≤ ' + cond.max + ')'; }
+        else { msg = '✅ ' + fmtMetric(metric) + ': ' + display + ' — target achieved!'; }
+        results.push(msg);
+        if (!ok) passed = false;
+    }
+
+    // Scoring
+    let points = 0;
+    if (passed) {
+        const timeTaken = Math.round((Date.now() - challengeStartTime) / 1000);
+        const timeBonus = Math.max(0, 180 - timeTaken);
+        const movesPenalty = Math.max(0, challengeMoves - 5) * 2;
+        const hintPenalty = hintRevealed ? 20 : 0;
+        points = 100 + timeBonus + (hintRevealed ? 0 : 30) - movesPenalty;
+        points = Math.max(10, points);
+        challengesCompleted++;
+        winStreak++;
+        totalScore += points;
+    } else {
+        winStreak = 0;
+    }
+
+    // Update score display
+    document.getElementById('score-total').textContent = totalScore;
+    document.getElementById('score-challenges').textContent = challengesCompleted;
+    document.getElementById('score-streak').textContent = winStreak;
+    document.getElementById('score-efficiency').textContent = passed ? '+' + points + ' pts' : '—';
+
+    // Show debrief
+    const debriefEl = document.getElementById('debrief-box');
+    debriefEl.innerHTML = '<strong>' + (passed ? '🎉 Challenge Complete!' : '🔄 Not quite — ') + '</strong><br><br>' +
+        results.join('<br>') + '<br><br>' +
+        (currentChallenge.debrief ? (passed ? currentChallenge.debrief.success : currentChallenge.debrief.failure) : '') +
+        (passed && points ? '<br><br><strong>Score this round: +' + points + ' points</strong> (time: ' + Math.round((Date.now()-challengeStartTime)/1000) + 's, moves: ' + challengeMoves + (hintRevealed ? ', hint used' : '') + ')' : '');
+    debriefEl.classList.add('visible');
+
+    document.getElementById('challenge-progress').textContent =
+        (passed ? '🎉' : '🔄') + ' Challenges completed: ' + challengesCompleted + ' | Total score: ' + totalScore;
+}
+
+function skipChallenge() {
+    if (confirm('Skip this challenge and choose a new scenario?')) {
+        stopTimer();
+        document.getElementById('challenge-content').style.display = 'none';
+        currentChallenge = null;
+        winStreak = 0;
+        document.getElementById('score-streak').textContent = '0';
+    }
+}
+
+function fmtMetric(m) {
+    return { gdp:'GDP', inflation:'Inflation', unemployment:'Unemployment', consumption:'Consumption', investment:'Investment', netExports:'Net Exports', budgetBalance:'Budget Balance', debtToGDP:'Debt-to-GDP' }[m] || m;
+}
+
+// ============================================================================
+// TIMER
+// ============================================================================
+function startTimer(seconds) {
+    stopTimer();
+    timerSecondsLeft = seconds;
+    const totalSecs = seconds;
+    document.getElementById('timer-bar').classList.add('active');
+    updateTimerDisplay(timerSecondsLeft, totalSecs);
+
+    timerInterval = setInterval(() => {
+        timerSecondsLeft--;
+        updateTimerDisplay(timerSecondsLeft, totalSecs);
+        if (timerSecondsLeft <= 0) {
+            stopTimer();
+            showPolicyMessage('⏰ Time is up! Check your solution.');
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    document.getElementById('timer-bar').classList.remove('active');
+}
+
+function updateTimerDisplay(secs, total) {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    const disp = document.getElementById('timer-display');
+    const fill = document.getElementById('timer-fill');
+    disp.textContent = m + ':' + String(s).padStart(2,'0');
+    fill.style.width = (secs / total * 100) + '%';
+    const urgent = secs <= 30;
+    disp.classList.toggle('urgent', urgent);
+    fill.classList.toggle('urgent', urgent);
+    document.getElementById('timer-label').textContent = urgent ? 'Hurry up!' : 'Time Remaining';
+}
+
+// ============================================================================
+// UI HELPERS
+// ============================================================================
+function showPolicyMessage(msg) {
+    const el = document.getElementById('policy-message');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function showModal(id) {
+    document.getElementById('modal-backdrop').classList.add('active');
+    document.getElementById(id).classList.add('active');
+}
+
+function closeAllModals() {
+    document.getElementById('modal-backdrop').classList.remove('active');
+    document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+}
+
+function confirmReset() {
+    if (confirm('Reset the simulation to default settings?')) { resetSimulation(); showPolicyMessage('🔄 Simulation reset.'); }
+}
+
+function resetSimulation() {
+    // Reset to UK 2025 ONS baseline values
+    interestRate = 4.25; governmentSpending = 490; taxRate = 20; corporateTax = 25; consumerConfidence = 1.0;
+    consumption = 1510; investment = 450; netExports = -35; inflation = 2.8; unemployment = 4.7; debtToGDP = 98;
+    document.getElementById('interest-rate').value = 4.25;
+    document.getElementById('government-spending').value = 490;
+    document.getElementById('tax-rate').value = 20;
+    document.getElementById('corporate-tax').value = 25;
+    document.getElementById('consumption-sensitivity').value = 1.0;
+    gdpHistory = []; inflationHistory = []; unemploymentHistory = []; timeLabels = []; timeStep = 0;
+    updateDisplay();
+}
+
+function exportData() {
+    const gdp = Math.round(consumption + investment + governmentSpending + netExports);
+    const data = {
+        timestamp: new Date().toISOString(),
+        policy: { interestRate, governmentSpending, taxRate, corporateTax, consumerConfidence },
+        economy: { gdp, consumption: Math.round(consumption), investment: Math.round(investment), netExports: Math.round(netExports), inflation: inflation.toFixed(2), unemployment: unemployment.toFixed(2), debtToGDP: debtToGDP.toFixed(1) },
+        score: { totalScore, challengesCompleted, winStreak },
+        history: { timeLabels, gdpHistory, inflationHistory, unemploymentHistory }
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'phillips-machine-' + Date.now() + '.json'; a.click();
+    URL.revokeObjectURL(url);
+    showPolicyMessage('📥 Data exported!');
+}
+
+// Keyboard ESC closes modals
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllModals(); });
+
+// Init
+document.addEventListener('DOMContentLoaded', initSimulation);
+</script>
+</body>
+</html>
