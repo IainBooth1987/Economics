@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Economic Methodology Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting — 2 cols */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sort-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem; }
+        .sort-left { display: flex; flex-direction: column; gap: 0; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; cursor: pointer; flex: 1; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sort-right { display: flex; flex-direction: column; gap: 0.75rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 180px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.3rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 80px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.82rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 660px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .sort-layout { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Economic Methodology Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_econmeth_game_pw';
+  var valid = ['EconMeth-8Jz!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['EconMeth-8Jz!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_econmeth_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Economic Methodology</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Positive vs Normative</button>
+        <button class="tab" onclick="switchTab(2)">Economics as Social Science</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 10</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:10%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/10</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Positive vs Normative — sort each statement into the correct category</span>
+        <div class="instructions-row">Click a statement to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sort-layout">
+            <div class="sort-left">
+                <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+                    <span class="col-label" style="color:var(--muted)">📦 Unsorted Statements</span>
+                    <div class="sort-items" id="unsortedItems"></div>
+                </div>
+            </div>
+            <div class="sort-right">
+                <div class="sort-col" onclick="placeInCategory('positive')">
+                    <span class="col-label">✅ Positive Statements</span>
+                    <span class="col-hint">Objective, testable, fact-based</span>
+                    <div class="sort-items" id="positive"></div>
+                </div>
+                <div class="sort-col" onclick="placeInCategory('normative')">
+                    <span class="col-label">💭 Normative Statements</span>
+                    <span class="col-hint">Subjective, value judgements, opinions</span>
+                    <div class="sort-items" id="normative"></div>
+                </div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: SOCIAL SCIENCE -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Missing Words</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Mix &amp; Match</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Missing Words — Economics as a Social Science</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Mix &amp; Match — Key Methodology Terms</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2) { if (!fillInit) { fillInit = true; initFillPassage(); } if (!matchInit) { matchInit = true; initMatching(); } }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    [0,1].forEach(i => { const el = document.getElementById(`sub-${i}`); if(el) el.classList.toggle('active', i===index); });
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "Which of these best describes economics as a social science?", options: ["Economics studies the physical world through controlled experiments","Economics studies human behaviour and society, dealing with unpredictable human actions","Economics uses only mathematical models with no human element","Economics is identical to natural sciences in its methodology"], correct: 1, explanation: "Economics is a social science because it studies human behaviour and society. Unlike natural sciences that study the physical world with predictable laws, economics deals with human choices which are influenced by psychology, culture, and changing preferences, making them less predictable." },
+    { question: "What is a key difference between positive and normative economics?", options: ["Positive economics involves value judgements, normative economics is objective","Positive economics can be tested with evidence, normative economics involves opinions","Positive economics is about the future, normative economics is about the past","There is no real difference between them"], correct: 1, explanation: "Positive statements can be tested and verified with evidence (e.g., 'Unemployment is 5%'). Normative statements contain value judgements and opinions about what should be (e.g., 'The government should reduce unemployment'). This is a fundamental distinction in economic methodology." },
+    { question: "Which of the following is a positive statement?", options: ["The government should increase spending on the NHS","Income inequality is too high and needs addressing","When interest rates rise, borrowing typically falls","Taxes on the wealthy ought to be increased for fairness"], correct: 2, explanation: "This is a positive statement because it describes a testable relationship between interest rates and borrowing. It makes no value judgement about whether this is good or bad. The other options all contain words like 'should', 'ought', or 'too high' which indicate normative value judgements." },
+    { question: "Which statement is normative?", options: ["The UK inflation rate fell to 2.3% in November 2024","Higher minimum wages may lead to some job losses","The government should prioritise economic growth over environmental protection","Tax revenues increase when economic activity rises"], correct: 2, explanation: "This is normative because it contains a value judgement ('should prioritise') about what policy goal is more important. It cannot be proven true or false — it depends on personal values. The other statements are positive as they can be tested with evidence, even if there's uncertainty in the second option." },
+    { question: "Why can't economists conduct controlled experiments like natural scientists?", options: ["Economics doesn't use mathematics","It's unethical and impractical to control entire economies and people's lives","Economists prefer theoretical models to experiments","Economic data cannot be measured"], correct: 1, explanation: "Unlike chemistry or physics, economists cannot ethically manipulate entire economies or control people's lives for experiments. You can't impose a recession on one country as a 'control group'. This limitation means economists rely more on observational data, natural experiments, and theoretical models." },
+    { question: "How do value judgements influence economic policy decisions?", options: ["Value judgements have no role — economics is purely objective","Value judgements determine which economic goals are prioritised and how trade-offs are resolved","Value judgements only matter in microeconomics, not macroeconomics","Value judgements are the same as positive statements"], correct: 1, explanation: "Value judgements are crucial in policy because they determine priorities. For example, choosing between low unemployment vs low inflation, or growth vs environmental protection, depends on what society values most. Even positive analysis of trade-offs requires normative judgements about which outcomes matter most." },
+    { question: "What makes economics less predictable than natural sciences?", options: ["Economists are less intelligent than natural scientists","Economic data is always inaccurate","Human behaviour changes based on expectations, psychology, and context — the 'ceteris paribus' assumption rarely holds","Economics uses no mathematical models"], correct: 2, explanation: "Economics is less predictable because humans change their behaviour based on expectations (e.g., inflation expectations), psychological factors, and context. Unlike physics where gravity always works the same way, economic relationships shift. Also, 'ceteris paribus' (all else equal) rarely holds in reality — many variables change simultaneously." },
+    { question: "What role do models play in economic methodology?", options: ["Models are useless because they simplify reality too much","Models help economists understand complex relationships by isolating key variables, though they have limitations","Models perfectly predict all economic outcomes","Only natural sciences use models, not social sciences"], correct: 1, explanation: "Economic models simplify reality to focus on key relationships (e.g., supply and demand), making complex systems understandable. However, they have limitations because they omit factors, make assumptions (like rational behaviour), and may not capture real-world complexity. The goal isn't perfect prediction but better understanding." },
+    { question: "Which statement best describes 'thinking like an economist'?", options: ["Always agreeing with government economic policy","Analysing costs, benefits, incentives, and trade-offs while being aware of the difference between positive analysis and normative judgements","Only caring about profit and efficiency, ignoring social welfare","Memorising economic theories without critical thinking"], correct: 1, explanation: "Thinking like an economist means systematically analysing opportunity costs, incentives, and trade-offs. It involves separating positive analysis (what is) from normative judgements (what ought to be), understanding that every choice has costs, and that people respond to incentives. It's about analytical framework, not political ideology." },
+    { question: "Why might two economists disagree on policy recommendations even when they agree on the positive analysis?", options: ["One of them must be wrong about the facts","They have different value judgements about which outcomes are most important","Economics is not a real science","Economic data is never reliable"], correct: 1, explanation: "Economists can agree on positive facts (e.g., 'Minimum wage increases may cause some job losses') but disagree normatively on whether the policy is good. One might value helping low-wage workers more, another might prioritise employment levels. Different values about equity vs efficiency, or short-run vs long-run effects, lead to different policy recommendations." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "The UK unemployment rate is currently 4.2%", category: "positive" },
+    { text: "The government should reduce income tax to boost economic growth", category: "normative" },
+    { text: "Raising interest rates typically reduces inflation", category: "positive" },
+    { text: "Healthcare is more important than defence spending", category: "normative" },
+    { text: "Higher minimum wages may lead to increased unemployment", category: "positive" },
+    { text: "The wealthy should pay a higher proportion of their income in tax", category: "normative" },
+    { text: "Government spending increased by 3% last year", category: "positive" },
+    { text: "Economic growth should be prioritised over environmental protection", category: "normative" },
+    { text: "When petrol prices rise, people tend to drive less", category: "positive" },
+    { text: "The education budget ought to be increased", category: "normative" },
+    { text: "Inflation fell from 6.7% to 3.9% over the past year", category: "positive" },
+    { text: "Income inequality in the UK is too high and must be reduced", category: "normative" },
+    { text: "Subsidies for renewable energy reduce production costs for green electricity", category: "positive" },
+    { text: "The government should ban all fossil fuel extraction immediately", category: "normative" },
+    { text: "Trade tariffs increase the price of imported goods", category: "positive" },
+    { text: "Brexit has had a negative impact on UK economic growth", category: "positive" },
+    { text: "The UK should rejoin the European Union single market", category: "normative" },
+    { text: "Cutting corporation tax from 25% to 19% may attract more foreign investment", category: "positive" },
+    { text: "Workers deserve a minimum wage of at least £15 per hour", category: "normative" },
+    { text: "Reducing immigration will improve living standards for UK citizens", category: "normative" }
+];
+
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['positive','normative'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillAnswers = ["social","decisions","chemistry","human","preferences","method","evidence","models","motion","controlled","impractical","observational","paribus","simultaneously","expectations","mathematics","predictable","truth","politics","outcomes"];
+const fillTemplate = "Economics is classified as a [0] science because it studies human behaviour in society, examining how individuals and groups make [1] about scarce resources. Unlike natural sciences such as physics or [2] which study the physical world with predictable laws, economics deals with [3] decision-making which is influenced by psychology, culture, and changing [4]. A key similarity with natural sciences is that economics uses the scientific [5] of observation, hypothesis formation, and testing theories with [6]. Economists develop [7] to simplify reality and understand complex relationships, just as physicists use models to explain [8]. However, a fundamental difference is that economists cannot conduct [9] experiments in the same way natural scientists can. It would be unethical and [10] to manipulate entire economies or control people's lives for experimental purposes. Instead, economists rely on [11] data, natural experiments, and statistical analysis to test theories. Another crucial difference is that 'ceteris [12]' (all other things being equal) rarely holds in economics — multiple variables change [13], making predictions less certain. Human behaviour is also influenced by [14] about the future, which can become self-fulfilling, further complicating economic analysis. The use of [15] and statistics is common to both economics and natural sciences, but economic relationships are less [16] and stable than physical laws. Finally, while natural sciences aim for objective [17], economics frequently intersects with [18] because policy decisions require value judgements about which economic [19] to prioritise, such as growth versus equality, or efficiency versus equity.";
+
+let fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    const shuffled = [...fillAnswers].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank1').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = fillTemplate;
+    fillAnswers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`); });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(b => b.classList.remove('selected-word'));
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    const blank = document.querySelector(`[data-bid="${bid}"]`);
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+    }
+    fillState.placed[bid] = { ...fillState.selected };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    let correct = 0;
+    fillAnswers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="${i}"]`);
+        if (!blank) return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = fillAnswers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('fillResult1');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Positive Statement", definition: "A statement that can be tested with evidence and proven true or false, describing what is, was, or will be", id: 1 },
+    { term: "Normative Statement", definition: "A statement containing value judgements about what should or ought to be, based on opinions that cannot be proven true or false", id: 2 },
+    { term: "Value Judgement", definition: "A subjective opinion about what is desirable or important, influencing which economic goals to prioritise", id: 3 },
+    { term: "Ceteris Paribus", definition: "Latin phrase meaning 'all other things being equal' — an assumption used in economics that is rarely true in reality", id: 4 },
+    { term: "Social Science", definition: "A field of study that examines human behaviour and society, dealing with unpredictable human actions influenced by psychology and culture", id: 5 },
+    { term: "Economic Methodology", definition: "The approach economists use to study the economy, including models, data analysis, and distinguishing positive from normative analysis", id: 6 },
+    { term: "Opportunity Cost", definition: "The value of the next best alternative forgone when making a decision — a key concept in economic thinking", id: 7 },
+    { term: "Economic Model", definition: "A simplified representation of reality used to understand complex economic relationships by isolating key variables", id: 8 },
+    { term: "Trade-off", definition: "A situation where choosing more of one thing means accepting less of another, requiring decisions about priorities", id: 9 },
+    { term: "Natural Experiment", definition: "An observational study where economists analyse real-world events they cannot control, used because controlled experiments are unethical", id: 10 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Interrelationship Between Markets</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Scenario classifier */
+        .scenario-box { background: var(--surface); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 1.25rem 1.5rem; font-size: 0.95rem; line-height: 1.7; color: var(--text); margin-bottom: 1.1rem; }
+        .cat-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 0.65rem; margin-bottom: 0.75rem; }
+        .cat-btn { padding: 0.7rem 0.85rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; color: var(--muted); text-align: center; transition: all 0.15s; }
+        .cat-btn:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .cat-btn.selected-cat { background: var(--warning-bg); border-color: var(--amber); color: var(--amber); }
+        .cat-btn.correct-cat { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .cat-btn.incorrect-cat { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        [data-theme="light"] .cat-btn.selected-cat { color: #92400e; }
+        [data-theme="light"] .cat-btn.correct-cat { color: #065f46; }
+        [data-theme="light"] .cat-btn.incorrect-cat { color: #991b1b; }
+        .scenario-feedback { display: none; padding: 0.9rem 1.1rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); margin-top: 0.75rem; }
+        .scenario-feedback.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .scenario-feedback { color: var(--text); }
+        .scenario-counter { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); margin-top: 0.75rem; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.91rem; color: var(--text); }
+        .passage-box h4 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; margin-top: 1.25rem; }
+        .passage-box h4:first-child { margin-top: 0; }
+        .word-blank { display: inline-block; min-width: 72px; padding: 2px 7px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.81rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 700px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } .cat-btns { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Interrelationship Between Markets Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_intmkt_game_pw';
+  var valid = ['IntMkt-4Yc!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['IntMkt-4Yc!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_intmkt_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Interrelationship Between Markets</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Scenario Classification</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SCENARIO CLASSIFIER -->
+    <div class="tab-content">
+        <span class="mono-label">Read each scenario — select the correct type of market interrelationship</span>
+        <div class="q-num" id="scenarioLabel">Scenario 1 of 20</div>
+        <div class="scenario-box" id="scenarioText"></div>
+        <div class="cat-btns" id="scenarioBtns"></div>
+        <div class="scenario-feedback" id="scenarioFeedback"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="nextScenario()">Next Scenario →</button>
+            <button class="btn btn-primary" onclick="checkScenario()">Check Answer</button>
+        </div>
+        <p class="scenario-counter" id="scenarioCounter">Score: 0 / 0 answered</p>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Market Interrelationship Examples</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Five Market Interrelationship Examples</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t=localStorage.getItem('biz-omics-theme')||'dark';
+    document.documentElement.setAttribute('data-theme',t);
+    var btn=document.getElementById('theme-btn');
+    if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=cur==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('biz-omics-theme',next);
+    document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+
+let scenarioInit=false, matchInit=false, fillInit=false;
+
+function switchTab(index){
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===index));
+    if(index===1&&!scenarioInit){scenarioInit=true;displayScenario();}
+    if(index===2&&!matchInit){matchInit=true;initMatching();}
+}
+
+function switchSubTab(index){
+    document.querySelectorAll('.sub-tab').forEach((t,i)=>t.classList.toggle('active',i===index));
+    [0,1].forEach(i=>{const el=document.getElementById(`sub-${i}`);if(el)el.classList.toggle('active',i===index);});
+    if(index===1&&!fillInit){fillInit=true;initFillPassage();}
+}
+
+/* ── MCQ ── */
+const questions=[
+    {question:"What is 'joint demand' (complementary goods)?",options:["When two goods are produced together from the same process","When two goods are consumed together — an increase in demand for one leads to increased demand for the other","When two goods can be used instead of each other","When one good is used to produce another good"],correct:1,explanation:"Joint demand (complementary goods) occurs when goods are consumed together. Examples: cars and petrol, printers and ink cartridges, smartphones and apps. If demand for cars increases, demand for petrol also increases. A rise in the price of one good will reduce demand for BOTH goods because they're used together."},
+    {question:"If the price of games consoles falls significantly, what will happen in the market for video games (assuming joint demand)?",options:["Demand for video games will decrease","Demand for video games will increase, shifting the demand curve right","Supply of video games will decrease","Nothing will happen in the video games market"],correct:1,explanation:"Consoles and games are in joint demand (complements). A lower console price increases the quantity of consoles demanded. Since games and consoles are used together, demand for video games shifts RIGHT — at every price, more games are demanded. This leads to higher equilibrium price and quantity in the video games market."},
+    {question:"What is 'competitive demand' (substitute goods)?",options:["When goods are consumed together","When goods compete for the same use — consumers choose one instead of the other","When goods are produced together","When demand for a good depends on production of another"],correct:1,explanation:"Competitive demand (substitutes) occurs when goods serve similar purposes and compete for consumer spending. Examples: tea and coffee, butter and margarine, bus and train travel. An increase in the price of one good causes demand for its substitute to increase as consumers switch."},
+    {question:"If the price of chicken increases significantly, what will likely happen in the beef market (assuming competitive demand)?",options:["Demand for beef will shift left as it becomes relatively more expensive","Demand for beef will shift right as consumers switch from chicken to beef","Supply of beef will increase","Nothing will happen in the beef market"],correct:1,explanation:"Chicken and beef are substitutes (competitive demand). When chicken price rises, beef becomes relatively cheaper. Consumers substitute away from chicken toward beef, shifting beef demand RIGHT. This causes beef's equilibrium price and quantity to increase. The markets are interdependent."},
+    {question:"What is 'composite demand'?",options:["When a good is demanded for multiple different uses","When two goods are demanded together","When goods compete for consumers","When goods are produced jointly"],correct:0,explanation:"Composite demand occurs when a good has multiple uses. Example: milk is demanded for drinking, cheese production, yogurt production, and butter production. If demand increases in one use (say, cheese production), it reduces supply available for other uses, potentially raising prices in all markets using that resource."},
+    {question:"Oil is in composite demand — used for petrol, plastics, heating, and chemicals. If demand for petrol increases significantly, what happens?",options:["The price of oil rises, making plastics, heating, and chemicals more expensive","The price of oil falls, making other products cheaper","Only the petrol market is affected","Supply of oil automatically increases to meet all demands"],correct:0,explanation:"With composite demand, increased demand in one use (petrol) competes with other uses (plastics, heating, chemicals) for the same oil supply. This drives up oil prices, affecting ALL markets that use oil. Plastic manufacturers, heating suppliers, and chemical producers all face higher costs. The markets are interconnected through the common input."},
+    {question:"What is 'derived demand'?",options:["When demand for one good creates demand for another good used in its production","When goods are consumed together","When goods compete for the same consumers","When goods are produced as by-products"],correct:0,explanation:"Derived demand means demand for a factor of production (or component) derives from demand for the final product. Example: demand for construction workers derives from demand for new houses; demand for steel derives from demand for cars. If house demand increases, demand for bricks, timber, and construction labour all increase."},
+    {question:"If consumer demand for new cars increases, what happens in the market for steel (assuming derived demand)?",options:["Demand for steel decreases as car manufacturers economise","Demand for steel shifts right because more steel is needed to produce more cars","Supply of steel increases automatically","Nothing happens to steel demand"],correct:1,explanation:"Steel demand is derived from car demand. When car demand increases, manufacturers need more steel to produce more vehicles. This shifts steel demand RIGHT, increasing steel's equilibrium price and quantity. Similarly, demand for car workers, glass, rubber, and electronics all increase. One market change ripples through related markets."},
+    {question:"What is 'joint supply' (by-products)?",options:["When two goods are supplied together because producing one automatically produces the other","When two suppliers cooperate to produce a good","When supply depends on demand for another good","When goods compete for production resources"],correct:0,explanation:"Joint supply occurs when producing one good automatically produces another as a by-product. Examples: beef and leather (from cows), petrol and diesel (from crude oil refining), lamb and wool (from sheep). An increase in demand for one product affects the market for the other because their production is linked."},
+    {question:"If demand for beef increases significantly, what will happen in the leather market (assuming joint supply)?",options:["Supply of leather shifts right, causing leather prices to fall","Supply of leather shifts left, causing leather prices to rise","Demand for leather increases","Nothing happens to the leather market"],correct:0,explanation:"Beef and leather are in joint supply — you get both from slaughtering cattle. Increased beef demand leads to more cattle slaughtered, automatically increasing leather supply (shift RIGHT). This causes leather prices to FALL and quantity to increase. One market's demand increase affects another market's supply due to their production linkage."},
+    {question:"Why do changes in one market typically affect other markets?",options:["Because all markets are independent and isolated","Because markets are interconnected through complementary goods, substitutes, common inputs, and production linkages","Because government controls all market outcomes","Because consumers always buy the same amount regardless of price"],correct:1,explanation:"Markets are interdependent through various relationships: joint demand (complements like phones and apps), competitive demand (substitutes like tea and coffee), composite demand (shared inputs like oil), derived demand (inputs needed for production like steel for cars), and joint supply (by-products like beef and leather). A change in one market ripples through related markets."},
+    {question:"A government subsidy makes electric cars much cheaper. Analyse the market impacts:",options:["Only the electric car market is affected","Multiple markets affected: increased demand for electricity (joint demand), decreased demand for petrol cars (competitive demand), increased demand for charging infrastructure (derived demand)","All car prices fall equally","Supply of cars increases in all markets"],correct:1,explanation:"This demonstrates market interconnectedness: (1) Electric car demand increases due to lower prices; (2) Electricity demand increases (joint demand — cars need charging); (3) Petrol car demand decreases (competitive demand — substitutes); (4) Demand for charging stations, lithium, and batteries increases (derived demand); (5) Petrol demand may fall. One policy change cascades through multiple related markets."}
+];
+
+let currentQuestion=0,score=0;
+const userAnswers=new Array(questions.length).fill(null);
+
+function initMultipleChoice(){displayQuestion();}
+function displayQuestion(){
+    const q=questions[currentQuestion],isAns=userAnswers[currentQuestion]!==null,uC=userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML=`<div class="q-card"><div class="q-num">Question ${currentQuestion+1} of ${questions.length}</div><div class="q-text">${q.question}</div><div class="options">${q.options.map((opt,i)=>{let cls='option';if(isAns){cls+=' disabled';if(i===q.correct)cls+=' correct';else if(i===uC)cls+=' incorrect';}return`<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;}).join('')}</div><div class="explanation ${isAns?'show':''}">${q.explanation}</div></div>`;
+    updateProgress();updateScoreDisplay();updateButtons();
+}
+function selectAnswer(i){if(userAnswers[currentQuestion]!==null)return;userAnswers[currentQuestion]=i;if(i===questions[currentQuestion].correct)score++;displayQuestion();}
+function nextQuestion(){if(currentQuestion<questions.length-1){currentQuestion++;displayQuestion();}else showFinalResult();}
+function previousQuestion(){if(currentQuestion>0){currentQuestion--;displayQuestion();}}
+function showFinalResult(){
+    document.getElementById('mcqMain').style.display='none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct=Math.round(score/questions.length*100);
+    document.getElementById('resultScore').textContent=`${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent=`${pct}% correct`;
+    let emoji='📚',msg='Keep studying — review the material and try again.';
+    if(pct>=90){emoji='🌟';msg='Outstanding — you\'ve mastered this topic!';}
+    else if(pct>=75){emoji='👏';msg='Excellent work — strong understanding!';}
+    else if(pct>=60){emoji='✓';msg='Good effort — review the areas you missed.';}
+    document.getElementById('resultEmoji').textContent=emoji;
+    document.getElementById('resultMessage').textContent=msg;
+}
+function restartQuiz(){currentQuestion=0;score=0;userAnswers.fill(null);document.getElementById('mcqResult').classList.remove('show');document.getElementById('mcqMain').style.display='block';displayQuestion();}
+function updateProgress(){document.getElementById('progressBar').style.width=((currentQuestion+1)/questions.length*100)+'%';document.getElementById('questionLabel').textContent=`Question ${currentQuestion+1} of ${questions.length}`;}
+function updateScoreDisplay(){document.getElementById('scoreDisplay').textContent=`Score: ${score} / ${userAnswers.filter(a=>a!==null).length}`;}
+function updateButtons(){document.getElementById('prevBtn').style.visibility=currentQuestion===0?'hidden':'visible';document.getElementById('nextBtn').textContent=currentQuestion===questions.length-1?'Finish ✓':'Next →';}
+
+/* ── SCENARIO CLASSIFIER ── */
+const scenarios=[
+    {text:"The price of coffee increases by 40%. As a result, demand for tea increases significantly as consumers switch beverages.",type:"competitive",explanation:"Competitive demand (substitutes). Coffee and tea compete for the same use. When coffee becomes more expensive, consumers substitute toward the relatively cheaper alternative (tea), shifting tea demand right."},
+    {text:"Due to rising demand for new housing, construction companies significantly increase their demand for bricks, cement, and timber.",type:"derived",explanation:"Derived demand. Demand for construction materials (bricks, cement, timber) derives from demand for the final product (houses). The materials aren't wanted for themselves but because they're needed to produce houses."},
+    {text:"Sony releases a highly popular new PlayStation console. As sales soar, demand for PlayStation games increases dramatically.",type:"joint",explanation:"Joint demand (complementary goods). Consoles and games are consumed together — you need both for the product to be useful. Increased console sales create increased demand for games."},
+    {text:"Farmers increase cattle production for beef. As a result, the supply of leather increases, causing leather prices to fall.",type:"joint-supply",explanation:"Joint supply. Beef and leather are by-products of cattle — producing more beef automatically produces more leather. The supply curve for leather shifts right, lowering its price. One production decision affects two markets."},
+    {text:"Oil prices rise sharply. This affects multiple industries: petrol stations, plastic manufacturers, and chemical producers all face higher costs.",type:"composite",explanation:"Composite demand. Oil has multiple uses — it's demanded for petrol, plastics, heating, chemicals, and more. All these industries compete for the same oil supply. Rising demand in one use (or reduced supply) affects prices in all markets using oil."},
+    {text:"The popularity of smartphones increases. As a result, telecommunications companies see rising demand for mobile data plans and 4G/5G services.",type:"joint",explanation:"Joint demand (complementary goods). Smartphones and mobile data are consumed together — smartphones need data plans to be fully functional. Increased smartphone ownership creates increased demand for data services."},
+    {text:"Natural gas prices increase dramatically. Consumers switch to electric heating, causing demand for electric heaters to rise.",type:"competitive",explanation:"Competitive demand (substitutes). Natural gas heating and electric heating serve the same purpose — they compete for consumers' heating needs. When gas becomes expensive, consumers substitute toward electric heating."},
+    {text:"The automobile industry experiences a boom. This leads to increased demand for steel, rubber, glass, and automotive workers.",type:"derived",explanation:"Derived demand. Demand for production inputs (steel, rubber, glass, labour) derives from demand for the final product (cars). These inputs aren't wanted for themselves but because they're needed to manufacture automobiles."},
+    {text:"Airlines significantly increase ticket prices. As a result, demand for hotel accommodations at holiday destinations decreases.",type:"joint",explanation:"Joint demand (complementary goods). Air travel and hotel stays are consumed together for holidays. When flight prices rise, the total cost of holidays increases, reducing demand for both flights AND hotel stays."},
+    {text:"Wheat is used to produce bread, pasta, breakfast cereals, and animal feed. A poor harvest reduces wheat supply, affecting all these markets.",type:"composite",explanation:"Composite demand. Wheat has multiple uses — bread, pasta, cereals, and feed all compete for wheat supply. Reduced wheat supply drives up prices, affecting ALL products that use wheat as an input."},
+    {text:"A new superhighway is built. This increases demand for tarmac, construction machinery, road workers, and construction materials.",type:"derived",explanation:"Derived demand. Demand for construction inputs derives from demand for the final product (the highway). Tarmac, machinery, labour, and materials aren't wanted for themselves but because they're needed to build the road."},
+    {text:"The price of train tickets increases by 30%. As a result, more people choose to travel by bus, increasing demand for bus services.",type:"competitive",explanation:"Competitive demand (substitutes). Trains and buses are substitute forms of transport. When train travel becomes more expensive, passengers substitute toward the relatively cheaper bus option, shifting bus demand right."},
+    {text:"E-books become much cheaper due to competition. As a result, demand for e-readers (like Kindle) increases significantly.",type:"joint",explanation:"Joint demand (complementary goods). E-readers and e-books are consumed together. Cheaper e-books make the total cost of e-reading lower, increasing demand for e-readers."},
+    {text:"During sheep farming, increased lamb production automatically leads to increased wool supply, causing wool prices to fall.",type:"joint-supply",explanation:"Joint supply. Lamb and wool are by-products from sheep — producing more lamb automatically produces more wool. The supply curve for wool shifts right due to increased lamb production, lowering wool prices."},
+    {text:"A boom in smartphone production leads to dramatically increased demand for rare earth minerals, microchips, and lithium batteries.",type:"derived",explanation:"Derived demand. Demand for components (rare earths, chips, batteries) derives from demand for the final product (smartphones). These inputs aren't wanted for themselves but because they're essential for smartphone production."},
+    {text:"Cinema ticket prices increase sharply. Demand for streaming services like Netflix increases as people substitute home entertainment.",type:"competitive",explanation:"Competitive demand (substitutes). Cinema and streaming services compete for entertainment spending. When cinema becomes expensive, consumers substitute toward streaming services, shifting streaming demand right."},
+    {text:"Crude oil is refined into multiple products. An increase in petrol demand causes the supply of diesel, jet fuel, and lubricants to also increase.",type:"joint-supply",explanation:"Joint supply. Refining crude oil produces multiple products simultaneously — petrol, diesel, jet fuel, and lubricants are joint products. Increased petrol production from more refining automatically increases supply of the other products."},
+    {text:"Cotton is used to make clothing, bed linens, medical supplies, and industrial materials. A drought reduces cotton supply, raising prices in all these markets.",type:"composite",explanation:"Composite demand. Cotton has multiple uses — clothing, bedding, medical, and industrial sectors all compete for cotton supply. Reduced supply affects ALL markets using cotton."},
+    {text:"A popular new video game is released. Demand for gaming headsets, controllers, and gaming chairs increases significantly.",type:"joint",explanation:"Joint demand (complementary goods). Games and gaming accessories are consumed together to enhance the gaming experience. Increased demand for games creates increased demand for complementary products."},
+    {text:"The property market booms. Estate agents, surveyors, solicitors, removal companies, and furniture retailers all experience increased demand.",type:"derived",explanation:"Derived demand. Demand for property-related services derives from demand for houses. Estate agents, surveyors, solicitors, removal firms, and furniture sellers aren't wanted for themselves but because their services are needed when people buy and move into houses."}
+];
+
+const scenarioTypes=[
+    {id:'joint',label:'Joint Demand (Complements)'},
+    {id:'competitive',label:'Competitive Demand (Substitutes)'},
+    {id:'composite',label:'Composite Demand'},
+    {id:'derived',label:'Derived Demand'},
+    {id:'joint-supply',label:'Joint Supply'}
+];
+
+let currentScenario=0,scenarioScore=0,scenariosAnswered=0,scenarioAnsweredThis=false;
+
+function displayScenario(){
+    const s=scenarios[currentScenario];
+    document.getElementById('scenarioLabel').textContent=`Scenario ${currentScenario+1} of ${scenarios.length}`;
+    document.getElementById('scenarioText').textContent=s.text;
+    document.getElementById('scenarioBtns').innerHTML=scenarioTypes.map(t=>
+        `<button class="cat-btn" data-stype="${t.id}" onclick="selectScenarioCat('${t.id}')">${t.label}</button>`
+    ).join('');
+    document.getElementById('scenarioFeedback').classList.remove('show');
+    scenarioAnsweredThis=false;
+    updateScenarioCounter();
+}
+
+function selectScenarioCat(id){
+    if(scenarioAnsweredThis)return;
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected-cat'));
+    document.querySelector(`[data-stype="${id}"]`).classList.add('selected-cat');
+}
+
+function checkScenario(){
+    if(scenarioAnsweredThis)return;
+    const sel=document.querySelector('.cat-btn.selected-cat');
+    if(!sel){alert('Please select a classification type.');return;}
+    const s=scenarios[currentScenario];
+    const correct=sel.dataset.stype===s.type;
+    scenariosAnswered++;
+    if(correct){scenarioScore++;sel.classList.add('correct-cat');}
+    else{sel.classList.add('incorrect-cat');const cb=document.querySelector(`[data-stype="${s.type}"]`);if(cb)cb.classList.add('correct-cat');}
+    scenarioAnsweredThis=true;
+    const fb=document.getElementById('scenarioFeedback');
+    fb.innerHTML=`<strong>${correct?'✓ Correct!':'✗ Incorrect'}</strong> — ${s.explanation}`;
+    fb.classList.add('show');
+    updateScenarioCounter();
+}
+
+function nextScenario(){if(currentScenario<scenarios.length-1){currentScenario++;displayScenario();}}
+function updateScenarioCounter(){document.getElementById('scenarioCounter').textContent=`Score: ${scenarioScore} / ${scenariosAnswered} answered`;}
+
+/* ── MATCH ── */
+const matchingData=[
+    {term:"Joint Demand",definition:"When two goods are consumed together — demand for one creates demand for the other (complements)",id:1},
+    {term:"Competitive Demand",definition:"When goods serve similar purposes and compete for consumers — demand for one reduces demand for the other (substitutes)",id:2},
+    {term:"Composite Demand",definition:"When a good has multiple uses — different industries compete for the same supply",id:3},
+    {term:"Derived Demand",definition:"When demand for one good derives from demand for another — inputs needed for production",id:4},
+    {term:"Joint Supply",definition:"When producing one good automatically produces another as a by-product",id:5},
+    {term:"Complementary Goods",definition:"Goods consumed together, where increased demand for one increases demand for the other",id:6},
+    {term:"Substitute Goods",definition:"Goods that can replace each other, where increased price of one increases demand for the other",id:7},
+    {term:"Market Interdependence",definition:"When changes in one market affect prices and quantities in related markets",id:8}
+];
+
+let matchSelected=null,matchMatches={},matchUsed=new Set();
+
+function initMatching(){
+    matchSelected=null;matchMatches={};matchUsed=new Set();
+    const shuffled=[...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML=matchingData.map(item=>`<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`).join('');
+    document.getElementById('matchDefs').innerHTML=shuffled.map(item=>`<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id){
+    if(matchUsed.has(id))return;
+    document.querySelectorAll('.match-term').forEach(t=>t.classList.remove('selected'));
+    if(matchSelected===id){matchSelected=null;return;}
+    matchSelected=id;document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId){
+    if(!matchSelected)return;
+    const termId=matchSelected,termText=matchingData.find(d=>d.id===termId).term;
+    const defEl=document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing=defEl.querySelector('.match-label');
+    if(existing){const oldId=parseInt(existing.dataset.tid);matchUsed.delete(oldId);document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');existing.remove();delete matchMatches[defId];defEl.classList.remove('matched');}
+    matchMatches[defId]=termId;matchUsed.add(termId);
+    const label=document.createElement('div');label.className='match-label';label.dataset.tid=termId;label.textContent=termText;
+    defEl.insertBefore(label,defEl.firstChild);defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected=null;
+}
+
+function checkMatching(){
+    let correct=0;
+    document.querySelectorAll('.match-def').forEach(def=>{
+        const defId=parseInt(def.dataset.id);def.classList.remove('correct','incorrect');
+        if(matchMatches[defId]!==undefined){if(matchMatches[defId]===defId){def.classList.add('correct');correct++;}else def.classList.add('incorrect');}
+    });
+    const total=matchingData.length,pct=Math.round(correct/total*100);
+    const res=document.getElementById('matchResult');
+    res.textContent=`${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className='inline-result show '+(pct===100?'success':pct>=60?'partial':'poor');
+    if(pct<100)setTimeout(()=>document.querySelectorAll('.match-def').forEach(d=>d.classList.remove('correct','incorrect')),2500);
+}
+function resetMatching(){initMatching();}
+
+/* ── FILL ── */
+const fillAnswers=["consumed","falls","fall","left","total","demand","interdependent","ink","data","milk","compete","increase","substitute","increase","right","other","marketing","fall","butter","products","multiple","yogurt","cheese","reduces","prices","expensive","supply","one","oil","pasta","bricks","housing","right","quantity","depends","themselves","collapses","left","steel","workers","labour","other","slaughtered","supply","right","fall","beef","supply","production","profitable","supply","wool","diesel"];
+const fillSections=[
+    {h4:"Example 1: Joint Demand (Complementary Goods)",text:"Cars and petrol are in joint demand — they are [0] together. If the price of cars [1], fewer people buy cars, which causes demand for petrol to [2]. The demand curve for petrol shifts [3]. Conversely, if petrol prices rise sharply, the [4] cost of running a car increases, potentially reducing [5] for cars. The two markets are [6]. Other examples include printers and [7] cartridges, smartphones and mobile [8], or coffee and [9]."},
+    {h4:"Example 2: Competitive Demand (Substitute Goods)",text:"Tea and coffee are in competitive demand — they [10] for the same use. If coffee prices [11] significantly, consumers [12] toward tea, causing demand for tea to [13]. The tea demand curve shifts [14]. The markets are interdependent — a change in one market affects the [15]. Similarly, if a [16] campaign promotes coffee's health benefits, tea demand might [17], shifting its demand curve left. Other examples include [18] and margarine, or different brands of similar [19]."},
+    {h4:"Example 3: Composite Demand",text:"Milk is in composite demand — it has [20] uses. Milk is demanded for drinking, cheese production, [21] production, and butter production. If demand for [22] increases dramatically (perhaps due to pizza popularity), cheese producers buy more milk. This [23] supply available for other uses and drives up milk [24]. Drinking milk, yogurt, and butter all become more [25] because they compete for the same milk [26]. All markets using milk are affected by increased demand in one market. Other examples include [27] (used for petrol, plastics, heating, chemicals) or wheat (used for bread, [28], cereals, animal feed)."},
+    {h4:"Example 4: Derived Demand",text:"Demand for [29] is derived from demand for houses. When [30] demand increases, builders need more bricks to construct homes. This shifts brick demand [31], increasing brick prices and [32]. The brick market [33] on the housing market — bricks aren't wanted for [34] but because they're needed to build houses. If the housing market [35], brick demand falls, shifting its demand curve [36]. Other examples include demand for [37] (derived from car demand), car [38] (derived from car demand), or construction [39] (derived from infrastructure projects)."},
+    {h4:"Example 5: Joint Supply",text:"Beef and leather are in joint supply — producing one automatically produces the [40]. When beef demand increases, more cattle are [41], automatically increasing leather [42]. The leather supply curve shifts [43], causing leather prices to [44]. Notice that a change in [45] demand affects leather [46] (not demand). The markets are linked through [47]. If leather demand then increases due to fashion trends, this makes cattle farming more [48], potentially increasing beef [49] too. Other examples include lamb and [50] (from sheep), or petrol and [51] (from crude oil refining)."}
+];
+
+let fillState={selected:null,placed:{}};
+
+function initFillPassage(){
+    fillState={selected:null,placed:{}};
+    const shuffled=[...fillAnswers].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank1').innerHTML='<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>'+
+        shuffled.map((w,i)=>`<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html='';
+    fillSections.forEach(sec=>{
+        let sectionHtml=sec.text;
+        fillAnswers.forEach((_,i)=>{sectionHtml=sectionHtml.replace(`[${i}]`,`<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`);});
+        html+=`<h4>${sec.h4}</h4>${sectionHtml} `;
+    });
+    document.getElementById('passage1').innerHTML=html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word,wid,btn){
+    document.querySelectorAll('#wordBank1 .word-option').forEach(b=>b.classList.remove('selected-word'));
+    if(fillState.selected&&fillState.selected.wid===wid){fillState.selected=null;}
+    else{fillState.selected={word,wid};btn.classList.add('selected-word');}
+}
+
+function clickFillBlank(bid){
+    const blank=document.querySelector(`[data-bid="${bid}"]`);if(!blank)return;
+    if(fillState.placed[bid]!==undefined&&!fillState.selected){
+        const oldBtn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if(oldBtn)oldBtn.classList.remove('used','selected-word');
+        delete fillState.placed[bid];blank.textContent='___';blank.className='word-blank';return;
+    }
+    if(!fillState.selected)return;
+    if(fillState.placed[bid]!==undefined){const oldBtn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);if(oldBtn)oldBtn.classList.remove('used','selected-word');}
+    fillState.placed[bid]={...fillState.selected};
+    blank.textContent=fillState.selected.word;blank.className='word-blank has-word';
+    const btn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.selected.wid}"]`);
+    if(btn){btn.classList.add('used');btn.classList.remove('selected-word');}
+    fillState.selected=null;
+}
+
+function checkFill(){
+    let correct=0;
+    fillAnswers.forEach((ans,i)=>{
+        const blank=document.querySelector(`[data-bid="${i}"]`);if(!blank)return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if(fillState.placed[i]&&fillState.placed[i].word===ans){blank.classList.add('correct');correct++;}
+        else if(fillState.placed[i])blank.classList.add('incorrect');
+    });
+    const total=fillAnswers.length,pct=Math.round(correct/total*100);
+    const res=document.getElementById('fillResult1');
+    res.textContent=`${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passages and try again.'}`;
+    res.className='inline-result show '+(pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(){fillInit=false;fillState={selected:null,placed:{}};initFillPassage();}
+
+window.onload=function(){initMultipleChoice();};
+</script>
+</body>
+</html>

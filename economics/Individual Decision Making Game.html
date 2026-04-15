@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Individual Economic Decision Making</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; overflow-x: auto; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sort-layout-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1rem; }
+        .sort-layout-split { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .sort-cols-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 160px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.3rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 80px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 700px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .sort-layout-2 { grid-template-columns: 1fr; } .sort-cols-3 { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Individual Decision Making Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_inddecmk_game_pw';
+  var valid = ['IndDecMk-9Xt!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['IndDecMk-9Xt!2026','MicroFnd-6Wt!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_inddecmk_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Individual Decision Making</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Theory &amp; Mechanisms</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: THEORY & MECHANISMS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('t2',0)">Classical vs Behavioural</button>
+            <button class="sub-tab" onclick="switchSubTab('t2',1)">Price Mechanism Functions</button>
+        </div>
+        <div class="sub-tab-content active" id="t2-sub-0">
+            <span class="mono-label">Sort each statement into Classical Theory or Behavioural Theory</span>
+            <div class="instructions-row">Click a statement to select it, then click a column to place it. Click a placed item to return it to Unsorted.</div>
+            <div class="sort-layout-2">
+                <div class="unsorted-panel" onclick="placeSort(1,'unsorted')">
+                    <span class="col-label" style="color:var(--muted)">📦 Unsorted Statements</span>
+                    <div class="sort-items" id="unsortedItems1"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <div class="sort-col" onclick="placeSort(1,'classical')">
+                        <span class="col-label">📚 Classical Theory</span>
+                        <span class="col-hint">Rational, utility-maximising</span>
+                        <div class="sort-items" id="classical"></div>
+                    </div>
+                    <div class="sort-col" onclick="placeSort(1,'behavioral')">
+                        <span class="col-label">🧠 Behavioural Theory</span>
+                        <span class="col-hint">Biased, influenced by psychology</span>
+                        <div class="sort-items" id="behavioral"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="sortResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetSort(1)">Reset</button>
+                <button class="btn btn-primary" onclick="checkSort(1)">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="t2-sub-1">
+            <span class="mono-label">Sort each example into the correct price mechanism function</span>
+            <div class="instructions-row">Click an item to select it, then click a column to place it. Click a placed item to return it to Unsorted.</div>
+            <div class="sort-layout-split">
+                <div class="unsorted-panel" onclick="placeSort(2,'unsorted')">
+                    <span class="col-label" style="color:var(--muted)">📦 Unsorted Examples</span>
+                    <div class="sort-items" id="unsortedItems2"></div>
+                </div>
+                <div class="sort-cols-3">
+                    <div class="sort-col" onclick="placeSort(2,'signaling')">
+                        <span class="col-label">📡 Signalling</span>
+                        <span class="col-hint">Prices communicate information</span>
+                        <div class="sort-items" id="signaling"></div>
+                    </div>
+                    <div class="sort-col" onclick="placeSort(2,'incentive')">
+                        <span class="col-label">💰 Incentive</span>
+                        <span class="col-hint">Prices motivate behaviour</span>
+                        <div class="sort-items" id="incentive"></div>
+                    </div>
+                    <div class="sort-col" onclick="placeSort(2,'rationing')">
+                        <span class="col-label">⚖️ Rationing</span>
+                        <span class="col-hint">Prices allocate scarce goods</span>
+                        <div class="sort-items" id="rationing"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="sortResult2" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetSort(2)">Reset</button>
+                <button class="btn btn-primary" onclick="checkSort(2)">Check Answers</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('t3',0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab('t3',1)">Rational Decision Making</button>
+        </div>
+        <div class="sub-tab-content active" id="t3-sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="t3-sub-1">
+            <span class="mono-label">Missing Words — Classical Rational Decision Making Theory</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let sort1Init=false, sort2Init=false, matchInit=false, fillInit=false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===index));
+    if (index===1 && !sort1Init){sort1Init=true; initSort(1);}
+    if (index===2 && !matchInit){matchInit=true; initMatching();}
+}
+
+function switchSubTab(group, index) {
+    const prefix = group+'-sub-';
+    document.querySelectorAll(`[id^="${prefix}"]`).forEach((el,i)=>el.classList.toggle('active',i===index));
+    const tabGroup = group==='t2'
+        ? document.querySelectorAll('.tab-content')[1].querySelectorAll('.sub-tab')
+        : document.querySelectorAll('.tab-content')[2].querySelectorAll('.sub-tab');
+    tabGroup.forEach((t,i)=>t.classList.toggle('active',i===index));
+    if (group==='t2' && index===1 && !sort2Init){sort2Init=true; initSort(2);}
+    if (group==='t3' && index===1 && !fillInit){fillInit=true; initFillPassage();}
+}
+
+/* ── MCQ ── */
+const questions = [
+    {question:"According to classical economic theory, what does it mean to be a 'rational' decision maker?",options:["Making decisions based on emotions and gut feelings","Weighing up costs and benefits to maximise utility (satisfaction) from choices","Always choosing the cheapest option available","Following what other people do"],correct:1,explanation:"Classical theory assumes individuals are rational utility maximisers who weigh up the costs and benefits of decisions to maximise their satisfaction (utility). They have complete information, can process it perfectly, and always act in their self-interest. This is a simplifying assumption that helps economists build models, though behavioural economists question its realism."},
+    {question:"What is 'total utility'?",options:["The extra satisfaction gained from consuming one more unit","The overall satisfaction gained from consuming all units of a good","The price paid for a good or service","The benefit to society from consumption"],correct:1,explanation:"Total utility is the total satisfaction gained from consuming a certain quantity of a good or service. For example, eating three slices of pizza gives you a total utility that is the sum of satisfaction from all three slices. As you consume more, total utility typically rises, but at a diminishing rate."},
+    {question:"What is 'marginal utility'?",options:["The total satisfaction from all units consumed","The additional satisfaction gained from consuming one more unit of a good","The average satisfaction per unit consumed","The satisfaction lost when price increases"],correct:1,explanation:"Marginal utility is the extra (additional) satisfaction gained from consuming one more unit. For example, if eating two slices of pizza gives 15 units of satisfaction and three slices gives 20 units, the marginal utility of the third slice is 5 units. Understanding margin is crucial in economics — decisions are made 'at the margin'."},
+    {question:"What does the 'law of diminishing marginal utility' state?",options:["Total utility falls as more units are consumed","As consumption increases, the additional satisfaction from each extra unit decreases","People always want more of everything","Price and quantity demanded move in the same direction"],correct:1,explanation:"The law of diminishing marginal utility states that as you consume more units of a good, the additional satisfaction (marginal utility) from each extra unit falls. The first slice of pizza when hungry gives high satisfaction, the fourth slice much less. This helps explain why demand curves slope downward — people are willing to pay less for additional units because they gain less satisfaction."},
+    {question:"How does diminishing marginal utility support a downward-sloping demand curve?",options:["It doesn't — they're unrelated concepts","As marginal utility falls with each unit, consumers are only willing to pay lower prices for additional units","Total utility always equals price","Marginal utility increases with consumption"],correct:1,explanation:"Since each additional unit gives less satisfaction (diminishing marginal utility), rational consumers are only willing to pay lower prices for extra units. If the 1st unit is worth £10 to you but the 5th only £2, you'll only buy that 5th unit if price falls to £2. This creates the inverse relationship between price and quantity demanded."},
+    {question:"Why is 'thinking at the margin' important in economics?",options:["It's not important — only totals matter","Economic decisions are about whether to do one more or one less of something, not all-or-nothing choices","Marginal means average in economics","It only applies to businesses, not consumers"],correct:1,explanation:"Thinking at the margin means considering the costs and benefits of one more (or one less) unit. You don't decide 'should I eat pizza or not' — you decide 'should I eat ONE MORE slice?' Firms decide 'should we hire ONE MORE worker?' This marginal analysis is how rational decisions are made in economics."},
+    {question:"What is the 'invisible hand' concept in economics?",options:["Government control of the economy","The idea that self-interested individuals, pursuing their own goals, unintentionally promote the good of society through the market mechanism","Secret market manipulation by large firms","The physical process of exchanging goods"],correct:1,explanation:"Adam Smith's 'invisible hand' describes how the market mechanism coordinates economic activity. Individuals pursuing self-interest (profit for firms, utility for consumers) lead to socially beneficial outcomes — resources flow where most valued, supply meets demand, innovation occurs. No central planner needed — the price mechanism 'invisibly' guides allocation."},
+    {question:"Which is a key assumption that behavioural economists challenge about classical theory?",options:["That people have unlimited wants","That individuals are perfectly rational and always maximise utility with full information","That resources are scarce","That opportunity costs exist"],correct:1,explanation:"Behavioural economists question the classical assumption that people are perfectly rational utility maximisers with complete information and perfect computational ability. Instead, they provide evidence that real people use mental shortcuts (heuristics), suffer from biases, have limited willpower, and make systematically 'irrational' decisions that classical theory can't explain."},
+    {question:"Which of these is an example of behavioural bias, not rational decision making?",options:["Weighing up costs and benefits before buying","Being influenced by how choices are 'framed' — choosing differently when the same option is presented differently","Comparing prices across different shops","Choosing the option with highest utility"],correct:1,explanation:"Framing effects show behavioural bias — rational actors shouldn't be influenced by how information is presented, only by the actual content. Yet people choose differently when told '90% fat free' vs '10% fat' (same thing). Other biases include anchoring (being influenced by irrelevant numbers), loss aversion (fearing losses more than valuing gains), and present bias (overvaluing immediate rewards)."},
+    {question:"What does the 'signalling function' of prices mean?",options:["Prices advertise products to consumers","Price changes communicate information about scarcity, surpluses, and where resources are most valued","Prices signal government policy","Firms signal their intentions to competitors"],correct:1,explanation:"The signalling function means prices convey information to market participants. Rising prices signal scarcity or increased demand — telling producers 'make more' and consumers 'use less'. Falling prices signal surplus — telling producers 'make less' and consumers 'buy more'. This information coordinates millions of decisions without central planning."},
+    {question:"What is the 'incentive function' of prices?",options:["Prices provide bonuses to workers","Price changes motivate producers to supply more/less and consumers to demand more/less","Prices incentivise government intervention","Firms are incentivised to fix prices"],correct:1,explanation:"The incentive function means prices motivate behaviour. High prices incentivise producers to supply more (profit motive) and consumers to demand less (substitution). Low prices do the opposite. This is how the 'invisible hand' works — self-interested responses to price signals lead resources to flow where most valued."},
+    {question:"What is the 'rationing function' of prices?",options:["Government distributes goods through ration coupons","Prices allocate scarce goods to those willing and able to pay — determining who gets what","Firms are rationed by quotas","Prices are fixed at specific ratios"],correct:1,explanation:"The rationing function means prices determine who gets scarce goods. When demand exceeds supply, prices rise until quantity demanded equals quantity supplied. Those willing and able to pay the market price get the good; others don't. It rations based on willingness/ability to pay rather than queuing, government allocation, or lottery."}
+];
+
+let currentQuestion=0, score=0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice(){ displayQuestion(); }
+function displayQuestion(){
+    const q=questions[currentQuestion], isAns=userAnswers[currentQuestion]!==null, uC=userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML=`<div class="q-card"><div class="q-num">Question ${currentQuestion+1} of ${questions.length}</div><div class="q-text">${q.question}</div><div class="options">${q.options.map((opt,i)=>{let cls='option';if(isAns){cls+=' disabled';if(i===q.correct)cls+=' correct';else if(i===uC)cls+=' incorrect';}return`<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;}).join('')}</div><div class="explanation ${isAns?'show':''}">${q.explanation}</div></div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+function selectAnswer(index){
+    if(userAnswers[currentQuestion]!==null)return;
+    userAnswers[currentQuestion]=index;
+    if(index===questions[currentQuestion].correct)score++;
+    displayQuestion();
+}
+function nextQuestion(){if(currentQuestion<questions.length-1){currentQuestion++;displayQuestion();}else showFinalResult();}
+function previousQuestion(){if(currentQuestion>0){currentQuestion--;displayQuestion();}}
+function showFinalResult(){
+    document.getElementById('mcqMain').style.display='none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct=Math.round(score/questions.length*100);
+    document.getElementById('resultScore').textContent=`${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent=`${pct}% correct`;
+    let emoji='📚',msg='Keep studying — review the material and try again.';
+    if(pct>=90){emoji='🌟';msg='Outstanding — you\'ve mastered this topic!';}
+    else if(pct>=75){emoji='👏';msg='Excellent work — strong understanding!';}
+    else if(pct>=60){emoji='✓';msg='Good effort — review the areas you missed.';}
+    document.getElementById('resultEmoji').textContent=emoji;
+    document.getElementById('resultMessage').textContent=msg;
+}
+function restartQuiz(){currentQuestion=0;score=0;userAnswers.fill(null);document.getElementById('mcqResult').classList.remove('show');document.getElementById('mcqMain').style.display='block';displayQuestion();}
+function updateProgress(){document.getElementById('progressBar').style.width=((currentQuestion+1)/questions.length*100)+'%';document.getElementById('questionLabel').textContent=`Question ${currentQuestion+1} of ${questions.length}`;}
+function updateScoreDisplay(){document.getElementById('scoreDisplay').textContent=`Score: ${score} / ${userAnswers.filter(a=>a!==null).length}`;}
+function updateButtons(){document.getElementById('prevBtn').style.visibility=currentQuestion===0?'hidden':'visible';document.getElementById('nextBtn').textContent=currentQuestion===questions.length-1?'Finish ✓':'Next →';}
+
+/* ── SORTING ── */
+const sortData = {
+    1: [
+        {text:"Individuals always act rationally to maximise their utility",category:"classical"},
+        {text:"People have perfect information and can process it without error",category:"classical"},
+        {text:"Decisions are influenced by how choices are framed or presented",category:"behavioral"},
+        {text:"Consumers weigh marginal utility against price to make optimal choices",category:"classical"},
+        {text:"People use mental shortcuts (heuristics) that lead to systematic biases",category:"behavioral"},
+        {text:"Economic agents have consistent preferences that don't change based on context",category:"classical"},
+        {text:"Loss aversion — people fear losses more than they value equivalent gains",category:"behavioral"},
+        {text:"Self-interest drives all economic decisions through cost-benefit analysis",category:"classical"},
+        {text:"Present bias — people overvalue immediate rewards and undervalue future ones",category:"behavioral"},
+        {text:"Consumers have unlimited computational ability to determine optimal choices",category:"classical"},
+        {text:"Anchoring — people are influenced by irrelevant initial numbers",category:"behavioral"},
+        {text:"The invisible hand leads self-interested behaviour to benefit society",category:"classical"},
+        {text:"Default bias — people tend to stick with pre-selected options",category:"behavioral"},
+        {text:"Individuals maximise utility by consuming until marginal utility equals price",category:"classical"},
+        {text:"Social norms and fairness concerns influence economic decisions",category:"behavioral"},
+        {text:"People suffer from limited willpower and self-control problems",category:"behavioral"}
+    ],
+    2: [
+        {text:"Rising house prices tell builders there's high demand — signals to increase construction",category:"signaling"},
+        {text:"High oil prices encourage consumers to use less fuel and switch to alternatives",category:"incentive"},
+        {text:"Concert tickets priced at £100 ensure only those willing to pay get seats",category:"rationing"},
+        {text:"Falling wheat prices communicate to farmers that there's oversupply",category:"signaling"},
+        {text:"Increased wages attract more workers to enter a profession",category:"incentive"},
+        {text:"Limited edition trainers at high prices go to those who value them most",category:"rationing"},
+        {text:"Stock price increases indicate growing investor confidence in a company",category:"signaling"},
+        {text:"Lower prices for electric cars motivate more consumers to switch from petrol",category:"incentive"},
+        {text:"Expensive restaurant prices during peak times distribute tables among diners",category:"rationing"},
+        {text:"Rising cryptocurrency prices signal increased demand and speculation",category:"signaling"},
+        {text:"High profits in tech sector incentivise firms to innovate and enter market",category:"incentive"},
+        {text:"Surge pricing for Uber ensures cars go to those willing to pay premium",category:"rationing"},
+        {text:"Falling prices for secondhand clothes communicate reduced demand",category:"signaling"},
+        {text:"Carbon taxes incentivise firms to reduce emissions and adopt green technology",category:"incentive"},
+        {text:"First-class plane tickets ration premium seats to high-paying passengers",category:"rationing"},
+        {text:"Wage increases in nursing signal labour shortage in healthcare",category:"signaling"},
+        {text:"Higher cigarette prices motivate smokers to quit or reduce consumption",category:"incentive"},
+        {text:"Expensive parking fees ration limited city centre parking spaces",category:"rationing"}
+    ]
+};
+const sortCols = {1:['classical','behavioral'], 2:['signaling','incentive','rationing']};
+const selectedSort = {1:null, 2:null};
+
+function initSort(n) {
+    selectedSort[n]=null;
+    const unsortedId = n===1 ? 'unsortedItems1' : 'unsortedItems2';
+    document.getElementById(unsortedId).innerHTML = [...sortData[n]].sort(()=>Math.random()-0.5).map(item=>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(${n},this,event)">${item.text}</div>`
+    ).join('');
+    sortCols[n].forEach(id=>document.getElementById(id).innerHTML='');
+    document.getElementById(`sortResult${n}`).classList.remove('show');
+}
+
+function selectSortItem(n, el, event) {
+    event.stopPropagation();
+    if(selectedSort[n]===el){el.classList.remove('sorting-selected');selectedSort[n]=null;return;}
+    if(selectedSort[n])selectedSort[n].classList.remove('sorting-selected');
+    selectedSort[n]=el; el.classList.add('sorting-selected');
+}
+
+function placeSort(n, colId) {
+    if(!selectedSort[n])return;
+    const unsortedId = n===1?'unsortedItems1':'unsortedItems2';
+    const targetId = colId==='unsorted'?unsortedId:colId;
+    const target = document.getElementById(targetId);
+    if(!target)return;
+    selectedSort[n].classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSort[n]);
+    selectedSort[n]=null;
+}
+
+function checkSort(n) {
+    let correct=0, total=0;
+    document.querySelectorAll(`[id="${n===1?'unsortedItems1':'unsortedItems2'}"] .sort-item, ${sortCols[n].map(id=>`#${id} .sort-item`).join(',')}`).forEach(item=>{
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if(item.dataset.category===item.parentElement.id){item.classList.add('correct-sort');correct++;}
+        else item.classList.add('incorrect-sort');
+    });
+    const pct=Math.round(correct/total*100);
+    const res=document.getElementById(`sortResult${n}`);
+    res.textContent=`${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className='inline-result show '+(pct===100?'success':pct>=60?'partial':'poor');
+    if(pct<100)setTimeout(()=>document.querySelectorAll(`${sortCols[n].map(id=>`#${id} .sort-item`).join(',')}`).forEach(item=>item.classList.remove('correct-sort','incorrect-sort')),2500);
+}
+
+function resetSort(n){
+    const initFn = n===1 ? ()=>{sort1Init=false;} : ()=>{sort2Init=false;};
+    initFn(); initSort(n);
+}
+
+/* ── MATCH ── */
+const matchingData = [
+    {term:"Rational Decision Making",definition:"Making choices by weighing costs and benefits to maximise utility, assuming perfect information and computational ability",id:1},
+    {term:"Utility",definition:"The satisfaction or benefit derived from consuming a good or service",id:2},
+    {term:"Total Utility",definition:"The overall satisfaction gained from consuming all units of a good",id:3},
+    {term:"Marginal Utility",definition:"The additional satisfaction gained from consuming one more unit of a good",id:4},
+    {term:"Diminishing Marginal Utility",definition:"The principle that as consumption increases, the extra satisfaction from each additional unit decreases",id:5},
+    {term:"Utility Maximisation",definition:"Consuming goods up to the point where marginal utility per pound equals marginal utility per pound of alternatives",id:6},
+    {term:"Thinking at the Margin",definition:"Making decisions by considering the costs and benefits of one more or one less unit, not all-or-nothing choices",id:7},
+    {term:"The Invisible Hand",definition:"Adam Smith's concept that self-interested individuals unintentionally promote societal good through the market mechanism",id:8},
+    {term:"Behavioural Economics",definition:"A field questioning rational choice theory by studying how psychological biases affect economic decisions",id:9},
+    {term:"Signalling Function",definition:"How price changes communicate information about scarcity, surpluses, and where resources are valued",id:10},
+    {term:"Incentive Function",definition:"How price changes motivate producers to supply more/less and consumers to demand more/less",id:11},
+    {term:"Rationing Function",definition:"How prices allocate scarce goods to those willing and able to pay the market price",id:12}
+];
+
+let matchSelected=null, matchMatches={}, matchUsed=new Set();
+
+function initMatching(){
+    matchSelected=null; matchMatches={}; matchUsed=new Set();
+    const shuffled=[...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML=matchingData.map(item=>`<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`).join('');
+    document.getElementById('matchDefs').innerHTML=shuffled.map(item=>`<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id){
+    if(matchUsed.has(id))return;
+    document.querySelectorAll('.match-term').forEach(t=>t.classList.remove('selected'));
+    if(matchSelected===id){matchSelected=null;return;}
+    matchSelected=id; document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId){
+    if(!matchSelected)return;
+    const termId=matchSelected, termText=matchingData.find(d=>d.id===termId).term;
+    const defEl=document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing=defEl.querySelector('.match-label');
+    if(existing){const oldId=parseInt(existing.dataset.tid);matchUsed.delete(oldId);document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');existing.remove();delete matchMatches[defId];defEl.classList.remove('matched');}
+    matchMatches[defId]=termId; matchUsed.add(termId);
+    const label=document.createElement('div'); label.className='match-label'; label.dataset.tid=termId; label.textContent=termText;
+    defEl.insertBefore(label,defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected=null;
+}
+
+function checkMatching(){
+    let correct=0;
+    document.querySelectorAll('.match-def').forEach(def=>{
+        const defId=parseInt(def.dataset.id); def.classList.remove('correct','incorrect');
+        if(matchMatches[defId]!==undefined){if(matchMatches[defId]===defId){def.classList.add('correct');correct++;}else def.classList.add('incorrect');}
+    });
+    const total=matchingData.length, pct=Math.round(correct/total*100);
+    const res=document.getElementById('matchResult');
+    res.textContent=`${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className='inline-result show '+(pct===100?'success':pct>=60?'partial':'poor');
+    if(pct<100)setTimeout(()=>document.querySelectorAll('.match-def').forEach(d=>d.classList.remove('correct','incorrect')),2500);
+}
+function resetMatching(){initMatching();}
+
+/* ── FILL ── */
+const fillAnswers = ["rational","utility","benefits","information","error","preferences","utility","unit","marginal","utility","consumption","falls","downward","lower","margin","less","worker","price","planning","hand","good","signals","more","rationing","behavior","influences"];
+const fillTemplate = "Classical economic theory assumes that individuals are [0] decision makers who aim to maximise their [1]. This means people weigh up the costs and [2] of choices to achieve the greatest satisfaction. Consumers are assumed to have perfect [3] about products, prices, and alternatives, and can process this information without [4]. They have consistent [5] that don't change based on context or how choices are presented. According to [6] theory, consumers maximise utility by considering marginal utility — the additional satisfaction from one more [7]. Rational consumers continue consuming a good until the marginal utility per pound spent equals the [8] [9] per pound spent on all other goods. This is the principle of equi-marginal [9]. The law of diminishing marginal utility states that as [10] increases, the extra satisfaction from each additional unit [11]. This explains why demand curves slope [12] — since later units give less satisfaction, consumers are only willing to pay [13] prices for them. Thinking at the [14] is crucial in economics. Decisions are not all-or-nothing but about whether to do one more or one [15] of something. Firms decide whether to hire one more [16], consumers decide whether to buy one more slice of pizza. The [17] mechanism coordinates economic activity through price signals without central [18]. Adam Smith's invisible [19] describes how self-interested individuals, each pursuing their own goals, unintentionally promote the [20] of society. When prices rise, this [21] scarcity and provides an incentive for producers to supply [22] and consumers to demand less. Prices also perform a [23] function — allocating scarce goods to those willing and able to pay. This traditional model assumes [24] is driven purely by utility maximisation and self-interest, with no room for biases, emotions, or social [25].";
+
+let fillState = { selected: null, placed: {} };
+
+function initFillPassage(){
+    fillState={selected:null,placed:{}};
+    const shuffled=[...fillAnswers].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank1').innerHTML='<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>'+
+        shuffled.map((w,i)=>`<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html=fillTemplate;
+    fillAnswers.forEach((_,i)=>{html=html.replace(`[${i}]`,`<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`);});
+    document.getElementById('passage1').innerHTML=html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word,wid,btn){
+    document.querySelectorAll('#wordBank1 .word-option').forEach(b=>b.classList.remove('selected-word'));
+    if(fillState.selected&&fillState.selected.wid===wid){fillState.selected=null;}
+    else{fillState.selected={word,wid};btn.classList.add('selected-word');}
+}
+
+function clickFillBlank(bid){
+    const blank=document.querySelector(`[data-bid="${bid}"]`); if(!blank)return;
+    if(fillState.placed[bid]!==undefined&&!fillState.selected){
+        const oldBtn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if(oldBtn)oldBtn.classList.remove('used','selected-word');
+        delete fillState.placed[bid]; blank.textContent='___'; blank.className='word-blank'; return;
+    }
+    if(!fillState.selected)return;
+    if(fillState.placed[bid]!==undefined){const oldBtn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);if(oldBtn)oldBtn.classList.remove('used','selected-word');}
+    fillState.placed[bid]={...fillState.selected};
+    blank.textContent=fillState.selected.word; blank.className='word-blank has-word';
+    const btn=document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.selected.wid}"]`);
+    if(btn){btn.classList.add('used');btn.classList.remove('selected-word');}
+    fillState.selected=null;
+}
+
+function checkFill(){
+    let correct=0;
+    fillAnswers.forEach((ans,i)=>{
+        const blank=document.querySelector(`[data-bid="${i}"]`); if(!blank)return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if(fillState.placed[i]&&fillState.placed[i].word===ans){blank.classList.add('correct');correct++;}
+        else if(fillState.placed[i])blank.classList.add('incorrect');
+    });
+    const total=fillAnswers.length,pct=Math.round(correct/total*100);
+    const res=document.getElementById('fillResult1');
+    res.textContent=`${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className='inline-result show '+(pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(){fillInit=false;fillState={selected:null,placed:{}};initFillPassage();}
+
+window.onload=function(){initMultipleChoice();};
+</script>
+</body>
+</html>
