@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Market Imperfections Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' x'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' v'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Market Imperfections Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_mktimp_game_pw';
+  var valid = ['MktImp-6Tz!2026','MktFail-Gm3!2026','MKTFAIL-GX4!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktImp-6Tz!2026','MktFail-Gm3!2026','MKTFAIL-GX4!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_mktimp_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Market Imperfections</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next &#8594;</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">&#127881;</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">&#8617; Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sort each statement into the correct type of market imperfection</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">Unsorted Statements</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-3">
+            <div class="sort-col" onclick="placeInCategory('information')">
+                <span class="col-label">Information Failures</span>
+                <span class="col-hint">Asymmetric or imperfect information causing market failure</span>
+                <div class="sort-items" id="information"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('monopoly')">
+                <span class="col-label">Monopoly Power</span>
+                <span class="col-hint">Market power enabling prices above marginal cost</span>
+                <div class="sort-items" id="monopoly"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('immobility')">
+                <span class="col-label">Factor Immobility</span>
+                <span class="col-hint">Labour or capital unable to move to productive uses</span>
+                <div class="sort-items" id="immobility"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Missing Words</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Market Imperfections</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '\uD83C\uDF19' : '\u2600';
+}
+
+var sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    document.querySelectorAll('.tab-content').forEach(function(c, i) { c.classList.toggle('active', i === index); });
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    [0, 1].forEach(function(i) {
+        var el = document.getElementById('sub-' + i);
+        if (el) el.classList.toggle('active', i === index);
+    });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+var questions = [
+    {
+        question: "What is asymmetric information in economics?",
+        options: [
+            "When all buyers and sellers in a market possess identical and complete information",
+            "When one party in a transaction has more or better information than the other, leading to imbalanced and potentially inefficient decision-making",
+            "When information is evenly distributed across all market participants",
+            "When government withholds economic data from consumers"
+        ],
+        correct: 1,
+        explanation: "Asymmetric information occurs when buyers and sellers hold different levels of information about a product, service, or risk. This imbalance can lead to market failure because the informed party may exploit the less-informed party, preventing efficient resource allocation and potentially causing markets to collapse entirely."
+    },
+    {
+        question: "How does asymmetric information cause market failure in the used car market?",
+        options: [
+            "Both buyer and seller have complete knowledge of the vehicle's full history and condition",
+            "The seller knows whether the car has hidden defects, but the buyer cannot easily verify quality, leading to adverse selection and potential market collapse",
+            "All used cars are of identical quality so information is irrelevant",
+            "Buyers possess perfect information about every car on the market"
+        ],
+        correct: 1,
+        explanation: "This is Akerlof's 'market for lemons' problem. Sellers know whether they have a good car or a defective one ('lemon'), but buyers cannot easily distinguish quality before purchase. Buyers therefore offer only average prices. Good-quality sellers withdraw, leaving mainly lemons — a process of adverse selection that can cause the market to unravel."
+    },
+    {
+        question: "What is moral hazard in insurance markets?",
+        options: [
+            "Insurance companies charging premiums that are excessively high relative to actual risk",
+            "When insured individuals change their behaviour and take greater risks because they no longer bear the full financial cost of their actions",
+            "When insurance premiums are set at a level that makes insurance unaffordable",
+            "When no consumers wish to purchase insurance products"
+        ],
+        correct: 1,
+        explanation: "Moral hazard occurs when insurance coverage alters the behaviour of the insured — people may take more risks (e.g. less care with insured possessions, riskier lifestyle choices) because the insurer bears most of the financial cost. This leads to higher-than-expected claims, market inefficiency, and in extreme cases, insurance market failure."
+    },
+    {
+        question: "What is adverse selection in insurance markets?",
+        options: [
+            "When insurance companies reject all applicants for coverage",
+            "When high-risk individuals are more likely to purchase insurance than low-risk individuals, raising average costs and potentially causing market breakdown",
+            "When all customers receive an equally favourable deal from their insurer",
+            "When insurance premiums are too high for most consumers to afford"
+        ],
+        correct: 1,
+        explanation: "Adverse selection arises from asymmetric information about risk. High-risk individuals know they are likely to claim and are eager to buy insurance; low-risk individuals may not bother. Insurers cannot perfectly distinguish risk levels, so charge average premiums. This attracts mainly high-risk customers, raising costs — low-risk individuals drop out and the market may spiral towards collapse."
+    },
+    {
+        question: "How does imperfect information about health risks contribute to the overconsumption of demerit goods?",
+        options: [
+            "Perfect information exists for all health-related products so behaviour is unaffected",
+            "Better information would increase consumption of demerit goods",
+            "Consumers systematically underestimate addiction potential, long-term health damage, and external costs, consuming more than they would if fully and accurately informed",
+            "Information failures always lead to underconsumption of harmful goods"
+        ],
+        correct: 2,
+        explanation: "Information failures worsen demerit good overconsumption. Smokers underestimate cancer and addiction risks; gamblers underestimate the probability and magnitude of losses; consumers of ultra-processed food do not fully appreciate long-term health consequences. Advertising may also deliberately mislead. Fully informed consumers would consume less — information failure compounds the underlying externality problem."
+    },
+    {
+        question: "How can government intervention address asymmetric information in markets?",
+        options: [
+            "By prohibiting all transactions where one party holds more information than the other",
+            "Through mandatory disclosure requirements, quality standards, professional licensing, and consumer protection legislation",
+            "By removing all regulations so that market forces resolve information problems",
+            "By setting maximum prices to compensate consumers for their lack of information"
+        ],
+        correct: 1,
+        explanation: "Governments can reduce information asymmetries through: mandatory disclosure obligations (ingredient labelling, financial statements, property surveys); quality standards and safety inspections; professional licensing for doctors, solicitors, and electricians; consumer protection laws; and public information campaigns. Each measure helps less-informed parties make better decisions."
+    },
+    {
+        question: "What is the principal-agent problem, and how does it relate to asymmetric information?",
+        options: [
+            "Principals and agents always share identical interests, so no conflict arises",
+            "Agents such as managers or employees may pursue their own interests rather than those of principals such as owners or shareholders, because principals cannot perfectly monitor agents' actions",
+            "Perfect information exists between owners and managers in all large firms",
+            "The principal-agent problem only applies in the public sector"
+        ],
+        correct: 1,
+        explanation: "The principal-agent problem arises from asymmetric information — principals cannot perfectly observe or monitor what agents actually do. Agents may shirk, take on excessive risk, or pursue personal benefits (expense accounts, empire-building) rather than maximising principal welfare. This creates inefficiency and typically requires costly monitoring mechanisms or carefully designed incentive contracts."
+    },
+    {
+        question: "What is a key characteristic of monopoly power that leads to market failure?",
+        options: [
+            "The presence of many competing firms driving prices down to marginal cost",
+            "The ability to set prices above marginal cost due to the absence of competitive pressure, creating allocative inefficiency and a deadweight welfare loss",
+            "Perfect competition among all firms in the industry",
+            "The complete absence of barriers to entry into the market"
+        ],
+        correct: 1,
+        explanation: "Monopoly power enables firms to act as price makers rather than price takers. By restricting output to where MR equals MC, monopolists charge prices above marginal cost (P > MC). This creates allocative inefficiency and deadweight loss — units that would benefit consumers more than they cost to produce are not produced — representing a misallocation of resources."
+    },
+    {
+        question: "Why does monopoly pricing create allocative inefficiency?",
+        options: [
+            "Monopolies always produce at the lowest possible average cost",
+            "Price exceeds marginal cost (P > MC), meaning consumers value additional units more than they cost to produce, yet those units are not produced — creating a deadweight welfare loss",
+            "Resources are perfectly allocated under monopoly because the firm maximises profit",
+            "Consumer surplus is maximised when a single firm supplies the entire market"
+        ],
+        correct: 1,
+        explanation: "Allocative efficiency requires P equals MC. Monopolists restrict output to where MR equals MC and charge a price above this. Since price (marginal benefit to society) exceeds marginal cost, there are mutually beneficial transactions that do not occur. The resulting deadweight loss is the social cost of monopoly — a welfare reduction compared to the competitive outcome."
+    },
+    {
+        question: "What is X-inefficiency in the context of monopoly?",
+        options: [
+            "The additional efficiency gains achieved when a monopolist faces no competition",
+            "The productive inefficiency arising when a monopolist operates with higher costs than necessary due to the absence of competitive pressure",
+            "The allocative efficiency achieved by a monopolist at the profit-maximising output",
+            "The efficiency gains from economies of scale in large monopolistic firms"
+        ],
+        correct: 1,
+        explanation: "X-inefficiency (Leibenstein) occurs when firms with market power lack the incentive to minimise costs. Without the threat of losing market share to rivals, monopolists can tolerate organisational slack, excess staffing, outdated technology, and wasteful managerial practices. The monopolist remains profitable despite operating above the minimum possible cost curve."
+    },
+    {
+        question: "What are barriers to entry, and why are they significant for monopoly power?",
+        options: [
+            "Features of markets that make entry very easy, encouraging competition from new firms",
+            "Obstacles preventing new firms from entering a market, such as economies of scale, patents, control of key resources, or high sunk costs — sustaining monopoly power over time",
+            "Government policies that guarantee all markets remain perfectly competitive",
+            "Features that always benefit consumers by ensuring stable prices and quality"
+        ],
+        correct: 1,
+        explanation: "Barriers to entry protect existing monopoly power by preventing potential competitors from entering and eroding supernormal profits. They include: natural monopoly (long-run average costs falling across the full market scale), legal barriers such as patents and exclusive licences, control of essential inputs, high capital requirements and sunk costs, strong brand loyalty, and predatory responses by incumbents."
+    },
+    {
+        question: "How does monopoly power affect dynamic efficiency and innovation?",
+        options: [
+            "Monopolies always innovate more rapidly than competitive firms because of their size",
+            "The effect is ambiguous — supernormal profits can fund R&D investment, but the absence of competitive pressure may reduce incentives to innovate",
+            "Innovation is guaranteed to increase under monopoly conditions",
+            "There is no relationship between market structure and the pace of innovation"
+        ],
+        correct: 1,
+        explanation: "The dynamic efficiency implications of monopoly are contested. Schumpeter argued supernormal profits finance R&D, enabling the large-scale investment that drives innovation. However, without competitive threats, monopolists may become complacent — there is no market share to lose if they fail to innovate. Competitive markets force firms to innovate continuously or lose customers."
+    },
+    {
+        question: "What is geographical immobility of labour, and what causes it?",
+        options: [
+            "Workers moving freely between regions in response to wage differentials",
+            "The inability or unwillingness of workers to relocate geographically for employment, caused by family and social ties, housing costs, information gaps, and the disruption of relocation",
+            "A situation where all workers are equally willing and able to move anywhere",
+            "A government policy preventing workers from changing their region of residence"
+        ],
+        correct: 1,
+        explanation: "Geographical immobility occurs when workers cannot or will not relocate for available jobs. Key causes include: strong family and social ties to a location; high housing costs and shortages in destination areas; limited information about opportunities elsewhere; financial costs of moving; disruption to children's education; and attachment to regional amenities and communities."
+    },
+    {
+        question: "What is occupational immobility of labour, and what are its main causes?",
+        options: [
+            "Workers being able to switch instantly between all occupations with no barriers",
+            "Workers lacking the skills, qualifications, or training to move between different occupations or industries, caused by skill specificity, costly retraining, and professional licensing",
+            "A situation where all skills are completely transferable across all industries",
+            "A preference among workers to remain in declining industries rather than seek retraining"
+        ],
+        correct: 1,
+        explanation: "Occupational immobility prevents workers moving between jobs requiring different skills. Causes include: lack of relevant qualifications; high specificity of existing skills; the time and financial cost of retraining; age-related discrimination against older workers; union restrictions on entry to certain trades; professional licensing requirements; and insufficient access to career guidance or reskilling support."
+    },
+    {
+        question: "How does factor immobility cause market failure?",
+        options: [
+            "Factor immobility ensures that resources are always allocated to their most productive uses",
+            "It creates structural unemployment in declining sectors while labour shortages exist in growing sectors elsewhere, preventing the economy from achieving productive efficiency",
+            "Labour and capital markets always clear rapidly, so factor immobility is not a significant problem",
+            "Wages and prices adjust instantly to eliminate any misallocation of resources"
+        ],
+        correct: 1,
+        explanation: "Factor immobility creates persistent misallocation: workers face structural unemployment in declining industries or regions while unfilled vacancies exist in growing sectors. This prevents the economy from reaching its productive frontier — labour resources are not deployed to their highest-value uses. The resulting welfare loss is a form of market failure requiring policy intervention."
+    },
+    {
+        question: "What is structural unemployment, and how does it relate to factor immobility?",
+        options: [
+            "Unemployment caused by a temporary downturn in economic activity",
+            "Unemployment that persists because the skills or location of unemployed workers do not match the available job vacancies, arising from both geographical and occupational immobility",
+            "Voluntary unemployment where workers choose not to accept available job offers",
+            "Unemployment caused solely by excessive minimum wage legislation"
+        ],
+        correct: 1,
+        explanation: "Structural unemployment occurs when unemployed workers lack the skills or are not located where vacancies exist. It results from both geographical immobility — for example, ex-miners in former coalfield areas unwilling or unable to move to where jobs exist — and occupational immobility — lacking the skills for available roles in growing industries such as technology or healthcare."
+    },
+    {
+        question: "What is capital immobility, and why does it contribute to resource misallocation?",
+        options: [
+            "Capital is always perfectly liquid and can be redeployed to any use instantly and without cost",
+            "Physical and financial capital face barriers to redeployment across sectors or regions — physical capital is often sector-specific with high sunk costs, perpetuating misallocation",
+            "All capital equipment is interchangeable between industries without modification or cost",
+            "Capital immobility only affects developing economies with underdeveloped financial markets"
+        ],
+        correct: 1,
+        explanation: "Capital immobility occurs when physical capital such as specialised machinery or industrial buildings cannot easily be redeployed to alternative uses, and when financial capital faces regulatory or informational barriers to movement. High sunk costs mean capital invested in declining sectors cannot be recovered, locking resources in low-productivity uses and preventing efficient reallocation."
+    },
+    {
+        question: "What government policies can reduce geographical immobility of labour?",
+        options: [
+            "Policies that make housing more expensive in all regions simultaneously",
+            "Improving job vacancy information systems, providing relocation subsidies, increasing affordable housing supply in high-demand areas, and regional development policies to create jobs in depressed areas",
+            "Introducing barriers to movement between regions to protect local labour markets",
+            "Eliminating all job vacancies in prosperous regions to redistribute demand"
+        ],
+        correct: 1,
+        explanation: "Governments can reduce geographical immobility through: comprehensive job vacancy information systems and online matching platforms; relocation grants and removal expense subsidies; social and affordable housing construction in high-demand areas; transport infrastructure improvements reducing commuting barriers; and regional development programmes such as enterprise zones to bring employment to depressed areas."
+    },
+    {
+        question: "What government policies can reduce occupational immobility of labour?",
+        options: [
+            "Reducing public expenditure on education and vocational training",
+            "Providing improved education, vocational training, apprenticeships, and subsidised reskilling programmes to develop transferable skills and facilitate movement between industries",
+            "Eliminating all professional qualifications to lower barriers to entry into occupations",
+            "Making retraining more expensive to ensure only the most committed workers retrain"
+        ],
+        correct: 1,
+        explanation: "Occupational immobility can be reduced through: a well-funded education system developing transferable skills; vocational training and apprenticeship programmes; subsidised retraining for redundant workers; lifelong learning initiatives and adult education; careers guidance services; and removing unnecessary occupational licensing barriers that restrict entry to certain professions without justification."
+    },
+    {
+        question: "How do information failures, monopoly power, and factor immobility interact to worsen market outcomes?",
+        options: [
+            "These market imperfections operate entirely independently and have no interaction effects",
+            "Monopoly power can exploit information asymmetries to maintain market dominance; factor immobility prevents new entry correcting monopoly; together they compound the departure from allocative and productive efficiency",
+            "The interaction of these imperfections always leads to perfectly efficient outcomes through self-correction",
+            "Market forces automatically resolve all three imperfections without government intervention"
+        ],
+        correct: 1,
+        explanation: "These imperfections interact and reinforce each other. Monopolists can exploit information asymmetries — consumers cannot easily assess quality or alternatives — to maintain pricing power. Factor immobility prevents new entrants from challenging incumbents even when supernormal profits signal entry opportunities. Together they compound allocative and productive inefficiency, strengthening the case for targeted government intervention across all three dimensions."
+    }
+];
+
+var currentQuestion = 0, score = 0;
+var userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    var q = questions[currentQuestion];
+    var isAnswered = userAnswers[currentQuestion] !== null;
+    var userChoice = userAnswers[currentQuestion];
+    var optHtml = q.options.map(function(opt, i) {
+        var cls = 'option';
+        if (isAnswered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userChoice) cls += ' incorrect';
+        }
+        return '<button class="' + cls + '" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
+    }).join('');
+    document.getElementById('questionContainer').innerHTML =
+        '<div class="q-card">' +
+        '<div class="q-num">Question ' + (currentQuestion + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="q-text">' + q.question + '</div>' +
+        '<div class="options">' + optHtml + '</div>' +
+        '<div class="explanation ' + (isAnswered ? 'show' : '') + '">' + q.explanation + '</div>' +
+        '</div>';
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    var pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = score + ' / ' + questions.length;
+    document.getElementById('resultPercent').textContent = pct + '% correct';
+    var emoji = '\uD83D\uDCDA', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '\u2B50'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '\uD83D\uDC4F'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '\u2713'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers = new Array(questions.length).fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+    document.getElementById('questionLabel').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+}
+function updateScoreDisplay() {
+    var answered = userAnswers.filter(function(a) { return a !== null; }).length;
+    document.getElementById('scoreDisplay').textContent = 'Score: ' + score + ' / ' + answered;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish \u2713' : 'Next \u2192';
+}
+
+/* ── SORTING ── */
+var sortingItems = [
+    { text: "Asymmetric information where one party holds significantly more knowledge than the other", category: "information" },
+    { text: "Used car market — sellers know about defects buyers cannot verify (the lemons problem)", category: "information" },
+    { text: "Moral hazard — insured parties take greater risks because they do not bear the full financial cost", category: "information" },
+    { text: "Adverse selection — high-risk individuals disproportionately likely to purchase insurance", category: "information" },
+    { text: "Consumers underestimating the health risks and addiction potential of cigarettes", category: "information" },
+    { text: "Principal-agent problem — managers pursuing their own interests rather than shareholders'", category: "information" },
+    { text: "Imperfect information about product quality causing market unravelling", category: "information" },
+    { text: "Ability to set prices above marginal cost due to absence of competitive pressure", category: "monopoly" },
+    { text: "Allocative inefficiency when price exceeds marginal cost, creating a deadweight welfare loss", category: "monopoly" },
+    { text: "X-inefficiency — operating above minimum cost due to lack of competitive threat", category: "monopoly" },
+    { text: "Deadweight loss from restricting output below the socially optimal level", category: "monopoly" },
+    { text: "Barriers to entry protecting supernormal profits — economies of scale, patents, sunk costs", category: "monopoly" },
+    { text: "Reduced consumer surplus and prices above the competitive level", category: "monopoly" },
+    { text: "Potential for reduced innovation incentives due to the absence of competitive threats", category: "monopoly" },
+    { text: "Geographical immobility — workers unable or unwilling to relocate for available jobs", category: "immobility" },
+    { text: "Occupational immobility — workers lacking skills or qualifications to switch industries", category: "immobility" },
+    { text: "Structural unemployment in declining regions and industries persisting over time", category: "immobility" },
+    { text: "Labour shortages in growing sectors coexisting with unemployment elsewhere", category: "immobility" },
+    { text: "Capital immobility — specialised physical capital cannot be redeployed to alternative uses", category: "immobility" },
+    { text: "Misallocation of resources preventing the economy from reaching productive efficiency", category: "immobility" },
+    { text: "High retraining costs creating a barrier to movement between occupations", category: "immobility" }
+];
+
+var selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    var shuffled = sortingItems.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('unsortedItems').innerHTML = shuffled.map(function(item) {
+        return '<div class="sort-item" data-category="' + item.category + '" onclick="selectSortItem(this,event)">' + item.text + '</div>';
+    }).join('');
+    ['information', 'monopoly', 'immobility'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    var targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    var correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(function(item) {
+        item.classList.remove('correct-sort', 'incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    var pct = Math.round(correct / total * 100);
+    var res = document.getElementById('sortResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.sort-item').forEach(function(item) {
+                item.classList.remove('correct-sort', 'incorrect-sort');
+            });
+        }, 2500);
+    }
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+var matchingData = [
+    { term: "Asymmetric Information", definition: "One party to a transaction holds more or better information than the other, preventing efficient market outcomes", id: 1 },
+    { term: "Moral Hazard", definition: "When insurance or protection against risk causes individuals to change behaviour and take greater risks than they otherwise would", id: 2 },
+    { term: "Adverse Selection", definition: "High-risk individuals are disproportionately likely to purchase insurance, raising average costs and potentially causing market breakdown", id: 3 },
+    { term: "Market for Lemons", definition: "Akerlof's model of how asymmetric information about quality can cause good-quality goods to be driven out of a market", id: 4 },
+    { term: "Principal-Agent Problem", definition: "Agents may pursue their own interests rather than those of principals due to asymmetric information and imperfect monitoring", id: 5 },
+    { term: "Monopoly Power", definition: "The ability of a firm to set price above marginal cost due to the absence of competitive pressure", id: 6 },
+    { term: "X-inefficiency", definition: "Operating above minimum cost due to organisational slack and absence of competitive pressure to cut costs", id: 7 },
+    { term: "Deadweight Welfare Loss", definition: "The reduction in total social welfare when output is restricted below the socially optimal level", id: 8 },
+    { term: "Barriers to Entry", definition: "Obstacles preventing new firms from entering a market, sustaining existing firms' market power and supernormal profits", id: 9 },
+    { term: "Geographical Immobility", definition: "The inability or unwillingness of workers to relocate to take up employment in other areas", id: 10 },
+    { term: "Occupational Immobility", definition: "Workers lacking the skills, qualifications, or training to move between different occupations or industries", id: 11 },
+    { term: "Structural Unemployment", definition: "Persistent unemployment caused by a mismatch between the skills or location of workers and the available job vacancies", id: 12 }
+];
+
+var matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    var shuffled = matchingData.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('matchTerms').innerHTML = matchingData.map(function(item) {
+        return '<div class="match-term" data-id="' + item.id + '" onclick="selectMatchTerm(' + item.id + ')">' + item.term + '</div>';
+    }).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(function(item) {
+        return '<div class="match-def" data-id="' + item.id + '" onclick="matchDefinition(' + item.id + ')">' + item.definition + '</div>';
+    }).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(function(t) { t.classList.remove('selected'); });
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector('.match-term[data-id="' + id + '"]').classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    var termId = matchSelected;
+    var termText = matchingData.find(function(d) { return d.id === termId; }).term;
+    var defEl = document.querySelector('.match-def[data-id="' + defId + '"]');
+    var existing = defEl.querySelector('.match-label');
+    if (existing) {
+        var oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector('.match-term[data-id="' + oldId + '"]').classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    var label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.add('used');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    var correct = 0;
+    document.querySelectorAll('.match-def').forEach(function(def) {
+        var defId = parseInt(def.dataset.id);
+        def.classList.remove('correct', 'incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    var total = matchingData.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('matchResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect match!' : 'Green = correct, red = incorrect. Keep adjusting and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.match-def').forEach(function(d) { d.classList.remove('correct', 'incorrect'); });
+        }, 2500);
+    }
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+var fillAnswers = ["asymmetric","sellers","lemons","hazard","risks","claims","selection","insurance","overconsumption","agents","principals","disclosure","marginal","inefficiency","restricted","X","entry","patents","productive","relocating","skills","unemployment","shortages","redeployed","training","development"];
+var fillTemplate = "Market imperfections prevent markets from allocating resources efficiently. [0] information occurs when one party has more knowledge than another. In the used car market, [1] know a vehicle's defects but buyers cannot verify quality, creating the market for [2] — adverse selection drives good cars out as buyers offer only average prices. Moral [3] in insurance markets arises when insured parties take greater [4] because they do not bear the full cost, leading to higher [5]. Adverse [6] occurs when high-risk individuals are more likely to purchase [7] than low-risk individuals, potentially causing market collapse. Imperfect information about health risks leads to [8] of demerit goods. The principal-agent problem arises when [9] pursue their own interests rather than those of [10]. Government can address information failures through mandatory [11] requirements, licensing, and consumer protection laws. Monopoly power enables firms to set prices above [12] cost (P above MC), causing allocative [13]. Output is [14] below the competitive level, creating deadweight loss. Lack of competitive pressure can cause [15]-inefficiency as firms operate above minimum cost. Barriers to [16] such as economies of scale and legal barriers like [17] sustain monopoly power. Factor immobility prevents resources moving to their most [18] uses. Geographical immobility stops workers from [19] for available jobs. Occupational immobility occurs when workers lack the [20] to change industry. Both contribute to structural [21] — workers in declining industries face persistent unemployment while [22] exist in growing sectors. Capital immobility means physical assets cannot easily be [23] to new uses. Policies to address immobility include improved education and [24] programmes, relocation subsidies, and regional [25] policies.";
+
+var fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    var shuffled = fillAnswers.slice().sort(function() { return Math.random() - 0.5; });
+    var bankHtml = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>';
+    bankHtml += shuffled.map(function(w, i) {
+        return '<button class="word-option" data-wid="' + i + '" data-word="' + w + '" onclick="selectFillWord(\'' + w.replace(/'/g, '&#39;') + '\',' + i + ',this)">' + w + '</button>';
+    }).join('');
+    document.getElementById('wordBank1').innerHTML = bankHtml;
+    var html = fillTemplate;
+    fillAnswers.forEach(function(_, i) {
+        html = html.replace('[' + i + ']', '<span class="word-blank" data-bid="' + i + '" onclick="clickFillBlank(' + i + ')">___</span>');
+    });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(function(b) { b.classList.remove('selected-word'); });
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word: word, wid: wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    var blank = document.querySelector('[data-bid="' + bid + '"]');
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        var oldBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (oldBtn) oldBtn.classList.remove('used', 'selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        var prevBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (prevBtn) prevBtn.classList.remove('used', 'selected-word');
+    }
+    fillState.placed[bid] = { word: fillState.selected.word, wid: fillState.selected.wid };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    var usedBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.selected.wid + '"]');
+    if (usedBtn) { usedBtn.classList.add('used'); usedBtn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    var correct = 0;
+    fillAnswers.forEach(function(ans, i) {
+        var blank = document.querySelector('[data-bid="' + i + '"]');
+        if (!blank) return;
+        blank.classList.remove('correct', 'incorrect', 'has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    var total = fillAnswers.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('fillResult1');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Good — check the red blanks.' : 'Review the passage and try again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

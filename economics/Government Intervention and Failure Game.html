@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Government Intervention &amp; Failure Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' x'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' v'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Government Intervention &amp; Failure Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_govintv_game_pw';
+  var valid = ['GovIntv-4Rq!2026','MktFail-Gm3!2026','MKTFAIL-GX4!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['GovIntv-4Rq!2026','MktFail-Gm3!2026','MKTFAIL-GX4!2026','BIZOMICS-MICRO-2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_govintv_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Government Intervention &amp; Failure</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 15</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:6.67%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next &#8594;</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">&#127881;</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/15</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">&#8617; Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sort each statement into the correct category</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">Unsorted Statements</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-3">
+            <div class="sort-col" onclick="placeInCategory('interventions')">
+                <span class="col-label">Intervention Methods</span>
+                <span class="col-hint">Tools used to correct market failure</span>
+                <div class="sort-items" id="interventions"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('objectives')">
+                <span class="col-label">Government Objectives</span>
+                <span class="col-hint">Goals that motivate government action</span>
+                <div class="sort-items" id="objectives"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('failure')">
+                <span class="col-label">Government Failure</span>
+                <span class="col-hint">Causes of unsuccessful intervention</span>
+                <div class="sort-items" id="failure"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Missing Words</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Government Intervention &amp; Failure</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '\uD83C\uDF19' : '\u2600';
+}
+
+var sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    document.querySelectorAll('.tab-content').forEach(function(c, i) { c.classList.toggle('active', i === index); });
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    [0, 1].forEach(function(i) {
+        var el = document.getElementById('sub-' + i);
+        if (el) el.classList.toggle('active', i === index);
+    });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+var questions = [
+    {
+        question: "Which of the following provides the strongest economic justification for government intervention in markets?",
+        options: [
+            "Market prices are considered too high by consumers",
+            "The existence of market failure leading to misallocation of resources",
+            "Businesses are generating excessive profits",
+            "Consumers and producers disagree on the correct price"
+        ],
+        correct: 1,
+        explanation: "Market failure — where resources are misallocated and outcomes are socially inefficient — provides the primary economic rationale for government intervention. This occurs when markets fail to achieve allocative efficiency, for example due to externalities, public goods, or information failures."
+    },
+    {
+        question: "A government imposes an indirect tax on cigarettes. What is the primary economic purpose of this intervention?",
+        options: [
+            "To increase government tax revenue as an end in itself",
+            "To internalise the negative externalities of smoking by raising the private cost toward the social cost",
+            "To create employment in the healthcare sector",
+            "To increase domestic cigarette production"
+        ],
+        correct: 1,
+        explanation: "Indirect taxation on demerit goods such as cigarettes aims to internalise negative externalities. By raising the price, consumption falls and consumers and producers are made to bear more of the social costs of their decisions, moving the market closer to the socially optimal output."
+    },
+    {
+        question: "Which method of government intervention involves the direct provision of goods and services?",
+        options: [
+            "Indirect taxation on demerit goods",
+            "Subsidies paid to private sector firms",
+            "State provision through public sector organisations such as the NHS",
+            "Maximum price controls set on private goods"
+        ],
+        correct: 2,
+        explanation: "State provision involves government directly supplying goods and services through public sector organisations, ensuring universal access regardless of ability to pay. It is typically used for public goods and merit goods where private markets would underprovide."
+    },
+    {
+        question: "A maximum price is set below the market equilibrium price. What is the most likely consequence?",
+        options: [
+            "A surplus as supply exceeds demand at the lower price",
+            "A shortage as demand exceeds supply, potentially leading to black markets",
+            "No change in the quantity demanded or supplied",
+            "An increase in producer surplus"
+        ],
+        correct: 1,
+        explanation: "A maximum (ceiling) price below equilibrium creates excess demand because quantity demanded exceeds quantity supplied at the lower price. This can lead to rationing, queuing, and black markets where goods are traded illegally above the legal maximum price."
+    },
+    {
+        question: "What is the main economic purpose of government subsidies paid to producers of merit goods like education?",
+        options: [
+            "To increase total government expenditure",
+            "To lower production costs and prices, encouraging consumption of goods that generate positive externalities",
+            "To create inflationary pressure in the economy",
+            "To eliminate all private provision of education"
+        ],
+        correct: 1,
+        explanation: "Subsidies reduce production costs and lower the market price, encouraging greater consumption of merit goods whose social benefits exceed private benefits. This corrects the underconsumption that occurs in free markets and moves output toward the socially optimal level."
+    },
+    {
+        question: "Tradable pollution permits are designed to achieve which outcome?",
+        options: [
+            "Allow unlimited pollution by any firm that can afford permits",
+            "Create a market for the right to pollute, reducing total emissions at the lowest overall cost",
+            "Ban all forms of industrial pollution immediately",
+            "Increase direct government control over all business activity"
+        ],
+        correct: 1,
+        explanation: "Tradable permits (cap-and-trade) set an overall pollution cap and allow firms to buy and sell permits. Firms with low abatement costs reduce emissions further and sell surplus permits; firms with high abatement costs buy permits. This achieves the environmental target at minimum total cost — a key advantage over uniform regulation."
+    },
+    {
+        question: "What is the purpose of extending property rights as a response to environmental externalities?",
+        options: [
+            "To allow homeowners to sell their properties more easily",
+            "To give stakeholders ownership rights so they can claim compensation for damages or negotiate solutions",
+            "To increase revenue from property taxes",
+            "To eliminate all forms of pollution through legal prohibition"
+        ],
+        correct: 1,
+        explanation: "Extending property rights (the Coase theorem approach) allows affected parties to negotiate solutions or seek compensation for environmental damage. Clear ownership creates incentives to prevent harm and can enable market-based solutions to externalities without direct government regulation."
+    },
+    {
+        question: "Which government objective is primarily concerned with reducing income and wealth inequality?",
+        options: [
+            "Maximising economic growth at all costs",
+            "Redistribution of income through progressive taxation and transfer payments",
+            "Minimising all forms of government expenditure",
+            "Maximising corporate profitability"
+        ],
+        correct: 1,
+        explanation: "Governments pursue equity objectives through progressive taxation (where higher earners pay larger proportions of income), transfer payments such as benefits and pensions, and public provision of services. These measures reduce inequality and ensure basic living standards for all citizens."
+    },
+    {
+        question: "What does the term 'government failure' mean in economics?",
+        options: [
+            "When government successfully corrects market failure and improves outcomes",
+            "When government intervention leads to a net welfare loss or greater misallocation of resources than the original market failure",
+            "When markets operate efficiently and government chooses not to intervene",
+            "When private businesses fail and become insolvent"
+        ],
+        correct: 1,
+        explanation: "Government failure occurs when intervention produces outcomes that are worse than the original market failure, creating a net welfare loss. The intervention itself becomes a source of misallocation rather than a solution, meaning government action reduces rather than improves overall welfare."
+    },
+    {
+        question: "Which is identified as a key source of government failure?",
+        options: [
+            "Policymakers having perfect information about all costs and benefits",
+            "Inadequate information about costs, benefits, elasticities, and likely behavioural responses",
+            "Complete consensus among politicians on all policy objectives",
+            "Zero administrative costs of implementing policies"
+        ],
+        correct: 1,
+        explanation: "Inadequate information is a fundamental source of government failure. Policymakers cannot access complete data on costs, benefits, elasticities, and how individuals and firms will respond to intervention. This leads to poorly calibrated policies that may worsen, rather than improve, resource allocation."
+    },
+    {
+        question: "How do conflicting government objectives contribute to government failure?",
+        options: [
+            "They ensure all policies achieve their intended outcomes simultaneously",
+            "They force governments into trade-offs, potentially sacrificing one legitimate goal when pursuing another",
+            "They eliminate the need for policy decisions altogether",
+            "They automatically guarantee economically efficient outcomes"
+        ],
+        correct: 1,
+        explanation: "Governments simultaneously pursue objectives such as growth, equity, environmental protection, and employment. These frequently conflict — for example, policies that boost growth may worsen inequality or environmental outcomes. Navigating these trade-offs can lead to suboptimal outcomes and government failure."
+    },
+    {
+        question: "Why are administrative costs relevant to the assessment of government failure?",
+        options: [
+            "Administrative costs are always zero and therefore irrelevant",
+            "They reduce the net benefits of intervention and may exceed the welfare gains from correcting market failure",
+            "Administrative costs affect only private companies, not government",
+            "They automatically ensure that all government intervention is justified"
+        ],
+        correct: 1,
+        explanation: "The administrative costs of designing, implementing, monitoring, and enforcing policies can be substantial. If these costs exceed the welfare gains from correcting market failure, the intervention produces a net welfare loss — a form of government failure even when the underlying policy intention was sound."
+    },
+    {
+        question: "What is meant when economists say that government intervention 'creates market distortions'?",
+        options: [
+            "Government perfectly removes all pre-existing inefficiencies from markets",
+            "Intervention introduces new inefficiencies — such as deadweight losses from taxes, shortages from price ceilings, or surpluses from price floors",
+            "Markets automatically return to full allocative efficiency following any intervention",
+            "All prices converge to their long-run equilibrium values"
+        ],
+        correct: 1,
+        explanation: "Government interventions such as taxes, subsidies, and price controls can create new distortions — deadweight losses, resource misallocation, and unintended price signals. These inefficiencies would not exist in the absence of intervention, meaning the cure may be worse than the disease."
+    },
+    {
+        question: "Which example best illustrates unintended consequences of government intervention?",
+        options: [
+            "An indirect tax on cigarettes that successfully reduces smoking rates",
+            "Rent controls that reduce housing quality, discourage maintenance, and restrict new construction",
+            "A subsidy for renewable energy that increases its consumption",
+            "Environmental regulations that successfully reduce industrial pollution"
+        ],
+        correct: 1,
+        explanation: "Unintended consequences arise when policies produce unexpected adverse effects. Rent controls, designed to improve housing affordability, reduce landlords' incentives to maintain or invest in properties, restrict supply by discouraging new construction, and can create long-run shortages — outcomes directly contrary to the policy's stated goals."
+    },
+    {
+        question: "A minimum price is set above the equilibrium price in an agricultural market. What is the most likely consequence?",
+        options: [
+            "A shortage as consumers demand more at the higher price",
+            "A surplus as quantity supplied exceeds quantity demanded at the higher price",
+            "The equilibrium price and quantity remain unchanged",
+            "A reduction in producer revenue"
+        ],
+        correct: 1,
+        explanation: "A minimum (floor) price above equilibrium creates excess supply because quantity supplied exceeds quantity demanded at the artificially high price. Governments may need to purchase and store the surplus at public expense. This is a common example of government intervention creating a market distortion."
+    }
+];
+
+var currentQuestion = 0, score = 0;
+var userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    var q = questions[currentQuestion];
+    var isAnswered = userAnswers[currentQuestion] !== null;
+    var userChoice = userAnswers[currentQuestion];
+    var optHtml = q.options.map(function(opt, i) {
+        var cls = 'option';
+        if (isAnswered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userChoice) cls += ' incorrect';
+        }
+        return '<button class="' + cls + '" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
+    }).join('');
+    document.getElementById('questionContainer').innerHTML =
+        '<div class="q-card">' +
+        '<div class="q-num">Question ' + (currentQuestion + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="q-text">' + q.question + '</div>' +
+        '<div class="options">' + optHtml + '</div>' +
+        '<div class="explanation ' + (isAnswered ? 'show' : '') + '">' + q.explanation + '</div>' +
+        '</div>';
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    var pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = score + ' / ' + questions.length;
+    document.getElementById('resultPercent').textContent = pct + '% correct';
+    var emoji = '\uD83D\uDCDA', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '\u2B50'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '\uD83D\uDC4F'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '\u2713'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers = new Array(questions.length).fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+    document.getElementById('questionLabel').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+}
+function updateScoreDisplay() {
+    var answered = userAnswers.filter(function(a) { return a !== null; }).length;
+    document.getElementById('scoreDisplay').textContent = 'Score: ' + score + ' / ' + answered;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish \u2713' : 'Next \u2192';
+}
+
+/* ── SORTING ── */
+var sortingItems = [
+    { text: "Imposing indirect taxes on goods with negative externalities such as carbon emissions", category: "interventions" },
+    { text: "Providing subsidies to producers of merit goods to lower prices and increase consumption", category: "interventions" },
+    { text: "Setting maximum prices to keep essential goods affordable for low-income households", category: "interventions" },
+    { text: "Direct state provision of public goods such as national defence and street lighting", category: "interventions" },
+    { text: "Implementing environmental regulations and minimum safety standards for businesses", category: "interventions" },
+    { text: "Creating tradable pollution permit schemes to reduce emissions at lowest total cost", category: "interventions" },
+    { text: "Extending property rights to enable affected parties to claim compensation for damages", category: "interventions" },
+    { text: "Redistributing income through progressive taxation and welfare transfers to reduce inequality", category: "objectives" },
+    { text: "Correcting market failure to improve allocative efficiency and resource allocation", category: "objectives" },
+    { text: "Promoting macroeconomic stability through growth, low inflation, and employment", category: "objectives" },
+    { text: "Ensuring adequate provision of public goods and merit goods undersupplied by markets", category: "objectives" },
+    { text: "Protecting vulnerable groups and ensuring minimum living standards for all citizens", category: "objectives" },
+    { text: "Inadequate information causing policymakers to design poorly calibrated policies", category: "failure" },
+    { text: "Conflicting objectives requiring difficult trade-offs between growth, equity, and environment", category: "failure" },
+    { text: "High administrative costs of implementation and enforcement exceeding welfare gains", category: "failure" },
+    { text: "Intervention creating new market distortions such as deadweight losses or shortages", category: "failure" },
+    { text: "Unintended consequences such as black markets, reduced quality, or supply shortages", category: "failure" },
+    { text: "Political pressures causing policies to serve narrow interests rather than the public good", category: "failure" }
+];
+
+var selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    var shuffled = sortingItems.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('unsortedItems').innerHTML = shuffled.map(function(item) {
+        return '<div class="sort-item" data-category="' + item.category + '" onclick="selectSortItem(this,event)">' + item.text + '</div>';
+    }).join('');
+    ['interventions', 'objectives', 'failure'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    var targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    var correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(function(item) {
+        item.classList.remove('correct-sort', 'incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    var pct = Math.round(correct / total * 100);
+    var res = document.getElementById('sortResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.sort-item').forEach(function(item) {
+                item.classList.remove('correct-sort', 'incorrect-sort');
+            });
+        }, 2500);
+    }
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+var matchingData = [
+    { term: "Market Failure", definition: "When the free market produces a socially inefficient outcome, leading to misallocation of resources", id: 1 },
+    { term: "Government Failure", definition: "When government intervention leads to a net welfare loss greater than the original market failure", id: 2 },
+    { term: "Indirect Tax", definition: "A tax levied on expenditure, used to raise the private cost of goods with negative externalities", id: 3 },
+    { term: "Subsidy", definition: "A payment to producers to lower costs and prices, encouraging consumption of goods with positive externalities", id: 4 },
+    { term: "Maximum Price", definition: "A legally imposed price ceiling set below equilibrium, creating excess demand and potential shortages", id: 5 },
+    { term: "Minimum Price", definition: "A legally imposed price floor set above equilibrium, creating excess supply or surpluses", id: 6 },
+    { term: "Tradable Permits", definition: "A cap-and-trade scheme giving firms the right to pollute up to a set limit, which can be bought and sold", id: 7 },
+    { term: "Regulatory Capture", definition: "When regulated firms gain undue influence over the regulatory bodies meant to oversee them", id: 8 },
+    { term: "Unintended Consequences", definition: "Unexpected negative outcomes of government intervention, such as black markets arising from price controls", id: 9 },
+    { term: "Information Failure", definition: "When policymakers lack complete data on costs, benefits, and responses, leading to poorly designed policies", id: 10 },
+    { term: "State Provision", definition: "Direct government supply of goods and services, typically used for public goods and merit goods", id: 11 },
+    { term: "Deadweight Loss", definition: "The reduction in total welfare caused by a market distortion such as a tax or price control", id: 12 }
+];
+
+var matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    var shuffled = matchingData.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('matchTerms').innerHTML = matchingData.map(function(item) {
+        return '<div class="match-term" data-id="' + item.id + '" onclick="selectMatchTerm(' + item.id + ')">' + item.term + '</div>';
+    }).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(function(item) {
+        return '<div class="match-def" data-id="' + item.id + '" onclick="matchDefinition(' + item.id + ')">' + item.definition + '</div>';
+    }).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(function(t) { t.classList.remove('selected'); });
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector('.match-term[data-id="' + id + '"]').classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    var termId = matchSelected;
+    var termText = matchingData.find(function(d) { return d.id === termId; }).term;
+    var defEl = document.querySelector('.match-def[data-id="' + defId + '"]');
+    var existing = defEl.querySelector('.match-label');
+    if (existing) {
+        var oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector('.match-term[data-id="' + oldId + '"]').classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    var label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.add('used');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    var correct = 0;
+    document.querySelectorAll('.match-def').forEach(function(def) {
+        var defId = parseInt(def.dataset.id);
+        def.classList.remove('correct', 'incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    var total = matchingData.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('matchResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect match!' : 'Green = correct, red = incorrect. Keep adjusting and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.match-def').forEach(function(d) { d.classList.remove('correct', 'incorrect'); });
+        }, 2500);
+    }
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+var fillAnswers = ["failure","taxes","externalities","subsidies","positive","regulation","property","permits","provision","free","information","conflicting","administrative","distortions","unintended","welfare","maximum","minimum","internalise","efficiency"];
+var fillTemplate = "Governments intervene in markets primarily to correct market [0], which occurs when the free market produces a socially inefficient outcome. Indirect [1] are used to address negative [2] by raising the private cost of harmful goods toward their social cost. [3] lower the price of merit goods with [4] externalities, encouraging greater consumption than markets would produce unaided. [5] sets legal rules and minimum standards to prevent harmful behaviour, while extending [6] rights allows affected parties to seek compensation for damage caused by others. Tradable pollution [7] create markets for the right to pollute, achieving environmental targets at the lowest total cost. State [8] of public goods such as national defence is necessary because of the [9] rider problem, which prevents private markets from supplying them profitably. Government failure arises when intervention worsens rather than improves outcomes. [10] failure is a key cause: policymakers cannot know all the costs, benefits, and behavioural responses relevant to a policy decision. [11] objectives force trade-offs — pursuing growth may conflict with equity or environmental goals. [12] costs of designing, implementing, and enforcing policies can be substantial, and if they exceed the welfare gains, the intervention produces a net welfare loss. Policies can also create new market [13], such as deadweight losses from taxes. [14] consequences are also common: rent controls, for example, may reduce housing quality and discourage new construction. The possibility of government failure means that even when market failure exists, intervention does not automatically improve [15]. For instance, a [16] price set below equilibrium creates a shortage, while a [17] price above equilibrium creates a surplus. Both interventions aim to [18] costs and benefits but risk becoming examples of government failure if they reduce overall [19].";
+
+var fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    var shuffled = fillAnswers.slice().sort(function() { return Math.random() - 0.5; });
+    var bankHtml = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>';
+    bankHtml += shuffled.map(function(w, i) {
+        return '<button class="word-option" data-wid="' + i + '" data-word="' + w + '" onclick="selectFillWord(\'' + w + '\',' + i + ',this)">' + w + '</button>';
+    }).join('');
+    document.getElementById('wordBank1').innerHTML = bankHtml;
+    var html = fillTemplate;
+    fillAnswers.forEach(function(_, i) {
+        html = html.replace('[' + i + ']', '<span class="word-blank" data-bid="' + i + '" onclick="clickFillBlank(' + i + ')">___</span>');
+    });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(function(b) { b.classList.remove('selected-word'); });
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word: word, wid: wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    var blank = document.querySelector('[data-bid="' + bid + '"]');
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        var oldBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (oldBtn) oldBtn.classList.remove('used', 'selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        var prevBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (prevBtn) prevBtn.classList.remove('used', 'selected-word');
+    }
+    fillState.placed[bid] = { word: fillState.selected.word, wid: fillState.selected.wid };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    var usedBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.selected.wid + '"]');
+    if (usedBtn) { usedBtn.classList.add('used'); usedBtn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    var correct = 0;
+    fillAnswers.forEach(function(ans, i) {
+        var blank = document.querySelector('[data-bid="' + i + '"]');
+        if (!blank) return;
+        blank.classList.remove('correct', 'incorrect', 'has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    var total = fillAnswers.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('fillResult1');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Good — check the red blanks.' : 'Review the passage and try again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
