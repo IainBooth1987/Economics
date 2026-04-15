@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — International Economy Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #0d1526;
+            --accent: #3b82f6;
+            --accent2: #60a5fa;
+            --amber: #f59e0b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12);
+            --incorrect-bg: rgba(239,68,68,0.12);
+            --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        /* ── HEADER ── */
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        /* ── TABS ── */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* ── PROGRESS / SCORE ── */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* ── QUESTION CARD ── */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .explanation strong { color: var(--accent2); }
+        [data-theme="light"] .explanation strong { color: #1d4ed8; }
+
+        /* ── BUTTONS ── */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* ── RESULT PANEL ── */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* ── INLINE RESULT ── */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .inline-result.info { background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        [data-theme="light"] .inline-result.info { color: #1d4ed8; }
+
+        /* ── SORTING (Pro/Anti Globalisation) ── */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; min-height: 280px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-col.pro-col { border-color: rgba(16,185,129,0.25); }
+        .sort-col.anti-col { border-color: rgba(239,68,68,0.25); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+        .placed-items { display: flex; flex-direction: column; gap: 0.5rem; min-height: 120px; }
+        .placed-item { padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.84rem; line-height: 1.4; }
+        .placed-item.pro { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .placed-item.anti { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .placed-item.pro { color: #065f46; }
+        [data-theme="light"] .placed-item.anti { color: #991b1b; }
+
+        .scenario-pool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
+        .scenario-pool-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; display: block; }
+        .scenario-items { display: flex; flex-direction: column; gap: 0.5rem; }
+        .scenario-card { padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.86rem; line-height: 1.5; color: var(--text); transition: all 0.15s; }
+        .scenario-card:hover { border-color: rgba(59,130,246,0.3); }
+        .scenario-card.selected-scenario { background: var(--warning-bg); border-color: var(--amber); }
+        .scenario-card.placed { opacity: 0.25; pointer-events: none; text-decoration: line-through; }
+        .placement-feedback { padding: 0.7rem 1rem; border-radius: 8px; margin-top: 0.75rem; font-size: 0.85rem; font-weight: 600; display: none; }
+        .placement-feedback.show { display: block; animation: fadeUp 0.2s ease; }
+        .placement-feedback.correct-place { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .placement-feedback.incorrect-place { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .placement-feedback.correct-place { color: #065f46; }
+        [data-theme="light"] .placement-feedback.incorrect-place { color: #991b1b; }
+
+        /* ── GAME SELECTOR ── */
+        .game-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem 1.4rem; cursor: pointer; transition: all 0.18s; }
+        .game-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .game-icon { font-size: 1.6rem; margin-bottom: 0.75rem; display: block; }
+        .game-card h3 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+        .game-card p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+        .game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .game-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* ── MATCH GAME ── */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; }
+        .match-item.matched:hover { transform: none; border-color: #10b981; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+
+        /* ── FILL IN BLANK ── */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-height: 54px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.35rem 0.85rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; margin-bottom: 1.25rem; line-height: 2.3; font-size: 0.95rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 95px; padding: 2px 10px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.85rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid, .game-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">International Economy Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_inteconrev_pw';
+  var valid = ['IntEconRev-5Pr2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['IntEconRev-5Pr2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_inteconrev_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">International Economy</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Pro-Globalisation vs De-Globalisation</span>
+        <div class="instructions-row">
+            Click a scenario to select it (highlights in amber), then click a category box to place it. You'll get instant feedback on each placement.
+        </div>
+        <div class="sorting-grid">
+            <div class="sort-col pro-col" onclick="placeScenario('pro')">
+                <span class="col-label">✅ Pro-Globalisation</span>
+                <p class="col-desc">Policies that support free trade and global integration</p>
+                <div class="placed-items" id="proScenarios"></div>
+            </div>
+            <div class="sort-col anti-col" onclick="placeScenario('anti')">
+                <span class="col-label">🚫 De-Globalisation</span>
+                <p class="col-desc">Policies that restrict trade and promote protectionism</p>
+                <div class="placed-items" id="antiScenarios"></div>
+            </div>
+        </div>
+        <div class="scenario-pool">
+            <span class="scenario-pool-label">Available Scenarios — click to select, then click a category above</span>
+            <div class="scenario-items" id="scenarioPool"></div>
+        </div>
+        <div class="placement-feedback" id="placementFeedback"></div>
+        <div id="sortingComplete" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkAllSorting()">Check Progress</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: INTERACTIVE GAMES ══ -->
+    <div class="tab-content">
+        <div id="gameSelector">
+            <span class="mono-label">Interactive Games</span>
+            <div class="game-grid">
+                <div class="game-card" onclick="startGame('match')">
+                    <span class="game-icon">🎯</span>
+                    <h3>Match the Pairs</h3>
+                    <p>Match international trade concepts with their definitions</p>
+                </div>
+                <div class="game-card" onclick="startGame('wto')">
+                    <span class="game-icon">🌐</span>
+                    <h3>WTO Missing Words</h3>
+                    <p>Complete the passage about the World Trade Organization</p>
+                </div>
+                <div class="game-card" onclick="startGame('advantage')">
+                    <span class="game-icon">📊</span>
+                    <h3>Comparative Advantage</h3>
+                    <p>Fill in the blanks about absolute vs comparative advantage</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Game -->
+        <div id="matchGame" class="game-area">
+            <div class="game-title">Match International Trade Concepts</div>
+            <div class="game-subtitle">Click a concept, then click its matching definition</div>
+            <div class="match-progress" id="matchProgress">0 / 12 matched</div>
+            <div class="match-grid">
+                <div>
+                    <span class="match-col-label">Concepts</span>
+                    <div class="match-items" id="matchConcepts"></div>
+                </div>
+                <div>
+                    <span class="match-col-label">Definitions</span>
+                    <div class="match-items" id="matchDefinitions"></div>
+                </div>
+            </div>
+            <div id="matchResult" class="inline-result" style="margin-top:1.25rem;"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- WTO Game -->
+        <div id="wtoGame" class="game-area">
+            <div class="game-title">The Role of the World Trade Organization</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="wtoWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="wtoPassage"></div>
+            <div id="wtoResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('wto')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('wto')">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Advantage Game -->
+        <div id="advantageGame" class="game-area">
+            <div class="game-title">Comparative vs Absolute Advantage</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="advantageWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="advantagePassage"></div>
+            <div id="advantageResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('advantage')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('advantage')">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What is comparative advantage?", options: ["When a country specializes in producing luxury goods","When a country can produce all goods more efficiently than another country","When a country has more resources than another country","When a country can produce a good at a lower opportunity cost than another country"], correct: 3, explanation: "<strong>Correct!</strong> Comparative advantage occurs when a country can produce a good at a lower opportunity cost than another country — they sacrifice less of other goods to produce it. Developed by David Ricardo, this explains why countries benefit from trade even when one country is more efficient at producing everything." },
+    { question: "What is absolute advantage?", options: ["When a country has the most advanced technology","When a country produces more of everything than any other country","When a country has the largest economy in the world","When a country can produce a good using fewer resources than another country"], correct: 3, explanation: "<strong>Correct!</strong> Absolute advantage exists when a country can produce a good using fewer resources (less time, labour, or capital) than another country. A country can have absolute advantage in all goods, but comparative advantage still explains why trade benefits both parties." },
+    { question: "How has containerisation affected international trade?", options: ["It has dramatically reduced transportation costs and increased trade volumes","It has increased shipping costs significantly","It has reduced the speed and efficiency of global trade","It has made shipping more dangerous and unreliable"], correct: 0, explanation: "<strong>Correct!</strong> Containerisation, introduced in the 1950s, revolutionised international trade by standardising shipping containers. It dramatically reduced transportation costs (by up to 90% in some cases), decreased loading times from weeks to hours, and enabled the development of global supply chains." },
+    { question: "What are economies of scale in international trade?", options: ["Government policies that restrict the size of multinational corporations","Cost advantages gained by companies through increased production levels","The measurement of trade balance between countries","The tendency for small firms to dominate international markets"], correct: 1, explanation: "<strong>Correct!</strong> Economies of scale are cost advantages businesses experience when production becomes more efficient as the scale increases. In international trade, firms can reduce average costs per unit by producing larger quantities for global markets — this incentivises firms to expand into international markets." },
+    { question: "Which best describes globalisation?", options: ["The formation of international military alliances","The process of increasing interconnection between countries through trade, investment, and culture","The adoption of a single global currency","The dominance of Western culture worldwide"], correct: 1, explanation: "<strong>Correct!</strong> Globalisation is the process of increasing economic, political, and cultural integration between countries. It involves growth in international trade, increased FDI, movement of labour across borders, spread of technology and knowledge, and cultural exchange." },
+    { question: "What is protectionism?", options: ["International agreements to protect human rights","Policies designed to shield domestic industries from foreign competition","Laws that protect consumers from dangerous products","Environmental regulations to protect ecosystems"], correct: 1, explanation: "<strong>Correct!</strong> Protectionism refers to government policies designed to restrict international trade and protect domestic industries from foreign competition. Measures include tariffs, quotas, subsidies, and regulatory barriers. Economists generally argue protectionism reduces overall economic efficiency and raises consumer prices." },
+    { question: "What is a tariff?", options: ["A limit on the quantity of goods that can be imported","A ban on importing specific goods","A tax imposed on imported goods","A payment to domestic producers"], correct: 2, explanation: "<strong>Correct!</strong> A tariff is a tax imposed by a government on imported goods and services. While tariffs protect domestic producers, they typically harm consumers through higher prices, reduce economic efficiency, and can provoke retaliation from trading partners." },
+    { question: "What is a quota?", options: ["A physical limit on the quantity of a good that can be imported","A trade agreement between countries","A tax on imported goods","A subsidy for domestic producers"], correct: 0, explanation: "<strong>Correct!</strong> A quota is a quantitative restriction that limits the amount of a specific good that can be imported during a given time period. Quotas are more restrictive than tariffs as they create absolute limits regardless of price. The WTO generally discourages quotas in favour of tariffs, which are more transparent." },
+    { question: "What are trade subsidies?", options: ["Financial assistance from government to domestic producers to help them compete internationally","Fees charged for importing goods","Taxes on domestic production","Payments made to foreign governments for trade agreements"], correct: 0, explanation: "<strong>Correct!</strong> Trade subsidies are financial assistance provided by governments to domestic producers to help them compete in domestic and international markets. They distort trade by giving artificial competitive advantages, burden taxpayers, and often provoke WTO disputes." },
+    { question: "What is a currency union?", options: ["An international bank that lends to developing countries","A system where all currencies are backed by gold","A group of countries that share a single currency","An agreement to fix exchange rates between currencies"], correct: 2, explanation: "<strong>Correct!</strong> A currency union is an agreement between countries to share a single currency and monetary policy — the most prominent example being the Eurozone. Benefits include elimination of exchange costs and increased price transparency, but challenges include loss of independent monetary policy." },
+    { question: "What is a trade bloc?", options: ["A restriction on all international trade","A government agency that regulates international trade","A group of countries that agree to reduce trade barriers between them","An international organization that promotes protectionism"], correct: 2, explanation: "<strong>Correct!</strong> A trade bloc is an agreement between countries to reduce or eliminate trade barriers among themselves. Types range from Free Trade Areas (no tariffs between members) to Customs Unions (common external tariff) to Economic Unions (unified economic policies)." },
+    { question: "What is a Preferential Trade Area (PTA)?", options: ["An agreement where countries reduce tariffs on some goods between members","An area where countries share a common currency","A zone where all trade barriers are completely eliminated","The most integrated form of regional trade agreement"], correct: 0, explanation: "<strong>Correct!</strong> A Preferential Trade Area (PTA) is the most basic form of regional trade agreement, where member countries agree to reduce tariffs on some (but not all) goods traded between them. PTAs represent the first step toward deeper integration and are often stepping stones to more comprehensive agreements." },
+    { question: "What defines a Customs Union?", options: ["Countries that only trade with each other","Countries that eliminate internal tariffs and adopt a common external tariff","Countries that share a common currency","Countries that have the same labor laws"], correct: 1, explanation: "<strong>Correct!</strong> A Customs Union goes beyond a Free Trade Area by not only eliminating tariffs between members but also establishing a Common External Tariff (CET) on imports from non-members. Examples include the EU and SACU. Members lose autonomy over individual trade policies with non-members." },
+    { question: "What is trade creation?", options: ["When new products are invented for export","When governments create new trade regulations","When production shifts from high-cost domestic producers to low-cost producers in partner countries","When countries start trading for the first time"], correct: 2, explanation: "<strong>Correct!</strong> Trade creation occurs when a trade agreement causes production to shift from higher-cost domestic producers to lower-cost, more efficient producers in partner countries. This is a welfare-improving outcome representing more efficient resource allocation." },
+    { question: "What is trade diversion?", options: ["When goods are smuggled across borders","When trade shifts from efficient non-member countries to less efficient member countries due to preferential treatment","When trade routes are redirected for political reasons","When countries change their main trading partners"], correct: 1, explanation: "<strong>Correct!</strong> Trade diversion occurs when a trade agreement causes trade to shift from more efficient non-member countries to less efficient member countries due to preferential treatment. This is a welfare-reducing outcome. The net benefit of a trade agreement depends on whether trade creation outweighs trade diversion." },
+    { question: "What is the primary role of the World Trade Organization (WTO)?", options: ["To set exchange rates between currencies","To regulate multinational corporations","To provide loans to developing countries","To promote free trade by reducing trade barriers and settling disputes"], correct: 3, explanation: "<strong>Correct!</strong> The WTO, established in 1995 with 164 members, promotes free trade by negotiating trade agreements, providing a forum for negotiations, and settling disputes through its dispute resolution system. It operates on principles of non-discrimination, predictability, and fair competition." },
+    { question: "What is the Single European Market (SEM)?", options: ["A currency used by all European countries","An area where goods, services, capital, and people can move freely without barriers","A stock exchange located in Europe","A trade agreement between Europe and Asia"], correct: 1, explanation: "<strong>Correct!</strong> The Single European Market (SEM), formalized in 1993, allows free movement of goods, services, capital, and people across EU member states. It creates a unified economic space of over 440 million people, increasing competition, economies of scale, consumer choice, and economic growth." },
+    { question: "What characterizes a Multinational Corporation (MNC)?", options: ["A company that has employees from different countries","A company that operates and has assets in multiple countries","A government-owned enterprise that trades internationally","A company that only exports goods"], correct: 1, explanation: "<strong>Correct!</strong> A Multinational Corporation (MNC) operates in multiple countries through foreign direct investment (FDI), owning or controlling production facilities or assets abroad. MNCs drive globalisation through job creation and technology transfer, but face criticism for exploiting cheap labour and tax avoidance." },
+    { question: "What distinguishes Less Developed Countries (LDCs) in international trade?", options: ["They export more than they import","They have the largest populations in the world","They rely heavily on primary product exports and face structural barriers to trade","They do not participate in international trade"], correct: 2, explanation: "<strong>Correct!</strong> LDCs typically face: heavy dependence on primary commodity exports (with volatile prices), limited manufacturing capacity, poor infrastructure, lack of technology and skilled labour, and high debt burdens. They also face declining terms of trade when primary product prices fall relative to manufactured goods." },
+    { question: "What is trade liberalisation?", options: ["The establishment of new trade regulations","The process of making trade more fair for developing countries","Government intervention to protect domestic industries","The removal or reduction of barriers to free trade between countries"], correct: 3, explanation: "<strong>Correct!</strong> Trade liberalisation is the removal or reduction of barriers to international trade, including reducing tariffs, removing quotas, simplifying customs, and harmonising standards. It can be unilateral, bilateral, regional, or multilateral (through the WTO). Proponents argue it increases efficiency and growth; critics worry about job losses and loss of policy autonomy." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — immediate feedback per placement
+══════════════════════════════════════ */
+const scenarios = [
+    { text: "Reducing tariffs on imported goods", type: "pro" },
+    { text: "Implementing high tariffs to protect domestic steel industry", type: "anti" },
+    { text: "Signing a free trade agreement with neighboring countries", type: "pro" },
+    { text: "Imposing strict quotas on textile imports", type: "anti" },
+    { text: "Joining the World Trade Organization", type: "pro" },
+    { text: "Providing subsidies to domestic farmers to compete with imports", type: "anti" },
+    { text: "Encouraging foreign direct investment through tax incentives", type: "pro" },
+    { text: "Nationalizing foreign-owned industries", type: "anti" },
+    { text: "Removing barriers to labour migration", type: "pro" },
+    { text: "Implementing 'Buy Local' government procurement policies", type: "anti" },
+    { text: "Harmonizing product standards with international norms", type: "pro" },
+    { text: "Introducing currency controls to limit capital outflows", type: "anti" },
+    { text: "Establishing a customs union with reduced internal tariffs", type: "pro" },
+    { text: "Withdrawing from international trade agreements", type: "anti" },
+    { text: "Promoting export-led growth through trade facilitation", type: "pro" },
+    { text: "Requiring foreign companies to partner with domestic firms", type: "anti" },
+    { text: "Adopting common regulatory standards across borders", type: "pro" },
+    { text: "Banning certain imported products to protect local producers", type: "anti" }
+];
+
+let selectedScenario = null;
+let placedScenarios = { pro: [], anti: [] };
+
+function initSorting() {
+    selectedScenario = null;
+    placedScenarios = { pro: [], anti: [] };
+    document.getElementById('proScenarios').innerHTML = '';
+    document.getElementById('antiScenarios').innerHTML = '';
+    document.getElementById('sortingComplete').classList.remove('show');
+    hidePlacementFeedback();
+    document.getElementById('scenarioPool').innerHTML = scenarios.map((s, i) =>
+        `<div class="scenario-card" data-index="${i}" onclick="selectScenario(${i})">${s.text}</div>`
+    ).join('');
+}
+
+function selectScenario(index) {
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected-scenario'));
+    if (selectedScenario === index) { selectedScenario = null; return; }
+    selectedScenario = index;
+    document.querySelector(`[data-index="${index}"]`).classList.add('selected-scenario');
+}
+
+function placeScenario(system) {
+    if (selectedScenario === null) return;
+    const scenario = scenarios[selectedScenario];
+    const correct = scenario.type === system;
+    const fb = document.getElementById('placementFeedback');
+
+    if (correct) {
+        // Place it
+        placedScenarios[system].push(scenario);
+        const container = document.getElementById(system === 'pro' ? 'proScenarios' : 'antiScenarios');
+        const div = document.createElement('div');
+        div.className = `placed-item ${system}`;
+        div.textContent = scenario.text;
+        container.appendChild(div);
+        // Mark card as placed
+        const card = document.querySelector(`[data-index="${selectedScenario}"]`);
+        if (card) card.classList.add('placed');
+        showPlacementFeedback(true, system === 'pro' ? 'pro-globalisation' : 'de-globalisation');
+    } else {
+        showPlacementFeedback(false);
+    }
+
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected-scenario'));
+    selectedScenario = null;
+
+    // Check if all placed
+    if (placedScenarios.pro.length + placedScenarios.anti.length === scenarios.length) {
+        const complete = document.getElementById('sortingComplete');
+        complete.textContent = '🎉 All scenarios sorted correctly! Well done!';
+        complete.className = 'inline-result show success';
+    }
+}
+
+function showPlacementFeedback(correct, category) {
+    const fb = document.getElementById('placementFeedback');
+    fb.className = 'placement-feedback show ' + (correct ? 'correct-place' : 'incorrect-place');
+    fb.textContent = correct
+        ? `✓ Correct — this is a ${category} policy.`
+        : '✗ Not quite — think about whether this policy opens up or restricts trade. Try again.';
+    clearTimeout(window._fbTimer);
+    window._fbTimer = setTimeout(() => hidePlacementFeedback(), 2800);
+}
+
+function hidePlacementFeedback() {
+    const fb = document.getElementById('placementFeedback');
+    fb.classList.remove('show');
+}
+
+function checkAllSorting() {
+    const placed = placedScenarios.pro.length + placedScenarios.anti.length;
+    const total = scenarios.length;
+    const complete = document.getElementById('sortingComplete');
+    if (placed === total) {
+        complete.textContent = `🎉 All ${total} scenarios sorted correctly!`;
+        complete.className = 'inline-result show success';
+    } else {
+        complete.textContent = `${placed} of ${total} sorted so far — keep going!`;
+        complete.className = 'inline-result show info';
+    }
+}
+
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Comparative Advantage", definition: "When a country can produce a good at a lower opportunity cost than another country" },
+    { concept: "Absolute Advantage", definition: "When a country can produce a good using fewer resources than another country" },
+    { concept: "Containerisation", definition: "Standardisation of shipping containers that revolutionised global trade efficiency" },
+    { concept: "Protectionism", definition: "Government policies designed to shield domestic industries from foreign competition" },
+    { concept: "Tariff", definition: "A tax imposed on imported goods to protect domestic producers or raise revenue" },
+    { concept: "Quota", definition: "A physical limit on the quantity of a specific good that can be imported" },
+    { concept: "Trade Bloc", definition: "A group of countries that agree to reduce trade barriers between themselves" },
+    { concept: "Customs Union", definition: "Countries that eliminate internal tariffs and adopt a common external tariff" },
+    { concept: "Trade Creation", definition: "When production shifts from high-cost domestic producers to low-cost partners" },
+    { concept: "Trade Diversion", definition: "When trade shifts from efficient non-members to less efficient members due to preferences" },
+    { concept: "WTO", definition: "The global organisation that promotes free trade and settles disputes between nations" },
+    { concept: "Multinational Corporation", definition: "A company that operates and has assets in multiple countries through FDI" }
+];
+let selectedConcept = null, selectedDefinition = null, matchedPairs = 0;
+
+function initMatch() {
+    matchedPairs = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = [...matchPairs].sort(()=>Math.random()-0.5).map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-definition="${p.concept}" onclick="selectDefinition(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+
+function selectDefinition(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition === concept) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    document.querySelectorAll('[data-definition]').forEach(e => e.classList.remove('selected'));
+    selectedDefinition = concept; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (!selectedConcept || !selectedDefinition) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-definition="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedPairs++; updateMatchProgress();
+        if (matchedPairs === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedPairs} / ${matchPairs.length} matched`; }
+function resetMatch() { initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK (shared engine)
+══════════════════════════════════════ */
+const fillData = {
+    wto: {
+        passage: "The World Trade Organization (WTO) was established in [blank0] to promote [blank1] trade and provide a framework for negotiating trade agreements. The WTO operates on key principles including [blank2], which ensures that countries cannot discriminate between trading partners, and [blank3], which requires countries to treat foreign goods the same as domestic goods once they enter the market. The organization has [blank4] member countries and provides a [blank5] mechanism to resolve trade conflicts between nations. The WTO aims to reduce [blank6] such as tariffs and quotas, thereby increasing global trade volumes and economic [blank7]. However, critics argue that the WTO favors [blank8] countries and can undermine [blank9] autonomy in setting domestic policies.",
+        answers: ["1995","free","non-discrimination","national treatment","164","dispute settlement","trade barriers","efficiency","developed","national"]
+    },
+    advantage: {
+        passage: "The concepts of absolute and comparative advantage are fundamental to understanding international trade. [blank0] advantage exists when a country can produce a good using [blank1] resources than another country, making it absolutely more efficient. However, even if a country has absolute advantage in all goods, trade can still be [blank2] due to comparative advantage. [blank3] advantage occurs when a country can produce a good at a lower [blank4] cost than another country. This means the country sacrifices [blank5] of other goods to produce it. According to [blank6], who developed this theory in 1817, countries should [blank7] in producing goods where they have comparative advantage and [blank8] for other goods. This leads to increased global [blank9] and mutual benefits for all trading partners, even when one country is more productive in everything.",
+        answers: ["Absolute","fewer","beneficial","Comparative","opportunity","less","David Ricardo","specialize","trade","efficiency"]
+    }
+};
+
+const fillState = {
+    wto: { selectedWord: null, placed: {} },
+    advantage: { selectedWord: null, placed: {} }
+};
+
+function initFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    state.selectedWord = null; state.placed = {};
+    document.getElementById(gameId+'WordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank</div>' +
+        [...data.answers].sort(()=>Math.random()-0.5).map(w =>
+            `<button class="word-option" data-word="${w}" onclick="selectFillWord('${gameId}','${w.replace(/'/g,"&#39;")}',this)">${w}</button>`
+        ).join('');
+    let html = data.passage;
+    data.answers.forEach((_,i) => {
+        html = html.replace(`[blank${i}]`, `<span class="word-blank" data-index="${i}" data-game="${gameId}" onclick="clickBlank('${gameId}',${i})">___</span>`);
+    });
+    document.getElementById(gameId+'Passage').innerHTML = html;
+    document.getElementById(gameId+'Result').classList.remove('show');
+}
+
+function selectFillWord(gameId, word, btn) {
+    const state = fillState[gameId];
+    document.getElementById(gameId+'WordBank').querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (state.selectedWord === word) { state.selectedWord = null; }
+    else { state.selectedWord = word; btn.classList.add('selected-word'); }
+}
+
+function clickBlank(gameId, index) {
+    const state = fillState[gameId];
+    const blank = document.querySelector(`[data-game="${gameId}"][data-index="${index}"]`);
+    if (!blank) return;
+    if (state.placed[index] !== undefined && !state.selectedWord) {
+        returnWordToBank(gameId, state.placed[index]); delete state.placed[index];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selectedWord) return;
+    if (state.placed[index] !== undefined) returnWordToBank(gameId, state.placed[index]);
+    state.placed[index] = state.selectedWord;
+    blank.textContent = state.selectedWord; blank.className = 'word-blank has-word';
+    markWordUsed(gameId, state.selectedWord); state.selectedWord = null;
+}
+
+function returnWordToBank(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function markWordUsed(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+}
+
+function checkFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-game="${gameId}"][data-index="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i] !== undefined) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(gameId+'Result');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(gameId) { initFill(gameId); }
+
+/* ── GAME NAV ── */
+function startGame(game) {
+    document.getElementById('gameSelector').style.display = 'none';
+    document.getElementById(game+'Game').classList.add('active');
+    if (game === 'match') initMatch(); else initFill(game);
+}
+
+function backToGameSelector() {
+    document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+    document.getElementById('gameSelector').style.display = 'block';
+}
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

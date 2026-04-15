@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Financial Markets Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #0d1526;
+            --accent: #10b981;
+            --accent2: #34d399;
+            --amber: #f59e0b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12);
+            --incorrect-bg: rgba(239,68,68,0.12);
+            --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface2: #f1f5f9;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1);
+            --incorrect-bg: rgba(239,68,68,0.1);
+            --warning-bg: rgba(245,158,11,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--ff-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* ── HEADER ── */
+        header {
+            padding: 1.1rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: rgba(10,14,26,0.96);
+            backdrop-filter: blur(16px);
+            z-index: 200;
+        }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag {
+            font-family: var(--ff-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            background: rgba(16,185,129,0.1);
+            padding: 0.28rem 0.7rem;
+            border-radius: 100px;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        .theme-btn {
+            padding: 0.35rem 0.6rem;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            line-height: 1;
+            transition: all 0.18s;
+        }
+        .theme-btn:hover { color: var(--text); }
+
+        /* ── LAYOUT ── */
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        /* ── TABS ── */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2.5rem;
+        }
+        .tab {
+            padding: 0.85rem 1.4rem;
+            background: none;
+            border: none;
+            font-family: var(--ff-sans);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.18s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── MONO LABELS ── */
+        .mono-label {
+            font-family: var(--ff-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+            display: block;
+        }
+
+        /* ── PROGRESS ── */
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.55rem;
+        }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill {
+            font-family: var(--ff-mono);
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: rgba(16,185,129,0.1);
+            padding: 0.2rem 0.65rem;
+            border-radius: 100px;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        .progress-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.5s ease;
+        }
+
+        /* ── QUESTION CARD ── */
+        .q-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .q-num {
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 0.7rem;
+        }
+        .q-text {
+            font-size: 1.08rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .options { display: grid; gap: 0.55rem; }
+        .option {
+            padding: 0.85rem 1.1rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--ff-sans);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text);
+            text-align: left;
+            transition: all 0.15s;
+        }
+        .option:hover { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: var(--accent); color: var(--accent2); }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+
+        .explanation {
+            display: none;
+            margin-top: 1.2rem;
+            padding: 1rem 1.2rem;
+            background: rgba(16,185,129,0.07);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.88rem;
+            line-height: 1.75;
+            color: var(--muted);
+        }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .explanation strong { color: var(--accent2); }
+        [data-theme="light"] .explanation strong { color: #059669; }
+
+        /* ── BUTTONS ── */
+        .nav-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.62rem 1.4rem;
+            border-radius: 8px;
+            border: none;
+            font-family: var(--ff-sans);
+            font-size: 0.87rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-primary { background: var(--accent); color: #0a0e1a; }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* ── RESULT PANEL ── */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg {
+            display: inline-block;
+            font-size: 0.87rem;
+            font-weight: 600;
+            color: var(--accent2);
+            background: rgba(16,185,129,0.1);
+            padding: 0.45rem 1.2rem;
+            border-radius: 100px;
+            border: 1px solid rgba(16,185,129,0.2);
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── INLINE RESULT ── */
+        .inline-result {
+            display: none;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.87rem;
+            font-weight: 600;
+        }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: var(--accent2); border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* ── SORTING ── */
+        .instructions-row {
+            font-size: 0.84rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            padding: 0.7rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .sorting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .sort-col {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            min-height: 300px;
+            cursor: pointer;
+            transition: border-color 0.18s;
+        }
+        .sort-col:hover { border-color: rgba(16,185,129,0.3); }
+        .col-label {
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .sort-items { display: flex; flex-direction: column; gap: 0.5rem; min-height: 200px; }
+        .sort-item {
+            padding: 0.7rem 0.9rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.86rem;
+            line-height: 1.5;
+            color: var(--text);
+            transition: all 0.15s;
+        }
+        .sort-item:hover { border-color: rgba(16,185,129,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: var(--accent); }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel {
+            background: var(--surface);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            cursor: pointer;
+        }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* ── GAME SELECTOR ── */
+        .game-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .game-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.75rem 1.4rem;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .game-card:hover { border-color: rgba(16,185,129,0.35); transform: translateY(-2px); }
+        .game-icon { font-size: 1.6rem; margin-bottom: 0.75rem; display: block; }
+        .game-card h3 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+        .game-card p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+        .game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .game-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* ── MATCH GAME ── */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item {
+            padding: 0.8rem 1rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.86rem;
+            line-height: 1.55;
+            color: var(--text);
+            transition: all 0.15s;
+            text-align: left;
+        }
+        .match-item:hover { border-color: rgba(16,185,129,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: var(--accent); cursor: default; }
+        .match-item.matched:hover { transform: none; border-color: var(--accent); }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+
+        /* ── FILL IN BLANK ── */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            min-height: 54px;
+            align-items: flex-start;
+            align-content: flex-start;
+        }
+        .word-bank-label {
+            width: 100%;
+            font-family: var(--ff-mono);
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+        .word-option {
+            padding: 0.35rem 0.85rem;
+            background: rgba(16,185,129,0.1);
+            color: var(--accent2);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 100px;
+            cursor: pointer;
+            font-family: var(--ff-sans);
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .word-option:hover { background: rgba(16,185,129,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #059669; }
+
+        .passage-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.75rem;
+            margin-bottom: 1.25rem;
+            line-height: 2.3;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .word-blank {
+            display: inline-block;
+            min-width: 95px;
+            padding: 2px 10px;
+            background: var(--surface2);
+            border: 1px dashed rgba(16,185,129,0.4);
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 0.85rem;
+            transition: all 0.15s;
+            vertical-align: middle;
+        }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(16,185,129,0.35); color: var(--accent2); background: rgba(16,185,129,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: var(--accent); color: var(--accent2); }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #059669; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.2rem 2.5rem;
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid, .game-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Financial Markets Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_finmktrev_pw';
+  var valid = ['FinMktRev-3Hx2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['FinMktRev-3Hx2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_finmktrev_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Financial Markets</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Commercial vs Investment Banking</span>
+        <div class="instructions-row">
+            Click an item to select it (highlights in amber), then click a category to place it. Click a placed item to return it to Unsorted.
+        </div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('commercial')">
+                <span class="col-label">🏦 Commercial Bank Functions</span>
+                <div class="sort-items" id="commercial"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('investment')">
+                <span class="col-label">📈 Investment Bank Activities</span>
+                <div class="sort-items" id="investment"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortingResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: GAMES ══ -->
+    <div class="tab-content">
+        <div id="gameSelector">
+            <span class="mono-label">Interactive Games</span>
+            <div class="game-grid">
+                <div class="game-card" onclick="startGame('match')">
+                    <span class="game-icon">🎯</span>
+                    <h3>Match the Pairs</h3>
+                    <p>Match financial market concepts with their definitions</p>
+                </div>
+                <div class="game-card" onclick="startGame('money')">
+                    <span class="game-icon">💵</span>
+                    <h3>Money &amp; Markets</h3>
+                    <p>Complete the passage about money's characteristics</p>
+                </div>
+                <div class="game-card" onclick="startGame('regulation')">
+                    <span class="game-icon">⚖️</span>
+                    <h3>Financial Regulation</h3>
+                    <p>Fill in the blanks about regulation and systemic risk</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Game -->
+        <div id="matchGame" class="game-area">
+            <div class="game-title">Match the Financial Market Concepts</div>
+            <div class="game-subtitle">Click a concept, then click its matching definition</div>
+            <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+            <div class="match-grid">
+                <div>
+                    <span class="match-col-label">Concepts</span>
+                    <div class="match-items" id="matchConcepts"></div>
+                </div>
+                <div>
+                    <span class="match-col-label">Definitions</span>
+                    <div class="match-items" id="matchDefinitions"></div>
+                </div>
+            </div>
+            <div id="matchResult" class="inline-result" style="margin-top:1.25rem;"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Money Fill-in-Blank -->
+        <div id="moneyGame" class="game-area">
+            <div class="game-title">Money, Functions &amp; Financial Markets</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="moneyWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="moneyPassage"></div>
+            <div id="moneyResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('money')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('money')">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Regulation Fill-in-Blank -->
+        <div id="regulationGame" class="game-area">
+            <div class="game-title">Financial Regulation &amp; Systemic Risk</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="regulationWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="regulationPassage"></div>
+            <div id="regulationResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('regulation')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('regulation')">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What are the four essential characteristics (functions) of money?", options: ["Durability, portability, divisibility, and scarcity","Gold-backed, government-issued, widely accepted, and valuable","Only medium of exchange and store of value","Medium of exchange, store of value, unit of account, and standard of deferred payment"], correct: 3, explanation: "<strong>Correct!</strong> Money performs four key functions: (1) Medium of exchange — facilitates transactions without barter; (2) Store of value — maintains purchasing power over time; (3) Unit of account — common measure for prices; (4) Standard of deferred payment — facilitates credit and future payments." },
+    { question: "What is the difference between narrow money (M0/M1) and broad money (M4)?", options: ["They are the same thing with different names","Narrow money is more important than broad money","Narrow money includes all bank deposits; broad money includes only cash","Narrow money includes only physical cash and central bank reserves; broad money includes cash plus all bank deposits and near-money assets"], correct: 3, explanation: "<strong>Correct!</strong> Narrow money (M0) = physical currency + commercial banks' reserves at the central bank. Broad money (M4) = M0 + all bank deposits + certificates of deposit + other near-money assets. Broad money is much larger because most 'money' exists as bank deposits." },
+    { question: "What is the money market, and how does it differ from the capital market?", options: ["They are the same market with different names","Money market uses only cash; capital market uses credit","Money market is for individuals; capital market is for businesses","Money market: short-term lending/borrowing (under 1 year) for liquidity; capital market: long-term finance (over 1 year) for investment through bonds and shares"], correct: 3, explanation: "<strong>Correct!</strong> Money market deals with short-term debt instruments maturing within one year — used for managing liquidity. Capital market deals with long-term securities (stocks, bonds) for raising investment capital." },
+    { question: "What is the key difference between debt and equity as methods of raising finance?", options: ["Only large firms can use equity finance","Debt is always cheaper than equity","Debt involves borrowing money that must be repaid with interest (loans, bonds); equity involves selling ownership stakes (shares) with no repayment obligation but shareholders own part of the firm","Debt and equity are the same thing"], correct: 2, explanation: "<strong>Correct!</strong> DEBT: Borrowing — must be repaid with interest, creates fixed obligation, lenders don't own the firm. EQUITY: Selling shares — no repayment required, dividends discretionary, shareholders own the firm and have voting rights." },
+    { question: "Why is there an inverse relationship between market interest rates and bond prices?", options: ["When interest rates rise, new bonds offer higher yields, making existing bonds with lower coupons less attractive, so their prices fall to increase their effective yield","Interest rates and bond prices always move together","Bond prices are fixed and never change","Central banks directly set bond prices"], correct: 0, explanation: "<strong>Correct!</strong> Example: You own a bond paying £50 coupon (5% on £1,000). If market rates rise to 10%, new bonds pay £100. Your bond is now unattractive, so its price falls to ~£500, making its £50 coupon represent a 10% yield. When rates ↑, bond prices ↓." },
+    { question: "A government bond has a face value of £100, pays an annual coupon of £5, and currently sells for £80. What is its yield?", options: ["20%","6.25% (calculated as: £5 coupon ÷ £80 market price × 100)","5% (the coupon rate)","£5"], correct: 1, explanation: "<strong>Correct!</strong> Yield = (Annual coupon ÷ Current market price) × 100 = (£5 ÷ £80) × 100 = 6.25%. The yield is higher than the coupon rate (5%) because the bond trades below face value." },
+    { question: "What are the main functions of a commercial bank?", options: ["Accept deposits, make loans, provide payment services, offer overdrafts and mortgages, facilitate money transmission, provide financial advice to retail and business customers","Only accept deposits and make loans","Set monetary policy and regulate other banks","Trade securities and underwrite IPOs"], correct: 0, explanation: "<strong>Correct!</strong> Commercial banks serve households and businesses: accept deposits, make loans, provide payment services, offer current/savings accounts, and act as financial intermediaries channelling funds from savers to borrowers." },
+    { question: "What is the key difference between commercial banks and investment banks?", options: ["Commercial banks are larger than investment banks","Commercial banks serve retail/business customers with deposits and loans; investment banks serve corporations and institutions with underwriting, M&A advice, and securities trading","Investment banks only invest in stocks","There is no meaningful difference"], correct: 1, explanation: "<strong>Correct!</strong> Commercial banks: retail focus, deposits, loans, payment services. Investment banks: wholesale focus, underwriting securities (IPOs), M&A advice, securities trading. Many banks are now universal banks doing both, which can increase systemic risk." },
+    { question: "What are the three main objectives of commercial banks, and why might they conflict?", options: ["Lending, borrowing, and investing","There are no conflicts between bank objectives","Profitability (earning returns), liquidity (meeting withdrawal demands), security (minimizing loan defaults) — conflicts arise as safer/more liquid assets typically earn lower returns","Growth, market share, and customer satisfaction"], correct: 2, explanation: "<strong>Correct!</strong> PROFITABILITY: Maximise interest margin. LIQUIDITY: Keep enough liquid assets — requires holding low-yielding assets. SECURITY: Minimise bad debts — requires conservative lending. Lending more increases profit but reduces liquidity and security." },
+    { question: "How do commercial banks create credit (money)?", options: ["Only the central bank can create money","By printing physical money","Through fractional reserve banking — when banks make loans, they create new deposits, expanding the money supply through the credit creation multiplier process","Banks cannot create money"], correct: 2, explanation: "<strong>Correct!</strong> When a bank makes a loan, it credits the borrower's account with new deposits, creating money. With a 10% reserve ratio, an initial £1,000 deposit can support £10,000 in total deposits. Banks create >97% of the money supply." },
+    { question: "What are the key items on a commercial bank's balance sheet?", options: ["Only customer deposits and loans","ASSETS: loans to customers, securities, reserves at central bank; LIABILITIES: customer deposits, borrowing from other banks/central bank; CAPITAL: shareholders' equity","Balance sheets don't apply to banks","Assets include deposits; liabilities include loans"], correct: 1, explanation: "<strong>Correct!</strong> ASSETS: customer loans (largest), government securities, reserves at BoE, interbank loans. LIABILITIES: customer deposits (largest), wholesale borrowing, bonds issued. CAPITAL: shareholders' equity buffer against losses." },
+    { question: "What is the role of the Prudential Regulation Authority (PRA)?", options: ["Supervise and regulate banks, building societies, and insurers to ensure they maintain adequate capital and liquidity ratios to promote financial stability and protect depositors","Protect consumers from fraud and mis-selling","Regulate stock market trading","Set monetary policy and interest rates"], correct: 0, explanation: "<strong>Correct!</strong> The PRA (part of Bank of England) focuses on prudential regulation — ensuring financial institutions are safe and sound. It sets and enforces capital requirements, liquidity ratios, stress tests, and risk management standards." },
+    { question: "What is the role of the Financial Conduct Authority (FCA)?", options: ["Regulate financial firms' conduct to protect consumers, enhance market integrity, and promote competition — focusing on fair treatment, transparency, and preventing mis-selling","Set capital requirements for banks","Provide deposit insurance","Control the money supply"], correct: 0, explanation: "<strong>Correct!</strong> The FCA regulates the conduct of financial services firms. It ensures fair treatment of customers, prevention of mis-selling (e.g. PPI scandal), market integrity (preventing insider trading), and competition." },
+    { question: "Why might a bank fail? What are the main risks?", options: ["Banks never fail because they are insured","Banks can fail from: liquidity crisis (can't meet withdrawals), loan defaults (borrowers don't repay), maturity mismatch (borrow short, lend long), insolvency (liabilities exceed assets), and bank runs","Only small banks can fail","Bank failure only happens in developing countries"], correct: 1, explanation: "<strong>Correct!</strong> Bank failure causes: (1) Liquidity crisis — sudden withdrawals exceed liquid assets (Northern Rock 2007); (2) Credit risk — large loan defaults; (3) Maturity transformation risk; (4) Capital inadequacy — losses erode equity buffer; (5) Bank runs — panic withdrawals become self-fulfilling." },
+    { question: "What is moral hazard in the context of banking, and how does it arise?", options: ["When regulators are too strict","When customers withdraw deposits","When banks take excessive risks knowing that governments will bail them out if things go wrong ('too big to fail'), leading to privatized profits and socialized losses","When banks refuse to lend to risky customers"], correct: 2, explanation: "<strong>Correct!</strong> Moral hazard: Banks take on excessive risk because they expect government bailouts. Banks keep profits when risks pay off; taxpayers bear losses when they don't. 2008: banks made risky mortgage loans, earned huge profits in boom, received bailouts in bust." },
+    { question: "What is systemic risk in financial markets?", options: ["The risk that failure of one major financial institution could trigger a cascade of failures throughout the financial system, threatening the entire economy due to interconnections between institutions","The risk that a single customer defaults on a loan","The normal business risk that all firms face","The risk of inflation"], correct: 0, explanation: "<strong>Correct!</strong> Systemic risk is contagion risk — one bank's failure spreads through the financial system via interconnected lending, loss of confidence, fire sales of assets, and credit freeze. 2008: Lehman Brothers collapse triggered a global crisis." },
+    { question: "What are capital ratios and why are they important for financial stability?", options: ["Capital ratios measure how much money a bank has in cash","Capital ratios measure bank profitability","Capital ratio = bank's equity capital ÷ risk-weighted assets; higher ratios mean bigger buffer to absorb losses, reducing risk of insolvency and protecting depositors","Capital ratios are unimportant for stability"], correct: 2, explanation: "<strong>Correct!</strong> Capital ratios measure the cushion of shareholders' equity against potential losses. 10% capital ratio on £100bn assets = £10bn buffer. If £8bn loans default, bank survives; if £12bn default, bank is insolvent. Basel III requires minimum ratios." },
+    { question: "What are liquidity ratios and why are they important?", options: ["Liquidity ratios measure bank profits","Liquidity ratios are the same as capital ratios","Liquidity ratio = liquid assets ÷ short-term liabilities; measures ability to meet withdrawal demands and short-term obligations, preventing liquidity crises and bank runs","Liquidity ratios measure how much money banks lend"], correct: 2, explanation: "<strong>Correct!</strong> Liquidity ratios ensure banks hold enough liquid assets to meet likely withdrawals. Northern Rock 2007 failed because it relied on wholesale funding — when those markets froze, it couldn't fund itself despite being solvent. Liquidity ≠ solvency." },
+    { question: "How do problems in financial markets impact the real economy?", options: ["Only banks are affected by financial crises","Credit freeze (businesses can't get loans for investment), wealth effects (falling asset prices reduce consumption), confidence collapse (consumers/firms postpone spending), recession and unemployment follow","Financial market problems don't affect the real economy","Real economy problems cause financial crises but not vice versa"], correct: 1, explanation: "<strong>Correct!</strong> Financial crisis transmission: (1) Credit crunch — banks stop lending; (2) Wealth destruction — falling house/stock prices reduce consumption; (3) Confidence collapse — uncertainty postpones spending; (4) Fiscal costs — bank bailouts. 2008–09 caused the worst recession since the 1930s." },
+    { question: "Why does 'lending long and borrowing short' create risk for banks?", options: ["Only small banks face this risk","Banks fund long-term loans (30-year mortgages) with short-term deposits that can be withdrawn anytime, creating maturity mismatch — if many depositors withdraw simultaneously, bank faces liquidity crisis","This practice creates no risk for banks","Central banks prevent all risks from maturity transformation"], correct: 1, explanation: "<strong>Correct!</strong> Maturity transformation is fundamental to banking but creates vulnerability. Banks accept deposits (withdrawable on demand) and lend as mortgages/business loans (repaid over years). If confidence collapses and depositors rush to withdraw, banks can't immediately recall long-term loans — hence deposit insurance and lender of last resort facilities." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Accept deposits from customers and pay interest on savings accounts", category: "commercial" },
+    { text: "Underwrite and issue securities for corporations (IPOs and bond issues)", category: "investment" },
+    { text: "Provide loans and mortgages to retail customers and businesses", category: "commercial" },
+    { text: "Advise on mergers and acquisitions (M&A) for large corporations", category: "investment" },
+    { text: "Offer current accounts and payment services (debit cards, direct debits)", category: "commercial" },
+    { text: "Trade securities and derivatives on behalf of institutional clients", category: "investment" },
+    { text: "Provide overdraft facilities and personal loans", category: "commercial" },
+    { text: "Engage in proprietary trading using the bank's own capital", category: "investment" },
+    { text: "Act as financial intermediary between savers and borrowers", category: "commercial" },
+    { text: "Provide market making services in bonds and equities", category: "investment" },
+    { text: "Offer safe deposit boxes and money transmission services", category: "commercial" },
+    { text: "Structure complex financial products like CDOs and derivatives", category: "investment" }
+];
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    document.getElementById('commercial').innerHTML = '';
+    document.getElementById('investment').innerHTML = '';
+    document.getElementById('sortingResult').classList.remove('show');
+}
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const target = document.getElementById(colId === 'unsorted' ? 'unsortedItems' : colId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortingResult');
+    const tail = pct===100 ? '🎉 Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again anytime.';
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${tail}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) {
+        setTimeout(() => {
+            document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort'));
+        }, 2500);
+    }
+}
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Medium of Exchange", definition: "Money's function as an intermediary in trade, eliminating the need for barter and the double coincidence of wants" },
+    { concept: "Narrow Money (M0)", definition: "Physical currency in circulation plus commercial banks' operational deposits at the central bank" },
+    { concept: "Broad Money (M4)", definition: "Narrow money plus all bank deposits, certificates of deposit, and near-money assets" },
+    { concept: "Capital Market", definition: "Market for long-term securities (over 1 year) including stocks and bonds, used to raise investment finance" },
+    { concept: "Money Market", definition: "Market for short-term debt instruments (under 1 year) like treasury bills, used for liquidity management" },
+    { concept: "Bond Yield", definition: "The annual return on a bond: (annual coupon payment ÷ current market price) × 100" },
+    { concept: "Fractional Reserve Banking", definition: "System where banks hold only a fraction of deposits as reserves and lend out the rest, creating money" },
+    { concept: "Moral Hazard", definition: "When banks take excessive risks expecting government bailouts if things go wrong (too big to fail)" },
+    { concept: "Systemic Risk", definition: "Risk that failure of one major financial institution triggers cascade of failures throughout the financial system" },
+    { concept: "Maturity Transformation", definition: "Banks' practice of funding long-term loans with short-term deposits, creating liquidity risk" }
+];
+let selectedConcept = null, selectedDefinition = null, matchedPairs = 0;
+
+function initMatch() {
+    matchedPairs = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = matchPairs.map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-definition="${p.concept}" onclick="selectDefinition(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+function selectDefinition(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition === concept) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    document.querySelectorAll('[data-definition]').forEach(e => e.classList.remove('selected'));
+    selectedDefinition = concept; el.classList.add('selected'); tryMatch();
+}
+function tryMatch() {
+    if (!selectedConcept || !selectedDefinition) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-definition="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedPairs++; updateMatchProgress();
+        if (matchedPairs === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedPairs} / ${matchPairs.length} matched`; }
+function resetMatch() { initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK (shared engine)
+══════════════════════════════════════ */
+const fillData = {
+    money: {
+        passage: "Money performs four essential functions. As a [blank0], it facilitates trade by eliminating the need for barter and the double coincidence of wants. As a [blank1], it maintains purchasing power over time, allowing people to save. As a [blank2], it provides a common measure for expressing prices and values. As a [blank3], it enables credit transactions and future payments. The money supply has different definitions. [blank4] money (M0) includes physical currency and bank reserves at the central bank. [blank5] money (M4) includes M0 plus all bank [blank6] and near-money assets. Financial markets can be categorized into the [blank7] market (short-term debt under 1 year for liquidity), the [blank8] market (long-term securities over 1 year for investment), and the foreign exchange market (trading currencies). Firms can raise finance through [blank9] (borrowing via bonds or bank loans that must be repaid) or [blank10] (selling shares, giving ownership stakes with no repayment). There's an inverse relationship between interest rates and [blank11] prices: when rates rise, existing bonds with lower coupons become less attractive, so their prices [blank12] to increase their effective yields.",
+        answers: ["medium of exchange","store of value","unit of account","standard of deferred payment","Narrow","Broad","deposits","money","capital","debt","equity","bond","fall"]
+    },
+    regulation: {
+        passage: "Financial regulation in the UK involves multiple bodies. The [blank0] sets monetary policy and acts as lender of last resort. The [blank1] (PRA) supervises banks and insurers to ensure they maintain adequate [blank2] ratios (equity buffer against losses) and [blank3] ratios (liquid assets to meet withdrawals). The Financial Policy Committee (FPC) monitors [blank4] risk — the danger that one institution's failure could trigger cascade failures throughout the system. The [blank5] (FCA) regulates firms' conduct to protect consumers and prevent mis-selling. Banks face several risks. [blank6] transformation — funding long-term loans with short-term deposits — creates liquidity risk. If confidence collapses and depositors rush to withdraw funds (a [blank7]), banks may fail despite being solvent. [blank8] hazard arises when banks take excessive risks expecting government [blank9] if they fail ('too big to fail'). This encourages risk-taking with privatized profits and socialized losses. When financial markets experience problems, the [blank10] economy suffers: credit [blank11] (firms can't borrow), wealth destruction (falling asset prices), confidence collapse, and recession. The 2008 financial crisis demonstrated how financial instability causes mass [blank12] and economic depression.",
+        answers: ["Bank of England","Prudential Regulation Authority","capital","liquidity","systemic","Financial Conduct Authority","Maturity","bank run","Moral","bailouts","real","freeze","unemployment"]
+    }
+};
+const fillState = {
+    money: { selectedWord: null, placed: {} },
+    regulation: { selectedWord: null, placed: {} }
+};
+
+function initFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    state.selectedWord = null; state.placed = {};
+    document.getElementById(gameId+'WordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank</div>' +
+        [...data.answers].sort(()=>Math.random()-0.5).map(w =>
+            `<button class="word-option" data-word="${w}" onclick="selectFillWord('${gameId}','${w.replace(/'/g,"&#39;")}',this)">${w}</button>`
+        ).join('');
+    let html = data.passage;
+    data.answers.forEach((_,i) => { html = html.replace(`[blank${i}]`, `<span class="word-blank" data-index="${i}" data-game="${gameId}" onclick="clickBlank('${gameId}',${i})">___</span>`); });
+    document.getElementById(gameId+'Passage').innerHTML = html;
+    document.getElementById(gameId+'Result').classList.remove('show');
+}
+function selectFillWord(gameId, word, btn) {
+    const state = fillState[gameId];
+    document.getElementById(gameId+'WordBank').querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (state.selectedWord === word) { state.selectedWord = null; }
+    else { state.selectedWord = word; btn.classList.add('selected-word'); }
+}
+function clickBlank(gameId, index) {
+    const state = fillState[gameId];
+    const blank = document.querySelector(`[data-game="${gameId}"][data-index="${index}"]`);
+    if (!blank) return;
+    if (state.placed[index] !== undefined && !state.selectedWord) {
+        returnWordToBank(gameId, state.placed[index]); delete state.placed[index];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selectedWord) return;
+    if (state.placed[index] !== undefined) returnWordToBank(gameId, state.placed[index]);
+    state.placed[index] = state.selectedWord;
+    blank.textContent = state.selectedWord; blank.className = 'word-blank has-word';
+    markWordUsed(gameId, state.selectedWord); state.selectedWord = null;
+}
+function returnWordToBank(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+function markWordUsed(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+}
+function checkFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-game="${gameId}"][data-index="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i] !== undefined) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(gameId+'Result');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+function resetFill(gameId) { initFill(gameId); }
+
+/* ── GAME NAV ── */
+function startGame(game) {
+    document.getElementById('gameSelector').style.display = 'none';
+    document.getElementById(game+'Game').classList.add('active');
+    if (game === 'match') initMatch(); else initFill(game);
+}
+function backToGameSelector() {
+    document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+    document.getElementById('gameSelector').style.display = 'block';
+}
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Supply-Side Policies Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* PROGRESS */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* MCQ */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        /* BUTTONS */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* RESULT PANEL */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* INLINE RESULT */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .inline-result.info { background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        [data-theme="light"] .inline-result.info { color: #1d4ed8; }
+
+        /* TAB 2: POLICY CLASSIFICATION */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .policy-type-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .policy-type-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: all 0.18s; text-align: center; }
+        .policy-type-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .policy-type-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+        .policy-type-card .card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+        .policy-type-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .policy-type-card.selected h3 { color: var(--accent2); }
+        .policy-type-card p { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+        .scenarios-pool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
+        .scenarios-pool-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; display: block; }
+        .scenario-item { padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.86rem; line-height: 1.5; color: var(--text); transition: all 0.15s; margin-bottom: 0.5rem; }
+        .scenario-item:last-child { margin-bottom: 0; }
+        .scenario-item:hover { border-color: rgba(59,130,246,0.3); }
+        .scenario-item.correct { background: var(--correct-bg); border-color: #10b981; cursor: default; pointer-events: none; opacity: 0.35; text-decoration: line-through; }
+        .scenario-item.incorrect { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+        .class-score-row { display: flex; justify-content: space-between; align-items: center; }
+
+        /* TAB 3: MATCH + FILL */
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; color: #34d399; }
+        .match-item.matched:hover { transform: none; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        [data-theme="light"] .match-item.matched { color: #065f46; }
+
+        /* FILL IN BLANK */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-height: 54px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.35rem 0.85rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; line-height: 2.3; font-size: 0.95rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 90px; padding: 2px 10px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.85rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .policy-type-cards, .match-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Supply-Side Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_supsiderev_pw';
+  var valid = ['SupSideRev-8Tz2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['SupSideRev-8Tz2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_supsiderev_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Supply-Side Policies</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Policy Classification</button>
+        <button class="tab" onclick="switchTab(2)">Quick Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 15</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:6.67%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/15</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: POLICY CLASSIFICATION ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Policy Classification — Free-Market or Interventionist?</span>
+        <div class="instructions-row">
+            Select a policy type below, then click each scenario to classify it. Correct answers fade out — wrong answers shake and stay for another try.
+        </div>
+        <div class="policy-type-cards">
+            <div class="policy-type-card" id="card-free-market" onclick="selectSystem('free-market')">
+                <span class="card-icon">🆓</span>
+                <h3>Free-Market</h3>
+                <p>Market-oriented reforms that reduce government intervention and increase competition</p>
+            </div>
+            <div class="policy-type-card" id="card-interventionist" onclick="selectSystem('interventionist')">
+                <span class="card-icon">🏛️</span>
+                <h3>Interventionist</h3>
+                <p>Government-led investment and intervention to improve productive capacity</p>
+            </div>
+        </div>
+        <div class="scenarios-pool">
+            <span class="scenarios-pool-label">Policies to classify</span>
+            <div id="scenariosContainer"></div>
+        </div>
+        <div class="class-score-row">
+            <span class="score-pill" id="classScore">0 / 14 correct</span>
+            <button class="btn btn-ghost" onclick="resetClassification()">Reset</button>
+        </div>
+        <div id="classComplete" class="inline-result" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- ══ TAB 3: QUICK GAMES ══ -->
+    <div class="tab-content">
+        <!-- Match -->
+        <span class="mono-label">Match the Concepts</span>
+        <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+        <div class="match-grid">
+            <div>
+                <span class="match-col-label">Terms</span>
+                <div class="match-items" id="matchTerms"></div>
+            </div>
+            <div>
+                <span class="match-col-label">Definitions</span>
+                <div class="match-items" id="matchDefs"></div>
+            </div>
+        </div>
+        <div id="matchResult" class="inline-result" style="margin-top:1rem;"></div>
+        <div class="nav-row" style="justify-content:flex-end; margin-top:0.75rem;">
+            <button class="btn btn-ghost" onclick="resetMatch()">Reset Matching</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Fill in blank — two passages, shared bank -->
+        <span class="mono-label">Fill in the Missing Words</span>
+        <div class="word-bank" id="wordBank"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+
+        <span class="passage-title">Scenario 1: Free-Market Supply-Side Policies</span>
+        <div class="passage-box" id="passage1"></div>
+
+        <span class="passage-title">Scenario 2: Interventionist Supply-Side Policies</span>
+        <div class="passage-box" id="passage2"></div>
+
+        <div id="fillResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initClassification();
+    if (index === 2) { initMatch(); initFill(); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "Which of the following is the primary goal of supply-side policies?", options: ["To reduce consumer spending","To increase government tax revenue","To increase aggregate demand in the economy","To shift the long-run aggregate supply curve to the right"], correct: 3, explanation: "The primary goal of supply-side policies is to increase the productive capacity of the economy by shifting the long-run aggregate supply (LRAS) curve to the right. This leads to higher potential output, lower costs of production, increased employment, and non-inflationary economic growth. Both free-market and interventionist supply-side policies aim to achieve this, though through different methods." },
+    { question: "Which of the following is an example of a free-market supply-side policy?", options: ["Building new motorways and railways","Increasing spending on education and training","Subsidising research and development","Reducing the top rate of income tax"], correct: 3, explanation: "Reducing the top rate of income tax is a free-market supply-side policy. It aims to increase incentives to work, save, and invest by allowing individuals and businesses to keep more of their income. Free-market policies focus on reducing government intervention, lowering taxes, deregulation, and promoting competition. The other options are interventionist policies involving direct government spending." },
+    { question: "What is privatisation?", options: ["Increasing taxes on private businesses","Government taking control of private companies","Nationalising key industries","Selling state-owned enterprises to the private sector"], correct: 3, explanation: "Privatisation is the process of transferring ownership of state-owned enterprises to the private sector. It is a key free-market supply-side policy used in the 1980s–90s in the UK. The theory is that private ownership increases efficiency due to profit incentives, reduces government spending, increases competition, and improves service quality. Examples include British Telecom, British Gas, and British Airways." },
+    { question: "Trade union reforms that limit strike action are designed to:", options: ["Increase labour market flexibility and reduce disruptions to production","Reduce labour market flexibility and increase wage costs","Increase workers' bargaining power","Encourage collective bargaining"], correct: 0, explanation: "Trade union reforms (a free-market policy) aim to increase labour market flexibility by reducing the power of unions to disrupt production through strikes and restrictive practices. The 1980s UK reforms required secret ballots before strikes, banned secondary picketing, and reduced closed shops. The goal is to reduce wage costs, increase productivity, and make labour markets more competitive, though critics argue this weakens workers' rights and bargaining power." },
+    { question: "Means-tested benefits are designed to:", options: ["Increase the overall welfare budget","Target welfare payments only to those below a certain income threshold","Provide universal benefits to all citizens regardless of income","Reduce incentives for private savings"], correct: 1, explanation: "Means-tested benefits are welfare payments provided only to those whose income falls below a certain level. This free-market approach aims to reduce the welfare budget, target help to those most in need, and increase work incentives by reducing dependency. However, critics note they can create poverty traps (where working more leads to benefit loss), require expensive administration, and may discourage saving." },
+    { question: "Which of the following is an interventionist supply-side policy?", options: ["Privatising state-owned industries","Cutting corporation tax rates","Deregulating labour markets","Government investment in infrastructure"], correct: 3, explanation: "Government investment in infrastructure (roads, railways, broadband, airports) is an interventionist supply-side policy. It involves direct government spending to improve the productive capacity of the economy. Better infrastructure reduces transport costs, improves connectivity, attracts investment, and increases productivity. Other interventionist policies include education spending, R&D subsidies, and industrial strategy." },
+    { question: "Capital expenditure by government typically refers to:", options: ["Day-to-day running costs like civil service salaries","Interest payments on government debt","Investment in long-term assets like infrastructure and buildings","Welfare benefit payments"], correct: 2, explanation: "Capital expenditure (CAPEX) refers to government spending on long-term physical assets such as roads, schools, hospitals, railways, and broadband infrastructure. Unlike current expenditure (day-to-day costs), capital spending creates assets that improve productive capacity over many years. It is a key interventionist supply-side policy that can boost LRAS by improving infrastructure, though it increases government debt in the short term." },
+    { question: "Educational reforms and increased spending on education aim to:", options: ["Reduce competition between schools","Increase human capital and labour productivity","Reduce the overall government budget deficit","Decrease the number of people in higher education"], correct: 1, explanation: "Investment in education (an interventionist policy) aims to increase human capital — the skills, knowledge, and productivity of the workforce. This improves labour quality, increases innovation, raises potential output, and makes the economy more competitive internationally. Benefits include higher productivity, lower unemployment, and greater social mobility, though the effects take many years to materialise." },
+    { question: "What is a potential disadvantage of free-market supply-side policies?", options: ["They always work immediately with no time lags","They require massive government spending increases","Tax cuts may increase inequality and may not guarantee increased investment","They eliminate all unemployment instantly"], correct: 2, explanation: "Free-market supply-side policies have several limitations: income/corporation tax cuts may increase inequality and may not lead to increased work effort or investment (people may simply save the extra income); deregulation can lead to market failures and exploitation; privatisation may create private monopolies; time lags are significant. There's also an opportunity cost of reduced tax revenue that could fund public services." },
+    { question: "What is a key advantage of interventionist supply-side policies?", options: ["They always reduce government debt","They don't require any government spending","They can target market failures and address externalities like education and infrastructure","They work instantly with immediate effects"], correct: 2, explanation: "Interventionist policies can directly address market failures that the private sector may not adequately provide, such as infrastructure, education, healthcare, and R&D. Markets under-provide these due to positive externalities and high costs. Government investment can target specific needs, reduce regional inequalities, and invest for long-term social benefit rather than short-term profit. However, they require funding through taxation or borrowing." },
+    { question: "Deregulation of markets refers to:", options: ["Increasing government control over industries","Removing rules and regulations to increase competition and efficiency","Increasing consumer protection laws","Nationalising private sector companies"], correct: 1, explanation: "Deregulation is a free-market policy that involves reducing or removing government rules, regulations, and barriers to entry in markets. Examples include removing licensing requirements, reducing planning restrictions, and simplifying business regulations. The aim is to increase competition, reduce costs, encourage entrepreneurship, and improve efficiency. However, excessive deregulation can lead to market failures, reduced consumer protection, and negative externalities." },
+    { question: "Which statement about cutting marginal tax rates is correct?", options: ["It has no effect on labour supply decisions","It may increase work incentives but could reduce government revenue and increase inequality","It is an interventionist supply-side policy","It always increases total tax revenue through the Laffer Curve effect"], correct: 1, explanation: "Cutting marginal income tax rates (the rate paid on the last pound earned) is intended to increase work incentives, reduce tax avoidance, and encourage enterprise. However, evidence is mixed: people may not significantly increase work hours, the policy disproportionately benefits high earners (increasing inequality), and revenue may fall. The Laffer Curve suggests very high rates reduce revenue, but most economies aren't at this point." },
+    { question: "Government subsidies for research and development (R&D) are justified because:", options: ["R&D only benefits large corporations","R&D has no economic benefits","R&D creates positive externalities that the market under-provides","The private sector always over-invests in R&D naturally"], correct: 2, explanation: "R&D subsidies are an interventionist policy justified by market failure. R&D creates positive externalities — knowledge spillovers that benefit society beyond the private returns to the firm. Since firms can't capture all benefits, they under-invest from society's perspective. Government subsidies (grants, tax credits) aim to increase innovation, productivity, and international competitiveness. The UK's R&D tax credits are an example." },
+    { question: "What is a 'supply-side improvement' compared to a 'supply-side policy'?", options: ["Supply-side improvements only refer to reduced inflation","Supply-side policies always fail while improvements always succeed","Supply-side improvements occur naturally (e.g., technological advances), while supply-side policies are deliberate government actions","They are exactly the same thing"], correct: 2, explanation: "This is an important distinction: Supply-side IMPROVEMENTS can occur naturally without government action, such as through technological innovation, discovery of natural resources, or private sector investment. Supply-side POLICIES are deliberate government interventions (either free-market or interventionist) designed to shift LRAS rightward. Both shift LRAS right, but policies are purposeful government actions while improvements can happen through market forces." },
+    { question: "Why might interventionist supply-side policies be considered more effective than free-market ones in developing economies?", options: ["Privatisation doesn't work anywhere","Free-market policies always cause hyperinflation in poor countries","Developing economies have perfect markets with no failures","Developing economies often lack infrastructure and education that markets won't adequately provide"], correct: 3, explanation: "In developing economies, market failures are often more severe: lack of basic infrastructure (roads, electricity, water), low education levels, underdeveloped financial systems, and insufficient private investment. These create significant barriers that free markets alone won't overcome. Interventionist policies (infrastructure investment, education spending, industrial strategy) may be necessary to create the foundations for growth. However, they require funding and efficient implementation." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   POLICY CLASSIFICATION — immediate feedback
+══════════════════════════════════════ */
+const scenarios = [
+    { text: "Reducing the top rate of income tax from 45% to 40%", answer: "free-market" },
+    { text: "Government builds a new high-speed rail network", answer: "interventionist" },
+    { text: "Selling Royal Mail to private shareholders", answer: "free-market" },
+    { text: "Introducing laws requiring secret ballots before union strikes", answer: "free-market" },
+    { text: "Increasing funding for apprenticeship training schemes", answer: "interventionist" },
+    { text: "Removing planning restrictions to make it easier to build new businesses", answer: "free-market" },
+    { text: "Government provides subsidies for firms investing in green technology", answer: "interventionist" },
+    { text: "Reducing corporation tax from 25% to 19%", answer: "free-market" },
+    { text: "Making welfare benefits conditional on job-seeking activities", answer: "free-market" },
+    { text: "Building new universities and expanding higher education access", answer: "interventionist" },
+    { text: "Deregulating the taxi market to allow more competition", answer: "free-market" },
+    { text: "Government invests in nationwide superfast broadband infrastructure", answer: "interventionist" },
+    { text: "Introducing R&D tax credits for innovative companies", answer: "interventionist" },
+    { text: "Reducing the power of professional associations to limit entry to professions", answer: "free-market" }
+];
+
+let selectedSystem = null;
+let classScore = 0;
+let classInitialised = false;
+
+function initClassification() {
+    if (classInitialised) return;
+    classInitialised = true;
+    selectedSystem = null; classScore = 0;
+    document.querySelectorAll('.policy-type-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('classScore').textContent = `0 / ${scenarios.length} correct`;
+    document.getElementById('classComplete').classList.remove('show');
+    document.getElementById('scenariosContainer').innerHTML = [...scenarios].sort(()=>Math.random()-0.5).map((s,i) =>
+        `<div class="scenario-item" data-answer="${s.answer}" onclick="classifyScenario(this)">${s.text}</div>`
+    ).join('');
+}
+
+function selectSystem(system) {
+    selectedSystem = system;
+    document.querySelectorAll('.policy-type-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById(`card-${system}`).classList.add('selected');
+}
+
+function classifyScenario(el) {
+    if (el.classList.contains('correct')) return;
+    if (!selectedSystem) {
+        const instr = document.querySelector('.instructions-row');
+        instr.style.borderColor = 'var(--amber)';
+        setTimeout(() => { instr.style.borderColor = ''; }, 1200);
+        return;
+    }
+    if (el.dataset.answer === selectedSystem) {
+        el.classList.add('correct');
+        classScore++;
+        document.getElementById('classScore').textContent = `${classScore} / ${scenarios.length} correct`;
+        if (classScore === scenarios.length) {
+            const c = document.getElementById('classComplete');
+            c.textContent = `🎉 All ${scenarios.length} policies classified correctly!`;
+            c.className = 'inline-result show success';
+        }
+    } else {
+        el.classList.add('incorrect');
+        setTimeout(() => el.classList.remove('incorrect'), 500);
+    }
+}
+
+function resetClassification() { classInitialised = false; initClassification(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Privatisation", definition: "Selling state-owned enterprises to the private sector to increase efficiency" },
+    { concept: "Marginal Tax Cuts", definition: "Reducing the rate of tax on the last pound earned to increase work incentives" },
+    { concept: "Capital Expenditure", definition: "Government investment in long-term physical assets like infrastructure" },
+    { concept: "Supply-Side Reform", definition: "Deliberate government policy to shift LRAS curve rightward" },
+    { concept: "Supply-Side Improvement", definition: "Natural increase in productive capacity without government policy action" },
+    { concept: "Deregulation", definition: "Removing government rules and regulations to increase competition" },
+    { concept: "Trade Union Reform", definition: "Legislation to reduce union power and increase labour market flexibility" },
+    { concept: "Means-Tested Benefits", definition: "Welfare payments targeted only at those below a certain income threshold" },
+    { concept: "Human Capital", definition: "The skills, knowledge, and productivity of the workforce" },
+    { concept: "R&D Subsidies", definition: "Government financial support for research and innovation to address positive externalities" }
+];
+let selectedConcept = null, selectedDef = null, matchedCount = 0;
+let matchInitialised = false;
+
+function initMatch() {
+    if (matchInitialised) return;
+    matchInitialised = true;
+    matchedCount = 0; selectedConcept = null; selectedDef = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchPairs.map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-def="${p.concept}" onclick="selectDef(this,'${p.concept.replace(/'/g,"&#39;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+
+function selectDef(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDef === concept) { el.classList.remove('selected'); selectedDef = null; return; }
+    document.querySelectorAll('[data-def]').forEach(e => e.classList.remove('selected'));
+    selectedDef = concept; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (!selectedConcept || !selectedDef) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-def="${selectedDef}"]`);
+    if (selectedConcept === selectedDef) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedCount++; updateMatchProgress();
+        if (matchedCount === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDef = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedCount} / ${matchPairs.length} matched`; }
+function resetMatch() { matchInitialised = false; initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two passages, shared bank
+══════════════════════════════════════ */
+const p1Answers = ["privatisation","efficiency","income","enterprise","reforms","flexibility","means-tested","LRAS"];
+const p2Answers = ["capital","connectivity","education","human","subsidies","externalities","strategy","spending"];
+const allFillAnswers = [...p1Answers, ...p2Answers];
+
+let fillSelected = null;
+let fillPlaced = {};
+let fillInitialised = false;
+
+function initFill() {
+    if (fillInitialised) return;
+    fillInitialised = true;
+    fillSelected = null; fillPlaced = {};
+
+    document.getElementById('wordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        [...allFillAnswers].sort(()=>Math.random()-0.5).map((w,i) =>
+            `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w}',${i},this)">${w}</button>`
+        ).join('');
+
+    // Passage 1
+    let p1 = "The UK government in the 1980s implemented extensive free-market supply-side policies to improve economic performance. A major focus was [p1-0], with industries like British Telecom and British Gas transferred to private ownership to increase [p1-1]. The government also reduced [p1-2] tax rates, cutting the top rate from 83% to 40% to increase work incentives and encourage [p1-3]. Trade union [p1-4] were introduced requiring secret ballots before strikes to increase labour market [p1-5]. Additionally, [p1-6] benefits were introduced to target welfare payments more effectively and reduce the benefits bill. These policies aimed to shift the [p1-7] curve rightward through increased competition and market forces rather than government intervention.";
+    p1Answers.forEach((_, i) => { p1 = p1.replace(`[p1-${i}]`, `<span class="word-blank" data-bid="p1-${i}" onclick="clickFillBlank('p1-${i}')">___</span>`); });
+    document.getElementById('passage1').innerHTML = p1;
+
+    // Passage 2
+    let p2 = "Modern interventionist supply-side policies focus on government investment to address market failures and increase productive capacity. A key area is [p2-0] expenditure on infrastructure such as roads, railways, and broadband networks to reduce transport costs and improve [p2-1]. Increased spending on [p2-2] and training aims to improve [p2-3] capital and raise workforce productivity over the long term. The government also provides [p2-4] for research and development because innovation creates positive [p2-5] that the private sector under-provides. Industrial [p2-6] policies may target specific sectors like green technology or advanced manufacturing. These interventionist policies require increased government [p2-7] or borrowing but aim to create the foundations for sustainable long-term economic growth.";
+    p2Answers.forEach((_, i) => { p2 = p2.replace(`[p2-${i}]`, `<span class="word-blank" data-bid="p2-${i}" onclick="clickFillBlank('p2-${i}')">___</span>`); });
+    document.getElementById('passage2').innerHTML = p2;
+
+    document.getElementById('fillResult').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (fillSelected && fillSelected.wid === wid) { fillSelected = null; }
+    else { fillSelected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    const blank = document.querySelector(`[data-bid="${bid}"]`);
+    if (!blank) return;
+    if (fillPlaced[bid] !== undefined && !fillSelected) {
+        returnFillWord(fillPlaced[bid].wid);
+        delete fillPlaced[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillSelected) return;
+    if (fillPlaced[bid] !== undefined) returnFillWord(fillPlaced[bid].wid);
+    fillPlaced[bid] = { ...fillSelected };
+    blank.textContent = fillSelected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`.word-option[data-wid="${fillSelected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    fillSelected = null;
+}
+
+function returnFillWord(wid) {
+    const btn = document.querySelector(`.word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill() {
+    let correct = 0, total = allFillAnswers.length;
+    p1Answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="p1-${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillPlaced[`p1-${i}`] && fillPlaced[`p1-${i}`].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillPlaced[`p1-${i}`]) blank.classList.add('incorrect');
+    });
+    p2Answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="p2-${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillPlaced[`p2-${i}`] && fillPlaced[`p2-${i}`].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillPlaced[`p2-${i}`]) blank.classList.add('incorrect');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('fillResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passages and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill() { fillInitialised = false; initFill(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

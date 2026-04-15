@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — AD/AS Analysis Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* PROGRESS */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* MCQ */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .explanation strong { color: var(--accent2); }
+        [data-theme="light"] .explanation strong { color: #1d4ed8; }
+
+        /* BUTTONS */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* RESULT PANEL */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* INLINE RESULT */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; min-height: 300px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 1rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.5rem; min-height: 200px; }
+        .sort-item { padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.84rem; line-height: 1.5; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* GAME SELECTOR */
+        .game-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem 1.4rem; cursor: pointer; transition: all 0.18s; }
+        .game-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .game-icon { font-size: 1.6rem; margin-bottom: 0.75rem; display: block; }
+        .game-card h3 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+        .game-card p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+        .game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .game-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* MATCH */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; color: #34d399; }
+        .match-item.matched:hover { transform: none; border-color: #10b981; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+        [data-theme="light"] .match-item.matched { color: #065f46; }
+
+        /* FILL IN BLANK */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-height: 54px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.35rem 0.85rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; margin-bottom: 1.25rem; line-height: 2.3; font-size: 0.95rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 95px; padding: 2px 10px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.85rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid, .game-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Aggregate Supply and Demand Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_aggsupdem_pw';
+  var valid = ['AggSupDem-7Kx2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['AggSupDem-7Kx2026','BIZOMICS-MACRO','BIZOMICS-MCR-X9K4','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_aggsupdem_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">AD/AS Analysis</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 18</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5.56%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/18</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — SRAS vs LRAS Determinants</span>
+        <div class="instructions-row">
+            Click a factor to select it (highlights in amber), then click a category to place it. Click a placed item to return it to Unsorted.
+        </div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('sras')">
+                <span class="col-label">⚡ Short-Run AS (SRAS) Factors</span>
+                <div class="sort-items" id="sras"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('lras')">
+                <span class="col-label">🚀 Long-Run AS (LRAS) Factors</span>
+                <div class="sort-items" id="lras"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortingResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: INTERACTIVE GAMES ══ -->
+    <div class="tab-content">
+        <div id="gameSelector">
+            <span class="mono-label">Interactive Games</span>
+            <div class="game-grid">
+                <div class="game-card" onclick="startGame('match')">
+                    <span class="game-icon">🎯</span>
+                    <h3>Match the Pairs</h3>
+                    <p>Match AD/AS concepts with their definitions</p>
+                </div>
+                <div class="game-card" onclick="startGame('multiplier')">
+                    <span class="game-icon">✖️</span>
+                    <h3>The Multiplier</h3>
+                    <p>Complete the passage about the multiplier process</p>
+                </div>
+                <div class="game-card" onclick="startGame('components')">
+                    <span class="game-icon">🧩</span>
+                    <h3>AD Components</h3>
+                    <p>Fill in the blanks about aggregate demand determinants</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Game -->
+        <div id="matchGame" class="game-area">
+            <div class="game-title">Match the AD/AS Concepts</div>
+            <div class="game-subtitle">Click a concept, then click its matching definition</div>
+            <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+            <div class="match-grid">
+                <div>
+                    <span class="match-col-label">Concepts</span>
+                    <div class="match-items" id="matchConcepts"></div>
+                </div>
+                <div>
+                    <span class="match-col-label">Definitions</span>
+                    <div class="match-items" id="matchDefinitions"></div>
+                </div>
+            </div>
+            <div id="matchResult" class="inline-result" style="margin-top:1.25rem;"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Multiplier Game -->
+        <div id="multiplierGame" class="game-area">
+            <div class="game-title">The Multiplier Process</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="multiplierWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="multiplierPassage"></div>
+            <div id="multiplierResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('multiplier')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('multiplier')">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Components Game -->
+        <div id="componentsGame" class="game-area">
+            <div class="game-title">Components of Aggregate Demand</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="componentsWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="componentsPassage"></div>
+            <div id="componentsResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('components')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('components')">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What does aggregate demand (AD) represent in the economy?", options: ["Only consumer spending on goods and services","Government spending plus business investment","The total supply of goods and services in an economy","The total planned spending on goods and services at different price levels in an economy: AD = C + I + G + (X - M)"], correct: 3, explanation: "<strong>Correct!</strong> Aggregate demand is the total planned expenditure on domestic goods and services at different price levels. It comprises consumption (C), investment (I), government spending (G), and net exports (X-M). AD shows the relationship between the price level and the quantity of real GDP demanded." },
+    { question: "If the marginal propensity to consume (MPC) is 0.75, what is the value of the multiplier?", options: ["7.5","4 (calculated as 1/(1-0.75) = 1/0.25 = 4)","1.33","0.75"], correct: 1, explanation: "<strong>Correct!</strong> The multiplier formula is k = 1/(1-MPC). With MPC = 0.75, the multiplier = 1/(1-0.75) = 1/0.25 = 4. This means an initial £1 billion increase in spending will eventually increase national income by £4 billion through successive rounds of spending." },
+    { question: "What is the difference between a movement along the AD curve and a shift of the AD curve?", options: ["A movement is caused by changes in income; a shift is caused by price changes","A movement is short-term; a shift is long-term","A movement along AD is caused by changes in the price level; a shift of AD is caused by changes in non-price factors like consumer confidence or government spending","Both are caused by the same factors"], correct: 2, explanation: "<strong>Correct!</strong> Movements along the AD curve occur when the price level changes. Shifts of the entire AD curve occur when non-price determinants change — such as consumer confidence, interest rates, government spending, exchange rates, or wealth." },
+    { question: "Which of the following would cause a rightward shift of the aggregate demand curve?", options: ["An appreciation of the exchange rate","A fall in consumer confidence","An increase in income tax rates","A decrease in interest rates, making borrowing cheaper and encouraging consumption and investment"], correct: 3, explanation: "<strong>Correct!</strong> Lower interest rates reduce the cost of borrowing, encouraging both consumption (C↑ through credit purchases) and investment (I↑ as more projects become profitable). This increases AD at every price level, shifting the AD curve rightward. The other options would shift AD leftward." },
+    { question: "What is the accelerator effect in relation to investment?", options: ["The rate at which productivity improves","Investment increases at an accelerating rate regardless of income","The speed at which prices rise in the economy","Changes in the level of national income (consumer demand) lead to proportionally larger changes in investment spending"], correct: 3, explanation: "<strong>Correct!</strong> The accelerator principle states that net investment is determined by the rate of change of national income. If consumer demand (and output) is rising, firms need to invest in new capital to meet this demand. A small increase in consumer demand can trigger a much larger increase in investment spending, amplifying economic cycles." },
+    { question: "What are the main determinants of consumption (C) in the economy?", options: ["Government spending and taxation","Disposable income, interest rates, consumer confidence, wealth, availability of credit, and expectations about future income","Investment and exports","Only current disposable income"], correct: 1, explanation: "<strong>Correct!</strong> Consumption depends on multiple factors: disposable income (Y-T) is the main determinant, but also interest rates (cost of borrowing/reward for saving), consumer confidence, wealth (especially housing/stock values), credit availability, and expectations. Changes in any of these shift the consumption function and therefore AD." },
+    { question: "What is the key difference between saving and investment in macroeconomics?", options: ["Saving and investment are the same thing","Saving is done by government; investment by households","Saving is income not spent by households; investment is spending by firms on capital goods — they are done by different economic agents","Saving is short-term; investment is long-term"], correct: 2, explanation: "<strong>Correct!</strong> Saving (S) is the portion of household disposable income not consumed. Investment (I) is spending by firms on capital goods (machinery, factories). In equilibrium, S = I, but the decision-makers are different: households save, firms invest. This creates the potential for the paradox of thrift when planned S ≠ planned I." },
+    { question: "If the MPC is 0.8, and the government increases spending by £2 billion, what will be the eventual change in national income?", options: ["£1.6 billion","£8 billion","£10 billion (Multiplier = 1/(1-0.8) = 5, so £2bn × 5 = £10bn)","£2 billion"], correct: 2, explanation: "<strong>Correct!</strong> With MPC = 0.8, the multiplier k = 1/(1-MPC) = 1/0.2 = 5. The multiplier effect means the initial £2 billion government spending will generate £10 billion total increase in national income (ΔY = k × ΔG = 5 × £2bn = £10bn) through successive rounds of consumption spending." },
+    { question: "What are the main determinants of short-run aggregate supply (SRAS)?", options: ["Changes in costs of production: money wage rates, raw material prices, business taxes, exchange rates, and productivity","Only technological progress","Consumer demand and spending","The size of the labour force"], correct: 0, explanation: "<strong>Correct!</strong> SRAS shifts when production costs change. Higher money wages, raw material costs (especially oil), business taxes, or exchange rate depreciation (making imports more expensive) shift SRAS leftward. Lower costs, productivity improvements, or subsidies shift SRAS rightward." },
+    { question: "What are the fundamental determinants of long-run aggregate supply (LRAS)?", options: ["Government spending in the current year","Only the current price level","Technology, productivity, education and skills, enterprise, factor mobility, economic incentives, and institutional structures","Short-term changes in wages and raw material prices"], correct: 2, explanation: "<strong>Correct!</strong> LRAS represents the economy's productive potential and depends on: quantity and quality of factors of production (labour, capital), technology, productivity, education/skills, entrepreneurship, factor mobility, competition, and institutions (property rights, banking system, legal framework)." },
+    { question: "How is underlying economic growth represented on an AD/AS diagram?", options: ["A shift of the AD curve only","A movement along the LRAS curve","A shift of the SRAS curve only","A rightward shift of the long-run aggregate supply (LRAS) curve, showing an increase in the economy's productive capacity"], correct: 3, explanation: "<strong>Correct!</strong> Underlying (potential) economic growth is shown by LRAS shifting rightward. This indicates the economy can sustainably produce more output, representing increases in productive capacity from factors like technological progress, capital accumulation, improved education, or labour force growth." },
+    { question: "What happens in macroeconomic equilibrium on an AD/AS diagram?", options: ["Equilibrium occurs where AD intersects AS, determining both the equilibrium price level and real GDP","There is no equilibrium in the AD/AS model","Equilibrium only determines the price level, not output","Equilibrium is where SRAS meets LRAS"], correct: 0, explanation: "<strong>Correct!</strong> Macroeconomic equilibrium is at the intersection of AD and AS curves. This determines both the equilibrium price level and real national output (GDP). In the short run, equilibrium is where AD = SRAS. In the long run, the economy tends toward where AD intersects LRAS at potential output." },
+    { question: "A negative demand-side shock (e.g., collapse in consumer confidence) would cause what effects on an AD/AS diagram?", options: ["AD shifts leftward, causing lower output (GDP falls), lower price level, and potentially creating demand-deficient unemployment","LRAS shifts leftward, reducing potential output","SRAS shifts leftward, causing stagflation","AD shifts rightward, increasing output and prices"], correct: 0, explanation: "<strong>Correct!</strong> A negative demand shock (fall in C, I, G, or X-M) shifts AD leftward. This causes: lower equilibrium output (recession), lower price level, higher unemployment (especially cyclical/demand-deficient unemployment), and a negative output gap." },
+    { question: "A negative supply-side shock (e.g., oil price spike) would cause what effects on an AD/AS diagram?", options: ["Only the price level rises with no impact on output","SRAS shifts leftward, causing higher price level (inflation), lower output (recession), creating stagflation","LRAS shifts rightward, increasing growth","AD shifts leftward, causing deflation"], correct: 1, explanation: "<strong>Correct!</strong> A negative supply shock (higher costs like oil prices, wages) shifts SRAS leftward. This creates the worst of both worlds: higher price level (cost-push inflation) AND lower real output (recession). This combination is called stagflation and presents a policy dilemma." },
+    { question: "How do changes in net exports (X - M) affect aggregate demand and economic performance?", options: ["Higher net exports (X-M increases) shift AD rightward, increasing GDP and employment; lower net exports shift AD leftward, reducing GDP","Net exports only affect the price level, not output","Net exports only affect the supply side of the economy","Changes in net exports have no macroeconomic impact"], correct: 0, explanation: "<strong>Correct!</strong> Net exports (X-M) is a component of AD. Increased exports or reduced imports increase AD, boosting GDP, employment, and potentially the price level. Factors affecting net exports include: exchange rates, relative inflation rates, foreign income levels, trade policies, and international competitiveness." },
+    { question: "Why does a higher marginal propensity to consume (MPC) result in a larger multiplier effect?", options: ["Because a higher MPC means people spend more of each extra pound earned, creating larger successive rounds of spending throughout the economy","Because investment becomes more profitable","Because it reduces the amount people save","Because the government spends more"], correct: 0, explanation: "<strong>Correct!</strong> The multiplier k = 1/(1-MPC). If MPC is higher, (1-MPC) is smaller, making the multiplier larger. With MPC = 0.9, k = 10; with MPC = 0.5, k = 2. A higher MPC means each round of spending generates more consumption in the next round, so the total effect of an initial injection is magnified more." },
+    { question: "What does the vertical long-run AS curve represent in the classical/neoclassical model?", options: ["That unemployment is always zero","The normal capacity level of output (potential GDP/full employment output) — output is independent of the price level in the long run","That the price level is fixed in the long run","That output can increase without any limits"], correct: 1, explanation: "<strong>Correct!</strong> The vertical LRAS represents the economy's potential output when all resources are fully employed at the natural rate of unemployment. Its position is determined by supply-side factors (technology, resources, productivity). In the long run, output is determined by these real factors, not the price level." },
+    { question: "How can global economic events affect the domestic economy through AD/AS analysis?", options: ["Foreign recessions reduce export demand (shifting AD left), global commodity price rises shift SRAS left, global growth increases export demand (shifting AD right)","Global events only shift LRAS, never AD or SRAS","Global events cannot affect a domestic economy","Global events only affect exchange rates with no AD/AS impact"], correct: 0, explanation: "<strong>Correct!</strong> Global events transmit to the domestic economy via: (1) Trade channel — foreign recessions reduce export demand, shifting AD left. (2) Price channel — global commodity prices affect SRAS (oil shocks shift SRAS left). (3) Financial channel — global interest rates affect domestic investment. (4) Confidence channel — global uncertainty affects C and I." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — SRAS vs LRAS
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Changes in money wage rates", category: "sras" },
+    { text: "Improvements in technology and innovation", category: "lras" },
+    { text: "Changes in world commodity prices (e.g., oil)", category: "sras" },
+    { text: "Increased education and skills in the workforce", category: "lras" },
+    { text: "Changes in business taxes and subsidies", category: "sras" },
+    { text: "Growth in the size of the labour force", category: "lras" },
+    { text: "Exchange rate fluctuations affecting import costs", category: "sras" },
+    { text: "Capital accumulation and investment in new machinery", category: "lras" },
+    { text: "Short-term productivity changes", category: "sras" },
+    { text: "Improved enterprise and entrepreneurship", category: "lras" },
+    { text: "Changes in raw material prices", category: "sras" },
+    { text: "Improved factor mobility (occupational and geographical)", category: "lras" },
+    { text: "Strengthened economic incentives and property rights", category: "lras" },
+    { text: "Weather-related supply disruptions", category: "sras" },
+    { text: "Improved institutional structures (banking system, legal framework)", category: "lras" }
+];
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    document.getElementById('sras').innerHTML = '';
+    document.getElementById('lras').innerHTML = '';
+    document.getElementById('sortingResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortingResult');
+    const tail = pct===100 ? '🎉 Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again anytime.';
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${tail}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Aggregate Demand (AD)", definition: "Total planned spending on domestic goods and services at different price levels: AD = C + I + G + (X - M)" },
+    { concept: "Consumption (C)", definition: "Household spending on goods and services, determined by disposable income, confidence, interest rates, and wealth" },
+    { concept: "Investment (I)", definition: "Spending by firms on capital goods (machinery, factories), influenced by interest rates, expectations, and the accelerator" },
+    { concept: "Marginal Propensity to Consume (MPC)", definition: "The proportion of additional income that households spend on consumption rather than save" },
+    { concept: "The Multiplier", definition: "The ratio of the final change in national income to the initial change in spending, calculated as k = 1/(1-MPC)" },
+    { concept: "The Accelerator", definition: "The theory that changes in the rate of growth of national income lead to proportionally larger changes in investment" },
+    { concept: "Short-Run AS (SRAS)", definition: "Shows the relationship between price level and output when production costs (wages, raw materials) can vary" },
+    { concept: "Long-Run AS (LRAS)", definition: "The economy's productive capacity at full employment, determined by supply-side factors like technology and resources" },
+    { concept: "Demand-Side Shock", definition: "A sudden change in any component of AD (C, I, G, X-M) causing the AD curve to shift" },
+    { concept: "Supply-Side Shock", definition: "A sudden change in production costs or capacity, causing the AS curve to shift (e.g., oil price spike)" }
+];
+let selectedConcept = null, selectedDefinition = null, matchedPairs = 0;
+
+function initMatch() {
+    matchedPairs = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = matchPairs.map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-definition="${p.concept}" onclick="selectDefinition(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+
+function selectDefinition(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition === concept) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    document.querySelectorAll('[data-definition]').forEach(e => e.classList.remove('selected'));
+    selectedDefinition = concept; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (!selectedConcept || !selectedDefinition) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-definition="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedPairs++; updateMatchProgress();
+        if (matchedPairs === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedPairs} / ${matchPairs.length} matched`; }
+function resetMatch() { initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK (shared engine)
+══════════════════════════════════════ */
+const fillData = {
+    multiplier: {
+        passage: "The multiplier process explains why an initial change in [blank0] leads to a larger final change in [blank1]. When there is an injection into the circular flow (such as increased government spending or investment), the recipients of this spending have higher [blank2]. They spend a proportion of this additional income — the [blank3] — on consumption. This spending becomes income for others, who in turn spend a proportion of it. The multiplier formula is k = [blank4]. If the MPC is [blank5], the multiplier equals 4, meaning a £1 billion increase in government spending will eventually increase national income by [blank6] billion. The size of the multiplier effect depends on the magnitude of the MPC: a [blank7] MPC results in a larger multiplier because more income is re-spent in each round rather than being withdrawn through [blank8], [blank9], or spending on [blank10]. Understanding the multiplier is crucial for predicting the impact of fiscal policy on the economy.",
+        answers: ["spending","national income","income","marginal propensity to consume","1/(1-MPC)","0.75","4","higher","saving","taxation","imports"]
+    },
+    components: {
+        passage: "Aggregate demand consists of four main components. [blank0] is household spending, determined primarily by [blank1] income, but also influenced by interest rates, consumer [blank2], wealth effects, and credit availability. [blank3] is spending by firms on capital goods, influenced by interest rates, business confidence, the rate of change of GDP (the [blank4] effect), and expected profitability. [blank5] spending is determined by government policy decisions and is used as a tool of fiscal policy. Finally, [blank6] minus [blank7] represents spending on domestically produced goods by foreigners minus spending on foreign goods by domestic residents. Net exports are affected by the [blank8], relative inflation rates, foreign income levels, and trade policies. The determinants of [blank9] include income levels, interest rates, and expectations about the future. Higher saving means lower consumption, creating a [blank10] — if all households simultaneously try to save more during a recession, consumption falls, income falls, and they may end up saving less overall.",
+        answers: ["Consumption","disposable","confidence","Investment","accelerator","Government","exports","imports","exchange rate","saving","paradox of thrift"]
+    }
+};
+
+const fillState = {
+    multiplier: { selectedWord: null, placed: {} },
+    components: { selectedWord: null, placed: {} }
+};
+
+function initFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    state.selectedWord = null; state.placed = {};
+    document.getElementById(gameId+'WordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank</div>' +
+        [...data.answers].sort(()=>Math.random()-0.5).map(w =>
+            `<button class="word-option" data-word="${w}" onclick="selectFillWord('${gameId}','${w.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}',this)">${w}</button>`
+        ).join('');
+    let html = data.passage;
+    data.answers.forEach((_,i) => {
+        html = html.replace(`[blank${i}]`, `<span class="word-blank" data-index="${i}" data-game="${gameId}" onclick="clickBlank('${gameId}',${i})">___</span>`);
+    });
+    document.getElementById(gameId+'Passage').innerHTML = html;
+    document.getElementById(gameId+'Result').classList.remove('show');
+}
+
+function selectFillWord(gameId, word, btn) {
+    const state = fillState[gameId];
+    document.getElementById(gameId+'WordBank').querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (state.selectedWord === word) { state.selectedWord = null; }
+    else { state.selectedWord = word; btn.classList.add('selected-word'); }
+}
+
+function clickBlank(gameId, index) {
+    const state = fillState[gameId];
+    const blank = document.querySelector(`[data-game="${gameId}"][data-index="${index}"]`);
+    if (!blank) return;
+    if (state.placed[index] !== undefined && !state.selectedWord) {
+        returnWordToBank(gameId, state.placed[index]); delete state.placed[index];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selectedWord) return;
+    if (state.placed[index] !== undefined) returnWordToBank(gameId, state.placed[index]);
+    state.placed[index] = state.selectedWord;
+    blank.textContent = state.selectedWord; blank.className = 'word-blank has-word';
+    markWordUsed(gameId, state.selectedWord); state.selectedWord = null;
+}
+
+function returnWordToBank(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function markWordUsed(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+}
+
+function checkFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-game="${gameId}"][data-index="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i] !== undefined) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(gameId+'Result');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(gameId) { initFill(gameId); }
+
+/* ── GAME NAV ── */
+function startGame(game) {
+    document.getElementById('gameSelector').style.display = 'none';
+    document.getElementById(game+'Game').classList.add('active');
+    if (game === 'match') initMatch(); else initFill(game);
+}
+
+function backToGameSelector() {
+    document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+    document.getElementById('gameSelector').style.display = 'block';
+}
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
