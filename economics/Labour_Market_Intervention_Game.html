@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Labour Market Intervention Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* FILL */
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Labour Market Intervention Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_labintv_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_labintv_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Labour Market Intervention</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Union Power, Min Wage Advantages &amp; Disadvantages</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('power')">
+                <span class="col-label">💪 Union Bargaining Power</span>
+                <div class="sort-items" id="power"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('advantages')">
+                <span class="col-label">✅ Min Wage Advantages</span>
+                <div class="sort-items" id="advantages"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('disadvantages')">
+                <span class="col-label">❌ Min Wage Disadvantages</span>
+                <div class="sort-items" id="disadvantages"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: MISSING WORDS ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Trade Union Effects</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: National Minimum Wage</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What factors affect a trade union's ability to influence wages?", options: ["Only membership numbers matter","Union membership density, ability to organise strikes, elasticity of labour demand, financial resources, legal framework, public support","Unions have unlimited power","Market structure is irrelevant"], correct: 1, explanation: "Union bargaining power depends on: 1) Membership density (% of workers unionised — higher = more power), 2) Strike ability (credible threat, worker solidarity), 3) Elasticity of demand for labour (inelastic = more power to raise wages without job losses), 4) Financial resources (strike funds sustain action), 5) Legal rights (right to strike, collective bargaining laws), 6) Public support (sympathy influences political/employer response)." },
+    { question: "How does elasticity of labour demand affect union bargaining power?", options: ["Elasticity doesn't matter","If labour demand is inelastic, unions can raise wages significantly with minimal job losses; if elastic, wage rises cause substantial unemployment","Elastic demand always helps unions","Inelastic demand weakens unions"], correct: 1, explanation: "INELASTIC demand (essential workers, no substitutes, labour small % of costs): union can push wages higher with few job losses — strong bargaining position. ELASTIC demand (easy automation, labour large % of costs): wage rise causes significant unemployment — weak position. Examples: doctors (inelastic) have strong unions; manufacturing workers (elastic due to automation) face a weaker position." },
+    { question: "When a trade union is introduced into a perfectly competitive labour market, what happens?", options: ["No change occurs","Wages rise above competitive equilibrium but employment falls, creating unemployment equal to excess labour supply at new wage","Both wages and employment always increase","Wages fall"], correct: 1, explanation: "In a competitive market: the union pushes the wage from W_competitive to W_union (above equilibrium). At the higher wage: 1) Quantity supplied increases (more want to work), 2) Quantity demanded falls (higher labour costs), 3) Creates unemployment (Qs − Qd). Trade-off: employed workers gain higher wages, but some lose jobs. There is a deadweight loss from reduced employment." },
+    { question: "When a trade union is introduced into a monopsony labour market, what can happen?", options: ["Always creates unemployment","Union can increase both wages AND employment by countering monopsony power, pushing wages toward competitive level","No effect possible","Only wages decrease"], correct: 1, explanation: "Paradoxical result: in a monopsony, a union can increase wages AND employment. The monopsonist pays W < MRP and restricts employment. A union pushing wages toward the competitive equilibrium forces the monopsonist to employ more workers (up to the competitive level). This reduces exploitation and increases efficiency. Beyond the competitive wage, the normal trade-off applies. The union acts as a countervailing power." },
+    { question: "What is union membership density and why does it matter?", options: ["Total population of the country","Percentage of workers in an industry/occupation who are union members — higher density means stronger collective action and strike threat","Number of union buildings","Years a union has existed"], correct: 1, explanation: "Membership density = (union members / total workers) × 100. High density (e.g., 90% in public sector): union can call effective strikes (most workers participate), negotiate for all, credible threat. Low density (e.g., 15% in private services): employers hire non-union workers during strikes, weak bargaining position. UK union density ~23% overall but varies: teachers 50%+, hospitality <5%." },
+    { question: "How does the ability to organise successful strikes affect union power?", options: ["Strikes are irrelevant","Credible strike threat is main source of union power — ability to halt production/services forces employers to negotiate; weak strike ability means weak bargaining","Strikes always succeed","Employers are unaffected by strikes"], correct: 1, explanation: "The strike threat is the union's leverage. Strong strike ability: 1) High membership solidarity, 2) Workers difficult to replace (skilled), 3) Strike causes major disruption/costs to employer, 4) Strike fund sustains workers. Result: employer negotiates to avoid strike. Weak strike ability: 1) Low membership, 2) Easy to replace workers, 3) Minimal disruption, 4) Workers can't afford prolonged action. Result: employer resists demands." },
+    { question: "What is the National Living Wage in the UK (2024)?", options: ["£8.50 per hour","£11.44 per hour for workers aged 21 and over","£15.00 per hour","No minimum wage exists"], correct: 1, explanation: "National Living Wage (NLW) = £11.44/hour for workers 21+. National Minimum Wage (NMW) varies by age: 18–20: £8.60, 16–17: £6.40, Apprentices: £6.40. NLW introduced 2016, initially for 25+, extended to 21+ in 2024. The government aims to reach two-thirds of median earnings. Applies to all workers regardless of firm size or profitability." },
+    { question: "What happens when a minimum wage is set ABOVE the equilibrium wage in a competitive labour market?", options: ["No effect occurs","Creates unemployment — quantity of labour supplied exceeds quantity demanded; some workers gain higher wages, others lose jobs","Employment always increases","Wages fall to equilibrium"], correct: 1, explanation: "Minimum wage above W_equilibrium: 1) Raises wages for those employed (beneficial), 2) Increases quantity supplied (more want to work at the higher wage), 3) Reduces quantity demanded (firms can't afford as many workers), 4) Creates unemployment/excess supply (Qs > Qd). Young/low-skilled workers are most affected. Creates a trade-off: higher pay vs job losses. The magnitude depends on elasticities." },
+    { question: "What happens when a minimum wage is set in a monopsony labour market?", options: ["Always creates unemployment","If set between monopsony wage and competitive wage, can increase both wages AND employment by eliminating monopsony exploitation","Has no effect","Reduces wages"], correct: 1, explanation: "In a monopsony, a minimum wage can be win-win. The monopsonist pays W_mono < W_competitive. A minimum wage at/near the competitive level: 1) Raises wages (reduces exploitation), 2) Forces the monopsonist to employ more (MCL curve becomes horizontal at min wage), 3) Increases employment toward the efficient level, 4) Improves worker welfare. However, if set too high (above W_competitive), it creates unemployment. The optimum is at the competitive wage." },
+    { question: "What is an advantage of the national minimum wage?", options: ["Guarantees full employment","Reduces poverty among working families by ensuring minimum income floor; prevents monopsony exploitation; reduces income inequality","Eliminates all unemployment","Raises productivity automatically"], correct: 1, explanation: "Advantages: 1) POVERTY REDUCTION: lifts low-paid workers above the poverty line, reduces in-work poverty, 2) REDUCES INEQUALITY: narrows wage distribution, helps lowest earners, 3) COUNTERS MONOPSONY: prevents exploitation in low-skill markets, 4) INCENTIVE TO WORK: makes work more attractive than benefits, 5) PRODUCTIVITY: may incentivise training/efficiency, 6) DEMAND BOOST: low earners have high MPC, spend extra income." },
+    { question: "What is a disadvantage of the national minimum wage?", options: ["Raises all workers' wages equally","May cause unemployment, especially among young/low-skilled workers; increases costs for small businesses; may accelerate automation","Has no economic effects","Eliminates all poverty"], correct: 1, explanation: "Disadvantages: 1) UNEMPLOYMENT: if set too high, reduces employment especially for least productive (young, disabled, low-skilled), 2) BUSINESS COSTS: small businesses may struggle with higher wage bills, 3) PRICES: firms may raise prices (inflationary), 4) AUTOMATION: incentivises replacing workers with machines, 5) REGIONAL ISSUES: appropriate for London may be excessive for low-cost regions, 6) BLACK MARKETS: some employers may hire illegally below the minimum." },
+    { question: "Who is most likely to be negatively affected by minimum wage increases?", options: ["High-skilled professionals","Young workers, low-skilled workers, workers in small businesses, those in labour-intensive industries","CEOs and managers","No one is affected"], correct: 1, explanation: "Most vulnerable groups: 1) YOUNG WORKERS (16–24): least experience, lowest productivity, easiest to replace with automation, 2) LOW-SKILLED: productivity may not justify minimum wage, 3) SMALL BUSINESSES: tight margins, less able to absorb costs, 4) LABOUR-INTENSIVE SECTORS: hospitality, retail, care where labour = major cost. These groups face the highest unemployment risk from wage floors." },
+    { question: "How might a minimum wage affect automation and technology adoption?", options: ["No effect on technology","Minimum wage makes labour relatively more expensive, incentivising firms to substitute capital (self-checkout, automation) for labour, accelerating technological unemployment","Reduces automation","Only affects wages"], correct: 1, explanation: "A higher minimum wage changes the factor price ratio (labour more expensive relative to capital). Firms respond by: 1) Installing self-checkout tills (supermarkets), 2) Ordering kiosks (fast food), 3) Industrial robots (manufacturing/warehousing), 4) Agricultural machinery. This accelerates automation, potentially destroying more jobs than the minimum wage directly eliminates. The long-run effect is likely larger than the short-run effect." },
+    { question: "What is the 'shock effect' or 'efficiency wage' argument for minimum wages?", options: ["Minimum wages shock the economy negatively","Higher wages may increase productivity through improved morale, reduced turnover, attracting better workers, incentivising training","Causes immediate unemployment","Reduces all worker effort"], correct: 1, explanation: "Efficiency wage theory suggests higher wages boost productivity: 1) MORALE: workers feel valued, work harder (reciprocity), 2) RETENTION: reduced turnover lowers recruitment/training costs, 3) ATTRACTION: higher wages attract better applicants (adverse selection reduced), 4) TRAINING INCENTIVE: employers invest more in workers, 5) REDUCES SHIRKING: the job is more valuable, workers fear losing it. If productivity gains offset wage costs, employment may not fall." },
+    { question: "How does the size of a minimum wage increase affect labour market outcomes?", options: ["Size doesn't matter","Small increases have minimal employment effects; large increases above equilibrium cause significant unemployment; effects depend on distance from equilibrium wage","All increases have identical effects","Larger increases always better"], correct: 1, explanation: "SMALL INCREASE (near equilibrium or in monopsony): minimal unemployment, mostly redistributive effect. MODERATE INCREASE (modestly above equilibrium): some unemployment, mainly among young/low-skilled, depends on demand elasticity. LARGE INCREASE (well above equilibrium): substantial unemployment, accelerates automation, black market work. UK evidence: moderate NLW increases had small employment effects. Very high minimum wages in some US cities show larger effects." },
+    { question: "Why might minimum wage effects differ between regions?", options: ["Regions don't matter","Regional cost-of-living differences mean the same minimum wage is more binding (above equilibrium) in low-cost areas, causing unemployment there","All regions are identical","Effects are always the same"], correct: 1, explanation: "A national minimum wage doesn't account for regional variations: 1) LONDON/SOUTH EAST: high costs, high wages — minimum wage often below equilibrium, minimal effect, 2) NORTH/RURAL: low costs, low wages — minimum wage above equilibrium for many, causes unemployment. A solution might be regional minimum wages, but this creates: administrative complexity, encourages business relocation, and workers moving to high-wage regions." },
+    { question: "What is the empirical evidence on minimum wage employment effects?", options: ["Always massive unemployment","Mixed evidence — some studies find small negative effects, others find no effect or positive effects (especially with monopsony); effects vary by context","Never causes unemployment","Economic theory is always wrong"], correct: 1, explanation: "Evidence is contested: Card & Krueger's fast food study found no employment effect from a minimum wage rise — suggested monopsony power. UK LOW PAY COMMISSION: moderate NLW increases had small/no employment effects. However: some studies find employment falls, especially for young workers. CONSENSUS: small/moderate increases near equilibrium have modest effects; large increases cause unemployment. Effects depend on monopsony power, elasticities, and firm responses." },
+    { question: "How do legal frameworks affect trade union power?", options: ["Laws are irrelevant","Right to strike, collective bargaining laws, union recognition procedures, and restrictions on union activities all significantly affect bargaining power","Unions operate outside the law","Only affects employers"], correct: 1, explanation: "Legal framework is crucial: UK HISTORICALLY: 1970s–early 1980s strong unions (closed shops, secondary picketing, limited strike restrictions). POST-1980s REFORMS: restrictions on strikes (ballots required), secondary action banned, closed shops outlawed, unions weakened. CURRENT: Employment Relations Act 1999 strengthened recognition procedures. EU: stronger worker/union rights than the US. US: 'right to work' laws in some states prohibit closed shops. Law shapes the entire bargaining environment." },
+    { question: "What is a closed shop and how does it affect union power?", options: ["A shop that has closed down","Requirement that all workers must join the union to be employed — maximises union membership and power but now largely illegal in the UK","A secret union meeting","Only affects shop workers"], correct: 1, explanation: "Closed shop: employer agrees to hire only union members. Effect: 100% membership, maximum union power, impossible for employer to hire non-union workers during strikes. Common in UK until 1980s (printing, docks). Employment Act 1990 made closed shops unenforceable. Arguments FOR: prevents free-riding, ensures union strength. Arguments AGAINST: restricts worker freedom, excludes those who don't want to join, can create union monopoly abuse." },
+    { question: "How does public support affect union bargaining outcomes?", options: ["Public opinion is irrelevant","Public sympathy influences political response and employer willingness to concede — strikes for 'fair' causes garner support; unpopular strikes face backlash","Always favours unions","Only affects the private sector"], correct: 1, explanation: "Public support matters: SYMPATHETIC STRIKES (NHS nurses, firefighters, teachers): the public backs workers, creating political pressure on government/employers to settle. UNSYMPATHETIC STRIKES (long disruption, high wages already, inconveniencing public): the public backs employers, creating political pressure on unions to settle. Media coverage shapes opinion. Public sector strikes are more visible, affecting voters directly, creating a political dimension to negotiations." },
+    { question: "Why might minimum wage have less unemployment effect than theory predicts?", options: ["Theory is completely wrong","Monopsony power, efficiency wages, reduced turnover costs, small increases relative to equilibrium, and adjustment through hours/benefits rather than jobs","Magic intervention","Employers never respond"], correct: 1, explanation: "Explanations for smaller-than-predicted effects: 1) MONOPSONY: common in low-wage markets, minimum wage counters exploitation, 2) EFFICIENCY WAGES: productivity gains offset costs, 3) REDUCED TURNOVER: lower hiring/training costs, 4) SMALL INCREASES: near equilibrium, binding for few workers, 5) ADJUSTMENT: cut hours/benefits instead of jobs, 6) PROFITABLE FIRMS: absorb costs from profits, 7) PRICE INCREASES: pass costs to consumers. Doesn't mean no trade-off, just smaller than the simple model suggests." },
+    { question: "How do trade unions affect wage inequality?", options: ["No effect on inequality","Unions reduce wage inequality by raising wages at the bottom, narrowing distribution, and negotiating more equal pay structures","Always increase inequality","Only affect union members"], correct: 1, explanation: "Unions reduce inequality through: 1) RAISING LOW WAGES: lift the floor, narrow distribution, 2) STANDARDISATION: reduce individual wage variation, promote pay scales, 3) SPILLOVER: non-union employers raise wages to compete, 4) POLITICAL: lobby for minimum wage, worker protections. Evidence: union decline (UK/US from 1980s) coincided with rising inequality. However: can create INSIDER-OUTSIDER problem — union workers (insiders) gain at the expense of the unemployed (outsiders)." },
+    { question: "What is the difference between National Living Wage and voluntary Living Wage?", options: ["They're identical","NLW is legally required minimum (£11.44); voluntary Living Wage (Living Wage Foundation) is higher recommendation (£12+) based on living costs","Voluntary Living Wage is lower","No difference exists"], correct: 1, explanation: "NATIONAL LIVING WAGE: government-set legal minimum (£11.44 for 21+), enforced by law, applies to all employers. VOLUNTARY LIVING WAGE: recommended by the Living Wage Foundation (£12.60 UK, £13.85 London), based on actual cost of living, voluntary employer commitment, accredited employers get a logo. The voluntary LW is higher, aiming to provide a genuine living standard not just a minimum. About 15,000 UK employers voluntarily pay the Living Wage." },
+    { question: "How might minimum wage affect training and skill development?", options: ["No effect on training","May reduce employer-provided training as higher wage costs force firms to cut non-wage costs; alternatively, may incentivise training to boost productivity to justify higher wages","Always increases training","Eliminates all training"], correct: 1, explanation: "Ambiguous effect: NEGATIVE: 1) Firms cut training budgets to offset wage costs, 2) Reduced employment of young workers (who receive most training), 3) Less incentive to train if firms can't recoup costs through initially low wages. POSITIVE: 1) Need higher productivity to justify minimum wage, 2) Efficiency wage effect — invest in valued workers, 3) Less turnover makes training investment worthwhile. UK: apprentice minimum wage (£6.40) attempts to preserve training incentives." },
+    { question: "What is the 'insider-outsider' problem with trade unions?", options: ["Unions help everyone equally","Unions benefit employed 'insiders' through higher wages but may harm unemployed 'outsiders' by creating barriers to entry and reducing employment","No such problem exists","Only affects union leaders"], correct: 1, explanation: "INSIDERS (employed union members): gain higher wages, better conditions, job security. OUTSIDERS (unemployed/non-union): face barriers — higher wages reduce jobs, union restrictions prevent entry. Unions maximise members' welfare, not total employment. Can create a two-tier labour market. Especially problematic if unions restrict supply (closed shops, licensing). Outsiders may be young, ethnic minorities, or those in excluded sectors. An equity concern: unions may worsen inequality between the employed and unemployed." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — 3 columns
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "High union membership density (high % of workers unionised)", category: "power" },
+    { text: "Ability to organise effective strikes with strong solidarity", category: "power" },
+    { text: "Inelastic demand for labour (few substitutes, essential workers)", category: "power" },
+    { text: "Strong financial resources and strike funds", category: "power" },
+    { text: "Favourable legal framework (right to strike, recognition laws)", category: "power" },
+    { text: "Public support and sympathy for union cause", category: "power" },
+    { text: "Skilled workers difficult to replace", category: "power" },
+    { text: "Reduces poverty among working families by ensuring income floor", category: "advantages" },
+    { text: "Counters monopsony exploitation in low-wage labour markets", category: "advantages" },
+    { text: "Reduces income inequality by raising wages at bottom of distribution", category: "advantages" },
+    { text: "Incentivises work over benefits (makes employment more attractive)", category: "advantages" },
+    { text: "May boost productivity through efficiency wage effects and morale", category: "advantages" },
+    { text: "Increases aggregate demand as low earners have high MPC", category: "advantages" },
+    { text: "Prevents race to bottom in wage competition", category: "advantages" },
+    { text: "May cause unemployment especially among young and low-skilled", category: "disadvantages" },
+    { text: "Increases costs for businesses, especially small firms", category: "disadvantages" },
+    { text: "May lead to higher prices as firms pass on wage costs", category: "disadvantages" },
+    { text: "Accelerates automation as firms substitute capital for labour", category: "disadvantages" },
+    { text: "Regional problems — too high for low-cost areas, too low for expensive areas", category: "disadvantages" },
+    { text: "May reduce training opportunities and apprenticeships", category: "disadvantages" },
+    { text: "Could encourage informal/black market employment", category: "disadvantages" }
+];
+
+let selectedSortingItem = null;
+let sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['power','advantages','disadvantages'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two independent passages
+══════════════════════════════════════ */
+const fillData = {
+    1: {
+        answers: ["density","power","strikes","demand","inelastic","strike","framework","support","competitive","falls","monopsony","and","monopoly"],
+        template: "Trade union bargaining power depends on several factors. Union membership [0] (percentage of workers unionised) determines ability to organise collective action — higher density means stronger [1]. The ability to organise successful [2] with strong solidarity provides a credible threat forcing employers to negotiate. Elasticity of labour [3] affects outcomes — if demand is [4], unions can raise wages significantly with minimal job losses; if elastic, wage rises cause substantial unemployment. Strong financial resources and [5] funds sustain industrial action. The legal [6] matters — right to strike, collective bargaining laws, and union recognition procedures affect power. Public [7] influences political response and employer willingness to concede. When unions enter perfectly [8] labour markets, wages rise above equilibrium but employment [9], creating unemployment. However, when unions enter [10] labour markets, they can increase both wages [11] employment by countering employer exploitation and pushing wages toward the competitive level. This creates bilateral [12] where the outcome depends on relative bargaining strength."
+    },
+    2: {
+        answers: ["11","above","unemployment","monopsony","poverty","exploitation","inequality","productivity","consume","unemployment","costs","prices","automation","regional","mixed"],
+        template: "The National Living Wage in the UK is £[0].44 per hour for workers aged 21+. When minimum wage is set [1] equilibrium in a competitive market, it creates [2] as quantity supplied exceeds quantity demanded. However, in [3] labour markets, a minimum wage between the monopsony wage and competitive wage can increase both wages and employment by eliminating exploitation. Advantages of minimum wage include: reducing [4] among working families, countering monopsony [5], reducing income [6], incentivising work over benefits, and potentially boosting [7] through efficiency wage effects. Low earners have a high marginal propensity to [8], so higher wages increase aggregate demand. Disadvantages include: potential [9] especially among young and low-skilled workers, increased [10] for businesses especially small firms, higher [11] as firms pass on wage costs to consumers, accelerated [12] as firms substitute capital for labour, and [13] problems where the same minimum is too high for low-cost areas. Evidence on employment effects is [14]: small increases near equilibrium have modest effects, but large increases can cause significant unemployment."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid);
+        delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

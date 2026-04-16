@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Production &amp; Productivity Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* Simulator */
+        .sim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; margin-bottom: 1.25rem; }
+        .sim-scenario { font-size: 0.97rem; line-height: 1.7; color: var(--text); margin-bottom: 1.25rem; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.7rem; margin-bottom: 1.5rem; }
+        .metric-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; }
+        .metric-box .mk { font-family: var(--ff-mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.3rem; }
+        .metric-box .mv { font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+        .sim-selects { display: grid; gap: 0.85rem; margin-bottom: 1.25rem; }
+        .sim-selects label { font-size: 0.8rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 0.3rem; font-family: var(--ff-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+        .sim-selects select { width: 100%; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--ff-sans); font-size: 0.87rem; cursor: pointer; appearance: none; }
+        .sim-selects select:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+        [data-theme="light"] .sim-selects select { background: #f1f5f9; }
+        .sim-result { display: none; margin-top: 1.25rem; padding: 1.25rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-size: 0.85rem; line-height: 1.7; }
+        .sim-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .sim-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .sim-ba-col { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem; }
+        .sim-ba-col h4 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--accent); margin-bottom: 0.6rem; }
+        .sim-ba-col p { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+        .sim-feedback { margin-top: 0.85rem; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.84rem; font-weight: 600; }
+        .sim-feedback.correct { background: var(--correct-bg); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+        .sim-feedback.incorrect { background: var(--incorrect-bg); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+        [data-theme="light"] .sim-feedback.correct { color: #065f46; }
+        [data-theme="light"] .sim-feedback.incorrect { color: #991b1b; }
+        .sim-counter { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 0.5rem; }
+
+        /* Match game */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.83rem; font-weight: 600; margin-bottom: 0.45rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.35; cursor: not-allowed; }
+        .match-def { padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-bottom: 0.45rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.67rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.15rem 0.5rem; border-radius: 4px; margin-bottom: 0.3rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+
+        /* Fill game */
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.92rem; color: var(--text); }
+        .passage-box h4 { font-family: var(--ff-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.5rem; margin-top: 1rem; }
+        .passage-box h4:first-child { margin-top: 0; }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        .match-inline-result { display: none; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .match-inline-result.show { display: block; }
+        .match-inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .match-inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .match-inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .match-inline-result.success { color: #065f46; }
+        [data-theme="light"] .match-inline-result.partial { color: #92400e; }
+        [data-theme="light"] .match-inline-result.poor { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .match-grid { grid-template-columns: 1fr; }
+            .sim-ba { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Production &amp; Productivity Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_prodprod_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_prodprod_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Production &amp; Productivity</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Production Simulator</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SIMULATOR -->
+    <div class="tab-content">
+        <span class="mono-label">Production Simulator — Analyse each scenario</span>
+        <div class="sim-card">
+            <div class="q-num" id="simLabel">Scenario 1 of 10</div>
+            <p class="sim-scenario" id="simScenario"></p>
+            <div class="metrics-grid" id="simMetrics"></div>
+            <div class="sim-selects">
+                <div>
+                    <label>Best action to take</label>
+                    <select id="simAction"><option value="">-- Select action --</option></select>
+                </div>
+                <div>
+                    <label>Effect on productivity</label>
+                    <select id="simProductivity">
+                        <option value="">-- Select --</option>
+                        <option value="increase">Increase productivity</option>
+                        <option value="decrease">Decrease productivity</option>
+                        <option value="no-change">No change</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Effect on unit costs</label>
+                    <select id="simCosts">
+                        <option value="">-- Select --</option>
+                        <option value="decrease">Decrease unit costs</option>
+                        <option value="increase">Increase unit costs</option>
+                        <option value="no-change">No change</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Market structure impact</label>
+                    <select id="simMarket">
+                        <option value="">-- Select --</option>
+                        <option value="more-competitive">More competitive (lower barriers/prices)</option>
+                        <option value="less-competitive">Less competitive (higher barriers, monopoly power)</option>
+                        <option value="new-market">Creates entirely new market</option>
+                        <option value="destroys-market">Destroys existing market (creative destruction)</option>
+                        <option value="no-change">No significant market structure change</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Type of change</label>
+                    <select id="simChangeType">
+                        <option value="">-- Select --</option>
+                        <option value="specialization">Specialisation benefit</option>
+                        <option value="division-labour">Division of labour</option>
+                        <option value="invention">Invention</option>
+                        <option value="innovation">Innovation</option>
+                        <option value="creative-destruction">Creative destruction</option>
+                        <option value="technology">Technological change</option>
+                    </select>
+                </div>
+            </div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="nextSimulation()">Next Scenario →</button>
+                <button class="btn btn-primary" onclick="analyseDecision()">Analyse Decision</button>
+            </div>
+            <div class="sim-result" id="simResult"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Creative Destruction</button>
+            <button class="sub-tab" onclick="switchSubTab(2)">Specialisation &amp; Money</button>
+        </div>
+
+        <!-- Sub 1: Match -->
+        <div class="sub-tab-content active">
+            <span class="mono-label">Match each term to its definition — click a term, then click its definition</span>
+            <div class="match-grid">
+                <div class="match-col">
+                    <h3>Terms</h3>
+                    <div id="matchTerms"></div>
+                </div>
+                <div class="match-col">
+                    <h3>Definitions</h3>
+                    <div id="matchDefs"></div>
+                </div>
+            </div>
+            <div class="match-inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Sub 2: Fill 1 -->
+        <div class="sub-tab-content">
+            <span class="mono-label">Missing Words — Creative Destruction &amp; Technological Change</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Sub 3: Fill 2 -->
+        <div class="sub-tab-content">
+            <span class="mono-label">Missing Words — Specialisation &amp; Money</span>
+            <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage2"></div>
+            <div id="fillResult2" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let simInit = false, matchInit = false;
+const fillInitialised = {1: false, 2: false};
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !simInit) { simInit = true; displaySimulation(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.sub-tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initFillPassage(1);
+    if (index === 2) initFillPassage(2);
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What is 'production' in economics?", options: ["The process of selling goods to consumers","The process of converting inputs (factors of production) into outputs (goods and services)","The process of transporting goods to market","The process of pricing products"], correct: 1, explanation: "Production is the process of combining factors of production (land, labour, capital, enterprise) to create goods and services. It transforms inputs into outputs that have value. Examples: using steel, labour, and machinery to produce cars; or using ingredients, chefs, and equipment to produce meals." },
+    { question: "What is 'productivity'?", options: ["The total output produced by a firm","The efficiency of production — output per unit of input","The number of workers employed","The profit made from production"], correct: 1, explanation: "Productivity measures efficiency — how much output is produced per unit of input. Labour productivity = Total output / Number of workers. Higher productivity means more output from the same inputs, reducing unit costs and increasing competitiveness. A worker producing 50 units per day is more productive than one producing 30 units per day." },
+    { question: "A factory employs 20 workers who produce 1,000 units per day. What is the labour productivity?", options: ["20 units per worker","50 units per worker per day","1,000 units","20,000 units"], correct: 1, explanation: "Labour productivity = Total output / Number of workers = 1,000 units / 20 workers = 50 units per worker per day. This measures how efficient each worker is. If productivity increases to 60 units per worker, the same 20 workers could produce 1,200 units, or only 17 workers would be needed to produce 1,000 units." },
+    { question: "What is 'specialisation'?", options: ["When workers perform all tasks in production","When workers, firms, or countries focus on producing specific goods/services they're best at","When firms produce many different products","When production uses only one input"], correct: 1, explanation: "Specialisation occurs when economic agents concentrate on what they do best. Individual specialisation: a worker focuses on one task (e.g., installing car engines only). Firm specialisation: Toyota specialises in cars, not computers. National specialisation: Saudi Arabia specialises in oil production. Specialisation increases productivity through practice and skill development." },
+    { question: "What is the 'division of labour'?", options: ["Breaking production into separate tasks performed by different workers","Dividing workers into management and employees","Separating factories by geographic location","Splitting profits among workers"], correct: 0, explanation: "Division of labour means breaking production into specialised tasks. Instead of one worker making an entire car, Worker A installs engines, Worker B fits doors, Worker C paints. Benefits: workers become expert at their task, no time lost switching between tasks, easier to train, machinery can be specialised. Adam Smith's pin factory example: 10 workers specialising could make 48,000 pins/day vs. 200 pins if each made complete pins alone." },
+    { question: "Which is a key benefit of specialisation and division of labour?", options: ["Workers become less skilled over time","Increased productivity and efficiency — workers become expert at specific tasks","Production becomes more expensive","All workers must know every job"], correct: 1, explanation: "Specialisation increases productivity because: (1) Workers become highly skilled at specific tasks through repetition; (2) No time wasted switching between tasks; (3) Easier and quicker to train workers; (4) Specialised machinery can be used; (5) Workers matched to tasks they're best at. This reduces unit costs and increases output, benefiting firms and consumers." },
+    { question: "Why does specialisation necessitate money as a medium of exchange?", options: ["Specialised workers need to buy goods they don't produce — money enables efficient trade","Money makes specialisation impossible","Specialised producers can produce everything they need","Barter works better with specialisation"], correct: 0, explanation: "Specialisation creates interdependence. A specialist car producer makes only cars but needs food, clothes, housing. Without money, they'd need barter — finding someone who wants a car AND has food they want (double coincidence of wants). Money solves this: sell cars for money, use money to buy anything. Money enables specialisation by making exchange efficient. Without money, we'd need self-sufficiency (no specialisation)." },
+    { question: "What is the difference between invention and innovation?", options: ["They are the same thing","Invention is creating something new; innovation is successfully commercialising/applying an invention","Innovation is creating something new; invention is selling it","Invention happens first, innovation never happens"], correct: 1, explanation: "Invention = creating a new idea, product, or process (e.g., first electric car motor invented in 1828). Innovation = successfully bringing an invention to market or applying it commercially (e.g., Tesla innovating mass-market electric cars in 2010s). Invention is the discovery; innovation is the practical application. Many inventions (flying cars, jet packs) haven't been successfully innovated for mass markets." },
+    { question: "How can technological change affect production?", options: ["It only affects marketing, not production","It can change methods of production, increase productivity, improve efficiency, and reduce costs","Technology always increases costs","Technology has no impact on production"], correct: 1, explanation: "Technological change transforms production: (1) New methods: automation replaces manual assembly; (2) Higher productivity: robots work 24/7 without breaks; (3) Greater efficiency: 3D printing reduces waste; (4) Lower costs: automated warehouses need fewer workers. Example: Car factories using robots increased productivity massively — one worker with robots produces more than 10 workers without." },
+    { question: "What is 'creative destruction'?", options: ["When firms deliberately destroy their own products","The process where innovation destroys old industries/jobs while creating new ones","When governments force firms to close","The destruction of the environment by production"], correct: 1, explanation: "Creative destruction (Joseph Schumpeter) occurs when innovation makes old products/industries obsolete. 'Destruction': Digital cameras destroyed film camera companies (Kodak bankrupt); streaming destroyed video rental (Blockbuster closed); email reduced postal service. 'Creative': New industries/jobs created — software engineers, app developers, drone operators. It's the continuous cycle where innovation simultaneously destroys old markets and creates new ones." },
+    { question: "Which is an example of creative destruction?", options: ["A factory hiring more workers using the same technology","Smartphones destroying the markets for cameras, MP3 players, GPS devices, and alarm clocks while creating app development industry","A shop repainting its storefront","Workers taking a lunch break"], correct: 1, explanation: "Smartphones demonstrate creative destruction perfectly. Destruction: Markets destroyed for standalone cameras (Kodak), MP3 players (iPod), portable GPS (TomTom), alarm clocks, calculators, and flashlights. Jobs lost in these industries. Creation: New markets for apps, app developers, mobile payment systems, mobile advertising. Uber and Airbnb wouldn't exist without smartphones. One innovation simultaneously destroyed multiple old industries while creating entirely new ones." },
+    { question: "How can technological change influence market structure?", options: ["Technology has no effect on market structure","Technology can reduce barriers to entry (creating competition) or create network effects (leading to monopolies)","Technology always creates perfect competition","Technology always creates monopolies"], correct: 1, explanation: "Technology affects market structure both ways. More competitive: Internet reduced barriers to entry — anyone can start an online shop competing with established retailers; Uber reduced taxi barriers. Less competitive (monopolies): Network effects — Facebook/Google benefit from more users, making it hard for competitors to enter; High fixed costs of developing operating systems created Microsoft's dominance. Technology can either increase competition (lowering entry barriers) or concentrate markets (economies of scale, network effects)." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SIMULATOR ── */
+const simulations = [
+    { scenario: "Your furniture factory employs 50 workers producing chairs. Each worker makes complete chairs from start to finish. Total daily output: 200 chairs. Labour productivity: 4 chairs per worker per day.", metrics: {Workers:50,Output:200,Productivity:4,"Unit cost":"£25"}, actions: ["Introduce division of labour — specialised tasks","Invest in automated cutting machinery","Hire 10 more workers using same methods"], correctAction: "Introduce division of labour — specialised tasks", correctAnswers: {productivity:"increase",costs:"decrease",market:"no-change",changeType:"division-labour"}, results: {Workers:50,Output:350,Productivity:7,"Unit cost":"£18"}, explanation: "Division of labour increases productivity dramatically. Workers specialise in specific tasks (cutting, assembly, finishing) becoming expert at their job. No time wasted switching tasks. Output increases from 200 to 350 chairs with same 50 workers — productivity rises from 4 to 7 chairs per worker. Unit costs fall from £25 to £18. This is Adam Smith's classic example — specialisation increases efficiency without new technology." },
+    { scenario: "Your car manufacturing plant produces 10,000 cars per year using 500 workers. Manual assembly is labour-intensive. Unit production cost: £15,000 per car.", metrics: {Workers:500,Output:"10,000 cars/year",Productivity:"20 cars/worker/year","Unit cost":"£15,000"}, actions: ["Install robotic assembly line automation","Hire 100 more workers","Reduce worker wages"], correctAction: "Install robotic assembly line automation", correctAnswers: {productivity:"increase",costs:"decrease",market:"more-competitive",changeType:"technology"}, results: {Workers:300,Output:"15,000 cars/year",Productivity:"50 cars/worker/year","Unit cost":"£10,000"}, explanation: "Automation dramatically increases productivity. Robots work 24/7 with consistent quality. Output increases to 15,000 cars with only 300 workers needed — productivity jumps from 20 to 50 cars per worker per year. Unit costs fall from £15,000 to £10,000. This makes the firm more competitive — it can lower prices or increase profit margins. Technological change transforms production efficiency." },
+    { scenario: "Netflix introduces streaming technology. Previously, consumers rented DVDs from physical video stores like Blockbuster. Blockbuster had 9,000 stores worldwide employing 84,000 people.", metrics: {Industry:"Video rental",Stores:"9,000",Employees:"84,000",Method:"Physical DVD rental"}, actions: ["Continue renting DVDs from physical stores","Innovate streaming technology","Increase DVD rental prices"], correctAction: "Innovate streaming technology", correctAnswers: {productivity:"increase",costs:"decrease",market:"destroys-market",changeType:"creative-destruction"}, results: {Industry:"Video streaming",Stores:"Physical stores obsolete",Employees:"Blockbuster bankrupt (2010), new streaming jobs created",Method:"Instant online streaming"}, explanation: "Classic creative destruction. Netflix's streaming innovation destroyed the DVD rental market — Blockbuster went bankrupt, 9,000 stores closed, 84,000 jobs lost. BUT it created new markets: streaming services, content creation jobs, software engineers, data analysts. Productivity increased — no physical stores, delivery, or inventory needed. Costs decreased — consumers pay less per movie watched. One innovation simultaneously destroyed an old industry while creating entirely new ones." },
+    { scenario: "Your textile factory produces shirts, trousers, dresses, curtains, and bedding. Workers switch between products daily. Production is inefficient with high error rates. Output: 5,000 items/month.", metrics: {Products:"5 different types",Workers:100,Output:"5,000 items/month",Productivity:"50 items/worker/month"}, actions: ["Specialise — focus only on high-quality shirts","Add more product types","Close the factory"], correctAction: "Specialise — focus only on high-quality shirts", correctAnswers: {productivity:"increase",costs:"decrease",market:"no-change",changeType:"specialization"}, results: {Products:"1 specialised product",Workers:100,Output:"12,000 shirts/month",Productivity:"120 items/worker/month"}, explanation: "Firm-level specialisation increases efficiency dramatically. By focusing on one product, workers develop expertise, machinery is specialised, processes optimised, and quality improves. Output increases from 5,000 mixed items to 12,000 high-quality shirts with same 100 workers. Productivity rises from 50 to 120 items per worker. Unit costs fall due to economies of scale and expertise. The firm becomes a specialist competing on quality and efficiency." },
+    { scenario: "Kodak invented the digital camera in 1975 but failed to commercialise it, fearing it would hurt film sales. By the 2000s, other companies innovated digital photography for mass markets.", metrics: {Company:"Kodak",Invention:"Digital camera (1975)",Market:"Dominated film photography",Sales:"Billions in film sales"}, actions: ["Protect film business, suppress digital innovation","Commercialise and innovate digital cameras","Increase film prices"], correctAction: "Commercialise and innovate digital cameras", correctAnswers: {productivity:"increase",costs:"decrease",market:"destroys-market",changeType:"creative-destruction"}, results: {Company:"Kodak bankrupt (2012)",Invention:"Digital photography becomes standard",Market:"Film photography market destroyed",Sales:"Digital camera companies thrive, smartphone cameras emerge"}, explanation: "This demonstrates the difference between invention and innovation, plus creative destruction. Kodak INVENTED digital cameras but failed to INNOVATE (commercialise). Other firms innovated digital photography, destroying the film market. Kodak went bankrupt in 2012. Creative destruction occurred: film photography destroyed (Kodak, film labs), but digital photography and smartphone cameras created new markets. The lesson: invention without innovation leads to failure." },
+    { scenario: "Your bakery employs 10 bakers, each making bread from start to finish: mixing dough, shaping, baking, packaging. Daily output: 100 loaves. Productivity: 10 loaves per baker per day.", metrics: {Workers:10,Output:"100 loaves/day",Productivity:"10 loaves/baker/day",Method:"Each baker does everything"}, actions: ["Introduce division of labour with specialised roles","Reduce working hours","Hire 5 more bakers using same method"], correctAction: "Introduce division of labour with specialised roles", correctAnswers: {productivity:"increase",costs:"decrease",market:"no-change",changeType:"division-labour"}, results: {Workers:10,Output:"200 loaves/day",Productivity:"20 loaves/baker/day",Method:"Specialised: 3 mix, 4 shape, 2 bake, 1 packages"}, explanation: "Division of labour doubles productivity without technology changes. Instead of each baker doing everything, specialisation occurs: 3 bakers become mixing experts, 4 become shaping experts, 2 baking experts, 1 packaging expert. No time lost switching tasks. Workers become highly skilled at their specific task. Same 10 workers now produce 200 loaves instead of 100 — productivity doubles from 10 to 20 loaves per baker. Unit costs fall due to higher efficiency." },
+    { scenario: "Amazon introduces warehouse automation robots. Previously, human workers walked miles daily picking products from shelves. Each worker processed 100 orders per day.", metrics: {Workers:"1,000 per warehouse","Orders/day":"100 per worker",Method:"Manual picking",Productivity:"100 orders/worker/day"}, actions: ["Continue manual picking methods","Introduce automated robot picking systems","Reduce warehouse size"], correctAction: "Introduce automated robot picking systems", correctAnswers: {productivity:"increase",costs:"decrease",market:"more-competitive",changeType:"technology"}, results: {Workers:"300 per warehouse (robot supervisors)","Orders/day":"400 per worker",Method:"Automated robotic systems",Productivity:"400 orders/worker/day"}, explanation: "Warehouse automation revolutionises productivity. Robots retrieve products while workers supervise and pack. Workers needed fall from 1,000 to 300, but those remaining process 400 orders each instead of 100 — productivity quadruples. Unit costs fall dramatically. Faster delivery and lower prices make Amazon more competitive. This is technological change increasing efficiency — same or higher output with fewer inputs. Creates new jobs (robot technicians) while reducing traditional warehouse jobs." },
+    { scenario: "Before money existed, your specialised shoe maker wanted grain. They had to find a grain farmer who wanted shoes (double coincidence of wants). This was difficult and time-consuming.", metrics: {System:"Barter economy",Efficiency:"Very low",Specialisation:"Limited — people produce what they need",Trade:"Requires double coincidence of wants"}, actions: ["Continue with barter system","Introduce money as medium of exchange","Produce everything yourself"], correctAction: "Introduce money as medium of exchange", correctAnswers: {productivity:"increase",costs:"decrease",market:"more-competitive",changeType:"specialization"}, results: {System:"Money economy",Efficiency:"Very high",Specialisation:"High — people specialise in what they do best",Trade:"Easy — sell anything for money, buy anything with money"}, explanation: "Money enables specialisation by solving the barter problem. The shoe maker sells shoes for money, then uses money to buy grain from anyone — no need to find someone who wants shoes AND has grain. Money as medium of exchange makes trade efficient. This allows specialisation: focus on what you're best at, trade for everything else. Without money, specialisation is impossible — you'd need to produce everything yourself. Money is essential infrastructure for productive economies." },
+    { scenario: "Uber innovates ride-sharing using smartphone apps. Traditional taxi drivers need expensive medallion licences (£200,000+ in London), use meters, and must be hailed on streets.", metrics: {Industry:"Traditional taxis",Barriers:"Very high (licences, medallions)",Market:"Limited competition",Drivers:"Licensed taxi drivers only"}, actions: ["Protect taxi monopoly, ban Uber","Allow Uber innovation with ride-sharing","Increase taxi licence fees"], correctAction: "Allow Uber innovation with ride-sharing", correctAnswers: {productivity:"increase",costs:"decrease",market:"more-competitive",changeType:"innovation"}, results: {Industry:"Ride-sharing economy",Barriers:"Low (smartphone + car)",Market:"Highly competitive",Drivers:"Anyone can drive part-time"}, explanation: "Uber demonstrates innovation creating competition and reducing barriers to entry. Previously, taxi medallions cost £200,000+ limiting supply and competition. Uber's innovation: smartphone app matching riders and drivers. Anyone with a car can participate — barriers to entry fall dramatically. More competition means lower prices and better service. Taxi medallion values collapsed. This shows how innovation can transform market structure from restricted competition to more competitive markets through technology reducing entry barriers." },
+    { scenario: "Ford Motor Company introduces assembly line production in 1913. Previously, skilled workers built entire cars by hand. One car took 12 hours to build. Highly skilled workers needed.", metrics: {Method:"Craft production","Time per car":"12 hours",Workers:"Highly skilled artisans",Output:"Low volume"}, actions: ["Continue craft production methods","Introduce moving assembly line with division of labour","Hire more skilled craftsmen"], correctAction: "Introduce moving assembly line with division of labour", correctAnswers: {productivity:"increase",costs:"decrease",market:"more-competitive",changeType:"innovation"}, results: {Method:"Assembly line production","Time per car":"93 minutes",Workers:"Semi-skilled workers doing repetitive tasks",Output:"High volume, affordable cars"}, explanation: "Ford's assembly line innovation revolutionised manufacturing. Car production time fell from 12 hours to 93 minutes — productivity increased nearly 8x. Extreme division of labour: one worker installs one part repeatedly, becoming very fast and efficient. Workers needed less skill as tasks simplified. Cars became affordable — Model T price fell 50%. This innovation transformed the auto industry from luxury craft production to mass production accessible to ordinary people." }
+];
+
+let currentSim = 0, simAnswered = false;
+
+function displaySimulation() {
+    const sim = simulations[currentSim];
+    document.getElementById('simLabel').textContent = `Scenario ${currentSim+1} of ${simulations.length}`;
+    document.getElementById('simScenario').textContent = sim.scenario;
+    document.getElementById('simMetrics').innerHTML = Object.entries(sim.metrics).map(([k,v]) =>
+        `<div class="metric-box"><div class="mk">${k}</div><div class="mv">${v}</div></div>`
+    ).join('');
+    const sel = document.getElementById('simAction');
+    sel.innerHTML = '<option value="">-- Select action --</option>' + sim.actions.map(a => `<option value="${a}">${a}</option>`).join('');
+    ['simProductivity','simCosts','simMarket','simChangeType'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('simResult').classList.remove('show');
+    simAnswered = false;
+}
+
+function analyseDecision() {
+    if (simAnswered) return;
+    const sim = simulations[currentSim];
+    const action = document.getElementById('simAction').value;
+    const prod = document.getElementById('simProductivity').value;
+    const costs = document.getElementById('simCosts').value;
+    const market = document.getElementById('simMarket').value;
+    const ct = document.getElementById('simChangeType').value;
+    if (!action || !prod || !costs || !market || !ct) { alert('Please complete all selections before analysing.'); return; }
+    const ca = sim.correctAnswers;
+    const results = { action: action === sim.correctAction, productivity: prod === ca.productivity, costs: costs === ca.costs, market: market === ca.market, changeType: ct === ca.changeType };
+    const total = Object.values(results).filter(v=>v).length;
+    const allRight = total === 5;
+    const marketLabels = {'more-competitive':'More competitive','less-competitive':'Less competitive','new-market':'Creates new market','destroys-market':'Destroys existing market (creative destruction)','no-change':'No significant change'};
+    const ctLabels = {'specialization':'Specialisation','division-labour':'Division of labour','invention':'Invention','innovation':'Innovation','creative-destruction':'Creative destruction','technology':'Technological change'};
+    let feedback = allRight ? '🌟 All 5 answers correct!' : `${total}/5 correct.`;
+    if (!allRight) {
+        if (!results.action) feedback += `<br>Action: ${sim.correctAction}`;
+        if (!results.productivity) feedback += `<br>Productivity: ${ca.productivity}`;
+        if (!results.costs) feedback += `<br>Unit costs: ${ca.costs}`;
+        if (!results.market) feedback += `<br>Market impact: ${marketLabels[ca.market]}`;
+        if (!results.changeType) feedback += `<br>Type: ${ctLabels[ca.changeType]}`;
+    }
+    const baHtml = `<div class="sim-ba">
+        <div class="sim-ba-col"><h4>Before</h4>${Object.entries(sim.metrics).map(([k,v])=>`<p><strong>${k}:</strong> ${v}</p>`).join('')}</div>
+        <div class="sim-ba-col"><h4>After</h4>${Object.entries(sim.results).map(([k,v])=>`<p><strong>${k}:</strong> ${v}</p>`).join('')}</div>
+    </div>`;
+    document.getElementById('simResult').innerHTML = baHtml + `<p style="margin-bottom:0.75rem;font-size:0.85rem;color:var(--muted);line-height:1.7">${sim.explanation}</p><div class="sim-feedback ${allRight?'correct':'incorrect'}">${feedback}</div>`;
+    document.getElementById('simResult').classList.add('show');
+    simAnswered = true;
+}
+
+function nextSimulation() {
+    if (currentSim < simulations.length - 1) { currentSim++; displaySimulation(); }
+}
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Production", definition: "The process of converting inputs (factors of production) into outputs (goods and services)", id: 1 },
+    { term: "Productivity", definition: "The efficiency of production — output per unit of input (e.g., output per worker)", id: 2 },
+    { term: "Labour Productivity", definition: "Total output divided by number of workers — measures output per worker", id: 3 },
+    { term: "Specialisation", definition: "When workers, firms, or countries focus on producing goods/services they're best at", id: 4 },
+    { term: "Division of Labour", definition: "Breaking production into separate tasks performed by different specialised workers", id: 5 },
+    { term: "Invention", definition: "Creating a new idea, product, or process for the first time", id: 6 },
+    { term: "Innovation", definition: "Successfully commercialising and applying an invention to create value", id: 7 },
+    { term: "Creative Destruction", definition: "Process where innovation destroys old industries while simultaneously creating new ones", id: 8 },
+    { term: "Medium of Exchange", definition: "Money's function that enables easy trading — sell anything for money, buy anything with money", id: 9 },
+    { term: "Technological Change", definition: "Changes in production methods, processes, or products due to new technology", id: 10 },
+    { term: "Barriers to Entry", definition: "Obstacles that make it difficult for new firms to enter a market (technology can reduce these)", id: 11 },
+    { term: "Double Coincidence of Wants", definition: "Barter problem — finding someone who wants what you have AND has what you want", id: 12 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove();
+        delete matchMatches[defId];
+        defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild);
+    defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'match-inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["innovation","simultaneously","Schumpeter","obsolete","fail","disappear","industries","created","film","bankrupt","disappeared","creation","editing","engineers","streaming","sales","manufacturing","music","profession","Netflix","new","manufacturers","industry","retail","drone","business","Blockbuster","technology","continuous","retraining","opportunities","typewriters","products","structures","born"],
+        template: "Creative destruction is the process where [0] destroys old industries and products while [1] creating new ones. This concept was developed by economist Joseph [2]. Innovation makes existing products, methods, or industries [3]. The 'destruction' side means traditional businesses [4], jobs are lost, and established markets [5]. The 'creative' side means new [6], new jobs, and new opportunities are [7]. For example, digital cameras destroyed the [8] photography industry. Companies like Kodak went [9] in 2012 despite inventing the digital camera. Kodak's film business, photo labs, and film production all [10]. However, this destruction was accompanied by [11]. New industries emerged: digital imaging, smartphone cameras, photo [12] apps, and cloud photo storage. New jobs were created: software [13], app designers, and digital photographers. Another example is [14] music destroying CD sales and record stores. The music streaming industry destroyed physical music [15]. HMV and Tower Records closed stores. CD [16] plants shut down. BUT streaming created new opportunities: Spotify employs thousands, artists can distribute [17] without record labels, playlist curators became a new [18], and data analysts study listening patterns. This is the essence of creative destruction: [19]'s innovation simultaneously destroys old markets while creating entirely [20] ones. The automobile destroyed horse-drawn carriage [21], but created the massive automotive [22]. Online shopping (Amazon) is destroying traditional [23] stores, but creating e-commerce jobs, warehouse automation, and [24] delivery services. Email destroyed much of the postal letter [25], but created digital communication industries. Netflix destroyed video rental stores like [26], but created the streaming industry employing thousands in content creation and [27]. Creative destruction is [28] to economic progress. While painful for workers in declining industries (requiring [29] and job transitions), it drives productivity growth, creates new [30], and improves consumer choice. Without creative destruction, we'd still be using [31], typewriters, and film cameras. The key insight: technological change isn't just about new [32]; it's about the transformation of entire market [33] as old industries die and new ones are [34]."
+    },
+    2: {
+        answers: ["efficient","tasks","200","48000","skilled","wasted","quicker","machinery","abilities","interdependence","exchange","impossible","farmer","double","medium","barter","money","anyone","exchange","unit","pounds","value","loaves","time-consuming","different","sells","outputs","reduces","productivity","oil","international","everything","specialization","economies"],
+        template: "Specialisation occurs when workers, firms, or countries concentrate on producing specific goods or services they are most [0] at. Division of labour means breaking production into separate [1] where different workers specialise in different stages. Adam Smith's famous pin factory example demonstrates the power of specialisation. One worker making complete pins might produce [2] pins per day. However, with division of labour where 10 workers each specialise in one task, the same 10 workers could produce [3] pins per day — a productivity increase of 240 times! The benefits of specialisation include: Workers become highly [4] at their specific tasks through practice and repetition. No time is [5] switching between different tasks and tools. Training becomes easier and [6] when workers learn one task instead of all tasks. Specialised [7] can be used for specific tasks. Workers can focus on tasks that match their natural [8]. However, specialisation creates [9]. A specialist car worker produces only cars but needs food, clothing, housing, and many other goods. This necessitates an efficient system of [10]. Without efficient exchange, specialisation would be [11]. Imagine a specialised doctor needing to barter medical services for food — they'd need to find a [12] who needed medical treatment AND was willing to trade food. This is called the [13] coincidence of wants problem. Money solves the specialisation problem by acting as a [14] of exchange. Instead of [15] (trading goods for goods), people sell their specialised output for [16]. Then they use that money to buy whatever they need from [17]. Money has several key functions that enable specialisation: As a medium of [18], money allows easy trading. As a [19] of account, money provides a common way to measure value — everything has a price in [20]. As a store of [21], money can be saved for future purchases. Imagine an economy without money. A baker specialising in bread would need to carry [22] around to trade directly. Finding people who want bread AND have what the baker needs would be [23]. Production would be inefficient as people would have to produce many [24] things themselves rather than specialising. With money, the baker [25] bread for money in the morning, then uses that money to buy meat, clothes, or anything else in the afternoon. The butcher, tailor, and farmer all specialise because they know they can sell their specialised [26] for money and buy everything else they need. Money dramatically [27] transaction costs — the time and effort needed to make trades. This efficiency enables deep specialisation, which increases [28] and living standards. Countries can also specialise: Saudi Arabia specialises in [29] production, Japan in electronics, New Zealand in dairy. They trade using [30] currency as the medium of exchange. Without money enabling trade, countries would need to produce [31] themselves, being far less productive. In summary, specialisation and division of labour increase productivity dramatically, but they create interdependence. Money as a medium of exchange solves the barter problem, making [32] efficient and enabling the deep specialisation that characterises modern [33]."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

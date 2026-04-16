@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Market Structures &amp; Firm Objectives Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Market Structures &amp; Objectives Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_mktobj_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_mktobj_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Market Structures &amp; Firm Objectives</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Market Structure Characteristics</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('perfect')">
+                <span class="col-label">✅ Perfect Competition</span>
+                <div class="sort-items" id="perfect"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('monopoly')">
+                <span class="col-label">🏢 Monopoly</span>
+                <div class="sort-items" id="monopoly"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('objectives')">
+                <span class="col-label">🎯 Alternative Objectives</span>
+                <div class="sort-items" id="objectives"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: MISSING WORDS -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Market Structures</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Firm Objectives</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What defines the spectrum of competition in market structures?", options: ["Only number of firms matters","Ranges from perfect competition (many firms, homogeneous products, free entry) to pure monopoly (single firm, unique product, blocked entry)","All markets are identical","Only price matters"], correct: 1, explanation: "The spectrum runs from PERFECT COMPETITION (most competitive) to PURE MONOPOLY (least competitive), with monopolistic competition and oligopoly in between. Key factors distinguishing structures: 1) NUMBER of firms (many to one), 2) PRODUCT DIFFERENTIATION (homogeneous to unique), 3) BARRIERS TO ENTRY (none to insurmountable), 4) PRICE-SETTING POWER (price taker to price maker)." },
+    { question: "What are the key characteristics of perfect competition?", options: ["Few large firms dominate","Many buyers and sellers, homogeneous products, perfect information, free entry/exit, firms are price takers","Products are differentiated","High barriers to entry exist"], correct: 1, explanation: "Perfect competition requires: 1) MANY SMALL firms (no individual influence), 2) HOMOGENEOUS products (identical/perfect substitutes), 3) PERFECT INFORMATION (all know prices/quality), 4) FREE ENTRY/EXIT (no barriers), 5) PRICE TAKERS (accept market price). Result: firms face perfectly elastic demand, can't influence price. Examples: agricultural commodities, stock markets (closest approximations)." },
+    { question: "What are the key characteristics of monopoly?", options: ["Many small competing firms","Single seller, unique product with no close substitutes, high barriers to entry, firm is price maker","Easy entry for new firms","Perfect substitutes available"], correct: 1, explanation: "Pure monopoly has: 1) SINGLE SELLER (100% market share), 2) UNIQUE PRODUCT (no close substitutes), 3) HIGH BARRIERS TO ENTRY (legal, natural, strategic), 4) PRICE MAKER (sets price via output decisions), 5) DOWNWARD-SLOPING DEMAND (raise price = lower quantity). Examples: local water supplier, historically Microsoft Windows, patents create temporary monopolies. Rare in pure form." },
+    { question: "What is the profit-maximising rule for all firms?", options: ["Maximise revenue only","Produce where Marginal Cost equals Marginal Revenue (MC = MR) — additional unit adds same cost as revenue","Minimise costs only","Produce maximum output always"], correct: 1, explanation: "PROFIT MAXIMISATION RULE: MC = MR. Logic: If MR > MC (extra revenue exceeds extra cost), produce more (increases profit). If MR < MC (extra cost exceeds extra revenue), produce less (reduces loss). Profit maximised where MR = MC — can't improve by changing output. Applies to ALL market structures, though MR varies: perfect competition MR = P, monopoly MR < P." },
+    { question: "Why is MC = MR the profit-maximising output?", options: ["It maximises revenue","At MC = MR, producing one more unit adds equal cost and revenue (no profit gain); producing one less loses equal profit — this is the optimum","It minimises costs","Firms choose this randomly"], correct: 1, explanation: "MC = MR is equilibrium because: BEFORE this point (MR > MC): each unit adds more revenue than cost, so produce it (profit rises). AFTER this point (MR < MC): each unit costs more than revenue gained, so don't produce it (profit falls). AT MC = MR: profit can't be improved by adjusting output either way. This is marginal analysis — continue activity while marginal benefit (MR) exceeds marginal cost (MC)." },
+    { question: "What is the divorce of ownership from control?", options: ["Owners and managers are the same","Separation between shareholders (owners seeking profit) and managers (controllers making decisions who may have different objectives)","Government controls all firms","No separation exists"], correct: 1, explanation: "DIVORCE OF OWNERSHIP FROM CONTROL: In large corporations, SHAREHOLDERS own the firm (want maximum profit/dividends) but don't run it day-to-day. MANAGERS control decisions (hired to run firm). PRINCIPAL-AGENT PROBLEM: managers may pursue own objectives (salaries, perks, empire-building, quiet life) rather than maximising shareholder profit. Information asymmetry prevents shareholders monitoring managers perfectly. Larger in big public companies; minimal in small owner-managed firms." },
+    { question: "What consequences arise from divorce of ownership from control?", options: ["Perfect profit maximisation always","Managers may pursue sales maximisation, growth, satisficing, managerial utility rather than profit maximisation — reduces shareholder returns","No effect on firm behaviour","Costs always fall"], correct: 1, explanation: "Consequences: 1) MANAGERIAL OBJECTIVES dominate: growth (size/prestige), sales revenue (bonuses tied to revenue), satisficing (adequate not maximum profit), 2) X-INEFFICIENCY: managers slack without owner pressure, 3) EXCESSIVE PERKS: luxury offices, jets, entertainment, 4) EMPIRE BUILDING: grow firm beyond profit-maximising size. Mechanisms limiting this: takeover threat (low share price attracts raiders), performance-related pay, shareholder activism, board oversight. But problems persist." },
+    { question: "What is sales revenue maximisation?", options: ["Same as profit maximisation","Firm maximises total revenue (Price × Quantity) subject to minimum profit constraint — produces more than profit-maximising output where MR = 0","Producing at lowest cost","Charging highest possible price"], correct: 1, explanation: "SALES REVENUE MAXIMISATION (Baumol): managers care about revenue not profit (bonuses/status tied to sales). Maximised where MR = 0 (revenue can't increase further). Compare to profit max (MC = MR): revenue max produces MORE output at LOWER price. Requires minimum profit to satisfy shareholders. Reasons: manager salaries linked to revenue/size, easier to finance expansion, prestige. Evidence: managerial firms have higher output, lower prices than owner-managed." },
+    { question: "What is the growth maximisation objective?", options: ["Firms never want to grow","Managers pursue maximum growth rate (assets, employees, market share) for prestige, job security, salaries — may sacrifice short-term profit","Growth reduces profits permanently","Only small firms grow"], correct: 1, explanation: "GROWTH MAXIMISATION (Marris): managers gain from firm size — higher salaries, more power, prestige, job security. May sacrifice current profit for growth via: 1) Retained earnings for expansion (not dividends), 2) Takeovers/mergers, 3) R&D investment, 4) Market share battles. Constraint: need minimum profit to prevent takeover or shareholder revolt. Creates trade-off: fast growth vs profit. Explains empire-building, diversification beyond core competence." },
+    { question: "What is satisficing?", options: ["Maximising profit always","Achieving satisfactory (adequate) profit rather than maximum profit — bounded rationality means firms don't optimise but aim for acceptable targets","Minimising effort only","Losing money deliberately"], correct: 1, explanation: "SATISFICING (Simon): firms set SATISFACTORY targets (adequate profit, market share, sales) rather than maximising. Reasons: 1) BOUNDED RATIONALITY: limited information/computational ability prevents optimisation, 2) MULTIPLE STAKEHOLDERS: balance competing interests (shareholders, employees, customers), 3) UNCERTAINTY: can't identify maximum in complex environments, 4) ORGANISATIONAL POLITICS: internal conflicts prevent single objective. Firm continues current strategy if targets met; searches for alternatives if not. More realistic than profit maximisation." },
+    { question: "What is the survival objective?", options: ["Never important for firms","In harsh conditions (recession, new entry, financial distress), firm prioritises survival — accepting losses, cutting costs, maintaining cash flow","Only for new firms","Means maximising profit"], correct: 1, explanation: "SURVIVAL objective dominates when: 1) RECESSION/CRISIS: maintain liquidity, cut costs, accept losses short-term, 2) NEW FIRMS: build customer base even without profit, 3) INTENSE COMPETITION: predatory pricing by rival, need to match, 4) FINANCIAL DISTRESS: avoid bankruptcy. Actions: price below cost to maintain market share, redundancies, asset sales, postpone investment. Once survival secured, other objectives return. Explains why firms sometimes operate at a loss." },
+    { question: "What factors distinguish monopolistic competition from perfect competition?", options: ["Identical to perfect competition","Product differentiation (branding, quality, location) gives firms some price-setting power, though many firms and free entry remain","Only one firm exists","No entry is possible"], correct: 1, explanation: "MONOPOLISTIC COMPETITION has: 1) MANY FIRMS (like perfect competition), 2) DIFFERENTIATED PRODUCTS (unlike perfect competition's homogeneous goods), 3) FREE ENTRY/EXIT (like perfect competition), 4) SOME PRICE-MAKING POWER (unlike perfect competition's price takers). Examples: restaurants, hairdressers, clothing retailers. Firms face downward-sloping demand (brand loyalty), but competition limits power. Long-run: normal profit only (entry eliminates supernormal profit)." },
+    { question: "What characterises oligopoly?", options: ["Many small firms","Few large firms dominating market, strategic interdependence (each firm's decisions affect others), barriers to entry, potential for collusion","Perfect competition exists","No barriers to entry"], correct: 1, explanation: "OLIGOPOLY features: 1) FEW LARGE FIRMS dominate (high concentration ratio), 2) STRATEGIC INTERDEPENDENCE: firms consider rivals' reactions when making decisions, 3) BARRIERS TO ENTRY: economies of scale, brands, capital requirements, 4) POTENTIAL COLLUSION: incentive to cooperate (fix prices, share markets). Products may be homogeneous (petrol) or differentiated (cars). Examples: supermarkets (Tesco, Sainsbury's, Asda), mobile networks (EE, Vodafone, O2), airlines. Game theory models oligopoly behaviour." },
+    { question: "How does number of firms affect market structure?", options: ["Number doesn't matter","More firms increase competition, reduce individual firm's market power — spectrum from many (perfect competition) to one (monopoly)","All markets have same number","Only affects costs"], correct: 1, explanation: "NUMBER OF FIRMS crucial: MANY (perfect/monopolistic competition): each firm tiny market share, no individual influence, intense competition, price takers or minimal power. FEW (oligopoly): each firm significant share, strategic interaction, moderate power. ONE (monopoly): 100% share, maximum power. Number affects: concentration ratio, pricing power, profit potential, interdependence. Measured by: market share, concentration ratios (CR4 = top 4 firms' share), HHI index." },
+    { question: "How does product differentiation affect market structure?", options: ["Differentiation is irrelevant","Differentiation gives firms brand loyalty and price-setting power — spectrum from homogeneous (perfect competition) to unique (monopoly)","All products are identical","Only affects advertising"], correct: 1, explanation: "PRODUCT DIFFERENTIATION creates market power: HOMOGENEOUS (perfect competition): products are perfect substitutes, no brand loyalty, can't charge premium. DIFFERENTIATED (monopolistic competition, oligopoly): branding, quality, features create loyalty, firms can charge different prices. UNIQUE (monopoly): no substitutes, maximum power. Differentiation via: brand image, quality, design, customer service, location. Enables: price discrimination, premium pricing, customer retention. Creates downward-sloping demand (not perfectly elastic)." },
+    { question: "How do barriers to entry affect market structure?", options: ["All markets have free entry","Higher barriers protect incumbent profits, reduce competition — spectrum from free entry (perfect competition) to blocked entry (monopoly)","Barriers don't affect competition","Entry is always impossible"], correct: 1, explanation: "BARRIERS TO ENTRY determine contestability: FREE ENTRY (perfect/monopolistic competition): supernormal profit attracts entry, competed away to normal profit. MODERATE BARRIERS (oligopoly): economies of scale, brands, capital requirements limit but don't prevent entry. HIGH BARRIERS (monopoly): legal (patents, licences), natural (massive economies of scale), strategic (predatory pricing, exclusive contracts) block entry. High barriers sustain supernormal profit long-run. Barriers include: sunk costs, brand loyalty, technology, regulation, control of resources." },
+    { question: "What is the market share objective?", options: ["Firms ignore market share","Maximise percentage of total market sales — may sacrifice short-term profit via low prices/heavy promotion to gain dominant position","Same as profit maximisation","Only small firms pursue this"], correct: 1, explanation: "MARKET SHARE MAXIMISATION: firms value share (%) of total market. Reasons: 1) STRATEGIC: dominance creates barriers, pricing power later, 2) ECONOMIES OF SCALE: larger share reduces costs, 3) INVESTOR CONFIDENCE: market leader image, 4) NETWORK EFFECTS: some products more valuable with many users. Tactics: predatory pricing (price below cost to gain share), heavy advertising, promotional discounts. Short-term profit sacrificed for long-term dominance. Amazon example: prioritised share over profit for years." },
+    { question: "What is the quality objective?", options: ["Quality is never an objective","Firm prioritises product/service quality over profit maximisation — invests in R&D, materials, training even when reducing short-term profit","Quality reduces all profits","Only luxury firms care"], correct: 1, explanation: "QUALITY MAXIMISATION: prioritise reputation and customer satisfaction. Reasons: 1) LONG-TERM PROFIT: quality builds loyalty, repeat customers, premium pricing later, 2) ETHICAL STANCE: owner/manager values reputation, 3) COMPETITIVE POSITION: quality differentiation in crowded markets. Trade-off: higher costs (better materials, more R&D, training) reduce short-term profit. Examples: luxury brands (Rolls-Royce), professional services (reputation crucial). May be compatible with long-run profit max but conflicts with short-term." },
+    { question: "How does organisational structure affect firm objectives?", options: ["Structure is irrelevant","Sole traders/partnerships likely profit maximise (owner-managed); large corporations more likely pursue managerial objectives due to divorce of ownership from control","All firms have identical objectives","Size doesn't matter"], correct: 1, explanation: "ORGANISATIONAL STRUCTURE matters: SOLE TRADER/PARTNERSHIPS: owner-managed, profits go directly to owner, strong profit motive. PRIVATE LIMITED (Ltd): often owner-managed, profit focus. PUBLIC LIMITED (PLC): divorce of ownership from control, managers may pursue sales/growth/satisficing rather than profit max. COOPERATIVES: member welfare not profit. NON-PROFIT: social objectives dominate. Size correlates with divorce: larger firms have more separation, more likely pursue managerial objectives." },
+    { question: "What mechanisms exist to align manager and shareholder interests?", options: ["No mechanisms exist","Performance-related pay (stock options, bonuses), threat of takeover (poor performance attracts raiders), board oversight, shareholder activism","Complete alignment always achieved","Only punishment works"], correct: 1, explanation: "Mechanisms to reduce PRINCIPAL-AGENT problem: 1) PERFORMANCE PAY: stock options, profit-related bonuses align manager interests with shareholders, 2) TAKEOVER THREAT: low share price (from poor management) attracts takeover, managers fired, 3) BOARD OF DIRECTORS: non-executive directors monitor management, 4) SHAREHOLDER ACTIVISM: institutional investors pressure management, 5) TRANSPARENT REPORTING: accounts make performance visible. However, never perfect alignment — managers still have information advantage, can game metrics." },
+    { question: "What is X-inefficiency and how does it relate to firm objectives?", options: ["Perfect efficiency always exists","Operating above minimum average cost due to organisational slack — managers don't minimise costs when they lack competitive pressure or profit motive","Only affects monopolies","X-inefficiency is impossible"], correct: 1, explanation: "X-INEFFICIENCY (Leibenstein): firms don't minimise costs, operate above minimum AC due to: 1) LACK OF COMPETITIVE PRESSURE: monopoly/oligopoly firms not forced to optimise, 2) DIVORCE OF OWNERSHIP: managers lack strong cost-control incentive, 3) ORGANISATIONAL SLACK: easy life, excess staff, gold-plating. Waste includes: overstaffing, luxurious offices, inefficient processes. More common when: monopoly power exists, managers control (not owners), weak governance. Competition reduces X-inefficiency — must cut costs to survive." },
+    { question: "How do stakeholders affect firm objectives?", options: ["Only shareholders matter","Multiple stakeholders (shareholders, employees, customers, suppliers, community) create competing demands — firms may satisfice to balance interests","Stakeholders have no influence","All stakeholders want the same thing"], correct: 1, explanation: "STAKEHOLDER THEORY: firms face multiple groups: SHAREHOLDERS want profit/dividends, EMPLOYEES want wages/security/conditions, CUSTOMERS want low prices/quality, SUPPLIERS want high prices/reliability, COMMUNITY wants jobs/environment, GOVERNMENT wants tax/compliance. Conflict: maximising profit may mean cutting wages, raising prices, polluting. Solutions: SATISFICING (adequate outcomes for all), CSR (corporate social responsibility), TRADE-OFFS (balance competing demands). Stakeholder power varies: shareholders strongest (can fire board), others use pressure/reputation." },
+    { question: "What is the relationship between time period and objectives?", options: ["Objectives never change","Short-run: survival, cash flow; Medium-run: market share, growth; Long-run: profit maximisation — objectives evolve as firm circumstances change","Same objective always","Time is irrelevant"], correct: 1, explanation: "OBJECTIVES VARY BY TIME PERIOD: SHORT-RUN (crisis): SURVIVAL dominates — maintain liquidity, accept losses. MEDIUM-RUN (growth phase): MARKET SHARE, SALES, GROWTH — build position even sacrificing profit. LONG-RUN (maturity): PROFIT MAXIMISATION — extract value, pay dividends. LIFECYCLE: startup (survival), growth (market share), maturity (profit), decline (survival again). Economic conditions matter: recession prioritises survival, boom allows growth. Rational to have evolving objectives matching firm's position." },
+    { question: "How does market structure affect pricing power?", options: ["All firms have equal power","Perfect competition: price takers (zero power); Monopolistic competition/Oligopoly: some power; Monopoly: price makers (maximum power)","Only costs determine prices","Structure doesn't affect pricing"], correct: 1, explanation: "PRICING POWER across spectrum: PERFECT COMPETITION: firms are PRICE TAKERS, must accept market price (perfectly elastic demand — raise price = lose all sales). MONOPOLISTIC COMPETITION: small power from differentiation, can charge slightly above competitors. OLIGOPOLY: moderate power from market dominance, strategic pricing. MONOPOLY: PRICE MAKERS, set price via output choice (downward-sloping demand). Power determined by: number of competitors, product differentiation, ease of entry. More competition = less pricing power." },
+    { question: "What is the profit satisficing level?", options: ["Maximum possible profit","Minimum acceptable profit level that satisfies shareholders without triggering takeover or rebellion — enables managers to pursue other objectives above this floor","Zero profit always","Losses are acceptable indefinitely"], correct: 1, explanation: "PROFIT SATISFICING: managers need MINIMUM profit to keep shareholders content (prevent revolt, takeover). Above this threshold, pursue own objectives (sales, growth, easy life). Constraint binds when: shareholders dissatisfied (sell shares, price falls), takeover threat emerges, board pressure. Minimum depends on: industry norms, shareholder expectations, firm's history. Explains why firms don't always profit max — constraint is minimum profit, not maximum. If market becomes more competitive, satisficing level rises (shareholders demand more)." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "Many small buyers and sellers, none can influence market price", category: "perfect" },
+    { text: "Homogeneous products — perfect substitutes, identical goods", category: "perfect" },
+    { text: "Perfect information — all participants know prices and quality", category: "perfect" },
+    { text: "Free entry and exit — no barriers prevent new firms entering", category: "perfect" },
+    { text: "Firms are price takers — must accept market-determined price", category: "perfect" },
+    { text: "Perfectly elastic demand curve facing individual firm", category: "perfect" },
+    { text: "Long-run: normal profit only (supernormal competed away)", category: "perfect" },
+    { text: "Single seller with 100% market share", category: "monopoly" },
+    { text: "Unique product with no close substitutes available", category: "monopoly" },
+    { text: "High barriers to entry prevent new competition", category: "monopoly" },
+    { text: "Firm is price maker — sets price via output decisions", category: "monopoly" },
+    { text: "Downward-sloping demand curve (price and quantity inversely related)", category: "monopoly" },
+    { text: "Can earn supernormal profit in long run", category: "monopoly" },
+    { text: "Price discrimination possible in some cases", category: "monopoly" },
+    { text: "Survival — maintaining existence in harsh conditions", category: "objectives" },
+    { text: "Sales revenue maximisation (Baumol) where MR = 0", category: "objectives" },
+    { text: "Growth maximisation — expanding firm size and market share", category: "objectives" },
+    { text: "Satisficing — achieving satisfactory rather than maximum targets", category: "objectives" },
+    { text: "Quality maximisation — prioritising product/service excellence", category: "objectives" },
+    { text: "Market share maximisation — gaining dominant market position", category: "objectives" },
+    { text: "Managerial utility — pursuing perks, prestige, easy life", category: "objectives" }
+];
+
+let selectedSortingItem = null, sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['perfect','monopoly','objectives'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["competition","homogeneous","takers","single","barriers","making","monopolistic","large","firms","differentiation","profit","Revenue","profit"],
+        template: "Market structures exist on a spectrum from perfect [0] to pure monopoly. Perfect competition requires many buyers and sellers, [1] products (perfect substitutes), perfect information, and free entry and exit. Firms are price [2] facing perfectly elastic demand. Monopoly features a [3] seller with a unique product, high [4] to entry, and price-[5] power with downward-sloping demand. Between these extremes lie [6] competition (many firms with differentiated products) and oligopoly (few [7] firms with strategic interdependence). Key factors distinguishing structures include: number of [8], degree of product [9], and ease of entry/exit. Traditional theory assumes firms aim to maximise [10] using the rule: produce where Marginal Cost equals Marginal [11] (MC = MR). At this output, producing one more unit adds equal cost and revenue, so [12] cannot be improved by changing output. This rule applies to all market structures."
+    },
+    2: {
+        answers: ["ownership","agent","X","Revenue","Growth","Satisficing","share","satisfactory","rationality","related","survival","maximization"],
+        template: "Divorce of [0] from control occurs when shareholders (owners) are separated from managers (controllers making decisions). This creates a principal-[1] problem where managers may pursue own objectives rather than maximising shareholder profit. Consequences include [2]-inefficiency (operating above minimum costs), excessive perks, and empire building. Alternative objectives include: [3] maximisation (where MR = 0, producing more than profit-maximising output), [4] maximisation (pursuing firm size for prestige and salaries), [5] objective (accepting adequate profit rather than maximum), survival (maintaining existence in harsh conditions), market [6] maximisation (gaining dominant position), and quality maximisation (prioritising reputation). The satisficing principle suggests firms achieve [7] targets rather than optimise, due to bounded [8], multiple stakeholders, and organisational politics. Mechanisms to align manager and shareholder interests include performance-[9] pay, threat of takeover, board oversight, and shareholder activism. Objectives may vary by time period: short-run focuses on [10], medium-run on growth and market share, long-run on profit [11]."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

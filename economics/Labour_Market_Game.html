@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Labour Market Theory Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* FILL */
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Labour Market Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_labmkt_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_labmkt_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Labour Market Theory</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Demand, Supply &amp; Elasticity Factors</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('demand')">
+                <span class="col-label">📉 Demand Shifts</span>
+                <div class="sort-items" id="demand"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('supply')">
+                <span class="col-label">📈 Supply Shifts</span>
+                <div class="sort-items" id="supply"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('elasticity')">
+                <span class="col-label">📊 Elasticity Factors</span>
+                <div class="sort-items" id="elasticity"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: MISSING WORDS ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Demand for Labour</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Supply of Labour</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What does it mean that demand for labour is a 'derived demand'?", options: ["Labour demand is independent of product markets","Demand for labour is derived from demand for the goods/services that labour produces — firms hire workers because consumers demand their output","Workers derive income from employment","Demand is always falling"], correct: 1, explanation: "Derived demand means firms don't demand labour for its own sake, but because consumers demand the products labour produces. If demand for cars increases, derived demand for car workers increases. If smartphone demand falls, derived demand for assembly workers falls. Labour is a means to produce goods/services consumers want." },
+    { question: "What is marginal revenue product (MRP) of labour?", options: ["Total revenue divided by number of workers","Additional revenue generated by employing one more worker, calculated as MPP × MR (or MPP × Price in perfect competition)","Average productivity per worker","Total wages paid to workers"], correct: 1, explanation: "MRP = marginal physical product (extra output from additional worker) × marginal revenue (revenue from selling that output). In perfect competition, MR = Price, so MRP = MPP × P. MRP shows the value of an additional worker to the firm. Example: if an extra worker produces 10 units worth £50 each, MRP = £500." },
+    { question: "According to marginal productivity theory, when will a profit-maximising firm stop hiring workers?", options: ["When all workers are employed","When MRP of labour equals the wage rate (MRP = W) — hiring more would cost more than revenue generated","When average productivity is maximised","Never stops hiring"], correct: 1, explanation: "Profit-maximising firms hire where MRP = W. If MRP > W (worker adds more revenue than costs), hire them (increases profit). If MRP < W (worker costs more than they generate), don't hire (reduces profit). Equilibrium at MRP = W. This is an application of the marginal principle: continue activity while marginal benefit > marginal cost." },
+    { question: "Why does the demand curve for labour slope downwards?", options: ["Wages always fall over time","Law of diminishing marginal returns — as more workers are hired, MPP falls, so MRP falls, meaning a lower wage justifies employment","Workers become less skilled","Demand is perfectly inelastic"], correct: 1, explanation: "With capital fixed in the short run, adding workers causes diminishing marginal returns — each additional worker adds less output than the previous one. As MPP falls, MRP (= MPP × P) falls. Lower MRP means the firm is only willing to hire additional workers at lower wages. Hence the demand curve slopes downward: quantity of labour demanded is inversely related to the wage rate." },
+    { question: "What would cause the demand curve for labour to shift rightward (increase)?", options: ["Fall in demand for the product","Increase in demand for the product labour produces, raising price and MRP at all employment levels","Decrease in labour productivity","Rise in wages"], correct: 1, explanation: "Rightward shift in labour demand occurs when: 1) Product demand/price rises (increases MRP = MPP × P), 2) Labour productivity increases (higher MPP increases MRP), 3) Prices of substitute factors (capital/machinery) rise, 4) Prices of complementary factors fall. Example: a smartphone demand surge increases demand for assembly workers." },
+    { question: "How does an increase in labour productivity affect labour demand?", options: ["Decreases labour demand","Increases labour demand by raising MPP, which increases MRP (= MPP × Price), shifting demand curve rightward","No effect on demand","Only affects wages"], correct: 1, explanation: "Higher productivity means each worker produces more output (higher MPP). Since MRP = MPP × P, higher MPP increases MRP at every wage level. This shifts the entire labour demand curve right — more workers demanded at each wage. Caused by: better training, improved technology, better management, capital investment." },
+    { question: "What is the elasticity of demand for labour?", options: ["Always equal to 1","Responsiveness of quantity of labour demanded to changes in wage rate, measured as % change in quantity demanded ÷ % change in wage","The wage rate divided by employment","Always perfectly inelastic"], correct: 1, explanation: "PED for labour = % change in quantity demanded of labour ÷ % change in wage rate. Elastic (>1): quantity demanded very responsive to wage changes. Inelastic (<1): quantity demanded relatively unresponsive. Perfectly inelastic (0): quantity unchanged despite wage changes. This determines the impact of wage increases on employment." },
+    { question: "Which factor makes demand for labour MORE elastic?", options: ["Labour costs are a tiny proportion of total costs","Easy substitutability between labour and capital — firms can easily replace workers with machines when wages rise","Demand for the product is perfectly inelastic","Time period is very short"], correct: 1, explanation: "Demand for labour is more elastic when: 1) Easy to substitute capital for labour (automation possible), 2) Labour costs are a large % of total costs (wage rises significantly impact profitability), 3) Demand for the product is elastic (price rise from higher wages reduces sales), 4) Longer time period (more time to adjust production methods)." },
+    { question: "Why does the time period affect elasticity of demand for labour?", options: ["It doesn't affect elasticity","Longer time periods allow firms to adjust production methods, substitute capital for labour, and relocate, making demand more elastic","Demand becomes less elastic over time","Time has no economic meaning"], correct: 1, explanation: "Short run: capital is fixed, difficult to change production methods — demand is inelastic. Long run: firms can invest in automation, relocate production, redesign processes, and substitute capital for labour. This makes demand more elastic — firms have more options to reduce labour when wages rise. Example: manufacturing can automate over years, but not immediately." },
+    { question: "How does the proportion of labour costs affect elasticity of labour demand?", options: ["Proportion doesn't matter","When labour costs are a large % of total costs, demand is more elastic — wage increases significantly impact profitability, prompting substitution","A higher proportion makes demand less elastic","Only affects supply"], correct: 1, explanation: "If labour = 70% of costs (labour-intensive like teaching), a 10% wage rise significantly impacts profitability, and the firm is strongly incentivised to reduce workers (elastic demand). If labour = 5% of costs (capital-intensive like oil refining), the same wage rise has minimal impact — little incentive to change employment (inelastic demand)." },
+    { question: "What are monetary factors affecting labour supply to an occupation?", options: ["Only job satisfaction","Wage/salary levels, pension schemes, bonuses, benefits packages, overtime pay, job security affecting lifetime earnings","Working conditions only","Location of work"], correct: 1, explanation: "Monetary factors include: 1) Wage/salary level (main factor), 2) Pension contributions, 3) Performance bonuses, 4) Health insurance, 5) Company car/benefits, 6) Overtime opportunities, 7) Job security (affects expected lifetime earnings). A higher total compensation package increases willingness to supply labour to that occupation. People respond to financial incentives." },
+    { question: "What are non-monetary factors affecting labour supply to an occupation?", options: ["Only wages matter","Job satisfaction, working conditions, hours, location, career progression, work-life balance, job status/prestige, training opportunities","Monetary factors only","Supply is unaffected by non-monetary factors"], correct: 1, explanation: "Non-monetary factors: 1) Job satisfaction/interest, 2) Working conditions (safe, comfortable), 3) Hours/flexibility, 4) Location/commute, 5) Holiday entitlement, 6) Promotion prospects, 7) Job status/prestige, 8) Work-life balance, 9) Training/development. Explains why people accept lower pay for satisfying jobs or demand higher pay for unpleasant work (compensating wage differential)." },
+    { question: "What is a compensating wage differential?", options: ["Equal pay for all jobs","Higher wages paid to compensate for unpleasant working conditions, danger, antisocial hours, or other job disadvantages","Minimum wage requirements","Wage increases over time"], correct: 1, explanation: "Compensating differentials are wage premiums for undesirable job characteristics. Dangerous jobs (oil rigs, mining) pay more to attract workers willing to accept risks. Night shifts pay a premium for antisocial hours. Dirty/unpleasant jobs require higher wages. This reflects that non-monetary factors affect labour supply — worse conditions require higher monetary compensation." },
+    { question: "Why does the market supply curve for labour slope upwards?", options: ["It slopes downwards","Higher wages attract more workers to an occupation — increases opportunity cost of not working there, attracts workers from other occupations","Supply is perfectly inelastic","Wages don't affect supply"], correct: 1, explanation: "Higher wages: 1) Attract workers from other occupations (higher opportunity cost of not switching), 2) Encourage current workers to supply more hours/effort, 3) Make training for the occupation more attractive (long-term decision), 4) Reduce workers leaving the occupation. The supply curve slopes up: there is a positive relationship between wage and quantity of labour supplied to an occupation." },
+    { question: "What would shift the supply curve of labour to an occupation rightward (increase)?", options: ["Worse working conditions","Improved non-monetary benefits (better conditions, training, progression), more qualified workers, reduced barriers to entry","Higher wages in other occupations","Decreased population"], correct: 1, explanation: "Rightward supply shift (more workers at each wage): 1) Better working conditions/job satisfaction, 2) Improved promotion prospects, 3) More people qualified (better training/education), 4) Lower barriers to entry (easier licensing/qualifications), 5) Increased population/immigration, 6) Changing attitudes making occupation more acceptable, 7) Better location/reduced commute costs." },
+    { question: "How do qualification requirements affect labour supply to an occupation?", options: ["No effect on supply","Higher/longer qualification requirements restrict supply by creating barriers to entry, shifting supply curve leftward","Always increase supply","Only affect demand"], correct: 1, explanation: "Professional occupations (doctors, lawyers) require extensive qualifications, reducing supply: 1) Long training period (5–7 years) deters entrants, 2) High training costs, 3) Need for high prior educational achievement. This restricts supply, creating upward pressure on wages. Explains why highly qualified professions command higher wages — supply is constrained by entry barriers." },
+    { question: "How does geographical immobility affect labour supply to specific regions?", options: ["Has no effect","Reduces labour supply to regions when workers can't/won't relocate due to family ties, housing costs, lack of information","Always increases supply","Only affects demand"], correct: 1, explanation: "Geographical immobility restricts labour supply to jobs in different regions: 1) Family/social ties prevent relocation, 2) Housing costs in destination (London house prices), 3) Children's education disruption, 4) Lack of information about opportunities elsewhere, 5) Moving costs. Creates regional wage differentials — high-demand regions (London) have higher wages partly because supply is limited by immobility." },
+    { question: "What is the effect of trade unions on labour supply to an occupation?", options: ["Always increase supply","Can restrict supply through closed shop agreements, entry requirements, or apprenticeship limits, shifting supply left and raising wages","Have no effect on supply","Only affect working conditions"], correct: 1, explanation: "Trade unions can restrict labour supply: 1) Closed shop (must be union member to work), 2) Limit apprenticeship places, 3) Strict entry requirements, 4) Control over who can practice (professional bodies). By restricting supply, unions increase wages. However, this is less common now. Unions also improve non-monetary conditions (safety, hours), potentially increasing supply." },
+    { question: "How does elasticity of product demand affect elasticity of labour demand?", options: ["They're unrelated","If product demand is elastic, labour demand is more elastic — wage rises increase prices, reducing sales significantly, so firms cut employment more","Elastic product demand makes labour demand inelastic","Product demand is irrelevant"], correct: 1, explanation: "Labour demand is derived from product demand. If product demand is elastic: wage rise → higher prices → large fall in sales → large employment reduction (elastic labour demand). If product demand is inelastic: wage rise → higher prices → small sales fall → small employment change (inelastic labour demand). Example: luxury goods (elastic demand) have elastic labour demand." },
+    { question: "Which demonstrates derived demand for labour?", options: ["Workers demanding higher wages","Electric vehicle sales surge increases demand for battery manufacturing workers because firms need more labour to meet product demand","Population growth alone","Government legislation"], correct: 1, explanation: "This perfectly illustrates derived demand: consumers demand EVs → firms need to produce more EVs → firms demand more battery workers. Labour demand doesn't arise independently — it's derived from consumer product demand. If EV demand fell, derived demand for battery workers would fall even without changes in worker productivity or wages." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING — 3 columns
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Increase in demand for the product that labour produces", category: "demand" },
+    { text: "Rise in labour productivity (higher MPP increases MRP)", category: "demand" },
+    { text: "Increase in price of substitute factors like machinery", category: "demand" },
+    { text: "Fall in price of complementary factors used with labour", category: "demand" },
+    { text: "Technological improvements raising worker output", category: "demand" },
+    { text: "Subsidies to firms reducing production costs", category: "demand" },
+    { text: "Improved training increasing worker skills and productivity", category: "demand" },
+    { text: "Increase in working-age population through immigration", category: "supply" },
+    { text: "Improved working conditions making occupation more attractive", category: "supply" },
+    { text: "Better promotion prospects and career progression opportunities", category: "supply" },
+    { text: "Reduced qualification/entry requirements lowering barriers", category: "supply" },
+    { text: "Improved work-life balance or flexible working arrangements", category: "supply" },
+    { text: "Better training and education increasing number of qualified workers", category: "supply" },
+    { text: "Changing social attitudes making occupation more acceptable", category: "supply" },
+    { text: "Easy substitutability between labour and capital (automation possible)", category: "elasticity" },
+    { text: "Labour costs as large proportion of total production costs", category: "elasticity" },
+    { text: "Elastic demand for the final product produced", category: "elasticity" },
+    { text: "Longer time period allowing firms to adjust production methods", category: "elasticity" },
+    { text: "Availability of alternative production techniques using different factor mixes", category: "elasticity" },
+    { text: "Proportion of total costs accounted for by wages", category: "elasticity" },
+    { text: "Ease of relocating production to lower-wage regions/countries", category: "elasticity" }
+];
+
+let selectedSortingItem = null;
+let sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['demand','supply','elasticity'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK — two independent passages
+══════════════════════════════════════ */
+const fillData = {
+    1: {
+        answers: ["derived","products","physical","revenue","price","wage","downwards","falls","price","productivity","complementary","elastic","total","time"],
+        template: "Demand for labour is a [0] demand — firms hire workers because consumers demand the [1] labour produces. Marginal revenue product (MRP) equals marginal [2] product (extra output from additional worker) multiplied by marginal [3] (revenue from selling that output). In perfect competition, MR equals [4], so MRP = MPP × Price. According to marginal productivity theory, profit-maximising firms hire workers until MRP equals the [5] rate. The demand curve for labour slopes [6] due to the law of diminishing marginal returns — as more workers are hired, MPP [7], so MRP falls. Shifts in labour demand occur when: product demand/[8] changes (affects MRP = MPP × P), labour [9] changes (affects MPP), prices of substitute factors change, or prices of [10] factors change. Elasticity of demand for labour measures responsiveness of quantity demanded to wage changes. Demand is more [11] when: labour is easily substituted with capital, labour costs are a large proportion of [12] costs, product demand is elastic, and the [13] period is longer allowing production method adjustments."
+    },
+    2: {
+        answers: ["monetary","salary","security","satisfaction","hours","promotion","balance","differentials","upwards","training","rightward","qualified","population","entry","lower","immobility"],
+        template: "Supply of labour to an occupation is influenced by [0] and non-monetary factors. Monetary factors include: wage/[1] levels, pension schemes, bonuses, benefits packages, and job [2]. Non-monetary factors include: job [3] and interest, working conditions (safety, comfort), working [4], location/commute distance, holiday entitlement, [5] prospects, job status/prestige, and work-life [6]. Compensating wage [7] are higher wages paid to compensate for unpleasant working conditions, danger, or antisocial hours. The market supply curve for labour slopes [8] because higher wages attract more workers from other occupations and make [9] for the occupation more attractive. Supply shifts [10] (increases) when: working conditions improve, promotion prospects improve, more people become [11] (better training/education), barriers to entry are reduced, [12] increases through immigration, or social attitudes towards the occupation improve. Qualification requirements restrict supply by creating barriers to [13] — professional occupations requiring extensive qualifications have [14] supply. Geographical [15] restricts supply when workers cannot relocate due to family ties, housing costs, or lack of information about opportunities elsewhere."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid);
+        delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

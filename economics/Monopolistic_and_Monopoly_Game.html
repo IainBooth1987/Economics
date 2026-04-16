@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Monopolistic Competition &amp; Monopoly Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Monopolistic &amp; Monopoly Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_monop_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_monop_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Monopolistic Competition &amp; Monopoly</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 30</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:3.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/30</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Market Characteristics &amp; Outcomes</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('monocomp')">
+                <span class="col-label">🏪 Monopolistic Competition</span>
+                <div class="sort-items" id="monocomp"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('power')">
+                <span class="col-label">👑 Monopoly Power Sources</span>
+                <div class="sort-items" id="power"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('nonprice')">
+                <span class="col-label">📊 Non-Price Competition</span>
+                <div class="sort-items" id="nonprice"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: MISSING WORDS -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Monopolistic Competition</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Monopoly Analysis</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What demand curve do firms face in monopoly and monopolistic competition?", options: ["Perfectly elastic demand","Downward-sloping demand — firms are price makers, can set price but face trade-off: higher price = lower quantity sold","Vertical demand","Perfectly inelastic"], correct: 1, explanation: "MONOPOLY and MONOPOLISTIC COMPETITION: firms face DOWNWARD-SLOPING demand. They are PRICE MAKERS (not price takers like perfect competition). Can choose price-quantity combination on demand curve: raise price → sell less, lower price → sell more. Key implication: MR < P (unlike perfect competition where MR = P). Must consider demand elasticity when pricing. Degree of slope indicates market power — steeper = more power." },
+    { question: "Why is MR < P for monopoly and monopolistic competition?", options: ["MR always equals P","To sell additional unit, must lower price on ALL units (assuming no price discrimination), so marginal revenue less than price of last unit","MR is greater than P","No relationship exists"], correct: 1, explanation: "MARGINAL REVENUE < PRICE because: To sell extra unit, firm must LOWER PRICE. Without perfect price discrimination, this lower price applies to ALL UNITS sold (not just the extra one). MR = revenue from extra unit = P of that unit MINUS lost revenue from lowering price on previous units. Example: sell 10 at £12 = £120. Sell 11 at £11 = £121. MR = £1 (not £11). MR curve lies BELOW demand/AR curve, twice as steep for straight-line demand." },
+    { question: "In monopoly short-run equilibrium, where does the firm produce and what profit?", options: ["Where P = MC, normal profit","Where MC = MR, can make supernormal profit (P > AC), normal profit (P = AC), or loss (P < AC)","Maximum output always","Where AC is minimum"], correct: 1, explanation: "MONOPOLY SHORT-RUN: produces where MC = MR (profit max). Then reads price from DEMAND curve at that quantity (NOT from MR curve). Profit depends on AC: SUPERNORMAL if P > AC, NORMAL if P = AC, LOSS if P < AC but P > AVC (continues operating). Unlike perfect competition: can't predict profit from equilibrium condition alone, depends on cost structure. Monopolist doesn't produce where P = MC (produces where MR = MC, and P > MR)." },
+    { question: "What is monopoly's long-run equilibrium?", options: ["Normal profit only","Supernormal profit sustained by barriers to entry — no entry eliminates profit, unlike perfect competition","Always losses","Zero profit"], correct: 1, explanation: "MONOPOLY LONG-RUN: SUPERNORMAL PROFIT sustained indefinitely if BARRIERS TO ENTRY prevent competition. No free entry means no new firms → supply doesn't increase → price doesn't fall → profit persists. Equilibrium: MC = MR, P > AC (supernormal profit). Contrast perfect competition: free entry eliminates supernormal profit in long run. Key difference: BARRIERS protect monopoly profit. If barriers erode, profit disappears." },
+    { question: "What are the key characteristics of monopolistic competition?", options: ["One firm, unique product","Many firms, differentiated products, free entry/exit, some price-making power — like perfect competition with product differentiation","Few large firms","Identical products"], correct: 1, explanation: "MONOPOLISTIC COMPETITION combines: 1) MANY FIRMS (like perfect competition), 2) DIFFERENTIATED PRODUCTS (unlike perfect competition — brands, quality, location create loyalty), 3) FREE ENTRY/EXIT (like perfect competition), 4) SOME PRICE-MAKING POWER (downward-sloping demand from differentiation, unlike perfect competition's price takers). Examples: restaurants, hairdressers, plumbers, cafes, clothing retailers. Each firm has small 'monopoly' from brand/location but faces many competitors." },
+    { question: "What is monopolistic competition short-run equilibrium?", options: ["P = MC always","MC = MR, firms can make supernormal profit (P > AC), normal profit (P = AC), or loss (P < AC) — like monopoly short-run","Normal profit only","P = minimum AC"], correct: 1, explanation: "SHORT-RUN MONOPOLISTIC COMPETITION: produce where MC = MR, read price from demand curve. Three scenarios: 1) SUPERNORMAL PROFIT: P > AC (if strong brand/location), 2) NORMAL PROFIT: P = AC (break-even), 3) LOSS: P < AC (if weak brand/poor location). Diagram shows: downward-sloping demand/AR, MR below demand, MC = MR determines output, AC curve determines profit. Similar to monopoly short-run but typically less market power (flatter demand)." },
+    { question: "What is monopolistic competition long-run equilibrium?", options: ["Supernormal profit persists","Normal profit only (P = AC, not minimum AC) — free entry eliminates supernormal profit but productively inefficient","Losses continue","P = MC achieved"], correct: 1, explanation: "LONG-RUN MONOPOLISTIC COMPETITION: FREE ENTRY/EXIT eliminates supernormal profit/losses. Equilibrium: MC = MR, P = AC (tangency), NORMAL PROFIT only. However: P > MC (allocatively inefficient), P = AC but NOT minimum AC (productively inefficient — excess capacity). Demand curve shifts left as entry occurs (market share diluted) until tangent to AC. Result: more firms than perfectly competitive outcome, higher prices, lower output per firm. Trade-off: variety vs efficiency." },
+    { question: "What is excess capacity in monopolistic competition?", options: ["Firms operating at minimum AC","Firms produce below output at minimum AC — productively inefficient, could lower costs by producing more but demand insufficient","Over-production","Perfect efficiency"], correct: 1, explanation: "EXCESS CAPACITY: in long-run equilibrium, firms produce where P = AC (tangency) which is LEFT of minimum AC. Could produce more and lower AC, but insufficient demand at lower price to attract customers. Result: PRODUCTIVE INEFFICIENCY — not minimising costs. Why? Product differentiation means downward-sloping demand, prevents tangency at minimum AC. Cost of variety: 'too many' firms, each underutilising capacity. Examples: half-empty restaurants, hairdressers with idle chairs." },
+    { question: "What factors increase monopoly power?", options: ["More competitors and easy entry","High barriers to entry, fewer competitors, successful advertising/branding, high product differentiation","Homogeneous products","Perfect information"], correct: 1, explanation: "MONOPOLY POWER increases with: 1) HIGH BARRIERS TO ENTRY: patents, licences, economies of scale, capital requirements, 2) FEWER COMPETITORS: fewer substitutes available, steeper demand, 3) SUCCESSFUL ADVERTISING/BRANDING: creates loyalty, reduces price elasticity, 4) HIGH PRODUCT DIFFERENTIATION: makes switching costly, reduces substitutability. Measured by: price elasticity of demand (inelastic = more power), Lerner Index [(P-MC)/P], ability to raise price above MC without losing all customers." },
+    { question: "What are barriers to entry?", options: ["Easy entry for all","Obstacles preventing/deterring new firms entering market — legal, structural, strategic — protect incumbent profits","No barriers exist","Only help consumers"], correct: 1, explanation: "BARRIERS TO ENTRY prevent competition: LEGAL: patents (20 years monopoly on inventions), licences/regulations (taxis, pharmacies), copyrights. STRUCTURAL: economies of scale (incumbents have cost advantage), high sunk costs (investment can't be recovered), control of resources (De Beers diamonds). STRATEGIC: limit pricing (set low price to deter entry), predatory pricing, brand loyalty (established brands deter entry), exclusive contracts. Effect: sustain supernormal profit, reduce competition, potentially harm consumers." },
+    { question: "How does advertising affect monopoly power?", options: ["Advertising reduces market power","Successful advertising creates brand loyalty, differentiates products, reduces price elasticity of demand — increases monopoly power","No effect on power","Only informs consumers"], correct: 1, explanation: "ADVERTISING increases monopoly power by: 1) BRAND LOYALTY: consumers prefer advertised brand, less willing to switch, 2) PRODUCT DIFFERENTIATION: creates perceived uniqueness (even if products similar), 3) REDUCES PRICE ELASTICITY: loyal customers less sensitive to price, 4) BARRIERS TO ENTRY: established brands harder to displace. However: may increase competition if it informs about alternatives. Persuasive advertising (creates wants) vs informative advertising (helps choice). Examples: Coca-Cola brand power, Apple loyalty." },
+    { question: "How does product differentiation affect market power?", options: ["Makes products identical","Creates brand loyalty and perceived uniqueness, giving firms downward-sloping demand and price-making power — greater differentiation = more power","Eliminates all market power","Only affects costs"], correct: 1, explanation: "PRODUCT DIFFERENTIATION creates market power through: 1) BRAND LOYALTY: customers prefer specific brand, 2) REDUCED SUBSTITUTABILITY: products less interchangeable, fewer perfect substitutes, 3) NICHE MARKETS: appeal to specific segments, 4) SWITCHING COSTS: time/effort to change brands. Result: downward-sloping demand (not perfectly elastic), price-making power. Spectrum: PERFECT COMPETITION (homogeneous) → MONOPOLISTIC COMPETITION (some differentiation) → OLIGOPOLY (strong brands) → MONOPOLY (unique). Examples: restaurants (location/cuisine), smartphones (iOS vs Android)." },
+    { question: "What is non-price competition?", options: ["Only competing on price","Competing through quality, branding, customer service, advertising, innovation rather than price — common when price wars unprofitable","No competition exists","Illegal competition"], correct: 1, explanation: "NON-PRICE COMPETITION: firms compete on FACTORS OTHER THAN PRICE. Methods: 1) QUALITY: better materials, features, reliability, 2) ADVERTISING: brand awareness, image, 3) CUSTOMER SERVICE: support, guarantees, returns, 4) LOCATION: convenient access, 5) AFTER-SALES: warranties, maintenance, 6) INNOVATION: new products, R&D. Why use? Price wars erode profit, non-price competition can differentiate without lowering prices. Common in: monopolistic competition, oligopoly. Example: phone companies compete on network quality, features, not just price." },
+    { question: "Why is non-price competition important in monopolistic competition?", options: ["Firms only compete on price","Differentiation is key to market power and avoiding price wars — quality, branding, service create loyalty and justify premium pricing","Competition doesn't matter","Products are identical"], correct: 1, explanation: "NON-PRICE COMPETITION crucial because: 1) MAINTAINS DIFFERENTIATION: quality/service keeps products distinct, 2) AVOIDS PRICE WARS: cutting prices reduces all firms' profits, 3) BUILDS LOYALTY: good service/quality creates repeat customers, 4) JUSTIFIES PREMIUM: customers pay more for superior quality/service, 5) SUSTAINABLE: harder to copy than price cuts. Examples: restaurants compete on food quality/ambiance not just price, hairdressers on skill/experience, coffee shops on atmosphere/service." },
+    { question: "What are the advantages of monopoly?", options: ["No advantages exist","Economies of scale (lower AC), funds for R&D from supernormal profit, avoid wasteful duplication, cross-subsidisation possible","Only disadvantages","Benefits consumers always"], correct: 1, explanation: "MONOPOLY ADVANTAGES: 1) ECONOMIES OF SCALE: one large firm achieves lower AC than many small firms (natural monopoly: water, rail), 2) DYNAMIC EFFICIENCY: supernormal profit funds R&D, innovation (Schumpeter argument — pharmaceuticals need profit to fund drug development), 3) AVOID DUPLICATION: one network cheaper than competing ones (infrastructure), 4) INTERNATIONAL COMPETITIVENESS: large firms compete globally, 5) CROSS-SUBSIDISATION: loss-making services subsidised by profitable ones (Royal Mail rural delivery)." },
+    { question: "What are the disadvantages of monopoly?", options: ["No disadvantages","Allocative inefficiency (P > MC), productive inefficiency (not at minimum AC), X-inefficiency, higher prices, restricted output, deadweight loss","Only advantages","Perfect efficiency"], correct: 1, explanation: "MONOPOLY DISADVANTAGES: 1) ALLOCATIVE INEFFICIENCY: P > MC (underproduction), 2) PRODUCTIVE INEFFICIENCY: not at minimum AC (no competitive pressure), 3) X-INEFFICIENCY: organisational slack without competition, 4) HIGHER PRICES: P > competitive level, exploits consumers, 5) RESTRICTED OUTPUT: Q < competitive level, 6) DEADWEIGHT LOSS: welfare loss from underproduction, 7) REGRESSIVE: higher prices hurt poor more, 8) RENT-SEEKING: resources wasted protecting monopoly. Consumer surplus → producer surplus transfer." },
+    { question: "What is allocative inefficiency in monopoly?", options: ["P = MC is achieved","P > MC — monopoly underproduces, units where MSB > MSC not produced, creating deadweight loss and welfare loss","Perfect allocation","Overproduction occurs"], correct: 1, explanation: "ALLOCATIVE INEFFICIENCY: monopoly produces where MC = MR, then sets P from demand curve, resulting in P > MC. Meaning: consumers value additional units (P) more than cost of production (MC), but monopolist restricts output to maintain high price. Result: UNDERPRODUCTION relative to social optimum (where P = MC). Creates DEADWEIGHT LOSS — welfare that could be gained but isn't. Contrast perfect competition: P = MC (allocatively efficient)." },
+    { question: "What is productive inefficiency in monopoly?", options: ["Production at minimum AC","Monopoly doesn't produce at minimum AC — no competitive pressure to minimise costs, may have X-inefficiency from organisational slack","Most efficient production","Maximum output"], correct: 1, explanation: "PRODUCTIVE INEFFICIENCY: monopoly produces where MC = MR, NOT at minimum AC. Two aspects: 1) NOT AT MINIMUM AC: could produce at lower cost but chooses not to (lack of competition removes pressure), 2) X-INEFFICIENCY: organisational slack, overstaffing, gold-plating, inefficient practices without competition to discipline. Result: AC > minimum possible. Contrast perfect competition: long-run forces firms to minimum AC. Monopolist comfortable, no efficiency pressure." },
+    { question: "What is the consumer welfare effect of monopoly?", options: ["Consumer surplus maximised","Consumer surplus reduced — higher prices, lower quantity, transfer of surplus from consumers to monopolist producer surplus","No effect on consumers","Consumers always benefit"], correct: 1, explanation: "CONSUMER WELFARE: monopoly REDUCES consumer surplus through: 1) HIGHER PRICE: P_monopoly > P_competitive, 2) LOWER QUANTITY: Q_monopoly < Q_competitive, 3) SURPLUS TRANSFER: consumer surplus becomes producer surplus (rectangle), 4) DEADWEIGHT LOSS: some surplus lost entirely (triangle). Net effect: consumers worse off, producer better off, society loses (deadweight loss). Regressive impact: price increases hurt poor more (spend larger % income on essentials). Contrast perfect competition: maximises consumer surplus." },
+    { question: "How do you measure monopoly power?", options: ["Market share only","Lerner Index: (P-MC)/P, ranges 0 (perfect competition) to 1 (pure monopoly); or price elasticity of demand (PED) — inelastic demand = more power","Profit only","Number of products"], correct: 1, explanation: "MEASURING MONOPOLY POWER: 1) LERNER INDEX = (P - MC)/P. Perfect competition: P = MC, index = 0. Pure monopoly: P >> MC, index approaches 1. Higher index = more market power. 2) PRICE ELASTICITY OF DEMAND: inelastic demand = steep curve = more power to raise price without losing sales. 3) Market share (imperfect — high share doesn't guarantee power if contestable). 4) Barriers to entry presence. 5) Ability to price discriminate." },
+    { question: "What is X-inefficiency?", options: ["Maximum efficiency","Organisational slack causing costs above minimum — overstaffing, luxuries, inefficient processes — occurs when lacking competitive pressure","Perfect efficiency","Doesn't exist in monopoly"], correct: 1, explanation: "X-INEFFICIENCY (Leibenstein): firms don't minimise costs due to LACK OF COMPETITIVE PRESSURE. Monopoly symptoms: 1) Overstaffing (more employees than needed), 2) Managerial slack (easy life, not optimising), 3) Gold-plating (luxurious offices, facilities), 4) Inefficient processes (not modernising). Result: AC above minimum possible. Why? No competition threatens survival, so no pressure to cut costs. Perfect competition forces efficiency; monopoly allows comfortable existence. Evidence: industries privatised/deregulated show sudden cost reductions." },
+    { question: "What is the natural monopoly argument?", options: ["All monopolies are natural","When economies of scale so large that one firm can supply market at lower AC than multiple firms — duplicating infrastructure wasteful","Monopolies occur naturally without reason","Never economically justified"], correct: 1, explanation: "NATURAL MONOPOLY: economies of scale throughout relevant output range make one firm most efficient. Examples: WATER/SEWERAGE (massive fixed costs of pipes, treatment), RAIL NETWORKS (track infrastructure), ELECTRICITY TRANSMISSION (grid). If multiple firms: duplicate infrastructure (wasteful), higher AC for each. Solution: ALLOW monopoly BUT REGULATE price/quality (RPI-X, rate of return regulation). Breaking up natural monopoly increases costs, harms consumers. However: technology may erode natural monopoly (e.g., mobile phones vs landlines)." },
+    { question: "How does monopoly affect innovation (Schumpeter's view)?", options: ["Monopoly reduces all innovation","Monopoly profit funds R&D; temporary monopoly from patents rewards innovation; large firms better placed for expensive R&D","No relationship exists","Competition always better"], correct: 1, explanation: "SCHUMPETER ARGUMENT: monopoly PROMOTES innovation: 1) SUPERNORMAL PROFIT funds expensive R&D (perfect competition has no profit for R&D), 2) PATENT PROTECTION: temporary monopoly rewards innovation (otherwise instant copying), 3) ECONOMIES OF SCALE in R&D: large firms afford research facilities, 4) DIVERSIFICATION: monopolist can cross-subsidise risky R&D. Examples: pharmaceuticals (£1bn+ per drug, need monopoly profit), tech companies (Apple, Microsoft innovation). Counter: lack of competition reduces innovation pressure. Trade-off: static efficiency vs dynamic efficiency." },
+    { question: "What is monopoly's effect on income distribution?", options: ["More equal distribution","Regressive — transfers consumer surplus to producer surplus, hurts poor more as higher prices on necessities, worsens inequality","No effect on distribution","Helps redistribute income"], correct: 1, explanation: "INCOME DISTRIBUTION effects: 1) REGRESSIVE: monopoly prices hurt poor more (spend larger % income on necessities like water, energy), 2) SURPLUS TRANSFER: consumer surplus → producer surplus (shareholders typically wealthier), 3) WORSENS INEQUALITY: monopoly profits concentrated in few hands, 4) REDUCED ACCESS: high prices exclude poor (e.g., expensive medicine). Particularly harmful in: utilities, healthcare, food. Policy responses: price regulation, nationalisation, progressive taxation of profits, universal provision (NHS)." },
+    { question: "How do price makers differ from price takers?", options: ["They're identical","Price makers face downward-sloping demand, choose price-quantity combination, MR < P; price takers face perfectly elastic demand, accept market price, MR = P","Only price takers exist","No difference in outcomes"], correct: 1, explanation: "PRICE TAKERS (perfect competition): face perfectly elastic demand, P = MR = AR, accept market price, focus on quantity decision, no market power. PRICE MAKERS (monopoly, monopolistic competition, oligopoly): face downward-sloping demand, MR < P, choose price OR quantity (not both independently — linked by demand), have market power. Implication: price makers can raise price without losing ALL sales, balance higher price vs lower volume, consider demand elasticity. Degree of power varies: monopoly (most) to monopolistic competition (least)." },
+    { question: "What is the relationship between elasticity and monopoly power?", options: ["No relationship","Inelastic demand = more monopoly power — can raise price without losing many sales; elastic demand = less power — customers switch to substitutes","Elastic demand gives more power","Elasticity doesn't matter"], correct: 1, explanation: "ELASTICITY-POWER RELATIONSHIP: INELASTIC DEMAND (PED < 1): few substitutes, customers can't/won't switch, firm has STRONG monopoly power, can raise prices significantly. ELASTIC DEMAND (PED > 1): many substitutes available, customers switch easily, WEAK monopoly power, price increases lose customers. Lerner Index: (P-MC)/P = 1/PED. More inelastic (lower PED) = higher index = more power. Example: prescription drugs (inelastic, high power) vs restaurants (elastic, low power)." },
+    { question: "What is the trade-off between competition and economies of scale?", options: ["No trade-off exists","More competition = more firms = less economies of scale exploitation; fewer firms = exploit scale but less competition — optimal structure depends on MES vs market size","Always want maximum competition","Scale doesn't matter"], correct: 1, explanation: "COMPETITION-SCALE TRADE-OFF: BENEFITS OF COMPETITION: lower prices, allocative efficiency, productive efficiency pressure, innovation. BENEFITS OF FEW LARGE FIRMS: economies of scale, lower AC, avoid duplication. Optimal structure depends on: 1) Minimum Efficient Scale (MES) relative to market size, 2) Shape of AC curve (flat after MES = less trade-off). If MES is large % of market: NATURAL MONOPOLY better (one firm, regulate). If MES is small %: COMPETITION better (many firms). Example: water (natural monopoly) vs restaurants (competition)." },
+    { question: "What is contestability and how does it limit monopoly power?", options: ["Contestability doesn't affect monopoly","Low entry/exit barriers mean potential competition disciplines monopoly even without actual competition — threat of entry ('hit and run') limits prices","Only actual competition matters","Makes monopoly stronger"], correct: 1, explanation: "CONTESTABLE MARKETS: low/zero sunk costs, easy entry/exit mean POTENTIAL ENTRY disciplines incumbent. Even with one firm (monopoly), if entry easy: firm can't charge excessive prices or new entrant enters, undercuts, takes profit, exits ('hit and run'). Result: monopoly behaves competitively (P near AC) even without actual competitors. Requires: NO SUNK COSTS, RAPID ENTRY/EXIT, ACCESS TO TECHNOLOGY. Examples: airline routes (aircraft are mobile, not sunk), deregulated buses. Reduces need for regulation if contestable." },
+    { question: "How does branding create monopoly power?", options: ["Branding reduces power","Strong brands create loyalty, differentiation, reduce price elasticity — customers willing to pay premium, won't switch even if competitors cheaper","Branding has no effect","Only affects small firms"], correct: 1, explanation: "BRANDING creates power through: 1) EMOTIONAL CONNECTION: customers identify with brand values (Apple, Nike), 2) PERCEIVED QUALITY: brand signals reliability, status (Mercedes, Rolex), 3) SWITCHING COSTS: psychological attachment makes switching costly, 4) HABITUAL PURCHASING: don't consider alternatives (Coca-Cola), 5) NETWORK EFFECTS: everyone uses it (Microsoft, Facebook). Result: INELASTIC DEMAND — customers pay premium, ignore cheaper alternatives. Investment: massive advertising spending creates/maintains brand power. Barrier to entry: established brands hard to displace." },
+    { question: "What is the difference between short-run and long-run in monopolistic competition?", options: ["No difference exists","Short-run: supernormal profit possible; Long-run: free entry eliminates supernormal profit (demand shifts left), leaving normal profit at P = AC (tangency)","Both have supernormal profit","Both have losses"], correct: 1, explanation: "SHORT-RUN: firms with strong brands/locations make SUPERNORMAL PROFIT (P > AC), others make normal profit or losses. Output where MC = MR. LONG-RUN: FREE ENTRY/EXIT adjusts: If profit: entry → demand per firm shifts LEFT (market share diluted) → continues until P = AC (tangency), normal profit only. If losses: exit → demand per firm shifts RIGHT → continues until P = AC. Result: MORE FIRMS than perfect competition, EXCESS CAPACITY (not at minimum AC), P > MC (allocatively inefficient). Trade-off: variety vs efficiency." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "Many firms competing in market", category: "monocomp" },
+    { text: "Differentiated products — branding, quality, location create uniqueness", category: "monocomp" },
+    { text: "Free entry and exit — no significant barriers", category: "monocomp" },
+    { text: "Downward-sloping demand curve giving some price-making power", category: "monocomp" },
+    { text: "Normal profit only in long run (free entry eliminates supernormal)", category: "monocomp" },
+    { text: "Excess capacity — production below minimum AC in long run", category: "monocomp" },
+    { text: "Non-price competition essential to maintain differentiation", category: "monocomp" },
+    { text: "High barriers to entry — patents, licences, economies of scale", category: "power" },
+    { text: "Fewer competitors — limited substitutes available", category: "power" },
+    { text: "Successful advertising creating brand loyalty and awareness", category: "power" },
+    { text: "Strong product differentiation reducing substitutability", category: "power" },
+    { text: "Inelastic demand — customers won't switch despite price rises", category: "power" },
+    { text: "Control of essential resources or distribution channels", category: "power" },
+    { text: "Sunk costs deterring new entrants from entering market", category: "power" },
+    { text: "Quality improvements — better materials, features, reliability", category: "nonprice" },
+    { text: "Branding and advertising building image and awareness", category: "nonprice" },
+    { text: "Customer service — support, guarantees, after-sales care", category: "nonprice" },
+    { text: "Location and convenience for customers", category: "nonprice" },
+    { text: "Product innovation and development of new features", category: "nonprice" },
+    { text: "Loyalty schemes and rewards programmes", category: "nonprice" },
+    { text: "Packaging, presentation, and shopping experience", category: "nonprice" }
+];
+
+let selectedSortingItem = null, sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['monocomp','power','nonprice'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["many","differentiated","entry","downward","makers","competitors","MR","profit","normal","left","capacity","insufficient","MC","advertising","variety"],
+        template: "Monopolistic competition combines features of perfect competition and monopoly. Markets have [0] firms competing but products are [1] through branding, quality, or location. Free [2] and exit exist like perfect competition. Firms face [3]-sloping demand curves and are price [4], giving them some market power. However, this power is limited by many [5]. In short-run equilibrium, firms produce where MC equals [6], and can make supernormal [7] if P > AC, normal profit if P = AC, or losses if P < AC. In long-run equilibrium, free entry and exit ensure only [8] profit where P = AC (tangency). However, this occurs at output [9] of minimum AC, creating excess [10]. This means productive inefficiency — firms could lower costs by producing more but demand is [11]. Firms are also allocatively inefficient as P > [12]. Non-price competition is essential, including quality improvements, [13], customer service, and innovation. This creates product [14] which is valued by consumers despite the efficiency costs. Examples include restaurants, hairdressers, and local shops."
+    },
+    2: {
+        answers: ["downward","maker","less","all","MR","profit","barriers","scale","advertising","differentiation","underproduction","minimum","prices","natural","duplication","zero"],
+        template: "Monopoly occurs when a single firm dominates the market. The firm faces [0]-sloping demand and is a price [1]. Key concept: MR is [2] than P because to sell additional units, the monopolist must lower price on [3] units. In short-run equilibrium, monopoly produces where MC = [4] then sets price from the demand curve. Can make supernormal [5] if P > AC. In long run, high [6] to entry sustain supernormal profit indefinitely, unlike perfect competition. Monopoly power is influenced by: high barriers to entry (patents, licences, economies of [7]), fewer competitors, successful [8] creating brand loyalty, and product [9]. Disadvantages include allocative inefficiency (P > MC causing [10]), productive inefficiency (not at [11] AC), X-inefficiency from organisational slack, higher [12], restricted output, and deadweight welfare loss. Advantages include economies of scale (especially [13] monopoly where one firm most efficient), funds for R&D from supernormal profit (Schumpeter argument), avoiding wasteful [14], and cross-subsidisation. Lerner Index measures monopoly power: (P-MC)/P, ranging from [15] (perfect competition) to 1 (pure monopoly)."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Oligopoly Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.85rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 160px; }
+        .sort-item { padding: 0.6rem 0.8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.81rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        .passage-title { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.6rem; display: block; margin-top: 1.5rem; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 720px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Oligopoly Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_oligo_game_pw';
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MktStr-Lbr#9Xq2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_oligo_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Oligopoly</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Missing Words</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 30</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:3.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/30</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Oligopoly Characteristics &amp; Behaviours</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('characteristics')">
+                <span class="col-label">📋 Key Characteristics</span>
+                <div class="sort-items" id="characteristics"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('collusive')">
+                <span class="col-label">🤝 Collusive Behaviour</span>
+                <div class="sort-items" id="collusive"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('competitive')">
+                <span class="col-label">⚔️ Competitive Behaviour</span>
+                <div class="sort-items" id="competitive"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: MISSING WORDS -->
+    <div class="tab-content">
+        <span class="mono-label">Missing Words — Two Passages</span>
+
+        <span class="passage-title" style="margin-top:0">Passage 1: Oligopoly Fundamentals</span>
+        <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1</div></div>
+        <div class="passage-box" id="passage1"></div>
+        <div id="fillResult1" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <span class="passage-title">Passage 2: Collusion &amp; Competition</span>
+        <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2</div></div>
+        <div class="passage-box" id="passage2"></div>
+        <div id="fillResult2" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initFillPassage(1); initFillPassage(2); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What are the main characteristics of oligopoly?", options: ["Few large firms dominating market, high concentration ratio, strategic interdependence, barriers to entry, products may be homogeneous or differentiated","Many small firms, homogeneous products","One firm controls market","Perfect competition with free entry"], correct: 0, explanation: "OLIGOPOLY CHARACTERISTICS: 1) FEW LARGE FIRMS dominate (high market concentration), 2) HIGH BARRIERS TO ENTRY: economies of scale, brands, capital requirements, 3) STRATEGIC INTERDEPENDENCE: each firm's decisions affect rivals (unlike perfect competition), 4) PRODUCTS: may be homogeneous (petrol, cement) or differentiated (cars, phones), 5) PRICE MAKERS: firms have market power. UK examples: supermarkets (Tesco, Sainsbury's, Asda, Morrisons), mobile networks (EE, Vodafone, O2, Three), energy suppliers." },
+    { question: "What is a concentration ratio and how is it calculated?", options: ["Profit as % of revenue","Number of firms in market","Sum of market shares of top N firms","Average firm size"], correct: 2, explanation: "CONCENTRATION RATIO (CRn): sum of market shares of top n firms. CR3 = % market share of 3 largest, CR4 = 4 largest, CR5 = 5 largest. Example: if top 4 supermarkets have 30%, 25%, 15%, 10% = CR4 = 80%. INTERPRETATION: CR4 > 40% suggests oligopoly, CR4 > 60% highly concentrated. Limitation: ignores firms outside top n, doesn't show distribution within top firms, ignores international competition, market definition matters." },
+    { question: "What is strategic interdependence in oligopoly?", options: ["Firms act independently","No interaction between firms","Each firm's decisions (price, output, advertising) depend on and affect rivals' actions","Government controls all decisions"], correct: 2, explanation: "STRATEGIC INTERDEPENDENCE: oligopolist must consider HOW RIVALS WILL REACT to their decisions. If cut price: will rivals match (price war) or ignore (gain market share)? If increase advertising: will rivals respond? Creates UNCERTAINTY and COMPLEXITY. Uses GAME THEORY to analyse. Example: supermarket pricing — Tesco cuts prices, must anticipate Sainsbury's response. Contrast perfect competition: firm too small to affect rivals. Monopoly: no rivals to consider." },
+    { question: "What is the kinked demand curve model?", options: ["Vertical demand curve","Perfectly elastic demand","Straight line demand","Demand curve kinked at current price — elastic above, inelastic below, creating price rigidity"], correct: 3, explanation: "KINKED DEMAND CURVE (Sweezy): Assumption: if firm RAISES price, rivals DON'T follow (elastic demand — lose customers). If firm CUTS price, rivals MATCH (inelastic demand — no gain in market share). Result: KINK at current price, MR discontinuous (vertical gap). Firm reluctant to change price (stays at kink). Explains PRICE RIGIDITY in oligopoly. Criticism: doesn't explain how price determined initially, assumes specific rival behaviour, not always observed. ONE model of oligopoly, not THE model." },
+    { question: "What is the difference between collusive and non-collusive oligopoly?", options: ["All oligopolies collude","No oligopolies collude","Collusive: firms cooperate to maximise joint profit; Non-collusive: firms compete independently while recognising interdependence","They're identical"], correct: 2, explanation: "COLLUSIVE OLIGOPOLY: firms COOPERATE through: formal cartels (OPEC), tacit collusion (price leadership), or informal agreements. Aim: avoid competition, maximise joint profit like monopoly. ILLEGAL in most countries. NON-COLLUSIVE OLIGOPOLY: firms compete but recognise interdependence, use game theory (prisoner's dilemma), compete on price/quality/advertising. Examples: UK supermarkets (competitive), airlines (some tacit collusion). Reality: spectrum between pure competition and pure collusion." },
+    { question: "What is the difference between cooperation and collusion?", options: ["Identical terms","Collusion is always legal","All cooperation is illegal","Cooperation: legal activities like joint ventures, R&D sharing, industry standards; Collusion: illegal price-fixing, market-sharing agreements to restrict competition"], correct: 3, explanation: "COOPERATION (legal): joint ventures (developing new technology), research collaborations, setting industry standards (USB, WiFi), sharing distribution networks, training programmes. BENEFITS industry/consumers. COLLUSION (illegal): price-fixing, market-sharing (allocating customers/regions), output restrictions, bid-rigging. HARMS consumers through higher prices, restricted choice. UK Competition & Markets Authority (CMA), EU competition law prohibit collusion but may allow cooperation if benefits outweigh anti-competitive effects." },
+    { question: "What is a cartel?", options: ["Formal collusive agreement where firms coordinate price, output, market shares to maximise joint profit","Government regulation","Perfect competition","Individual firm behaviour"], correct: 0, explanation: "CARTEL: formal agreement among firms to: 1) FIX PRICES (at monopoly level), 2) RESTRICT OUTPUT (to raise price), 3) DIVIDE MARKETS (allocate customers/regions), 4) COORDINATE ACTIONS. Example: OPEC (oil producers coordinate output). Result: higher prices, lower output, monopoly profits shared. PROBLEMS: illegal in most countries, incentive to CHEAT (produce more than quota at high price), UNSTABLE (self-interest vs collective interest), ENTRY (high price attracts new entrants if barriers low)." },
+    { question: "What is price leadership?", options: ["Government sets prices","Prices fall continuously","Tacit collusion where one dominant firm sets price and others follow","All firms set different prices"], correct: 2, explanation: "PRICE LEADERSHIP: DOMINANT FIRM (usually largest/lowest cost) sets price, others follow. Types: 1) DOMINANT FIRM: strongest firm leads (e.g., market leader with 40%+ share), 2) BAROMETRIC: firm best at reading market conditions leads, 3) COLLUSIVE: agreed leader (disguised cartel). Benefits: TACIT COLLUSION without explicit illegal agreement, price stability, avoid price wars. Example: petrol stations often follow leader's price changes within hours. Relies on: high concentration, symmetry of costs, threat of retaliation if don't follow." },
+    { question: "What causes price wars in oligopoly?", options: ["Price wars never occur","Breakdown of collusion, entry of aggressive new competitor, excess capacity/falling demand forcing firms to compete for market share, predatory pricing to eliminate rivals","Government intervention only","Perfect competition"], correct: 1, explanation: "PRICE WAR CAUSES: 1) COLLUSION BREAKDOWN: cheating/disagreement ends cooperation, 2) NEW ENTRANT: aggressive pricing to gain market share (e.g., Aldi/Lidl entering UK supermarkets), 3) EXCESS CAPACITY: recession/falling demand → fight for market share, 4) PREDATORY PRICING: drive out rival then raise prices, 5) MISTRUST: suspicion rival will cheat. Result: prices fall toward costs, profits collapse, consumers benefit short-term. Eventually: unsustainable losses → price war ends, firms seek stability." },
+    { question: "Why do oligopolies engage in non-price competition?", options: ["Price competition is more profitable","Price wars erode all firms' profits — non-price competition builds loyalty and differentiates without destructive undercutting","Non-price competition is illegal","Firms can't change prices"], correct: 1, explanation: "NON-PRICE COMPETITION preferred because: 1) PRICE WARS destroy profit for all firms (rivals match cuts), 2) HARDER TO COPY: quality/service takes time to replicate, price cuts instant, 3) BRAND LOYALTY: advertising builds long-term advantage, 4) LEGAL: less scrutiny than price-fixing, 5) DIFFERENTIATION: avoids commodity competition. Methods: advertising (Coca-Cola vs Pepsi), quality/features (phone specs), customer service, loyalty schemes, innovation (R&D race). Examples: petrol stations compete on location/convenience not just price." },
+    { question: "What barriers to entry protect oligopoly?", options: ["Only legal barriers","Economies of scale, high capital requirements, brand loyalty, vertical integration, patents, network effects, sunk costs, aggressive incumbent responses","No barriers exist","Entry is always free"], correct: 1, explanation: "BARRIERS IN OLIGOPOLY: 1) ECONOMIES OF SCALE: established firms have cost advantages (supermarkets, car manufacturing), 2) HIGH CAPITAL: massive investment needed (airlines need planes), 3) BRAND LOYALTY: established brands hard to displace (Coca-Cola), 4) VERTICAL INTEGRATION: control of supply chain, 5) PATENTS/TECHNOLOGY: intellectual property protection, 6) NETWORK EFFECTS: more users = more value (social media), 7) PREDATORY RESPONSES: incumbents cut prices to eliminate entrants, 8) SUNK COSTS: investment can't be recovered (advertising spend)." },
+    { question: "What factors influence pricing in oligopoly?", options: ["Random decisions","Only costs matter","Costs, demand, rivals' likely reactions, collusive agreements/price leadership, game theory considerations, regulatory environment, barriers to entry","Government sets all prices"], correct: 2, explanation: "PRICING FACTORS: 1) COSTS: can't price below AC long-term, 2) DEMAND: elasticity determines revenue effects, 3) RIVALS' REACTIONS: will they match/ignore? (kinked demand), 4) COLLUSION: explicit/tacit agreements, price leadership, 5) GAME THEORY: prisoner's dilemma considerations, 6) BARRIERS: high barriers allow higher prices, 7) REGULATION: CMA monitors excessive pricing, 8) REPUTATION: predatory pricing risks, 9) CAPACITY: excess capacity may trigger price war. Complex decision requiring strategic thinking." },
+    { question: "What factors influence advertising expenditure in oligopoly?", options: ["Advertising not used in oligopoly","Rivals' advertising levels, degree of differentiation, brand value, market maturity — often a prisoner's dilemma where all advertise heavily, cancelling out","Random amounts","Only firm size"], correct: 1, explanation: "ADVERTISING FACTORS: 1) RIVAL BEHAVIOUR: match competitors' spending (advertising race), 2) DIFFERENTIATION: how much can quality/image vary (high in phones, low in petrol), 3) BRAND VALUE: building loyalty creates barrier to entry, 4) MARKET MATURITY: new markets need more advertising, 5) PRODUCT TYPE: consumer goods > industrial goods, 6) REGULATION: restrictions (tobacco banned, alcohol limited), 7) EFFECTIVENESS: diminishing returns to advertising. Often: prisoner's dilemma — all advertise heavily, cancel out, waste resources but can't stop individually." },
+    { question: "What factors influence R&D/innovation in oligopoly?", options: ["No innovation in oligopoly","Only monopolies innovate","Perfect competition has most innovation","Supernormal profit availability to fund R&D, competitive pressure from rivals, patent protection enabling recoupment, threat of disruption from new technology"], correct: 3, explanation: "R&D FACTORS: 1) PROFIT AVAILABILITY: supernormal profit funds expensive R&D (pharmaceuticals), 2) COMPETITIVE PRESSURE: innovate or rivals gain advantage (smartphones), 3) PATENT PROTECTION: 20-year monopoly rewards innovation, 4) IMITATION THREAT: rivals copy innovations (need constant development), 5) MARKET STRUCTURE: oligopoly may be optimal — profit to fund R&D PLUS competition pressure (Schumpeter). Examples: pharmaceuticals (massive R&D spending), tech (Apple vs Samsung innovation race). Too competitive (perfect competition): no profit. Too monopolistic: no pressure." },
+    { question: "What is the significance of uncertainty in oligopoly?", options: ["Uncertainty only helps firms","Cannot predict rivals' reactions with certainty — this uncertainty causes price rigidity, signalling, tacit collusion, and conservative strategies","Perfect information always","No uncertainty exists"], correct: 1, explanation: "UNCERTAINTY crucial in oligopoly: don't know HOW RIVALS WILL REACT to decisions. If cut price: will they match (price war, no gain) or ignore (gain market share)? If increase advertising: retaliation? This uncertainty causes: 1) CAUTION: reluctant to change prices (kinked demand), 2) SIGNALLING: announce intentions to gauge reactions, 3) TACIT COLLUSION: reduce uncertainty through coordination, 4) CONSERVATIVE STRATEGIES: follow-the-leader, match competitors. Contrast perfect competition: no strategic uncertainty (too small to affect others)." },
+    { question: "What are the advantages of oligopoly?", options: ["No advantages exist","Only disadvantages","Perfect efficiency achieved","Economies of scale, high R&D spending/innovation from supernormal profit, competitive pressure prevents X-inefficiency, product variety, dynamic efficiency"], correct: 3, explanation: "OLIGOPOLY ADVANTAGES: 1) ECONOMIES OF SCALE: few large firms achieve low AC (car manufacturing), 2) DYNAMIC EFFICIENCY: supernormal profit funds R&D (pharmaceuticals £1bn/drug, tech innovation), 3) COMPETITIVE PRESSURE: unlike monopoly, competition prevents slack, 4) PRODUCT VARIETY: differentiation creates choice (car models, phone types), 5) INTERNATIONAL COMPETITIVENESS: large firms compete globally (Airbus vs Boeing), 6) STABLE PRICES: avoid price war volatility. Schumpeter: oligopoly may be OPTIMAL structure — profit for R&D plus competitive pressure." },
+    { question: "What are the disadvantages of oligopoly?", options: ["Allocative inefficiency (P > MC especially if collusive), collusion potential, barriers sustaining supernormal profit, wasteful advertising, price rigidity, income inequality","No disadvantages","Only helps consumers","Perfect efficiency"], correct: 0, explanation: "OLIGOPOLY DISADVANTAGES: 1) ALLOCATIVE INEFFICIENCY: P > MC (underproduction) especially if collusive, 2) COLLUSION POTENTIAL: act like monopoly, raise prices, restrict output (OPEC), 3) BARRIERS: prevent entry, sustain supernormal profit, 4) WASTEFUL ADVERTISING: prisoner's dilemma — resources wasted in competitive advertising, 5) PRICE RIGIDITY: kinked demand → slow response to cost/demand changes, 6) INCOME DISTRIBUTION: supernormal profit to owners, not consumers. Severity depends on: degree of collusion, height of barriers, regulatory effectiveness." },
+    { question: "How can collusion maximise joint profit?", options: ["Only benefits one firm","Collusion has no effect","Collusion reduces all profits","Firms act like a single monopolist — agree output quotas summing to monopoly output, set common price, divide profit"], correct: 3, explanation: "COLLUSIVE PROFIT MAXIMISATION: firms coordinate to MAXIMISE TOTAL INDUSTRY PROFIT (like monopoly). Method: 1) Agree OUTPUT QUOTAS (sum to monopoly output where industry MC = MR), 2) Set common PRICE (monopoly price from demand), 3) DIVIDE PROFIT (based on market shares/quotas). Example: OPEC restricts oil output, raises price, shares profit. Result: each firm better off than competitive outcome BUT incentive to CHEAT (produce above quota at high price). Unstable unless strong enforcement/trust." },
+    { question: "Why is collusion unstable (temptation to cheat)?", options: ["Prisoner's dilemma — individual incentive to produce above quota at high cartel price, but if all cheat, output rises, price collapses, everyone worse off","Collusion is always stable","No incentive to break agreements","Cheating is impossible"], correct: 0, explanation: "INSTABILITY from PRISONER'S DILEMMA: If firm produces ABOVE QUOTA while others restrict: firm sells more at high cartel price, maximises individual profit. But: if ALL cheat, output increases, price collapses, everyone worse off than collusion. Rational for individual to cheat BUT if all act rationally, cooperation collapses. Additional factors: 1) ASYMMETRY: different costs → disagreement on quotas, 2) MONITORING DIFFICULTY: hard to detect cheating, 3) NUMBER: more firms → harder coordination, 4) ENTRY: high price attracts entrants, 5) ENFORCEMENT: no legal contracts (illegal)." },
+    { question: "What is tacit collusion?", options: ["Illegal price-fixing","Perfect competition","Formal written agreement","Unspoken cooperation without explicit agreement — through price leadership, signalling, parallel pricing — avoiding illegality"], correct: 3, explanation: "TACIT COLLUSION: coordination WITHOUT EXPLICIT AGREEMENT (to avoid illegality). Methods: 1) PRICE LEADERSHIP: follow dominant firm's prices, 2) SIGNALLING: announce price intentions publicly, rivals respond, 3) PARALLEL PRICING: match competitors' prices quickly (petrol stations), 4) FOCAL POINTS: round number pricing (£9.99). Enables: price stability, avoid price wars, maintain profit WITHOUT illegal cartel. Hard to prosecute: no evidence of agreement. Examples: airlines often announce fare changes, observe rivals' reactions before implementing." },
+    { question: "What is the prisoner's dilemma in oligopoly?", options: ["Only applies to criminals","Always cooperate","Firms face choice: cooperate (high joint profit) or compete (individual gain but mutual loss if all compete) — dominant strategy is compete, but cooperation is better outcome","Irrelevant to economics"], correct: 2, explanation: "PRISONER'S DILEMMA: Two firms choose prices. COOPERATE (both charge high): high profit for both. COMPETE (undercut rival): winner takes market. If BOTH compete: price war, low profit for both. Dominant strategy: COMPETE (better regardless of rival's choice). Outcome: BOTH COMPETE (Nash equilibrium) despite COOPERATION being better for both. Explains: difficulty maintaining collusion, price wars, heavy advertising. Solution: repeated interaction (long-term relationship), reputation, retaliation threats. Real oligopolies: repeated game, easier to sustain cooperation." },
+    { question: "What is predatory pricing in oligopoly?", options: ["Deliberately pricing below cost to drive competitor out of market, then raising prices after exit","Legal competitive pricing","Pricing to maximise profit","Always beneficial"], correct: 0, explanation: "PREDATORY PRICING: incumbent firm prices BELOW AC (makes loss) to force rival/entrant out. After exit, raises price to monopoly level, recoups losses. Requires: 1) DEEP POCKETS: survive losses longer than victim, 2) CREDIBLE THREAT: reputation deters future entry, 3) BARRIERS: prevent re-entry after prices raised. ILLEGAL: abuse of dominant position. Evidence needed: below-cost pricing, intent to eliminate competitor, ability to recoup. Difficult to distinguish from: legitimate competition, loss-leaders, marginal cost pricing. CMA investigates suspected cases." },
+    { question: "How does game theory apply to oligopoly?", options: ["Only applies to monopoly","Game theory is irrelevant","Analyses strategic interaction between firms — players, strategies, payoffs, Nash equilibrium — showing prisoner's dilemma outcomes and why cooperation is difficult","Perfectly predicts all outcomes"], correct: 2, explanation: "GAME THEORY models oligopoly decisions: 1) PLAYERS: firms in oligopoly, 2) STRATEGIES: price levels, output quantities, advertising spending, 3) PAYOFFS: profits from strategy combinations, 4) ANALYSIS: find optimal strategy considering rivals' choices. NASH EQUILIBRIUM: no firm wants to change strategy given others' strategies. Shows: prisoner's dilemma (competition despite cooperation better), first-mover advantage, commitment value, reputation importance. Examples: pricing decisions, advertising wars, entry deterrence. Limitation: assumes rationality, complete information (often unrealistic)." },
+    { question: "What is limit pricing?", options: ["Minimum legal price","Charging highest possible price","Setting price low enough to deter entry (below monopoly level but above competitive)","Random pricing"], correct: 2, explanation: "LIMIT PRICING: incumbent sets price BELOW monopoly level to make entry UNPROFITABLE for potential entrants. Price set where: entrant can't cover AC at remaining demand. Trade-off: LOWER PROFIT NOW (from restraining price) vs HIGHER FUTURE PROFIT (no competition). Requires: credible commitment to maintain low price post-entry. More likely when: barriers moderate (too low → can't deter, too high → unnecessary), entry threat real, long-term perspective. Example: established airline keeps fares low enough that new entrant can't fill planes profitably." },
+    { question: "What factors make collusion more likely?", options: ["Collusion never succeeds","Perfect competition","Few firms (easier coordination), similar costs (agreement on price easier), high barriers to entry, product homogeneity, stable demand, legal environment permissive","Many small firms"], correct: 2, explanation: "COLLUSION MORE LIKELY when: 1) FEW FIRMS: easier coordination, monitoring (duopoly easiest), 2) SIMILAR COSTS: agree on price easily (asymmetry causes disputes), 3) HIGH BARRIERS: entry won't undermine cartel, 4) HOMOGENEOUS PRODUCT: no quality competition, just price, 5) STABLE DEMAND: predictable shares, no market disruption, 6) TRANSPARENT PRICES: detect cheating easily, 7) REPEATED INTERACTION: build trust, retaliate against cheaters, 8) WEAK REGULATION: OPEC operates as countries (outside national law). Contrast: many firms, heterogeneous products, fluctuating demand → collusion difficult." },
+    { question: "How do regulators combat collusion?", options: ["Competition law prohibits cartels, leniency programmes for whistleblowers, monitor suspicious parallel pricing, prohibit information sharing, merger control prevents concentration","Regulators don't act","Encourage all collusion","Only focus on monopolies"], correct: 0, explanation: "ANTI-COLLUSION MEASURES: 1) COMPETITION LAW: cartels illegal (UK Competition Act 1998, EU Article 101), fines up to 10% turnover, 2) LENIENCY PROGRAMMES: first firm to report cartel gets immunity (encourages defection), 3) INVESTIGATIONS: dawn raids, document seizure for evidence, 4) MONITORING: parallel pricing, price leadership scrutinised, 5) INFORMATION EXCHANGE: sharing commercially sensitive data prohibited, 6) MERGER CONTROL: prevent excessive concentration enabling collusion. Examples: EU fined truck manufacturers €2.93bn for price-fixing cartel. Challenges: tacit collusion hard to prove, international cartels difficult to prosecute." },
+    { question: "What is the relationship between concentration and competition?", options: ["Perfect positive relationship","Higher concentration generally reduces competition but relationship complex — other factors (contestability, product differentiation, regulation) also matter","No relationship exists","Only concentration matters"], correct: 1, explanation: "CONCENTRATION-COMPETITION RELATIONSHIP: HIGH CONCENTRATION (CR4 > 60%): easier collusion (few firms coordinate), but NOT AUTOMATIC — fierce competition possible if: contestable (low barriers), no collusion, aggressive rivals. LOW CONCENTRATION: suggests competition BUT not guaranteed if: high barriers (protected regional monopolies), tacit collusion across many firms. OTHER FACTORS: barriers to entry, product differentiation, regulation, import competition. Example: UK supermarkets high CR4 (~70%) but intense competition. Airline routes: low concentration domestically but protected by slots/regulations." },
+    { question: "Why might oligopoly be efficient for innovation (Schumpeter's view)?", options: ["Only monopoly innovates","Oligopoly prevents all innovation","Combines supernormal profit (funds expensive R&D) with competitive pressure (incentive to innovate before rivals)","Perfect competition is most innovative"], correct: 2, explanation: "SCHUMPETER ARGUMENT: oligopoly OPTIMAL for innovation. Perfect competition: profit too low to fund R&D. Monopoly: no competitive pressure to innovate. OLIGOPOLY: BEST OF BOTH — supernormal profit funds R&D AND competitive rivalry creates innovation race. Evidence: 1) PHARMACEUTICALS: oligopoly, massive R&D (£1bn/drug), 2) TECH: Apple vs Samsung innovation competition, 3) AUTO: Toyota vs VW vs GM continuous improvement. Caveat: depends on market specifics — some oligopolies complacent, some highly innovative. Dynamic efficiency from innovation may outweigh static inefficiency." },
+    { question: "What is non-collusive oligopoly behaviour?", options: ["Firms compete independently while recognising interdependence — competing on price, advertising, innovation, quality without explicit agreements","Always involves price-fixing","Identical to perfect competition","No competition exists"], correct: 0, explanation: "NON-COLLUSIVE OLIGOPOLY: firms COMPETE but recognise interdependence. Behaviour: 1) PRICE COMPETITION: undercut rivals if believe won't match (cautious due to kinked demand), 2) ADVERTISING WARS: heavy spending to gain market share (Pepsi vs Coca-Cola), 3) INNOVATION: race to launch new products (smartphones), 4) QUALITY COMPETITION: superior features/service, 5) STRATEGIC MOVES: commitments, threats (announce capacity expansion), 6) GAME THEORY: analyse rivals' likely responses. Examples: UK supermarkets (price matching, loyalty cards), airlines (schedule optimisation, route networks). More dynamic than collusion but less profitable." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "Few large firms dominating the market", category: "characteristics" },
+    { text: "High market concentration ratio (CR4 typically >40%)", category: "characteristics" },
+    { text: "Strategic interdependence between firms' decisions", category: "characteristics" },
+    { text: "High barriers to entry protecting incumbent firms", category: "characteristics" },
+    { text: "Products may be homogeneous or differentiated", category: "characteristics" },
+    { text: "Firms are price makers with market power", category: "characteristics" },
+    { text: "Uncertainty about rivals' reactions to decisions", category: "characteristics" },
+    { text: "Formal cartels agreeing on price and output quotas (illegal)", category: "collusive" },
+    { text: "Price leadership — dominant firm sets price, others follow", category: "collusive" },
+    { text: "Tacit collusion through signalling and parallel pricing", category: "collusive" },
+    { text: "Joint profit maximisation acting like monopoly", category: "collusive" },
+    { text: "Market-sharing agreements allocating customers or regions", category: "collusive" },
+    { text: "Information exchange to coordinate pricing", category: "collusive" },
+    { text: "Stable prices avoiding competitive undercutting", category: "collusive" },
+    { text: "Price wars with aggressive undercutting of rivals", category: "competitive" },
+    { text: "Heavy advertising expenditure to gain market share", category: "competitive" },
+    { text: "Innovation and R&D races between competitors", category: "competitive" },
+    { text: "Quality competition and product differentiation", category: "competitive" },
+    { text: "Predatory pricing to eliminate competitors", category: "competitive" },
+    { text: "Limit pricing to deter new market entry", category: "competitive" },
+    { text: "Non-price competition through service and loyalty schemes", category: "competitive" }
+];
+
+let selectedSortingItem = null, sortInitialised = false;
+
+function initSorting() {
+    if (sortInitialised) return;
+    sortInitialised = true;
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['characteristics','collusive','competitive'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInitialised = false; initSorting(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["few","shares","40","interdependence","uncertainty","entry","petrol","demand","elastic","match","kink","structure","behavior"],
+        template: "Oligopoly is characterised by [0] large firms dominating the market with high concentration ratios. Concentration ratio (CRn) is calculated as the sum of market [1] of top n firms. CR4 greater than [2]% typically indicates oligopoly. The key feature is strategic [3] — each firm's decisions affect and depend on rivals' actions, creating [4]. Oligopolies have high barriers to [5] including economies of scale, brand loyalty, and capital requirements. Products may be homogeneous (like [6]) or differentiated (like cars). The kinked [7] curve model explains price rigidity — demand is [8] above current price (rivals don't follow increase) but inelastic below (rivals [9] cuts). This creates a [10] at current price and discontinuous MR curve. However, this is just ONE model of oligopoly behaviour, not the only explanation. Oligopoly can be defined by market [11] (few firms, high concentration) or market conduct ([12]) involving strategic interaction."
+    },
+    2: {
+        answers: ["cooperation","cartels","leadership","quotas","unstable","cheat","competition","wars","differentiate","entrants","Predatory","low","scale","pressure","MC","theory"],
+        template: "Collusive oligopoly involves [0] between firms to maximise joint profit, either through formal [1] (illegal) or tacit collusion like price [2]. Cartels fix prices and output [3] to act like a monopoly. OPEC is a famous example. However, collusion is [4] due to prisoner's dilemma — individual firms have incentive to [5] by producing above quota. Non-collusive oligopoly involves independent [6] while recognising interdependence. Non-price competition is preferred because price [7] erode all firms' profits, while advertising, quality, and service can [8] without destructive price-cutting. Price wars occur when collusion breaks down or aggressive new [9] enter. [10] pricing involves setting price below cost to eliminate competitors (illegal). Limit pricing sets price [11] enough to deter entry. Advantages of oligopoly include economies of [12], high R&D spending (Schumpeter argument), and competitive [13]. Disadvantages include allocative inefficiency (P > [14]), potential collusion raising prices, and wasteful advertising. Game [15] analyses strategic interaction, showing Nash equilibrium outcomes and explaining why cooperation is difficult despite being mutually beneficial."
+    }
+};
+
+const fillState = { 1: { selected: null, placed: {} }, 2: { selected: null, placed: {} } };
+const fillInitialised = { 1: false, 2: false };
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = { selected: null, placed: {} };
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = '<div class="word-bank-label">Word Bank ' + n + ' — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        returnFillWord(n, state.placed[bid].wid); delete state.placed[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) returnFillWord(n, state.placed[bid].wid);
+    state.placed[bid] = { ...state.selected };
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function returnFillWord(n, wid) {
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
