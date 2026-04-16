@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Competition Policy &amp; Public Ownership Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' x'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' v'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 680px) { .sorting-grid-2 { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Competition Policy &amp; Public Ownership Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_comppol_game_pw';
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_comppol_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Competition Policy &amp; Public Ownership</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next &#8594;</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">&#127881;</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">&#8617; Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sort each statement into Arguments FOR or Arguments AGAINST public ownership, privatisation &amp; regulation</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">Unsorted Statements</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-2">
+            <div class="sort-col" onclick="placeInCategory('for')">
+                <span class="col-label">Arguments FOR</span>
+                <span class="col-hint">Public ownership / regulation / competition policy</span>
+                <div class="sort-items" id="for"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('against')">
+                <span class="col-label">Arguments AGAINST</span>
+                <span class="col-hint">Public ownership / regulation / competition policy</span>
+                <div class="sort-items" id="against"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Missing Words</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Competition Policy, Regulation &amp; Privatisation</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '\uD83C\uDF19' : '\u2600';
+}
+
+var sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    document.querySelectorAll('.tab-content').forEach(function(c, i) { c.classList.toggle('active', i === index); });
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    [0, 1].forEach(function(i) {
+        var el = document.getElementById('sub-' + i);
+        if (el) el.classList.toggle('active', i === index);
+    });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+var questions = [
+    {
+        question: "Which argument best supports public ownership of natural monopolies such as water supply?",
+        options: [
+            "Private firms are always more efficient than state enterprises",
+            "Natural monopolies have high fixed costs making competition wasteful; public ownership prevents monopoly exploitation",
+            "Public ownership always guarantees lower prices for consumers",
+            "Shareholders consistently prefer public ownership to private"
+        ],
+        correct: 1,
+        explanation: "Natural monopolies (utilities, rail infrastructure) have such high fixed costs that competition would involve wasteful duplication. Public ownership can prevent monopoly price exploitation and ensure universal service provision, including in unprofitable areas where a private firm would not operate."
+    },
+    {
+        question: "What is the key economic argument for privatisation of state-owned enterprises?",
+        options: [
+            "Public ownership is always profitable for the government",
+            "Private ownership introduces profit motive, competitive pressures, and efficiency incentives absent from state enterprises",
+            "Privatisation guarantees lower unemployment in every sector",
+            "Government retains full operational control after privatisation"
+        ],
+        correct: 1,
+        explanation: "Privatisation introduces market discipline, profit incentives, and accountability to shareholders. Private firms face competitive pressures and the threat of bankruptcy, encouraging efficiency improvements and innovation that may be absent in protected state enterprises with soft budget constraints."
+    },
+    {
+        question: "Which of the following is an argument AGAINST privatisation?",
+        options: [
+            "Increased efficiency and stronger innovation incentives",
+            "Better management accountability through market discipline",
+            "Loss of public control over essential services and potential for monopoly abuse without adequate regulation",
+            "Reduced government borrowing requirement"
+        ],
+        correct: 2,
+        explanation: "Critics argue privatisation can lead to loss of democratic control over essential services, creation of private monopolies that exploit consumers, asset stripping, job losses, and prioritisation of profit over public service obligations such as universal access."
+    },
+    {
+        question: "What is the primary purpose of market regulation?",
+        options: [
+            "To eliminate all private businesses and replace them with state enterprises",
+            "To correct market failures, protect consumers, ensure fair competition, and prevent monopoly abuse",
+            "To increase government tax revenue by controlling corporate profits",
+            "To create unemployment by restricting business activity"
+        ],
+        correct: 1,
+        explanation: "Regulation corrects market failures by protecting consumers from unsafe products, preventing monopoly exploitation, ensuring fair competition, addressing information asymmetries, and safeguarding public interest in essential services where the market would otherwise fail."
+    },
+    {
+        question: "What is regulatory capture?",
+        options: [
+            "When regulators successfully bring market participants under control",
+            "When regulated firms influence regulatory agencies to serve industry interests rather than the public interest",
+            "When a government introduces new regulations following a market failure",
+            "When markets are fully deregulated and regulators are disbanded"
+        ],
+        correct: 1,
+        explanation: "Regulatory capture occurs when regulatory agencies become dominated by the industries they are supposed to regulate. This can happen through revolving doors between industry and regulators, lobbying, or information asymmetry, leading to rules that benefit producers rather than consumers."
+    },
+    {
+        question: "Which UK body is primarily responsible for enforcing competition policy?",
+        options: [
+            "The Bank of England",
+            "The Competition and Markets Authority (CMA)",
+            "HM Treasury",
+            "The Financial Conduct Authority (FCA)"
+        ],
+        correct: 1,
+        explanation: "The Competition and Markets Authority (CMA) is the UK's primary competition regulator. It investigates mergers, enforces competition law, examines markets where competition may not be working well, and can impose penalties for anti-competitive behaviour."
+    },
+    {
+        question: "What is the purpose of merger control in UK competition policy?",
+        options: [
+            "To approve all business combinations regardless of market impact",
+            "To prevent mergers that would substantially lessen competition or create dominant positions harmful to consumers",
+            "To encourage the formation of monopolies for economies of scale",
+            "To increase corporate tax revenue through transaction levies"
+        ],
+        correct: 1,
+        explanation: "The CMA reviews mergers that could substantially lessen competition. It can block mergers or require remedies such as asset disposals. This prevents creation of dominant positions that could lead to higher prices, reduced innovation, or worse consumer outcomes."
+    },
+    {
+        question: "Which practice represents a serious violation of UK and EU competition law?",
+        options: [
+            "Competing aggressively on price to win market share",
+            "Cartel agreements between firms to fix prices, share markets, or restrict output",
+            "Investing in new technology to outperform rivals",
+            "Offering loyalty discounts to long-standing customers"
+        ],
+        correct: 1,
+        explanation: "Cartels involving price-fixing, market-sharing, bid-rigging, or output restrictions are serious violations of competition law. Such agreements harm consumers through higher prices and reduced choice, and can result in substantial fines of up to 10% of global annual turnover."
+    },
+    {
+        question: "What constitutes abuse of a dominant position in competition law?",
+        options: [
+            "Any firm that holds a large market share in its sector",
+            "When dominant firms exploit their position through predatory pricing, exclusionary practices, or unfair trading conditions",
+            "Firms that use successful marketing strategies to grow their customer base",
+            "Efficient production methods that give a firm a cost advantage"
+        ],
+        correct: 1,
+        explanation: "Having a dominant position is not illegal, but abusing it is. Examples include predatory pricing to eliminate competitors, exclusive dealing that forecloses markets, excessive pricing, discriminatory treatment of customers, or refusal to supply in order to restrict competition downstream."
+    },
+    {
+        question: "How do price cap regulations such as RPI-X work in privatised utilities?",
+        options: [
+            "Firms can set any price they wish, provided they inform the regulator",
+            "Maximum price increases are limited to RPI minus an efficiency factor X, incentivising cost reduction while protecting consumers",
+            "Prices must always decrease by the rate of inflation each year",
+            "Government sets exact prices annually following a public consultation"
+        ],
+        correct: 1,
+        explanation: "RPI-X regulation caps price increases at retail price inflation (RPI) minus an efficiency factor (X). This protects consumers from monopoly pricing while incentivising firms to reduce costs, since efficiency gains beyond X increase profits. It balances consumer protection with efficiency incentives."
+    },
+    {
+        question: "Why might privatisation of the railways be considered economically problematic?",
+        options: [
+            "Private firms always provide a higher quality of service than public operators",
+            "Natural monopoly characteristics, network coordination issues, safety concerns, and conflict between profit and public service obligations",
+            "Rail privatisation consistently reduces ticket prices for passengers",
+            "Privatisation guarantees improved infrastructure investment"
+        ],
+        correct: 1,
+        explanation: "Railway privatisation is controversial due to natural monopoly elements in infrastructure, coordination challenges across fragmented operators, tension between profit maximisation and service quality or safety, high capital requirements, and the essential nature of the service requiring universal access."
+    },
+    {
+        question: "Which argument best supports continued public ownership of the NHS?",
+        options: [
+            "Healthcare markets always function efficiently without government intervention",
+            "Market failures in healthcare — including information asymmetry, externalities, and equity concerns — justify public provision to ensure universal access",
+            "Private healthcare is consistently cheaper and of higher quality",
+            "Competition between providers always produces better health outcomes"
+        ],
+        correct: 1,
+        explanation: "Healthcare exhibits significant market failures: information asymmetries between doctors and patients, positive externalities from treatment, unpredictable demand, and equity concerns requiring universal access regardless of ability to pay. These justify public provision of healthcare."
+    },
+    {
+        question: "What was the 'revolving door' problem in financial regulation leading up to the 2008 crisis?",
+        options: [
+            "The frequent physical relocation of regulatory offices",
+            "The movement of personnel between regulatory agencies and regulated industries, leading to regulatory capture",
+            "Regulators taking turns to inspect different institutions",
+            "The rotation of regulatory responsibilities between different government departments"
+        ],
+        correct: 1,
+        explanation: "The revolving door refers to regulators moving to industry jobs and vice versa. This causes regulatory capture through: regulators seeking future industry employment, industry-friendly regulatory decisions, information asymmetry favouring industry, and loss of regulatory expertise to the private sector."
+    },
+    {
+        question: "What were the key objectives of the UK's 1980s privatisation programme under Thatcher?",
+        options: [
+            "To increase direct government control over strategic industries",
+            "To reduce government borrowing, improve efficiency through market discipline, and promote wider share ownership",
+            "To eliminate competition and create national champions",
+            "To nationalise additional industries deemed strategically important"
+        ],
+        correct: 1,
+        explanation: "The UK privatisation programme aimed to reduce the public sector borrowing requirement (PSBR), improve efficiency through profit incentives and competition, create popular capitalism through wider share ownership, reduce trade union power, and raise revenue from asset sales."
+    },
+    {
+        question: "A key criticism of utility privatisation in the 1980s and 1990s was that it:",
+        options: [
+            "Led to too much competition and excessive price reductions",
+            "Created private monopolies that exploited consumers through high prices and underinvestment before proper regulatory frameworks were established",
+            "Caused prices to fall too quickly, harming utility company shareholders",
+            "Resulted in too many new market entrants disrupting incumbents"
+        ],
+        correct: 1,
+        explanation: "Early privatisations sometimes created private monopolies without adequate regulatory frameworks. This led to consumer exploitation through excessive prices, underinvestment in infrastructure, deteriorating service quality, and excessive profits, demonstrating the need for strong independent regulation alongside privatisation."
+    },
+    {
+        question: "Which represents a potential benefit of deregulating the airline industry, as seen in Europe?",
+        options: [
+            "Guaranteed improvements in safety standards across all carriers",
+            "Lower barriers to entry encouraging new carriers, increased competition, lower fares, and expanded route networks",
+            "Elimination of all established legacy airlines unable to compete",
+            "Government control over pricing to ensure consumer protection"
+        ],
+        correct: 1,
+        explanation: "Airline deregulation in Europe reduced barriers to entry, enabling low-cost carriers such as Ryanair and easyJet. This increased competition, lowered average fares substantially, expanded route networks, and increased passenger numbers, though concerns remain about service quality and working conditions."
+    },
+    {
+        question: "What is a benefit of maintaining public ownership of essential infrastructure such as the National Grid?",
+        options: [
+            "Private ownership of infrastructure is always more expensive to operate",
+            "Network coordination, long-term strategic planning, universal service obligations, and democratic accountability for decisions affecting the public",
+            "Public firms always generate larger profits than their private counterparts",
+            "Public ownership guarantees complete elimination of inefficiency"
+        ],
+        correct: 1,
+        explanation: "Public ownership of infrastructure can enable better network coordination, long-term planning beyond short-term profit horizons, universal service provision in unprofitable areas, democratic accountability for strategic decisions, and avoidance of conflicts between profit maximisation and the public interest."
+    },
+    {
+        question: "Why do economists argue that some degree of regulation is necessary even after privatisation?",
+        options: [
+            "Private firms are inherently dishonest and must be supervised at all times",
+            "Privatised utilities often retain natural monopoly characteristics, meaning without regulation they can exploit consumers through high prices or underinvestment",
+            "Regulation always improves allocative efficiency in every market",
+            "Privatised firms never invest in capital unless forced to by regulators"
+        ],
+        correct: 1,
+        explanation: "Many privatised utilities remain natural monopolies with no meaningful competitors. Without regulation, they face little competitive pressure and can exploit consumers. Independent regulators such as Ofwat, Ofgem, and Ofcom set price caps, quality standards, and investment requirements to replicate competitive outcomes."
+    },
+    {
+        question: "Which argument supports deregulation of product markets?",
+        options: [
+            "More regulations always improve allocative and productive efficiency",
+            "Deregulation reduces compliance costs, removes barriers to entry, and encourages competition, innovation, and entrepreneurship",
+            "Deregulation guarantees consumer protection by increasing competition",
+            "Government intervention through regulation should always be expanded"
+        ],
+        correct: 1,
+        explanation: "Deregulation supporters argue it reduces bureaucratic costs, removes barriers to entry, encourages innovation and entrepreneurship, allows market forces to allocate resources efficiently, and increases consumer choice through competition. However, deregulation must be carefully managed to avoid market failures and consumer harm."
+    },
+    {
+        question: "How does effective competition policy benefit consumers in the long run?",
+        options: [
+            "By guaranteeing government ownership of all firms in strategic sectors",
+            "By promoting competitive markets which deliver lower prices, greater choice, better quality, and increased innovation",
+            "By eliminating all large businesses and preventing economies of scale",
+            "By fixing prices at government-determined levels across all industries"
+        ],
+        correct: 1,
+        explanation: "Effective competition policy maintains competitive markets that benefit consumers through lower prices (firms must compete on price), greater variety and innovation (to differentiate products), better quality (to attract customers), and dynamic efficiency from competitive pressures reducing X-inefficiency."
+    }
+];
+
+var currentQuestion = 0, score = 0;
+var userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    var q = questions[currentQuestion];
+    var isAnswered = userAnswers[currentQuestion] !== null;
+    var userChoice = userAnswers[currentQuestion];
+    var optHtml = q.options.map(function(opt, i) {
+        var cls = 'option';
+        if (isAnswered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userChoice) cls += ' incorrect';
+        }
+        return '<button class="' + cls + '" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
+    }).join('');
+    document.getElementById('questionContainer').innerHTML =
+        '<div class="q-card">' +
+        '<div class="q-num">Question ' + (currentQuestion + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="q-text">' + q.question + '</div>' +
+        '<div class="options">' + optHtml + '</div>' +
+        '<div class="explanation ' + (isAnswered ? 'show' : '') + '">' + q.explanation + '</div>' +
+        '</div>';
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    var pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = score + ' / ' + questions.length;
+    document.getElementById('resultPercent').textContent = pct + '% correct';
+    var emoji = '\uD83D\uDCDA', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '\u2B50'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '\uD83D\uDC4F'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '\u2713'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers = new Array(questions.length).fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+    document.getElementById('questionLabel').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+}
+function updateScoreDisplay() {
+    var answered = userAnswers.filter(function(a) { return a !== null; }).length;
+    document.getElementById('scoreDisplay').textContent = 'Score: ' + score + ' / ' + answered;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish \u2713' : 'Next \u2192';
+}
+
+/* ── SORTING ── */
+var sortingItems = [
+    { text: "Public ownership prevents monopoly exploitation of consumers in natural monopolies with high fixed costs", category: "for" },
+    { text: "State enterprises can prioritise social welfare over profit maximisation", category: "for" },
+    { text: "Public ownership ensures universal service provision including unprofitable areas", category: "for" },
+    { text: "Democratic accountability for strategic decisions affecting the public interest", category: "for" },
+    { text: "Regulation protects consumers from market failures and monopoly abuse", category: "for" },
+    { text: "Regulation ensures safety standards and quality in essential services", category: "for" },
+    { text: "Competition policy prevents anti-competitive practices and promotes consumer welfare", category: "for" },
+    { text: "Privatisation introduces profit motive and competitive pressures, improving productive efficiency", category: "for" },
+    { text: "Privatisation reduces public sector borrowing and raises revenue from asset sales", category: "for" },
+    { text: "Deregulation reduces compliance costs and barriers to entry, encouraging innovation", category: "for" },
+    { text: "Public enterprises may lack efficiency incentives and face soft budget constraints", category: "against" },
+    { text: "Political interference can lead to inefficient decision-making in state firms", category: "against" },
+    { text: "Privatisation can lead to job losses, reduced service quality, and asset stripping", category: "against" },
+    { text: "Private monopolies may exploit consumers without sufficiently strong regulation", category: "against" },
+    { text: "Excessive regulation creates compliance costs, stifles innovation, and raises barriers to entry", category: "against" },
+    { text: "Regulatory capture occurs when regulators serve industry rather than the public interest", category: "against" },
+    { text: "Deregulation may lead to market failures, consumer harm, and reduced safety standards", category: "against" },
+    { text: "Removing regulations can enable monopoly abuse and anti-competitive behaviour to go unchecked", category: "against" }
+];
+
+var selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    var shuffled = sortingItems.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('unsortedItems').innerHTML = shuffled.map(function(item) {
+        return '<div class="sort-item" data-category="' + item.category + '" onclick="selectSortItem(this,event)">' + item.text + '</div>';
+    }).join('');
+    ['for', 'against'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    var targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    var correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(function(item) {
+        item.classList.remove('correct-sort', 'incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    var pct = Math.round(correct / total * 100);
+    var res = document.getElementById('sortResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.sort-item').forEach(function(item) {
+                item.classList.remove('correct-sort', 'incorrect-sort');
+            });
+        }, 2500);
+    }
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+var matchingData = [
+    { term: "Natural Monopoly", definition: "An industry where the most efficient number of firms is one, due to very high fixed costs relative to demand", id: 1 },
+    { term: "Privatisation", definition: "The transfer of ownership of state enterprises to the private sector", id: 2 },
+    { term: "Nationalisation", definition: "The transfer of ownership of private enterprises to the public sector", id: 3 },
+    { term: "Regulatory Capture", definition: "When regulated firms come to control regulatory agencies, causing rules to serve industry rather than the public", id: 4 },
+    { term: "RPI-X Regulation", definition: "A price cap limiting annual price rises to inflation minus an efficiency factor, used in privatised utilities", id: 5 },
+    { term: "Cartel", definition: "An illegal agreement between firms to fix prices, share markets, or restrict output", id: 6 },
+    { term: "Predatory Pricing", definition: "Setting prices below cost to drive out competitors, then raising prices once they have exited the market", id: 7 },
+    { term: "Merger Control", definition: "Regulatory review of business combinations to prevent substantial lessening of competition", id: 8 },
+    { term: "Deregulation", definition: "The removal or reduction of government rules governing an industry or market", id: 9 },
+    { term: "Universal Service", definition: "The obligation to provide a service to all consumers at a uniform price, including in unprofitable areas", id: 10 },
+    { term: "Soft Budget Constraint", definition: "The expectation that a state enterprise will receive government funding regardless of financial performance", id: 11 },
+    { term: "Dominant Position", definition: "Holding sufficient market power to behave independently of competitive pressures", id: 12 }
+];
+
+var matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    var shuffled = matchingData.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('matchTerms').innerHTML = matchingData.map(function(item) {
+        return '<div class="match-term" data-id="' + item.id + '" onclick="selectMatchTerm(' + item.id + ')">' + item.term + '</div>';
+    }).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(function(item) {
+        return '<div class="match-def" data-id="' + item.id + '" onclick="matchDefinition(' + item.id + ')">' + item.definition + '</div>';
+    }).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(function(t) { t.classList.remove('selected'); });
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector('.match-term[data-id="' + id + '"]').classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    var termId = matchSelected;
+    var termText = matchingData.find(function(d) { return d.id === termId; }).term;
+    var defEl = document.querySelector('.match-def[data-id="' + defId + '"]');
+    var existing = defEl.querySelector('.match-label');
+    if (existing) {
+        var oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector('.match-term[data-id="' + oldId + '"]').classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    var label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.add('used');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    var correct = 0;
+    document.querySelectorAll('.match-def').forEach(function(def) {
+        var defId = parseInt(def.dataset.id);
+        def.classList.remove('correct', 'incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    var total = matchingData.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('matchResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect match!' : 'Green = correct, red = incorrect. Keep adjusting and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.match-def').forEach(function(d) { d.classList.remove('correct', 'incorrect'); });
+        }, 2500);
+    }
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+var fillAnswers = ["market","efficiency","monopoly","regulation","capture","motive","discipline","bankruptcy","privatisation","borrowing","assets","competition","cartels","fines","predatory","dominant","consumers","innovation","mergers","remedies"];
+var fillTemplate = "Traditional economics assumed that [0] forces would lead to efficient outcomes, but in practice many industries are prone to [1] failures. Where a single firm dominates — forming a [2] — there is a case for government intervention through [3] or public ownership. Regulators face the risk of [4] if the industries they oversee gain undue influence over them. The privatisation programme of the 1980s was motivated by a desire to introduce profit [5] and market [6] into state enterprises. By exposing firms to the threat of [7], it was argued they would become more efficient. Critics of [8] argue that it can create private monopolies, particularly in utilities, and may result in higher consumer prices and underinvestment. The public sector [9] requirement fell as governments raised revenue from selling state [10]. Competition policy aims to maintain effective [11] in markets for the long-run benefit of consumers. The Competition and Markets Authority (CMA) investigates [12] — illegal price-fixing or market-sharing agreements — and can impose significant [13] of up to 10% of global turnover. [14] pricing, where a dominant firm sets prices below cost to eliminate rivals, is an example of abuse of a [15] position. Effective competition policy benefits [16] through lower prices, greater choice, and more [17]. The CMA also scrutinises [18], requiring [19] such as asset disposals when a merger would substantially lessen competition.";
+
+var fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    var shuffled = fillAnswers.slice().sort(function() { return Math.random() - 0.5; });
+    var bankHtml = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>';
+    bankHtml += shuffled.map(function(w, i) {
+        return '<button class="word-option" data-wid="' + i + '" data-word="' + w + '" onclick="selectFillWord(\'' + w + '\',' + i + ',this)">' + w + '</button>';
+    }).join('');
+    document.getElementById('wordBank1').innerHTML = bankHtml;
+    var html = fillTemplate;
+    fillAnswers.forEach(function(_, i) {
+        html = html.replace('[' + i + ']', '<span class="word-blank" data-bid="' + i + '" onclick="clickFillBlank(' + i + ')">___</span>');
+    });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(function(b) { b.classList.remove('selected-word'); });
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word: word, wid: wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    var blank = document.querySelector('[data-bid="' + bid + '"]');
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        var oldBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (oldBtn) oldBtn.classList.remove('used', 'selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        var prevBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (prevBtn) prevBtn.classList.remove('used', 'selected-word');
+    }
+    fillState.placed[bid] = { word: fillState.selected.word, wid: fillState.selected.wid };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    var usedBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.selected.wid + '"]');
+    if (usedBtn) { usedBtn.classList.add('used'); usedBtn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    var correct = 0;
+    fillAnswers.forEach(function(ans, i) {
+        var blank = document.querySelector('[data-bid="' + i + '"]');
+        if (!blank) return;
+        blank.classList.remove('correct', 'incorrect', 'has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    var total = fillAnswers.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('fillResult1');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Good — check the red blanks.' : 'Review the passage and try again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

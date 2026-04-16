@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Market Failure Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' x'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' v'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Market Failure Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_mktfail_game_pw';
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_mktfail_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Market Failure</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 25</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:4%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next &#8594;</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">&#127881;</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/25</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">&#8617; Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sort each example into the correct type of market failure</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">Unsorted Examples</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-3">
+            <div class="sort-col" onclick="placeInCategory('public')">
+                <span class="col-label">Public Goods</span>
+                <span class="col-hint">Non-rival and/or non-excludable</span>
+                <div class="sort-items" id="public"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('positive')">
+                <span class="col-label">Merit Goods / Positive Externalities</span>
+                <span class="col-hint">Underprovided — social benefit exceeds private benefit</span>
+                <div class="sort-items" id="positive"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('negative')">
+                <span class="col-label">Demerit Goods / Negative Externalities</span>
+                <span class="col-hint">Overprovided — social cost exceeds private cost</span>
+                <div class="sort-items" id="negative"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Missing Words</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Market Failure: Public Goods, Externalities &amp; Information Failure</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '\uD83C\uDF19' : '\u2600';
+}
+
+var sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    document.querySelectorAll('.tab-content').forEach(function(c, i) { c.classList.toggle('active', i === index); });
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    [0, 1].forEach(function(i) {
+        var el = document.getElementById('sub-' + i);
+        if (el) el.classList.toggle('active', i === index);
+    });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+var questions = [
+    {
+        question: "What is market failure in economics?",
+        options: [
+            "When all firms in a market become unprofitable and close down",
+            "When prices in a market rise above the level consumers are willing to pay",
+            "When the free market mechanism leads to a misallocation of resources, failing to achieve allocative efficiency",
+            "When government regulation prevents markets from functioning normally"
+        ],
+        correct: 2,
+        explanation: "Market failure occurs when the free market produces outcomes that are socially inefficient — either too much or too little of certain goods relative to the socially optimal level. Resources are not allocated in a way that maximises total social welfare, creating a case for government intervention."
+    },
+    {
+        question: "What is the distinction between complete and partial market failure?",
+        options: [
+            "Complete market failure results in a missing market with zero private provision; partial market failure means a market exists but produces the wrong quantity",
+            "Complete market failure only occurs in developing economies",
+            "There is no meaningful distinction between the two",
+            "Partial market failure is always more serious than complete market failure"
+        ],
+        correct: 0,
+        explanation: "Complete market failure creates a missing market — no private provision at all, as with pure public goods like national defence. Partial market failure means the market exists but produces the wrong quantity — for example, factories overproduce goods with negative externalities because they ignore external costs imposed on third parties."
+    },
+    {
+        question: "What are the two key characteristics that define a pure public good?",
+        options: [
+            "Cheap to produce and widely available to all income groups",
+            "Non-rival and non-excludable",
+            "Expensive to produce and owned by the government",
+            "Private and profitable for firms to supply"
+        ],
+        correct: 1,
+        explanation: "Pure public goods are non-rival — one person's consumption does not reduce the amount available for others — and non-excludable — it is impossible or impractical to prevent non-payers from consuming the good. These characteristics cause complete market failure because private firms cannot generate profit from providing them."
+    },
+    {
+        question: "Which of the following is the best example of a pure public good?",
+        options: [
+            "A cinema ticket — rival and excludable",
+            "A chocolate bar — rival and excludable",
+            "National defence — non-rival and non-excludable",
+            "A congested motorway — rival when congested"
+        ],
+        correct: 2,
+        explanation: "National defence is a pure public good: protecting one citizen does not reduce protection available to others (non-rival), and it is impossible to exclude any citizen from receiving protection (non-excludable). This makes private provision unprofitable, causing complete market failure and requiring government provision."
+    },
+    {
+        question: "What is the free rider problem?",
+        options: [
+            "Individuals benefit from a good without paying for it because they cannot be excluded, giving rational people no incentive to contribute voluntarily",
+            "People using public transport without purchasing a valid ticket",
+            "A problem that only affects transportation markets",
+            "When all consumers pay their fair share for a public good"
+        ],
+        correct: 0,
+        explanation: "The free rider problem arises from non-excludability. Rational individuals will not voluntarily pay for a good if they can benefit from it without paying. Since firms cannot exclude non-payers, they cannot generate revenue or profit, so public goods are not supplied by free markets despite generating significant social benefits."
+    },
+    {
+        question: "What is a quasi-public good?",
+        options: [
+            "Any good provided directly by the government",
+            "A good that has some but not all characteristics of a pure public good — it may be excludable or become rival under certain conditions",
+            "Another term for a pure public good",
+            "A good that is purely private with no public characteristics"
+        ],
+        correct: 1,
+        explanation: "Quasi-public goods exhibit some but not all characteristics of pure public goods. Roads are excludable via tolls but become rival when congested. Beaches are excludable via entry fees but non-rival until crowded. Advances in technology can also shift goods from public to quasi-public by enabling exclusion."
+    },
+    {
+        question: "How has technology changed the nature of television broadcasting as an economic good?",
+        options: [
+            "Technology has had no effect on the classification of broadcast television",
+            "Technology made television a pure public good available to everyone",
+            "TV remains non-excludable despite technological advances",
+            "Digital encryption and subscription services made television excludable, transforming it from a public good into a quasi-public good"
+        ],
+        correct: 3,
+        explanation: "Traditional broadcast television was non-excludable — anyone with a receiver could watch. Digital encryption technology enabled exclusion: only paying subscribers can decrypt signals (as with Sky or Netflix). This technological change transformed television from a public good into a quasi-public good, enabling profitable private provision."
+    },
+    {
+        question: "What is the 'tragedy of the commons'?",
+        options: [
+            "When open-access common resources are overexploited because each individual captures full private benefits while sharing the costs of depletion with all other users",
+            "When the government takes ownership of all shared resources",
+            "A form of government policy failure in resource management",
+            "A type of public good characterised by non-rivalry"
+        ],
+        correct: 0,
+        explanation: "The tragedy of the commons occurs with open-access resources such as fishing grounds or the atmosphere. Each user captures the full benefit of their exploitation but shares the cost of depletion with all other users. Individual rationality leads to collective irrationality — the resource is depleted. The absence of property rights is the underlying cause."
+    },
+    {
+        question: "What are externalities in economics?",
+        options: [
+            "Effects that are always positive and benefit society as a whole",
+            "Costs that only affect the firm producing a good",
+            "The internal production costs faced by a firm",
+            "Spillover costs or benefits to third parties not involved in the market transaction"
+        ],
+        correct: 3,
+        explanation: "Externalities are costs or benefits that fall on third parties not involved in the economic transaction. Negative externalities arise when private cost is less than social cost (e.g. pollution). Positive externalities arise when private benefit is less than social benefit (e.g. education). Market failure occurs because decision-makers ignore these external effects."
+    },
+    {
+        question: "Why do negative externalities in production lead to overproduction at the market equilibrium?",
+        options: [
+            "Negative externalities have no effect on the quantity produced",
+            "Government always intervenes to prevent overproduction",
+            "Producers consider only their private marginal costs, ignoring the external costs imposed on third parties, so they produce beyond the social optimum",
+            "Production costs are too low relative to consumer demand"
+        ],
+        correct: 2,
+        explanation: "Firms maximise profit where marginal private cost (MPC) equals price, ignoring external costs. This means the market output exceeds the social optimum where marginal social cost (MSC) equals marginal social benefit (MSB). At the market quantity, MSC exceeds MSB, creating a deadweight welfare loss from overproduction."
+    },
+    {
+        question: "Why do positive externalities in consumption lead to underproduction at the market equilibrium?",
+        options: [
+            "Markets always overprovide goods with positive externalities",
+            "Positive externalities cause overproduction, not underproduction",
+            "No market failure occurs when positive externalities are present",
+            "Consumers consider only their private marginal benefits, ignoring spillover benefits to third parties, so consumption falls short of the social optimum"
+        ],
+        correct: 3,
+        explanation: "Consumers make decisions based on marginal private benefit (MPB) alone, ignoring benefits to third parties. Market equilibrium occurs where MPB equals price, but the social optimum is where MSB equals MSC. Since MSB exceeds MPB, the market underproduces relative to the social optimum, creating a deadweight welfare loss from underconsumption."
+    },
+    {
+        question: "How does the absence of property rights contribute to negative externalities?",
+        options: [
+            "Without clear ownership rights, individuals can impose costs on others without compensation or permission, since no one has the authority to prevent the harm or charge for it",
+            "The absence of property rights prevents all externalities from occurring",
+            "Ownership of assets has no bearing on whether externalities arise",
+            "Property rights are themselves the primary cause of negative externalities"
+        ],
+        correct: 0,
+        explanation: "When no one owns a resource such as the atmosphere or a river, firms can pollute freely because no owner can exclude them or demand compensation. Establishing property rights — as suggested by the Coase theorem — enables affected parties to negotiate solutions or seek compensation, internalising the externality through market mechanisms."
+    },
+    {
+        question: "What are merit goods, and why does the free market underprovide them?",
+        options: [
+            "Luxury goods that only high-income consumers can afford",
+            "Goods that have no externalities and are efficiently provided by competitive markets",
+            "Goods that are always provided free of charge by the government",
+            "Goods whose consumption generates positive externalities and which consumers undervalue or lack information about, leading to underconsumption relative to the social optimum"
+        ],
+        correct: 3,
+        explanation: "Merit goods such as education, healthcare, and libraries generate positive externalities. They are underprovided by free markets because consumers do not fully value long-term or external benefits, and imperfect information causes them to underestimate the benefits. Classifying a good as a merit good also involves a normative value judgement about what society should consume."
+    },
+    {
+        question: "What are demerit goods, and why does the free market overprovide them?",
+        options: [
+            "Inferior goods that consumers prefer to avoid",
+            "Goods that are inexpensive and widely available to all consumers",
+            "Goods that are illegal and therefore not traded in formal markets",
+            "Goods whose consumption generates negative externalities and which consumers overvalue or have imperfect information about, leading to overconsumption relative to the social optimum"
+        ],
+        correct: 3,
+        explanation: "Demerit goods such as cigarettes, alcohol, and gambling create negative externalities and are overprovided by markets because consumers ignore external costs imposed on others and have imperfect information about risks — underestimating addiction potential and long-term health or financial damage. Classifying a good as a demerit good involves a normative value judgement."
+    },
+    {
+        question: "How does imperfect information contribute to the underconsumption of merit goods?",
+        options: [
+            "Information has no effect on the consumption of merit goods",
+            "Imperfect information always leads to overconsumption of merit goods",
+            "Consumers underestimate long-term benefits, lack knowledge of positive effects, or exhibit present bias — consuming less than they would if fully and accurately informed",
+            "Consumers always have perfect information about the benefits of merit goods"
+        ],
+        correct: 2,
+        explanation: "Imperfect information compounds the underprovision of merit goods. People undervalue education's lifetime earnings boost, fail to appreciate the health benefits of exercise or a balanced diet, and exhibit present bias — placing excessive weight on immediate costs while discounting future benefits. Fully informed consumers would consume more than they do in practice."
+    },
+    {
+        question: "How does imperfect information contribute to the overconsumption of demerit goods?",
+        options: [
+            "Better information would increase the consumption of demerit goods",
+            "There is no relationship between information failure and demerit good overconsumption",
+            "Consumers underestimate the risks, addiction potential, and long-term health and financial costs, consuming more than they would if fully and accurately informed",
+            "Consumers always have perfect information about the harms associated with demerit goods"
+        ],
+        correct: 2,
+        explanation: "Information failures worsen demerit good overconsumption. Smokers underestimate cancer and addiction risks; gamblers underestimate the probability of losses; consumers of fast food do not fully appreciate long-term health consequences. Advertising may also deliberately mislead. Better information would reduce consumption — information failure compounds the underlying externality problem."
+    },
+    {
+        question: "In a diagram showing negative externalities in production, how does the market equilibrium compare to the social optimum?",
+        options: [
+            "There is no difference between the market equilibrium and the social optimum",
+            "The market and social optima coincide at the same output level",
+            "The market produces at Q_market where MPC equals MSB, which exceeds Q_optimum where MSC equals MSB, creating a deadweight welfare loss from overproduction",
+            "The market underproduces relative to the social optimum"
+        ],
+        correct: 2,
+        explanation: "With negative production externalities, MSC lies above MPC. The market equilibrium occurs where MPC equals price (MSB), but the social optimum is where MSC equals MSB. Since the MSC curve is above MPC, market output exceeds the social optimum. The triangle between the two cost curves from Q_social to Q_market represents the deadweight welfare loss from overproduction."
+    },
+    {
+        question: "In a diagram with positive consumption externalities, what does the vertical gap between the MPB and MSB curves represent?",
+        options: [
+            "The producer surplus earned by firms in the market",
+            "The private costs borne by individual consumers",
+            "The marginal external benefit — the spillover benefit to third parties at each level of consumption",
+            "The effect of government subsidies on consumer behaviour"
+        ],
+        correct: 2,
+        explanation: "MSB equals MPB plus marginal external benefit. The vertical gap between the MSB and MPB curves at any output level represents the marginal external benefit — the spillover benefit to third parties. For education, MPB is the student's private return; the gap captures society's additional gains from a more informed, productive, and law-abiding population."
+    },
+    {
+        question: "How does the tragedy of the commons relate to environmental market failures such as climate change?",
+        options: [
+            "Open-access environmental resources such as the atmosphere are overexploited because each emitter captures private economic benefits while the costs of depletion are shared globally",
+            "The tragedy of the commons has no relevance to environmental economics",
+            "Environmental resources are never subject to overexploitation in market economies",
+            "The tragedy of the commons only affects agricultural land, not environmental resources"
+        ],
+        correct: 0,
+        explanation: "Environmental market failures often exhibit the tragedy of the commons: the atmosphere is treated as an open-access resource, so firms emit greenhouse gases freely because the costs of climate change are distributed globally while the benefits of production are captured privately. The same logic applies to overfishing and deforestation. The absence of property rights is the underlying cause."
+    },
+    {
+        question: "What distinguishes merit and demerit goods from goods that simply have positive or negative externalities?",
+        options: [
+            "Merit and demerit classification involves a normative value judgement about what people should consume, and typically involves consumer information failure — not all goods with externalities fall into these categories",
+            "Merit and demerit goods are identical to goods with positive and negative externalities respectively",
+            "There is no meaningful distinction between the two sets of concepts",
+            "Only goods with externalities involve value judgements about consumption"
+        ],
+        correct: 0,
+        explanation: "Key distinctions: first, classifying a good as a merit or demerit good involves a normative judgement about desirable consumption levels. Second, merit and demerit goods typically involve consumer information failures, not only externalities. Third, not all goods with externalities qualify as merit or demerit goods — factory pollution involves a negative externality but is not itself a demerit good."
+    },
+    {
+        question: "Which of the following is an example of complete market failure?",
+        options: [
+            "A monopolist charging a price above marginal cost",
+            "Overconsumption of cigarettes due to addiction and information failure",
+            "Zero private provision of a pure public good such as national defence or flood defences",
+            "Overproduction of a good that generates pollution"
+        ],
+        correct: 2,
+        explanation: "Complete market failure means no market exists at all — a missing market. Pure public goods such as national defence have zero private provision because of non-excludability and the free rider problem. Partial failures such as pollution, cigarettes, and monopoly involve the wrong quantity being produced, but markets still exist and provide some output."
+    },
+    {
+        question: "How do property rights help address the tragedy of the commons?",
+        options: [
+            "Assigning property rights causes overexploitation of shared resources",
+            "Property rights convert all resources into public goods owned by the state",
+            "Assigning ownership creates an incentive to conserve resources, enables exclusion of overuse, and facilitates negotiation or charging for use — thereby internalising the externality",
+            "Property rights eliminate the need for any regulation of natural resources"
+        ],
+        correct: 2,
+        explanation: "Property rights solutions work through several channels: private owners have an incentive to conserve resources to preserve their future value; they can exclude overuse; and the Coase theorem suggests affected parties can negotiate efficient solutions once rights are assigned. Practical examples include fishing quotas (a property right to catch) and tradable pollution permits (a property right to emit limited amounts)."
+    },
+    {
+        question: "Why is the non-rivalry characteristic of public goods economically significant?",
+        options: [
+            "Non-rivalry prevents any consumption of the good from taking place",
+            "Non-rivalry causes prices to rise above the equilibrium level",
+            "Non-rivalry means the good is always expensive to produce",
+            "The marginal cost of providing the good to an additional user is zero, so it is efficient to allow everyone access — but private firms require positive prices for profit, making provision unprofitable"
+        ],
+        correct: 3,
+        explanation: "Non-rivalry means the marginal cost of an additional user is zero. Economic efficiency requires price to equal marginal cost — here, zero — so all should have access for free. However, private firms require positive prices to cover costs and earn profit. Charging for access is also inefficient when it prevents beneficial consumption at no extra cost to society."
+    },
+    {
+        question: "How do tradable pollution permits attempt to correct the negative externality of industrial pollution?",
+        options: [
+            "They allow unlimited pollution provided firms pay a one-off fee to the regulator",
+            "They set a total cap on pollution and allow firms to buy and sell the right to emit, achieving the environmental target at the lowest overall cost",
+            "They immediately ban all forms of industrial pollution",
+            "They increase direct government control over all production decisions"
+        ],
+        correct: 1,
+        explanation: "Tradable permits (cap-and-trade) set a total pollution cap and issue permits up to that limit. Firms that can reduce emissions cheaply do so and sell surplus permits; firms facing high abatement costs buy permits. The environmental target is met at minimum total cost. This market-based approach uses the price mechanism to internalise the externality efficiently."
+    },
+    {
+        question: "Which statement best describes the relationship between absent property rights and environmental pollution as a negative externality?",
+        options: [
+            "Property rights are the primary cause of environmental pollution",
+            "There is no relationship between property rights and environmental externalities",
+            "The environment requires no legal protection because markets automatically prevent damage",
+            "Because no one owns the atmosphere or waterways, polluters can impose costs on others freely — establishing property rights enables compensation claims or market-based solutions such as tradable permits"
+        ],
+        correct: 3,
+        explanation: "No one owns the atmosphere or rivers, so firms can pollute without paying compensation or seeking permission — a classic externality arising from absent property rights. Solutions include: assigning rights to polluters through tradable permits, creating a market; assigning rights to victims enabling Coasian compensation claims; or government ownership enforced through regulation. Each approach attempts to internalise the externality."
+    }
+];
+
+var currentQuestion = 0, score = 0;
+var userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    var q = questions[currentQuestion];
+    var isAnswered = userAnswers[currentQuestion] !== null;
+    var userChoice = userAnswers[currentQuestion];
+    var optHtml = q.options.map(function(opt, i) {
+        var cls = 'option';
+        if (isAnswered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userChoice) cls += ' incorrect';
+        }
+        return '<button class="' + cls + '" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
+    }).join('');
+    document.getElementById('questionContainer').innerHTML =
+        '<div class="q-card">' +
+        '<div class="q-num">Question ' + (currentQuestion + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="q-text">' + q.question + '</div>' +
+        '<div class="options">' + optHtml + '</div>' +
+        '<div class="explanation ' + (isAnswered ? 'show' : '') + '">' + q.explanation + '</div>' +
+        '</div>';
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    var pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = score + ' / ' + questions.length;
+    document.getElementById('resultPercent').textContent = pct + '% correct';
+    var emoji = '\uD83D\uDCDA', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '\u2B50'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '\uD83D\uDC4F'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '\u2713'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers = new Array(questions.length).fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+    document.getElementById('questionLabel').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+}
+function updateScoreDisplay() {
+    var answered = userAnswers.filter(function(a) { return a !== null; }).length;
+    document.getElementById('scoreDisplay').textContent = 'Score: ' + score + ' / ' + answered;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish \u2713' : 'Next \u2192';
+}
+
+/* ── SORTING ── */
+var sortingItems = [
+    { text: "National defence — non-rival and non-excludable, zero private provision", category: "public" },
+    { text: "Street lighting — benefits all residents, impossible to exclude non-payers", category: "public" },
+    { text: "Free rider problem prevents profitable private provision of certain goods", category: "public" },
+    { text: "A lighthouse guiding ships safely into harbour", category: "public" },
+    { text: "Uncongested roads — one car using does not reduce availability for others", category: "public" },
+    { text: "TV broadcasting became excludable through digital encryption technology", category: "public" },
+    { text: "Flood defence systems protecting entire communities from river flooding", category: "public" },
+    { text: "Education — creates informed citizens, reduces crime, and raises productivity", category: "positive" },
+    { text: "Vaccinations — protect the wider population by reducing the spread of disease", category: "positive" },
+    { text: "Research and development — knowledge spills over and benefits other firms", category: "positive" },
+    { text: "Employer-funded training — benefits future employers when workers change jobs", category: "positive" },
+    { text: "Museums and libraries — cultural and educational benefits to society as a whole", category: "positive" },
+    { text: "Tree planting — absorbs carbon dioxide and improves biodiversity for everyone", category: "positive" },
+    { text: "Renovation of historic buildings — improves the appearance of the neighbourhood", category: "positive" },
+    { text: "Cigarettes — secondhand smoke harms others; addiction risks are systematically underestimated", category: "negative" },
+    { text: "Factory pollution — air and water contamination imposes costs on local residents", category: "negative" },
+    { text: "Alcohol — increases risks of drunk driving, violence, and pressure on health services", category: "negative" },
+    { text: "Gambling — linked to crime and family breakdown; addiction potential is underestimated", category: "negative" },
+    { text: "Traffic congestion — each additional driver slows all other road users", category: "negative" },
+    { text: "Sugary drinks — contributes to obesity and long-term healthcare costs; risks undervalued", category: "negative" },
+    { text: "Noise pollution from construction or loud music — disturbs neighbouring residents", category: "negative" },
+    { text: "Fast food — imposes healthcare costs on society; nutritional information often ignored", category: "negative" }
+];
+
+var selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    var shuffled = sortingItems.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('unsortedItems').innerHTML = shuffled.map(function(item) {
+        return '<div class="sort-item" data-category="' + item.category + '" onclick="selectSortItem(this,event)">' + item.text + '</div>';
+    }).join('');
+    ['public', 'positive', 'negative'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    var targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    var correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(function(item) {
+        item.classList.remove('correct-sort', 'incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    var pct = Math.round(correct / total * 100);
+    var res = document.getElementById('sortResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.sort-item').forEach(function(item) {
+                item.classList.remove('correct-sort', 'incorrect-sort');
+            });
+        }, 2500);
+    }
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+var matchingData = [
+    { term: "Market Failure", definition: "When the free market produces a socially inefficient outcome, misallocating resources relative to the social optimum", id: 1 },
+    { term: "Complete Market Failure", definition: "A missing market — zero private provision despite social benefits, as with pure public goods", id: 2 },
+    { term: "Non-rivalry", definition: "One person's consumption of a good does not reduce the amount available for others to consume", id: 3 },
+    { term: "Non-excludability", definition: "It is impossible or impractical to prevent non-payers from consuming a good or benefiting from it", id: 4 },
+    { term: "Free Rider Problem", definition: "Rational individuals benefit from a good without paying because exclusion is impossible, preventing profitable private provision", id: 5 },
+    { term: "Negative Externality", definition: "A spillover cost imposed on third parties not involved in the transaction; private cost is less than social cost", id: 6 },
+    { term: "Positive Externality", definition: "A spillover benefit received by third parties not involved in the transaction; private benefit is less than social benefit", id: 7 },
+    { term: "Merit Good", definition: "A good that generates positive externalities and is underprovided by markets because consumers undervalue its benefits", id: 8 },
+    { term: "Demerit Good", definition: "A good that generates negative externalities and is overprovided by markets because consumers underestimate its harms", id: 9 },
+    { term: "Tragedy of the Commons", definition: "Overexploitation of open-access resources because users capture private benefits while sharing the costs of depletion", id: 10 },
+    { term: "Deadweight Welfare Loss", definition: "The reduction in total social welfare caused by a market producing at a quantity other than the social optimum", id: 11 },
+    { term: "Quasi-public Good", definition: "A good with some but not all characteristics of a pure public good — it may be excludable or become rival under certain conditions", id: 12 }
+];
+
+var matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    var shuffled = matchingData.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('matchTerms').innerHTML = matchingData.map(function(item) {
+        return '<div class="match-term" data-id="' + item.id + '" onclick="selectMatchTerm(' + item.id + ')">' + item.term + '</div>';
+    }).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(function(item) {
+        return '<div class="match-def" data-id="' + item.id + '" onclick="matchDefinition(' + item.id + ')">' + item.definition + '</div>';
+    }).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(function(t) { t.classList.remove('selected'); });
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector('.match-term[data-id="' + id + '"]').classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    var termId = matchSelected;
+    var termText = matchingData.find(function(d) { return d.id === termId; }).term;
+    var defEl = document.querySelector('.match-def[data-id="' + defId + '"]');
+    var existing = defEl.querySelector('.match-label');
+    if (existing) {
+        var oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector('.match-term[data-id="' + oldId + '"]').classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    var label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.add('used');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    var correct = 0;
+    document.querySelectorAll('.match-def').forEach(function(def) {
+        var defId = parseInt(def.dataset.id);
+        def.classList.remove('correct', 'incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    var total = matchingData.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('matchResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect match!' : 'Green = correct, red = incorrect. Keep adjusting and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.match-def').forEach(function(d) { d.classList.remove('correct', 'incorrect'); });
+        }, 2500);
+    }
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+var fillAnswers = ["misallocation","missing","non-rival","non-excludable","free","defense","rights","quasi","encryption","commons","externalities","private","overproduction","MSB","underproduction","MSB","education","underprovided","information","optimal"];
+var fillTemplate = "Market failure occurs when markets lead to a [0] of resources. Complete market failure results in a [1] market where zero private provision occurs. Pure public goods are [2] — one person's consumption does not reduce availability for others — and [3] — it is impossible to prevent non-payers from consuming. The [4] rider problem arises because rational individuals benefit without paying when exclusion is impossible, so markets cannot profitably provide national [5]. Technology can shift goods: digital [8] made TV excludable, converting it from a public good to a [7] good. The tragedy of the [9] occurs when open-access resources are overexploited as individuals bear private benefits but share costs, arising from the absence of property [6]. Externalities exist when there is a divergence between [11] and social costs or benefits. Negative externalities in production cause [12] because producers consider only marginal [11] cost, ignoring external costs — market output exceeds the point where MSC equals [13], creating a deadweight loss from the [10] that are not priced. Positive externalities in consumption cause [14] as consumers consider only marginal private benefit, ignoring external benefits — consumption falls short of where [15] equals MSC. Merit goods like [16] and healthcare are [17] due to positive externalities and imperfect [18]. Consumers underestimate long-term benefits or lack knowledge, consuming less than is socially [19]. Demerit goods are overconsumed because consumers underestimate risks and ignore external costs imposed on others.";
+
+var fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    var shuffled = fillAnswers.slice().sort(function() { return Math.random() - 0.5; });
+    var bankHtml = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>';
+    bankHtml += shuffled.map(function(w, i) {
+        return '<button class="word-option" data-wid="' + i + '" data-word="' + w + '" onclick="selectFillWord(\'' + w.replace(/'/g, '&#39;') + '\',' + i + ',this)">' + w + '</button>';
+    }).join('');
+    document.getElementById('wordBank1').innerHTML = bankHtml;
+    var html = fillTemplate;
+    fillAnswers.forEach(function(_, i) {
+        html = html.replace('[' + i + ']', '<span class="word-blank" data-bid="' + i + '" onclick="clickFillBlank(' + i + ')">___</span>');
+    });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(function(b) { b.classList.remove('selected-word'); });
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word: word, wid: wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    var blank = document.querySelector('[data-bid="' + bid + '"]');
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        var oldBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (oldBtn) oldBtn.classList.remove('used', 'selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        var prevBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (prevBtn) prevBtn.classList.remove('used', 'selected-word');
+    }
+    fillState.placed[bid] = { word: fillState.selected.word, wid: fillState.selected.wid };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    var usedBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.selected.wid + '"]');
+    if (usedBtn) { usedBtn.classList.add('used'); usedBtn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    var correct = 0;
+    fillAnswers.forEach(function(ans, i) {
+        var blank = document.querySelector('[data-bid="' + i + '"]');
+        if (!blank) return;
+        blank.classList.remove('correct', 'incorrect', 'has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    var total = fillAnswers.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('fillResult1');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Good — check the red blanks.' : 'Review the passage and try again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

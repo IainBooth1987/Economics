@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Markets &amp; Price Allocation Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' x'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' v'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-3 { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Market &amp; Price Allocation Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_mktalloc_game_pw';
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MKTFAIL-GX4!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_mktalloc_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Markets &amp; Price Allocation</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next &#8594;</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">&#127881;</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">&#8617; Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Sort each statement into the correct category</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">Unsorted Statements</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-3">
+            <div class="sort-col" onclick="placeInCategory('functions')">
+                <span class="col-label">Functions of Prices</span>
+                <span class="col-hint">What the price mechanism does</span>
+                <div class="sort-items" id="functions"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('advantages')">
+                <span class="col-label">Advantages</span>
+                <span class="col-hint">Benefits of market allocation</span>
+                <div class="sort-items" id="advantages"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('disadvantages')">
+                <span class="col-label">Disadvantages</span>
+                <span class="col-hint">Limitations of market allocation</span>
+                <div class="sort-items" id="disadvantages"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Missing Words</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — The Price Mechanism &amp; Extending Markets</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '\uD83C\uDF19' : '\u2600';
+}
+
+var sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    document.querySelectorAll('.tab-content').forEach(function(c, i) { c.classList.toggle('active', i === index); });
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach(function(t, i) { t.classList.toggle('active', i === index); });
+    [0, 1].forEach(function(i) {
+        var el = document.getElementById('sub-' + i);
+        if (el) el.classList.toggle('active', i === index);
+    });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+var questions = [
+    {
+        question: "What is the rationing function of prices in a market economy?",
+        options: [
+            "Prices encourage firms to produce more goods by raising profit margins",
+            "Prices allocate scarce resources to those willing and able to pay, excluding those who cannot or will not pay the market price",
+            "Prices transmit information about future consumer trends to producers",
+            "Prices are set by government to ensure fair distribution of goods"
+        ],
+        correct: 1,
+        explanation: "The rationing function means prices determine who receives scarce goods. When demand exceeds supply, rising prices ration the available stock to those who value it most highly — those willing and able to pay. This prevents persistent shortages and queues by allocating goods to their highest-value uses."
+    },
+    {
+        question: "How do prices perform a signalling function in markets?",
+        options: [
+            "They make announcements in markets to attract buyers",
+            "They convey information about relative scarcity and consumer preferences, coordinating the decisions of buyers and sellers without central planning",
+            "They eliminate all information problems faced by producers",
+            "They signal to government when intervention is required"
+        ],
+        correct: 1,
+        explanation: "Price changes signal valuable information: rising prices indicate increasing scarcity or demand; falling prices signal surplus or reduced demand. This information coordinates millions of decentralised decisions by consumers and producers simultaneously — without requiring a central planner or complete information about the economy."
+    },
+    {
+        question: "What is the incentive function of prices?",
+        options: [
+            "Prices have no meaningful effect on the behaviour of producers or consumers",
+            "Price changes motivate producers and consumers to alter their behaviour — high prices encourage production and discourage consumption",
+            "Prices only affect the decisions of large corporations, not individual consumers",
+            "Incentive effects are irrelevant in modern mixed economies"
+        ],
+        correct: 1,
+        explanation: "Prices create powerful incentives. High prices motivate producers to increase supply by offering a profit opportunity, while motivating consumers to reduce demand and economise. Low prices do the reverse. Together these responses coordinate the economy, answering what, how, and for whom to produce — without central direction."
+    },
+    {
+        question: "How does the price mechanism answer the question 'WHAT to produce'?",
+        options: [
+            "Government planners assess national needs and direct production accordingly",
+            "Consumer spending acts as a vote — producers make goods offering the highest profit potential, thereby reflecting consumer preferences",
+            "Random market processes determine which goods are produced",
+            "Tradition and custom dictate which goods continue to be produced"
+        ],
+        correct: 1,
+        explanation: "Consumer spending creates profit opportunities signalled through prices. High demand raises prices and profitability, incentivising producers to supply those goods. This 'invisible hand' directs resources to satisfy consumer preferences without central planning — consumer sovereignty guides production decisions in a market economy."
+    },
+    {
+        question: "How does the price mechanism answer the question 'HOW to produce'?",
+        options: [
+            "Government mandates which production methods all firms must use",
+            "Firms choose least-cost production methods, guided by input prices that signal the relative scarcity of labour, capital, and land",
+            "All firms in an industry use identical production methods",
+            "Technology choices are made randomly by firms with no cost consideration"
+        ],
+        correct: 1,
+        explanation: "Input prices guide production methods. Firms minimise costs by substituting toward relatively cheap inputs and away from expensive ones. If labour is cheap relative to capital, firms use labour-intensive methods. Price signals automatically promote productive efficiency across the economy without central direction."
+    },
+    {
+        question: "How does the price mechanism determine 'FOR WHOM to produce'?",
+        options: [
+            "Goods are distributed equally among all members of society",
+            "Income and wealth determine purchasing power — those with higher incomes can afford more goods, reflecting rewards earned in factor markets",
+            "Government distributes all output according to assessed need",
+            "Need alone determines who receives each good and service"
+        ],
+        correct: 1,
+        explanation: "The price mechanism distributes goods based on ability to pay, which depends on income earned by selling labour, land, capital, and enterprise in factor markets. This creates inequality but reflects market-determined factor returns. Critics argue this is unjust; defenders say it rewards productivity and effort."
+    },
+    {
+        question: "What is a key advantage of the price mechanism as a resource allocation system?",
+        options: [
+            "It requires extensive government planning and coordination to function",
+            "It operates automatically through decentralised decisions, efficiently coordinating millions of self-interested actors without requiring central information",
+            "It guarantees perfectly equal distribution of income and wealth",
+            "It eliminates all market failures and externalities"
+        ],
+        correct: 1,
+        explanation: "The price mechanism's efficiency stems from decentralisation. No central planner needs to collect and process all information about preferences, costs, and technology. Self-interested buyers and sellers responding to price signals automatically coordinate their decisions — Hayek called this spontaneous order, which economises on information and administrative costs."
+    },
+    {
+        question: "How does the price mechanism promote dynamic efficiency over time?",
+        options: [
+            "It prevents innovation by protecting established firms from competition",
+            "Profit incentives from high prices motivate firms to innovate, develop new products, and improve production methods to gain competitive advantage",
+            "It always maintains the status quo and resists technological change",
+            "Technology and production methods never change in market economies"
+        ],
+        correct: 1,
+        explanation: "Competitive pressures and profit motives drive innovation. Firms innovate to reduce costs (earning more profit at current prices) or develop new products (charging premium prices). Competition forces rivals to innovate or lose market share, promoting dynamic efficiency and long-run economic progress — a key advantage over central planning."
+    },
+    {
+        question: "What is a major equity concern with the price mechanism as an allocation system?",
+        options: [
+            "The price mechanism distributes goods equally to all members of society",
+            "Distribution is based on ability to pay rather than need, potentially excluding those with low incomes from essential goods such as healthcare and food",
+            "Everyone has sufficient income to purchase all goods at market prices",
+            "Income levels have no effect on consumption patterns in market economies"
+        ],
+        correct: 1,
+        explanation: "The price mechanism distributes goods based on purchasing power, not need. This creates inequality and may exclude people on low incomes from necessities such as healthcare, adequate food, and housing. Market outcomes can be productively efficient while violating principles of equity, creating a strong case for redistribution and government provision of essential services."
+    },
+    {
+        question: "Why does the price mechanism fail to provide public goods such as national defence?",
+        options: [
+            "Public goods are always provided efficiently by competitive markets",
+            "The free rider problem — non-excludability prevents firms from charging users, so profit-seeking producers will not supply these goods despite their social benefits",
+            "Public goods are unnecessary and society would be better off without them",
+            "Markets consistently overprovide public goods"
+        ],
+        correct: 1,
+        explanation: "Public goods are non-excludable — firms cannot prevent non-payers from benefiting. Rational individuals free-ride, refusing to pay if they can benefit anyway without paying. Without the ability to charge, markets cannot generate profit from supplying these goods. Socially valuable public goods therefore go unprovided by private markets, requiring state intervention."
+    },
+    {
+        question: "How does the price mechanism handle externalities inadequately?",
+        options: [
+            "The price mechanism always internalises all external costs and benefits",
+            "Market prices only reflect private costs and benefits, leading to overproduction of goods with negative externalities and underproduction of goods with positive externalities",
+            "All costs and benefits to third parties are automatically included in market prices",
+            "Externalities do not exist in modern market economies"
+        ],
+        correct: 1,
+        explanation: "Market prices only reflect private costs and benefits. External costs such as pollution are not borne by producers or consumers, causing overproduction beyond the social optimum. External benefits such as those from education are not captured in prices, causing underproduction. The price mechanism fails to account for these spillover effects, requiring government intervention."
+    },
+    {
+        question: "What is the economic problem with extending market mechanisms to organ donation?",
+        options: [
+            "A market for organs would reduce the available supply of transplantable organs",
+            "It raises serious ethical concerns including commodification of the human body, risk of exploiting the poor, undermining altruistic motivation, and changing donation from a gift to a commercial transaction",
+            "A market for organs would solve all current shortages without ethical costs",
+            "There are no significant ethical issues with introducing a market for organs"
+        ],
+        correct: 1,
+        explanation: "A market for organs raises multiple objections: it reduces the human body to a tradeable commodity, creates exploitation risk (the poor selling organs out of financial desperation), undermines altruistic motivations for donation, and fundamentally transforms organ donation from a gift relationship to a commercial transaction. Many economists argue these moral costs outweigh any efficiency gains."
+    },
+    {
+        question: "How did Titmuss argue that paying for blood donations would change behaviour?",
+        options: [
+            "Payment would have no effect on either the quantity or quality of blood supplied",
+            "Payment crowds out altruistic motivation — people donate less when paid, potentially reducing total supply and quality as financially-motivated donors may conceal health problems",
+            "Payment would definitively increase both the quantity and quality of blood supplied",
+            "Market payment always improves quality through competitive incentives"
+        ],
+        correct: 1,
+        explanation: "Titmuss argued that introducing payment for blood crowds out intrinsic motivation (altruism), potentially reducing total supply. Payment attracts those motivated by money who may conceal health issues, while deterring altruistic donors for whom the gift relationship is destroyed. This demonstrates how markets can undermine non-market motivations, social values, and even the outcomes they aim to improve."
+    },
+    {
+        question: "What concerns arise from introducing market mechanisms into education?",
+        options: [
+            "Markets in education always improve access and outcomes for all students",
+            "Markets may increase inequality through cream-skimming, treat education as a private commodity rather than a social right, and undermine equal opportunity and social cohesion",
+            "All students benefit equally from market competition between schools",
+            "Competition between schools always and automatically improves quality"
+        ],
+        correct: 1,
+        explanation: "Marketising education raises concerns: schools may select advantaged students (cream-skimming), increased segregation by income and ability may occur, treating education as a private good rather than a public investment may reduce social mobility, and equal opportunity may be undermined. Efficiency gains from competition may come at significant equity costs."
+    },
+    {
+        question: "Why might markets be particularly inappropriate for allocating healthcare?",
+        options: [
+            "Markets always provide optimal quantities and quality of healthcare",
+            "Severe information asymmetries, unpredictable and urgent demand, moral hazard, adverse selection, and equity concerns mean ability to pay does not reflect need",
+            "Healthcare has no special characteristics that distinguish it from other goods",
+            "The price mechanism works perfectly well in healthcare markets"
+        ],
+        correct: 1,
+        explanation: "Healthcare exhibits severe market failures: patients lack medical knowledge (information asymmetry), demand is often unpredictable and urgent making it inelastic, insurance creates moral hazard and adverse selection problems, and ability to pay does not reflect medical need. These failures — combined with strong equity arguments for universal access — justify significant public intervention."
+    },
+    {
+        question: "What is Adam Smith's 'invisible hand' concept?",
+        options: [
+            "Government must carefully control all economic activity to achieve good outcomes",
+            "Self-interested individuals pursuing profit unintentionally promote social welfare through competitive market prices that coordinate decentralised decisions",
+            "Markets always fail and require constant government correction",
+            "Central planning is necessary to coordinate a modern complex economy"
+        ],
+        correct: 1,
+        explanation: "Smith argued that individuals pursuing self-interest in competitive markets unintentionally promote the social good. Entrepreneurs seeking profit provide goods consumers want; competition forces low prices and efficiency. Price signals coordinate decisions and allocate resources efficiently without deliberate design or central planning — one of economics' most influential insights."
+    },
+    {
+        question: "How does the price mechanism automatically eliminate shortages?",
+        options: [
+            "Shortages persist indefinitely in market economies without government intervention",
+            "Rising prices simultaneously ration existing supply to highest-value uses and incentivise increased production, automatically eliminating the shortage",
+            "Government must always intervene immediately to resolve any shortage",
+            "Queuing and rationing by government are the only effective solutions to shortages"
+        ],
+        correct: 1,
+        explanation: "When demand exceeds supply, prices rise. This performs a dual function: rationing reduces quantity demanded by pricing out lower-value users, while the higher price incentivises producers to increase supply as profit opportunity grows. The market self-corrects without government intervention, a key advantage of the price mechanism over alternative allocation systems."
+    },
+    {
+        question: "What can happen when markets are introduced into previously non-market areas such as childcare?",
+        options: [
+            "No changes in motivation, behaviour, or relationships occur when payment is introduced",
+            "Motivation can shift from intrinsic to extrinsic — payment may crowd out care motivations and transform relationships from personal and reciprocal to transactional",
+            "Quality of care always improves once market incentives are introduced",
+            "All outcomes from introducing markets into new areas are positive"
+        ],
+        correct: 1,
+        explanation: "Marketisation can transform the nature of activities and relationships. Childcare provided within families or communities operates on a gift relationship driven by care and reciprocity. Introducing payment may crowd out intrinsic care motivations, change quality and the character of relationships, and alter what the activity fundamentally means — not all areas benefit from market logic."
+    },
+    {
+        question: "Why do markets consistently underprovide merit goods such as healthcare and education?",
+        options: [
+            "Competitive markets always provide the socially optimal quantity of all goods",
+            "Consumers undervalue long-term benefits and positive externalities, leading to underconsumption relative to the socially optimal level",
+            "Merit goods are always overproduced in market economies",
+            "No government intervention is ever justified in the provision of merit goods"
+        ],
+        correct: 1,
+        explanation: "Merit goods generate external benefits that individual consumers do not fully value when making private decisions. Pure markets underprovide them as consumers focus on private benefits, ignoring positive externalities. Imperfect information compounds this — people underestimate long-term benefits of education or preventive healthcare, consuming less than is socially optimal. This justifies subsidies or free public provision."
+    },
+    {
+        question: "What is the 'commodification' concern raised by philosophers such as Michael Sandel?",
+        options: [
+            "Commodification has no meaningful ethical implications in modern economies",
+            "Treating as tradeable commodities things that should not be bought or sold — such as votes or human body parts — degrades their intrinsic value and can violate human dignity",
+            "Everything should ultimately be commodified to achieve maximum allocative efficiency",
+            "Markets always improve social relationships by introducing clear pricing and accountability"
+        ],
+        correct: 1,
+        explanation: "Sandel argues that some things should not be for sale because market exchange corrupts or degrades them. Buying votes corrupts democracy; selling children violates human dignity; organ markets treat the body as a commodity. Markets are not morally neutral — they transform the meaning and value of what is exchanged. Efficiency arguments cannot override these moral concerns in every context."
+    }
+];
+
+var currentQuestion = 0, score = 0;
+var userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    var q = questions[currentQuestion];
+    var isAnswered = userAnswers[currentQuestion] !== null;
+    var userChoice = userAnswers[currentQuestion];
+    var optHtml = q.options.map(function(opt, i) {
+        var cls = 'option';
+        if (isAnswered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userChoice) cls += ' incorrect';
+        }
+        return '<button class="' + cls + '" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
+    }).join('');
+    document.getElementById('questionContainer').innerHTML =
+        '<div class="q-card">' +
+        '<div class="q-num">Question ' + (currentQuestion + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="q-text">' + q.question + '</div>' +
+        '<div class="options">' + optHtml + '</div>' +
+        '<div class="explanation ' + (isAnswered ? 'show' : '') + '">' + q.explanation + '</div>' +
+        '</div>';
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    var pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = score + ' / ' + questions.length;
+    document.getElementById('resultPercent').textContent = pct + '% correct';
+    var emoji = '\uD83D\uDCDA', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '\u2B50'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '\uD83D\uDC4F'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '\u2713'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers = new Array(questions.length).fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion + 1) / questions.length * 100) + '%';
+    document.getElementById('questionLabel').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+}
+function updateScoreDisplay() {
+    var answered = userAnswers.filter(function(a) { return a !== null; }).length;
+    document.getElementById('scoreDisplay').textContent = 'Score: ' + score + ' / ' + answered;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length - 1 ? 'Finish \u2713' : 'Next \u2192';
+}
+
+/* ── SORTING ── */
+var sortingItems = [
+    { text: "Rationing function — allocates scarce goods to those willing and able to pay the market price", category: "functions" },
+    { text: "Signalling function — conveys information about relative scarcity and consumer preferences to producers", category: "functions" },
+    { text: "Incentive function — motivates producers to supply more and consumers to economise when prices rise", category: "functions" },
+    { text: "Coordinates what to produce through consumer sovereignty and profit signals", category: "functions" },
+    { text: "Determines how to produce by incentivising firms to adopt least-cost production methods", category: "functions" },
+    { text: "Decides for whom to produce based on income and purchasing power in factor markets", category: "functions" },
+    { text: "Operates automatically without central planning or government coordination", category: "advantages" },
+    { text: "Economises on information — no central planner needs to possess complete knowledge of the economy", category: "advantages" },
+    { text: "Promotes productive and allocative efficiency through competition and profit incentives", category: "advantages" },
+    { text: "Provides dynamic incentives for innovation and technological progress", category: "advantages" },
+    { text: "Responds flexibly and rapidly to changing consumer preferences and economic conditions", category: "advantages" },
+    { text: "Creates inequality — distribution based on ability to pay rather than need", category: "disadvantages" },
+    { text: "Fails to provide public goods due to the free rider problem and non-excludability", category: "disadvantages" },
+    { text: "Ignores externalities, leading to overproduction of negative externality goods and underproduction of positive externality goods", category: "disadvantages" },
+    { text: "Underprovides merit goods as consumers undervalue long-term social benefits", category: "disadvantages" },
+    { text: "Information asymmetries between buyers and sellers can cause markets to fail", category: "disadvantages" },
+    { text: "Extending markets into new areas can crowd out altruism, commodify human relationships, and raise ethical concerns", category: "disadvantages" },
+    { text: "Can lead to concentration of monopoly power and reduced competition over time", category: "disadvantages" }
+];
+
+var selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    var shuffled = sortingItems.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('unsortedItems').innerHTML = shuffled.map(function(item) {
+        return '<div class="sort-item" data-category="' + item.category + '" onclick="selectSortItem(this,event)">' + item.text + '</div>';
+    }).join('');
+    ['functions', 'advantages', 'disadvantages'].forEach(function(id) { document.getElementById(id).innerHTML = ''; });
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    var targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    var correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(function(item) {
+        item.classList.remove('correct-sort', 'incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    var pct = Math.round(correct / total * 100);
+    var res = document.getElementById('sortResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.sort-item').forEach(function(item) {
+                item.classList.remove('correct-sort', 'incorrect-sort');
+            });
+        }, 2500);
+    }
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+var matchingData = [
+    { term: "Rationing Function", definition: "Prices allocate scarce goods to those willing and able to pay, preventing persistent shortages", id: 1 },
+    { term: "Signalling Function", definition: "Price changes convey information about scarcity and preferences, coordinating decentralised decisions", id: 2 },
+    { term: "Incentive Function", definition: "Price changes motivate producers to alter supply and consumers to adjust demand", id: 3 },
+    { term: "Consumer Sovereignty", definition: "The power of consumers to determine what is produced through their spending decisions", id: 4 },
+    { term: "Invisible Hand", definition: "Smith's concept that self-interested individuals pursuing profit unintentionally promote social welfare through competitive markets", id: 5 },
+    { term: "Free Rider Problem", definition: "When non-excludability allows individuals to benefit from a good without paying, preventing private market supply", id: 6 },
+    { term: "Commodification", definition: "Treating things as tradeable goods that arguably should not be bought and sold, potentially degrading their intrinsic value", id: 7 },
+    { term: "Crowding Out (altruism)", definition: "The process by which financial incentives reduce or destroy intrinsic motivation to perform an activity", id: 8 },
+    { term: "Merit Good", definition: "A good that generates positive externalities and is underprovided by markets because consumers undervalue its benefits", id: 9 },
+    { term: "Productive Efficiency", definition: "Producing output at the lowest possible cost, achieved through competitive pressure on firms", id: 10 },
+    { term: "Allocative Efficiency", definition: "Resources are allocated such that price equals marginal cost, maximising total welfare", id: 11 },
+    { term: "Dynamic Efficiency", definition: "Improvements in products and production methods over time driven by profit incentives and competitive pressure", id: 12 }
+];
+
+var matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    var shuffled = matchingData.slice().sort(function() { return Math.random() - 0.5; });
+    document.getElementById('matchTerms').innerHTML = matchingData.map(function(item) {
+        return '<div class="match-term" data-id="' + item.id + '" onclick="selectMatchTerm(' + item.id + ')">' + item.term + '</div>';
+    }).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(function(item) {
+        return '<div class="match-def" data-id="' + item.id + '" onclick="matchDefinition(' + item.id + ')">' + item.definition + '</div>';
+    }).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(function(t) { t.classList.remove('selected'); });
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector('.match-term[data-id="' + id + '"]').classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    var termId = matchSelected;
+    var termText = matchingData.find(function(d) { return d.id === termId; }).term;
+    var defEl = document.querySelector('.match-def[data-id="' + defId + '"]');
+    var existing = defEl.querySelector('.match-label');
+    if (existing) {
+        var oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector('.match-term[data-id="' + oldId + '"]').classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    var label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.add('used');
+    document.querySelector('.match-term[data-id="' + termId + '"]').classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    var correct = 0;
+    document.querySelectorAll('.match-def').forEach(function(def) {
+        var defId = parseInt(def.dataset.id);
+        def.classList.remove('correct', 'incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    var total = matchingData.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('matchResult');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect match!' : 'Green = correct, red = incorrect. Keep adjusting and check again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+    if (pct < 100) {
+        setTimeout(function() {
+            document.querySelectorAll('.match-def').forEach(function(d) { d.classList.remove('correct', 'incorrect'); });
+        }, 2500);
+    }
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+var fillAnswers = ["rationing","signalling","incentive","scarcity","sovereignty","invisible","automatically","information","innovation","inequality","public","externalities","altruistic","commodification","dignity","education","asymmetries","merit","crowding","efficiency"];
+var fillTemplate = "Prices perform three key functions in allocating resources. The [0] function allocates scarce goods to those willing and able to pay the market price. The [1] function conveys information about relative [3] and consumer preferences, coordinating decentralised decisions without central planning. The [2] function motivates producers and consumers to alter their behaviour in response to price changes. Together these functions answer the fundamental economic questions: what to produce is determined by consumer [4] and profit signals; how to produce is guided by input prices that incentivise least-cost methods; for whom to produce depends on income and purchasing power. Adam Smith's [5] hand describes how self-interested individuals pursuing profit unintentionally promote social welfare through competitive markets. The price mechanism operates [6] without central planning, economises on [7], and provides dynamic incentives for [8]. Despite these advantages, the price mechanism also has significant limitations. It creates [9] as distribution depends on ability to pay rather than need. It fails to provide [10] goods due to the free rider problem and non-excludability. Market prices do not reflect [11], causing overproduction of goods generating negative externalities and underproduction of those with positive externalities. Extending markets into new areas raises additional concerns. Paying for blood donations may crowd out [12] motivation (Titmuss), potentially reducing total supply. Markets for organs raise [13] concerns — treating the body as a tradeable good violates human [14] and risks exploiting vulnerable people. Marketising [15] may increase inequality through cream-skimming and selection. Healthcare markets suffer from information [16] that make market allocation particularly problematic. Markets also underprovide [17] goods because consumers undervalue long-term social benefits. The [18] out of intrinsic motivation by financial incentives and the risk that market logic undermines social values are key reasons why extending markets requires careful ethical scrutiny as well as analysis of economic [19].";
+
+var fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    var shuffled = fillAnswers.slice().sort(function() { return Math.random() - 0.5; });
+    var bankHtml = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>';
+    bankHtml += shuffled.map(function(w, i) {
+        return '<button class="word-option" data-wid="' + i + '" data-word="' + w + '" onclick="selectFillWord(\'' + w + '\',' + i + ',this)">' + w + '</button>';
+    }).join('');
+    document.getElementById('wordBank1').innerHTML = bankHtml;
+    var html = fillTemplate;
+    fillAnswers.forEach(function(_, i) {
+        html = html.replace('[' + i + ']', '<span class="word-blank" data-bid="' + i + '" onclick="clickFillBlank(' + i + ')">___</span>');
+    });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(function(b) { b.classList.remove('selected-word'); });
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word: word, wid: wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    var blank = document.querySelector('[data-bid="' + bid + '"]');
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        var oldBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (oldBtn) oldBtn.classList.remove('used', 'selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        var prevBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.placed[bid].wid + '"]');
+        if (prevBtn) prevBtn.classList.remove('used', 'selected-word');
+    }
+    fillState.placed[bid] = { word: fillState.selected.word, wid: fillState.selected.wid };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    var usedBtn = document.querySelector('#wordBank1 .word-option[data-wid="' + fillState.selected.wid + '"]');
+    if (usedBtn) { usedBtn.classList.add('used'); usedBtn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    var correct = 0;
+    fillAnswers.forEach(function(ans, i) {
+        var blank = document.querySelector('[data-bid="' + i + '"]');
+        if (!blank) return;
+        blank.classList.remove('correct', 'incorrect', 'has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    var total = fillAnswers.length, pct = Math.round(correct / total * 100);
+    var res = document.getElementById('fillResult1');
+    res.textContent = correct + ' / ' + total + ' correct (' + pct + '%) — ' + (pct === 100 ? 'Perfect score!' : pct >= 70 ? 'Good — check the red blanks.' : 'Review the passage and try again.');
+    res.className = 'inline-result show ' + (pct === 100 ? 'success' : pct >= 60 ? 'partial' : 'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
