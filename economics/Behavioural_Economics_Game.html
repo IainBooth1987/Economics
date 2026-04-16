@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Behavioural Economics Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting - 4 columns */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .sorting-grid-4 { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Behavioural Economics Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_behvecon_game_pw';
+  var valid = ['MicroFnd-6Wt!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MicroFnd-6Wt!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_behvecon_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Behavioural Economics</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Policy Examples</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Policy Examples — sort each intervention into the correct category</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted Policy Examples</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-4">
+            <div class="sort-col" onclick="placeInCategory('nudge')">
+                <span class="col-label">👉 Nudge</span>
+                <span class="col-hint">Gentle influence, freedom maintained</span>
+                <div class="sort-items" id="nudge"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('default')">
+                <span class="col-label">⚙️ Default Choice</span>
+                <span class="col-hint">Pre-selected option, can opt out</span>
+                <div class="sort-items" id="default"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('restricted')">
+                <span class="col-label">🚫 Restricted Choice</span>
+                <span class="col-hint">Some options removed or limited</span>
+                <div class="sort-items" id="restricted"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('mandated')">
+                <span class="col-label">⚠️ Mandated Choice</span>
+                <span class="col-hint">Must comply, no alternative</span>
+                <div class="sort-items" id="mandated"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Bounded Rationality &amp; Self-Control</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — Bounded Rationality &amp; Bounded Self-Control</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let sortInit = false, matchInit = false, fillInit = false;
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    [0,1].forEach(i => { const el = document.getElementById(`sub-${i}`); if(el) el.classList.toggle('active', i===index); });
+    if (index === 1 && !fillInit) { fillInit = true; initFillPassage(); }
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What does 'bounded rationality' mean in behavioural economics?", options: ["People always make perfectly rational decisions based on all available information","People have limited time, information, and cognitive ability to make fully rational decisions","Only economists can make rational decisions","People are completely irrational and never make good choices"], correct: 1, explanation: "Bounded rationality recognises that people face constraints when making decisions. They have limited time to gather information, limited ability to process complex data, and limited computational power to evaluate all options. This leads people to use mental shortcuts (heuristics) rather than being fully rational optimisers as traditional economics assumes." },
+    { question: "What is 'bounded self-control' in behavioural economics?", options: ["People have perfect willpower and always stick to long-term plans","People lack the self-control to always act in their long-term best interests, often prioritising immediate gratification","Self-control only applies to financial decisions","Government policies that restrict people's choices"], correct: 1, explanation: "Bounded self-control explains why people often fail to act in their own long-term interests. They may know smoking is harmful, saving is important, or healthy eating is beneficial, but still choose immediate pleasure over long-term wellbeing. This happens because present benefits feel more powerful than future costs (present bias), leading to procrastination and poor long-term outcomes." },
+    { question: "Which of these is an example of the 'anchoring' bias?", options: ["A customer seeing an item 'reduced from £100 to £60' perceives better value than if it was simply priced at £60","Someone copies their friend's purchasing decisions","A person uses past experience to make quick judgements","Someone donates money to charity out of kindness"], correct: 0, explanation: "Anchoring occurs when people rely too heavily on the first piece of information they receive (the 'anchor'). The original £100 price anchors their perception of value, making £60 seem like a bargain even if £60 is still overpriced. Retailers exploit this by showing inflated 'original prices' or expensive options first to make other options seem cheaper." },
+    { question: "What are 'heuristics' or 'rules of thumb'?", options: ["Complex mathematical formulas used by economists","Mental shortcuts that simplify decision-making but can lead to biases and errors","Government regulations that guide consumer behaviour","Perfectly rational decision-making processes"], correct: 1, explanation: "Heuristics are mental shortcuts that help people make decisions quickly without analysing all information. Examples include 'buy what I bought last time' or 'choose the middle-priced option'. While useful for saving time and mental effort (given bounded rationality), they can lead to systematic biases and poor decisions because they ignore important information." },
+    { question: "The 'availability bias' means people:", options: ["Only buy products that are currently in stock","Overestimate the probability of events that are easily recalled or recent in memory","Always choose the cheapest available option","Make decisions based on peer pressure"], correct: 1, explanation: "Availability bias causes people to judge probability based on how easily examples come to mind. After seeing plane crash news, people overestimate the danger of flying because it's vivid and memorable, even though statistically, flying is very safe. Similarly, lottery winners on TV make people overestimate their own chances of winning." },
+    { question: "How do 'social norms' influence economic decision-making?", options: ["They have no effect on individual choices","People conform to the behaviour of others in their social group, even when it's not in their economic self-interest","They only apply to wealthy individuals","They only affect non-economic decisions"], correct: 1, explanation: "Social norms are powerful influences on behaviour. People conform to what others do — buying certain brands because 'everyone has one', donating to charity because friends do, or recycling because neighbours do. This contradicts the traditional economics assumption that people are purely self-interested. Governments use social norms in nudges, like telling people '90% of your neighbours pay tax on time'." },
+    { question: "What is a 'nudge' in behavioural economics?", options: ["A government ban or prohibition","A gentle intervention that influences behaviour while preserving freedom of choice","A tax or subsidy that changes prices","Forcing people to make specific decisions"], correct: 1, explanation: "A nudge is a form of choice architecture that subtly guides people toward better decisions without restricting freedom. For example, placing healthy food at eye level nudges healthier eating, but people can still choose unhealthy options. Nudges work by exploiting biases (like default bias or social norms) to improve outcomes while maintaining liberty — a concept Richard Thaler calls 'libertarian paternalism'." },
+    { question: "Which is an example of a 'default choice'?", options: ["Banning smoking in public places","Automatically enrolling employees in pension schemes unless they opt out","Providing information about healthy eating","Making seatbelts compulsory with fines for non-compliance"], correct: 1, explanation: "Default choices exploit people's inertia and tendency to stick with pre-selected options. Auto-enrolment in pensions means people are enrolled by default but can opt out. Because of bounded rationality and inertia, most people stick with the default, dramatically increasing pension participation. This preserves choice (you can opt out) while using behavioural insights to improve outcomes." },
+    { question: "What is 'restricted choice' as a policy tool?", options: ["Providing more options to increase freedom","Limiting or removing certain options to guide behaviour, like banning certain harmful products","Forcing people to make a specific choice","Giving financial incentives for certain choices"], correct: 1, explanation: "Restricted choice removes or limits certain options deemed harmful. Examples include banning trans fats in food, restricting tobacco advertising, or removing large sugary drinks from sale. Unlike nudges, this is more paternalistic — it restricts freedom to protect people from poor decisions caused by bounded rationality or self-control problems. It's justified when market failures exist or people lack information." },
+    { question: "What is 'mandated choice'?", options: ["Suggesting what people should choose","Requiring people to make a decision on an issue, like requiring everyone to state organ donation preferences","Allowing people to avoid making decisions","Making a specific choice compulsory with no alternatives"], correct: 1, explanation: "Mandated choice requires people to actively make a decision rather than allowing them to procrastinate or rely on defaults. For example, requiring drivers to explicitly state whether they want to be organ donors (rather than having a default position). This forces engagement with an important decision while still preserving freedom of choice — unlike mandates, which force a specific outcome." },
+    { question: "Why is altruism important in behavioural economics?", options: ["It shows people are purely self-interested as traditional economics assumes","It demonstrates that people sometimes act to benefit others, even at personal cost, contradicting assumptions of pure self-interest","It only applies to charitable donations","It has no relevance to economic decision-making"], correct: 1, explanation: "Altruism challenges the traditional economics assumption that people are purely self-interested. People donate to charity, help strangers, recycle for future generations, and pay taxes honestly even when they could cheat. This matters for policy — appeals to social responsibility can be effective, and people care about fairness and others' wellbeing, not just their own material gain." },
+    { question: "How do perceptions of fairness affect economic decisions?", options: ["People ignore fairness and only care about maximising their own wealth","People reject economic outcomes they perceive as unfair, even if they would benefit materially","Fairness only matters to governments, not individuals","Fairness has no impact on market behaviour"], correct: 1, explanation: "Fairness perceptions strongly influence behaviour. Experiments show people reject unfair offers in games even when accepting would make them better off financially. Workers may resist pay cuts perceived as unfair, consumers may boycott companies seen as exploitative, and people may support redistribution policies even if it costs them personally. This contradicts assumptions of pure material self-interest." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING (4 columns) ── */
+const sortingItems = [
+    { text: "Placing healthy food at eye level in supermarkets", category: "nudge" },
+    { text: "Automatically enrolling employees in workplace pension schemes (can opt out)", category: "default" },
+    { text: "Banning the sale of cigarettes to anyone under 18", category: "restricted" },
+    { text: "Making it compulsory to wear seatbelts in cars", category: "mandated" },
+    { text: "Showing calorie information on restaurant menus", category: "nudge" },
+    { text: "Organ donation as default on driving licences (can opt out)", category: "default" },
+    { text: "Maximum limit on payday loan interest rates", category: "restricted" },
+    { text: "Requiring motorcycle riders to wear helmets by law", category: "mandated" },
+    { text: "Displaying energy efficiency ratings on appliances", category: "nudge" },
+    { text: "Automatic enrolment into green energy tariffs (can switch)", category: "default" },
+    { text: "Banning plastic bags or charging for them", category: "restricted" },
+    { text: "Making voting compulsory with fines for non-compliance", category: "mandated" },
+    { text: "Telling taxpayers '90% of people in your area pay tax on time'", category: "nudge" },
+    { text: "Printing graphic health warnings on cigarette packs", category: "nudge" },
+    { text: "Smaller plate sizes in canteens to reduce portion sizes", category: "nudge" },
+    { text: "Opt-out system for marketing emails (default is enrolled)", category: "default" },
+    { text: "Limiting maximum stakes on fixed-odds betting terminals", category: "restricted" },
+    { text: "Compulsory education until age 18", category: "mandated" },
+    { text: "Placing fruit near checkouts instead of chocolate", category: "nudge" },
+    { text: "Auto-enrolment in charitable giving via payroll (can opt out)", category: "default" },
+    { text: "Prohibition of certain harmful food additives", category: "restricted" },
+    { text: "Requiring all drivers to have car insurance by law", category: "mandated" },
+    { text: "Traffic light food labelling (red/amber/green)", category: "nudge" },
+    { text: "Pre-ticked boxes on organ donor forms (must untick to decline)", category: "default" }
+];
+
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['nudge','default','restricted','mandated'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Bounded Rationality", definition: "People have limited time, information, and cognitive ability to make fully rational decisions", id: 1 },
+    { term: "Bounded Self-Control", definition: "People lack the willpower to always act in their long-term best interests, often choosing immediate gratification", id: 2 },
+    { term: "Heuristics", definition: "Mental shortcuts or rules of thumb that simplify decision-making but can lead to biases", id: 3 },
+    { term: "Anchoring", definition: "Over-reliance on the first piece of information received when making decisions", id: 4 },
+    { term: "Availability Bias", definition: "Overestimating the probability of events that are easily recalled or vivid in memory", id: 5 },
+    { term: "Social Norms", definition: "Patterns of behaviour influenced by what others in a social group do", id: 6 },
+    { term: "Altruism", definition: "Acting to benefit others even at personal cost, contradicting pure self-interest", id: 7 },
+    { term: "Fairness", definition: "Perceptions of what is just or equitable, which can override purely economic considerations", id: 8 },
+    { term: "Nudge", definition: "A gentle intervention that influences behaviour while preserving freedom of choice", id: 9 },
+    { term: "Default Choice", definition: "A pre-selected option that people tend to stick with due to inertia, but can opt out of", id: 10 },
+    { term: "Restricted Choice", definition: "Limiting or removing certain options to guide behaviour toward better outcomes", id: 11 },
+    { term: "Mandated Choice", definition: "Requiring people to make an active decision rather than allowing them to avoid choosing", id: 12 },
+    { term: "Choice Architecture", definition: "The design of contexts in which people make decisions, influencing behaviour without restricting options", id: 13 },
+    { term: "Present Bias", definition: "Valuing immediate rewards more highly than future benefits, even when future benefits are larger", id: 14 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillAnswers = ["rational","bounded","time","options","heuristics","time","effort","decisions","anchoring","priced","perception","overestimate","safety","available","norms","neighbours","self","bias","pleasures","costs"];
+const fillTemplate = "Traditional economics assumes people are fully [0] decision-makers with unlimited time, information, and cognitive ability. However, behavioural economics recognises [1] rationality — people face constraints when making decisions. They have limited [2] to gather and process information, limited computational ability to evaluate all [3], and limited mental capacity to make complex calculations. This leads people to use [4] (also called rules of thumb) — mental shortcuts that simplify decision-making. For example, people might use the rule 'buy what I bought last [5]' or 'choose the middle-priced option' rather than carefully evaluating all alternatives. While heuristics save time and [6], they can lead to systematic biases and poor [7]. The [8] bias occurs when people rely too heavily on the first piece of information they receive. For example, seeing a product 'reduced from £100 to £60' makes £60 seem better value than if it was simply [9] at £60, even if both scenarios are identical. The original £100 becomes an anchor that influences [10]. The availability bias means people [11] the probability of events that are easily recalled or vivid in memory. After seeing news about plane crashes, people overestimate flying dangers despite statistical [12]. Recent, dramatic, or emotional events are more [13] and thus seem more probable than they really are. Social [14] also influence decisions — people conform to what others in their social group do, even when it's not in their economic self-interest. This explains why people buy certain brands because 'everyone has one', donate to charity because friends do, or recycle because [15] do. Behavioural economists also recognise bounded [16]-control — people lack the willpower to always act in their long-term best interests. They exhibit present [17] (valuing immediate rewards over future benefits), leading to procrastination, undersaving, and poor health choices. Someone might know saving is important but still spend on immediate [18]. This happens because present benefits feel more powerful than future [19], even when people intellectually understand the long-term consequences.";
+
+let fillState = { selected: null, placed: {} };
+
+function initFillPassage() {
+    fillState = { selected: null, placed: {} };
+    const shuffled = [...fillAnswers].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank1').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = fillTemplate;
+    fillAnswers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`); });
+    document.getElementById('passage1').innerHTML = html;
+    document.getElementById('fillResult1').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('#wordBank1 .word-option').forEach(b => b.classList.remove('selected-word'));
+    if (fillState.selected && fillState.selected.wid === wid) { fillState.selected = null; }
+    else { fillState.selected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    const blank = document.querySelector(`[data-bid="${bid}"]`);
+    if (!blank) return;
+    if (fillState.placed[bid] !== undefined && !fillState.selected) {
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+        delete fillState.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillState.selected) return;
+    if (fillState.placed[bid] !== undefined) {
+        const oldBtn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+    }
+    fillState.placed[bid] = { ...fillState.selected };
+    blank.textContent = fillState.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank1 .word-option[data-wid="${fillState.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    fillState.selected = null;
+}
+
+function checkFill() {
+    let correct = 0;
+    fillAnswers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="${i}"]`);
+        if (!blank) return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillState.placed[i] && fillState.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillState.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = fillAnswers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('fillResult1');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill() { fillInit = false; fillState = { selected: null, placed: {} }; initFillPassage(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

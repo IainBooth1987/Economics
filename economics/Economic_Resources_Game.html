@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Economic Activity &amp; Resources Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; overflow-x: auto; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; overflow-x: auto; }
+        .sub-tab { padding: 0.65rem 1.1rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; white-space: nowrap; }
+        .sub-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: fadeUp 0.25s ease; }
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+        /* MCQ */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+        /* Sorting — 4 cols */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.1rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+        .sorting-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 200px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .col-hint { font-size: 0.73rem; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.4rem; min-height: 100px; }
+        .sort-item { padding: 0.55rem 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.79rem; line-height: 1.45; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        /* Match */
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .match-col h3 { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.8rem; }
+        .match-term { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--text); }
+        .match-term:hover { border-color: rgba(59,130,246,0.4); }
+        .match-term.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-term.used { opacity: 0.3; cursor: not-allowed; }
+        .match-def { padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.78rem; margin-bottom: 0.4rem; transition: all 0.15s; color: var(--muted); line-height: 1.45; }
+        .match-def:hover { border-color: rgba(59,130,246,0.4); }
+        .match-def.matched { border-color: rgba(59,130,246,0.3); }
+        .match-def.correct { background: var(--correct-bg); border-color: #10b981; }
+        .match-def.incorrect { background: var(--incorrect-bg); border-color: #ef4444; }
+        .match-label { font-family: var(--ff-mono); font-size: 0.63rem; font-weight: 700; color: var(--amber); background: var(--warning-bg); padding: 0.12rem 0.45rem; border-radius: 4px; margin-bottom: 0.25rem; display: inline-block; }
+        [data-theme="light"] .match-def { color: #374151; }
+        /* Fill */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.3rem 0.8rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.8rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1rem; line-height: 2.3; font-size: 0.93rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 80px; padding: 2px 8px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.82rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.65em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+        @media (max-width: 860px) { .sorting-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { header { padding: 1rem 1.25rem; } main { padding: 1.5rem 1rem 3rem; } .sorting-grid-4 { grid-template-columns: 1fr; } .match-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body><!-- PASSWORD GATE -->
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Economic Resources Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_econres_game_pw';
+  var valid = ['MicroFnd-6Wt!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MicroFnd-6Wt!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_econres_game_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Economic Activity &amp; Resources</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Factors of Production</button>
+        <button class="tab" onclick="switchTab(2)">Key Concepts</button>
+    </div>
+
+    <!-- TAB 1: MCQ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 12</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:8.33%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/12</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;"><button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SORTING -->
+    <div class="tab-content">
+        <span class="mono-label">Factors of Production — sort each example into the correct category</span>
+        <div class="instructions-row">Click an item to select it (highlights amber), then click a category column to place it. Click a placed item to return it to Unsorted.</div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted Examples</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div class="sorting-grid-4">
+            <div class="sort-col" onclick="placeInCategory('land')">
+                <span class="col-label">🌍 Land</span>
+                <span class="col-hint">Natural resources</span>
+                <div class="sort-items" id="land"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('labour')">
+                <span class="col-label">👷 Labour</span>
+                <span class="col-hint">Human effort</span>
+                <div class="sort-items" id="labour"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('capital')">
+                <span class="col-label">🏭 Capital</span>
+                <span class="col-hint">Man-made resources</span>
+                <div class="sort-items" id="capital"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('enterprise')">
+                <span class="col-label">💡 Enterprise</span>
+                <span class="col-hint">Risk-taking &amp; organising</span>
+                <div class="sort-items" id="enterprise"></div>
+            </div>
+        </div>
+        <div id="sortResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: KEY CONCEPTS -->
+    <div class="tab-content">
+        <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab(0)">Mix &amp; Match</button>
+            <button class="sub-tab" onclick="switchSubTab(1)">Economic Problem</button>
+            <button class="sub-tab" onclick="switchSubTab(2)">PPFs</button>
+        </div>
+        <div class="sub-tab-content active" id="sub-0">
+            <span class="mono-label">Match each term to its definition</span>
+            <div class="match-grid">
+                <div class="match-col"><h3>Terms</h3><div id="matchTerms"></div></div>
+                <div class="match-col"><h3>Definitions</h3><div id="matchDefs"></div></div>
+            </div>
+            <div class="inline-result" id="matchResult"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetMatching()">Reset</button>
+                <button class="btn btn-primary" onclick="checkMatching()">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-1">
+            <span class="mono-label">Missing Words — The Basic Economic Problem &amp; Scarcity</span>
+            <div class="word-bank" id="wordBank1"><div class="word-bank-label">Word Bank 1 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage1"></div>
+            <div id="fillResult1" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(1)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(1)">Check Answers</button>
+            </div>
+        </div>
+        <div class="sub-tab-content" id="sub-2">
+            <span class="mono-label">Missing Words — Production Possibility Frontiers</span>
+            <div class="word-bank" id="wordBank2"><div class="word-bank-label">Word Bank 2 — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+            <div class="passage-box" id="passage2"></div>
+            <div id="fillResult2" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="resetFill(2)">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill(2)">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+let sortInit = false, matchInit = false;
+const fillInitialised = {1: false, 2: false};
+
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1 && !sortInit) { sortInit = true; initSorting(); }
+    if (index === 2 && !matchInit) { matchInit = true; initMatching(); }
+}
+
+function switchSubTab(index) {
+    document.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    [0,1,2].forEach(i => { const el = document.getElementById(`sub-${i}`); if(el) el.classList.toggle('active', i===index); });
+    if (index === 1) initFillPassage(1);
+    if (index === 2) initFillPassage(2);
+}
+
+/* ── MCQ ── */
+const questions = [
+    { question: "What is the fundamental economic problem?", options: ["Unlimited resources and limited wants","Scarcity — unlimited wants but limited resources to satisfy them","Poverty and inequality in society","High unemployment and inflation"], correct: 1, explanation: "The fundamental economic problem is scarcity. Resources (land, labour, capital, enterprise) are finite, but human wants are unlimited. This means we cannot produce everything people want, so choices must be made about how to allocate scarce resources. This is the starting point of all economic analysis." },
+    { question: "What are the three key economic decisions that arise from scarcity?", options: ["Who, when, and where to produce","What to produce, how to produce, and who benefits from production","Import, export, and consume","Save, invest, and spend"], correct: 1, explanation: "The three fundamental questions are: (1) WHAT goods and services to produce with scarce resources, (2) HOW to produce them (which combination of factors), and (3) WHO should benefit from the goods and services produced (distribution). Every economic system must answer these questions." },
+    { question: "Which of the following best describes 'opportunity cost'?", options: ["The monetary cost of purchasing a good or service","The value of the next best alternative forgone when making a choice","The total cost of production including all inputs","The cost of resources used in production"], correct: 1, explanation: "Opportunity cost is the value of the next best alternative that must be given up when making a choice. For example, if a farmer uses land to grow wheat instead of barley, the opportunity cost is the barley that could have been produced. It's measured in real terms (what's forgone), not just money." },
+    { question: "Which factor of production does 'coal reserves' represent?", options: ["Capital, because it's valuable","Land, because it's a natural resource","Labour, because people extract it","Enterprise, because it requires business activity"], correct: 1, explanation: "Coal reserves are classified as 'land' because land includes all natural resources provided by nature — minerals, oil, forests, fish stocks, the sea, and the environment itself. Even though extraction requires labour and capital, the coal itself is a natural resource." },
+    { question: "What does 'capital' mean as a factor of production?", options: ["Money and financial assets like shares and bonds","Man-made physical resources used to produce other goods (machinery, factories, tools)","The wealth and assets owned by individuals","Natural resources like land and minerals"], correct: 1, explanation: "In economics, capital refers to man-made physical resources used in production — machinery, equipment, factories, tools, and infrastructure. It does NOT mean money or financial capital. Capital is itself produced (someone had to make the machinery) and is used to produce other goods and services." },
+    { question: "Which best describes 'enterprise' as a factor of production?", options: ["Large corporations and multinational businesses","The willingness to take risks, organise factors of production, and innovate","Government-owned businesses and state enterprises","Small businesses and sole traders only"], correct: 1, explanation: "Enterprise (entrepreneurship) is the willingness and ability to take risks, combine the other factors of production, make business decisions, and innovate. Entrepreneurs bear the risk of failure but also reap the rewards of success. It's about the function of risk-taking and organising, not the size of the business." },
+    { question: "Why is the environment considered a scarce resource?", options: ["Because it's expensive to protect","Because it has alternative uses and using it for one purpose prevents other uses","Because only wealthy countries care about it","Because environmental damage is irreversible"], correct: 1, explanation: "The environment is scarce because it has competing uses. Using land for factories means less for agriculture or wildlife. Pollution from production uses up the environment's capacity to absorb waste. These alternative uses mean opportunity costs exist — protecting the environment means less production, and vice versa." },
+    { question: "On a Production Possibility Frontier (PPF), what does a point INSIDE the curve represent?", options: ["Maximum possible production with all resources fully employed","Inefficient use of resources or unemployment of factors of production","Economic growth from improved technology","An impossible combination of goods"], correct: 1, explanation: "Points inside the PPF represent productive inefficiency — resources are not being fully utilised. This could mean unemployment of labour, idle machinery, or inefficient production methods. The economy could produce more of both goods by moving to the boundary without needing extra resources." },
+    { question: "What does the PPF boundary represent?", options: ["The minimum production possible with current resources","The maximum possible production when all resources are fully and efficiently employed","The average production level over time","The preferred production combination"], correct: 1, explanation: "The PPF boundary shows the maximum possible production combinations when all resources are fully employed and used efficiently (productive efficiency). Every point on the boundary is productively efficient — you cannot produce more of one good without producing less of the other." },
+    { question: "How is opportunity cost shown on a PPF diagram?", options: ["By the slope of the curve","By the distance from the origin","By the amount of one good given up to gain more of the other (movement along the curve)","By points inside the curve"], correct: 2, explanation: "Opportunity cost is shown by movement along the PPF. If you move from one point to another on the boundary, producing more of Good X requires producing less of Good Y. The amount of Good Y sacrificed is the opportunity cost of the additional Good X. The slope of the PPF at any point indicates the opportunity cost." },
+    { question: "What causes an outward shift of the PPF?", options: ["Reducing unemployment and using idle resources","Economic growth through increased resources, improved technology, or better skills","Producing more consumer goods and fewer capital goods","Changing consumer preferences"], correct: 1, explanation: "An outward shift represents economic growth — the productive potential of the economy has increased. This happens through: more resources (immigration, discovering minerals), improved technology, better education/skills, or more capital investment. The economy can now produce more of both goods than before." },
+    { question: "Are all points on the PPF boundary allocatively efficient?", options: ["Yes, all boundary points are both productively and allocatively efficient","No, boundary points are productively efficient but not necessarily allocatively efficient","No, boundary points are allocatively efficient but not productively efficient","It depends on the shape of the curve"], correct: 1, explanation: "All points on the boundary are PRODUCTIVELY efficient (maximum output from resources), but NOT necessarily ALLOCATIVELY efficient. Allocative efficiency requires producing the combination of goods that society most wants. A point on the boundary could be producing 'wrong' goods — for example, too many guns and not enough butter if that's not what society values most." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ── SORTING ── */
+const sortingItems = [
+    { text: "Oil reserves in the North Sea", category: "land" },
+    { text: "A factory worker assembling cars", category: "labour" },
+    { text: "A conveyor belt in a manufacturing plant", category: "capital" },
+    { text: "An entrepreneur starting a new tech company", category: "enterprise" },
+    { text: "Forests used for timber production", category: "land" },
+    { text: "A surgeon performing an operation", category: "labour" },
+    { text: "A computer used in an office", category: "capital" },
+    { text: "A business owner deciding to expand into new markets", category: "enterprise" },
+    { text: "Iron ore mined from the ground", category: "land" },
+    { text: "A teacher educating students", category: "labour" },
+    { text: "Tractors and farm machinery", category: "capital" },
+    { text: "An innovator developing a new product", category: "enterprise" },
+    { text: "Fish stocks in the ocean", category: "land" },
+    { text: "A construction worker building houses", category: "labour" },
+    { text: "Roads and transport infrastructure", category: "capital" },
+    { text: "Someone taking financial risk by investing in a startup", category: "enterprise" },
+    { text: "Agricultural land for growing crops", category: "land" },
+    { text: "A software developer writing code", category: "labour" },
+    { text: "A warehouse storing finished goods", category: "capital" },
+    { text: "An entrepreneur combining resources to create value", category: "enterprise" },
+    { text: "Wind and solar energy from nature", category: "land" },
+    { text: "A nurse providing healthcare services", category: "labour" },
+    { text: "Office buildings and commercial property", category: "capital" },
+    { text: "A manager making strategic business decisions", category: "enterprise" }
+];
+
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    ['land','labour','capital','enterprise'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('sortResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected','correct-sort','incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect!':'Green = correct, red = incorrect. Keep moving items and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort')), 2500);
+}
+
+function resetSorting() { sortInit = false; initSorting(); }
+
+/* ── MATCH GAME ── */
+const matchingData = [
+    { term: "Scarcity", definition: "The fundamental economic problem — unlimited wants but limited resources to satisfy them", id: 1 },
+    { term: "Opportunity Cost", definition: "The value of the next best alternative forgone when making a choice", id: 2 },
+    { term: "Factors of Production", definition: "The resources used to produce goods and services: land, labour, capital, and enterprise", id: 3 },
+    { term: "Land", definition: "Natural resources provided by nature, including minerals, forests, oil, fish stocks, and the environment", id: 4 },
+    { term: "Labour", definition: "Human effort and work — both physical and mental — used in the production process", id: 5 },
+    { term: "Capital", definition: "Man-made physical resources used to produce other goods, such as machinery, factories, and tools", id: 6 },
+    { term: "Enterprise", definition: "The willingness to take risks, organise factors of production, innovate, and make business decisions", id: 7 },
+    { term: "Production Possibility Frontier", definition: "A curve showing the maximum possible production combinations when all resources are fully and efficiently employed", id: 8 },
+    { term: "Productive Efficiency", definition: "Producing maximum output from available resources, represented by points on the PPF boundary", id: 9 },
+    { term: "Allocative Efficiency", definition: "Producing the combination of goods that society most values, based on consumer preferences", id: 10 },
+    { term: "Economic Growth", definition: "An increase in productive capacity shown by an outward shift of the PPF", id: 11 },
+    { term: "Trade-off", definition: "A situation where choosing more of one thing means accepting less of another", id: 12 }
+];
+
+let matchSelected = null, matchMatches = {}, matchUsed = new Set();
+
+function initMatching() {
+    matchSelected = null; matchMatches = {}; matchUsed = new Set();
+    const shuffled = [...matchingData].sort(()=>Math.random()-0.5);
+    document.getElementById('matchTerms').innerHTML = matchingData.map(item =>
+        `<div class="match-term" data-id="${item.id}" onclick="selectMatchTerm(${item.id})">${item.term}</div>`
+    ).join('');
+    document.getElementById('matchDefs').innerHTML = shuffled.map(item =>
+        `<div class="match-def" data-id="${item.id}" onclick="matchDefinition(${item.id})">${item.definition}</div>`
+    ).join('');
+    document.getElementById('matchResult').classList.remove('show');
+}
+
+function selectMatchTerm(id) {
+    if (matchUsed.has(id)) return;
+    document.querySelectorAll('.match-term').forEach(t => t.classList.remove('selected'));
+    if (matchSelected === id) { matchSelected = null; return; }
+    matchSelected = id;
+    document.querySelector(`.match-term[data-id="${id}"]`).classList.add('selected');
+}
+
+function matchDefinition(defId) {
+    if (!matchSelected) return;
+    const termId = matchSelected;
+    const termText = matchingData.find(d=>d.id===termId).term;
+    const defEl = document.querySelector(`.match-def[data-id="${defId}"]`);
+    const existing = defEl.querySelector('.match-label');
+    if (existing) {
+        const oldId = parseInt(existing.dataset.tid);
+        matchUsed.delete(oldId);
+        document.querySelector(`.match-term[data-id="${oldId}"]`).classList.remove('used');
+        existing.remove(); delete matchMatches[defId]; defEl.classList.remove('matched');
+    }
+    matchMatches[defId] = termId; matchUsed.add(termId);
+    const label = document.createElement('div');
+    label.className = 'match-label'; label.dataset.tid = termId; label.textContent = termText;
+    defEl.insertBefore(label, defEl.firstChild); defEl.classList.add('matched');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.add('used');
+    document.querySelector(`.match-term[data-id="${termId}"]`).classList.remove('selected');
+    matchSelected = null;
+}
+
+function checkMatching() {
+    let correct = 0;
+    document.querySelectorAll('.match-def').forEach(def => {
+        const defId = parseInt(def.dataset.id);
+        def.classList.remove('correct','incorrect');
+        if (matchMatches[defId] !== undefined) {
+            if (matchMatches[defId] === defId) { def.classList.add('correct'); correct++; }
+            else def.classList.add('incorrect');
+        }
+    });
+    const total = matchingData.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('matchResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect match!':'Green = correct, red = incorrect. Keep adjusting and check again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) setTimeout(() => document.querySelectorAll('.match-def').forEach(d => d.classList.remove('correct','incorrect')), 2500);
+}
+
+function resetMatching() { initMatching(); }
+
+/* ── FILL IN THE BLANK ── */
+const fillData = {
+    1: {
+        answers: ["scarcity","wants","allocate","production","effort","enterprise","cost","alternative","healthcare","education","production","resources","methods","produced","scarcity","price","environment","state","cost","want","unavoidable"],
+        template: "The fundamental economic problem is [0] — society has unlimited [1] but only limited resources to satisfy them. This means that choices must be made about how to [2] scarce resources between different uses. Resources, also called factors of [3], include land (natural resources), labour (human [4]), capital (man-made resources used in production), and [5] (risk-taking and organising ability). Every choice involves an opportunity [6], which is the value of the next best [7] forgone. For example, if a government spends money on [8], the opportunity cost might be less spending on [9]. The central purpose of economic activity is the [10] of goods and services to satisfy needs and wants. All economic systems must answer three key questions: WHAT to produce with scarce [11], HOW to produce (which combination of factors and production [12]), and WHO is to benefit from the goods and services [13]. These questions arise directly from [14]. In a market economy, these decisions are made through the [15] mechanism — prices signal what consumers want, and producers respond by allocating resources accordingly. The [16] is also a scarce resource with alternative uses — it can be used for production, for recreation, or left in its natural [17]. Using the environment for industrial production means less is available for other purposes, demonstrating opportunity [18]. Scarcity applies to all societies regardless of wealth — even the richest nations cannot produce everything their citizens [19], so choices and trade-offs are [20]."
+    },
+    2: {
+        answers: ["diagram","resources","scarcity","technology","inefficiency","unemployment","boundary","allocatively","values","cost","less","opportunity","slope","adaptable","increasing","outward","resources","investment","good","trade-offs"],
+        template: "A Production Possibility Frontier (PPF) is a [0] that shows the maximum possible combinations of two goods or services that can be produced when all [1] are fully and efficiently employed. The PPF illustrates several key concepts. First, it shows [2] — the boundary represents maximum production, and we cannot go beyond it without more resources or better [3]. Points INSIDE the curve represent productive [4] — resources are not being fully utilised, perhaps due to [5] or inefficient production methods. Points ON the [6] are productively efficient — we're getting maximum output from available resources. However, not all points on the boundary are [7] efficient. Allocative efficiency means producing the combination of goods that society most [8], which depends on consumer preferences. A point on the boundary could be producing too many tanks and not enough food, for example. The PPF also illustrates opportunity [9]. Moving along the curve from one point to another shows the trade-off — to produce more of Good X, we must produce [10] of Good Y. The amount of Good Y given up is the [11] cost of the additional Good X. The [12] of the PPF indicates opportunity cost — a steeper slope means higher opportunity cost. Most PPFs are concave (bowed outward) because resources are not perfectly [13] between uses. This causes [14] opportunity costs — as we produce more of one good, we must sacrifice increasingly larger amounts of the other good. An [15] shift of the PPF represents economic growth — the productive capacity has increased due to more [16], improved technology, better education, or capital [17]. This means society can produce more of BOTH goods than before. A shift could also be asymmetric — for example, new technology might only improve production of one [18]. Understanding PPFs helps economists analyse resource allocation, efficiency, and the [19] that all societies face due to scarcity."
+    }
+};
+
+const fillState = {1: {selected: null, placed: {}}, 2: {selected: null, placed: {}}};
+
+function initFillPassage(n) {
+    if (fillInitialised[n]) return;
+    fillInitialised[n] = true;
+    fillState[n] = {selected: null, placed: {}};
+    const data = fillData[n];
+    const shuffled = [...data.answers].sort(()=>Math.random()-0.5);
+    document.getElementById(`wordBank${n}`).innerHTML = `<div class="word-bank-label">Word Bank ${n} — click to select, then click a blank. Click a filled blank to clear it.</div>` +
+        shuffled.map((w,i) => `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord(${n},'${w.replace(/'/g,"&#39;")}',${i},this)">${w}</button>`).join('');
+    let html = data.template;
+    data.answers.forEach((_, i) => { html = html.replace(`[${i}]`, `<span class="word-blank" data-bid="${i}" data-psg="${n}" onclick="clickFillBlank(${n},${i})">___</span>`); });
+    document.getElementById(`passage${n}`).innerHTML = html;
+    document.getElementById(`fillResult${n}`).classList.remove('show');
+}
+
+function selectFillWord(n, word, wid, btn) {
+    document.querySelectorAll(`#wordBank${n} .word-option`).forEach(b => b.classList.remove('selected-word'));
+    if (fillState[n].selected && fillState[n].selected.wid === wid) { fillState[n].selected = null; }
+    else { fillState[n].selected = {word, wid}; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(n, bid) {
+    const blank = document.querySelector(`[data-psg="${n}"][data-bid="${bid}"]`);
+    if (!blank) return;
+    const state = fillState[n];
+    if (state.placed[bid] !== undefined && !state.selected) {
+        const oldBtn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+        delete state.placed[bid]; blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selected) return;
+    if (state.placed[bid] !== undefined) {
+        const oldBtn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.placed[bid].wid}"]`);
+        if (oldBtn) oldBtn.classList.remove('used','selected-word');
+    }
+    state.placed[bid] = {...state.selected};
+    blank.textContent = state.selected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`#wordBank${n} .word-option[data-wid="${state.selected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    state.selected = null;
+}
+
+function checkFill(n) {
+    const data = fillData[n], state = fillState[n];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-psg="${n}"][data-bid="${i}"]`);
+        if (!blank) return;
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] && state.placed[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i]) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(`fillResult${n}`);
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(n) { fillInitialised[n] = false; fillState[n] = {selected: null, placed: {}}; initFillPassage(n); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
