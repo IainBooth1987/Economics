@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Price Stability Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* PROGRESS */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* MCQ */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .explanation strong { color: var(--accent2); }
+        [data-theme="light"] .explanation strong { color: #1d4ed8; }
+
+        /* BUTTONS */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* RESULT PANEL */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* INLINE RESULT */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* SORTING */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .sorting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .sort-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; min-height: 300px; cursor: pointer; transition: border-color 0.18s; }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 1rem; display: block; }
+        .sort-items { display: flex; flex-direction: column; gap: 0.5rem; min-height: 200px; }
+        .sort-item { padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.86rem; line-height: 1.5; color: var(--text); transition: all 0.15s; }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel { background: var(--surface); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; cursor: pointer; }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* GAME SELECTOR */
+        .game-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem 1.4rem; cursor: pointer; transition: all 0.18s; }
+        .game-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .game-icon { font-size: 1.6rem; margin-bottom: 0.75rem; display: block; }
+        .game-card h3 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+        .game-card p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+        .game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .game-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* MATCH */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; color: #34d399; }
+        .match-item.matched:hover { transform: none; border-color: #10b981; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+        [data-theme="light"] .match-item.matched { color: #065f46; }
+
+        /* FILL IN BLANK */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-height: 54px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.35rem 0.85rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; margin-bottom: 1.25rem; line-height: 2.3; font-size: 0.95rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 95px; padding: 2px 10px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.85rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid, .game-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Price Stability Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_pricestab_pw';
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_pricestab_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Price Stability</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 15</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:6.67%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/15</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Effects of Inflation</span>
+        <div class="instructions-row">
+            Click an item to select it (highlights in amber), then click a category to place it. Click a placed item to return it to Unsorted.
+        </div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('positive')">
+                <span class="col-label">💚 Positive Effects of Inflation</span>
+                <div class="sort-items" id="positiveEffects"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('negative')">
+                <span class="col-label">❌ Negative Effects of Inflation</span>
+                <div class="sort-items" id="negativeEffects"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortingResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: INTERACTIVE GAMES ══ -->
+    <div class="tab-content">
+        <div id="gameSelector">
+            <span class="mono-label">Interactive Games</span>
+            <div class="game-grid">
+                <div class="game-card" onclick="startGame('match')">
+                    <span class="game-icon">🎯</span>
+                    <h3>Match the Pairs</h3>
+                    <p>Match key price stability concepts with their definitions</p>
+                </div>
+                <div class="game-card" onclick="startGame('fisher')">
+                    <span class="game-icon">📐</span>
+                    <h3>Fisher Equation</h3>
+                    <p>Fill in the blanks about the Quantity Theory of Money</p>
+                </div>
+                <div class="game-card" onclick="startGame('boe')">
+                    <span class="game-icon">🏦</span>
+                    <h3>Bank of England</h3>
+                    <p>Complete the passage about monetary policy tools</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Game -->
+        <div id="matchGame" class="game-area">
+            <div class="game-title">Match the Price Stability Concepts</div>
+            <div class="game-subtitle">Click a concept, then click its matching definition</div>
+            <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+            <div class="match-grid">
+                <div>
+                    <span class="match-col-label">Concepts</span>
+                    <div class="match-items" id="matchConcepts"></div>
+                </div>
+                <div>
+                    <span class="match-col-label">Definitions</span>
+                    <div class="match-items" id="matchDefinitions"></div>
+                </div>
+            </div>
+            <div id="matchResult" class="inline-result" style="margin-top:1.25rem;"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Fisher Game -->
+        <div id="fisherGame" class="game-area">
+            <div class="game-title">Fisher's Equation of Exchange: MV = PQ</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="fisherWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="fisherPassage"></div>
+            <div id="fisherResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('fisher')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('fisher')">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- BOE Game -->
+        <div id="boeGame" class="game-area">
+            <div class="game-title">Bank of England Monetary Policy</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="boeWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="boePassage"></div>
+            <div id="boeResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('boe')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('boe')">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "According to Fisher's Equation of Exchange (MV = PQ), if the money supply (M) increases by 10% and the velocity of circulation (V) remains constant, but real output (Q) only increases by 3%, what will happen to the price level (P)?", options: ["The price level will increase by 3%","The price level will increase by approximately 7%","The price level will remain constant","The price level will increase by 10%"], correct: 1, explanation: "<strong>Correct!</strong> Using MV = PQ, if M increases by 10%, V is constant, and Q increases by 3%, then P must increase by approximately 7% to balance the equation (10% − 3% = 7%). This demonstrates the monetarist view that excessive money supply growth relative to output growth causes inflation." },
+    { question: "What is the key difference between deflation and disinflation?", options: ["Deflation is temporary, while disinflation is permanent","Deflation is when inflation is below 2%, while disinflation is negative inflation","Deflation is when prices fall, while disinflation is when the rate of inflation falls","Deflation affects all goods, while disinflation only affects some goods"], correct: 2, explanation: "<strong>Correct!</strong> Deflation occurs when the general price level is actually falling (negative inflation rate), whereas disinflation occurs when inflation is still positive but the rate is decreasing. For example, inflation falling from 5% to 3% is disinflation, not deflation." },
+    { question: "The Bank of England's primary objective regarding price stability is to maintain inflation at what target rate using which measure?", options: ["1% using CPI","2% using CPI (Consumer Price Index)","3% using CPIH (CPI including housing costs)","2.5% using RPI (Retail Price Index)"], correct: 1, explanation: "<strong>Correct!</strong> The Bank of England's Monetary Policy Committee (MPC) targets 2% inflation as measured by the Consumer Price Index (CPI). This symmetric target means the Bank is equally concerned about inflation being too high or too low." },
+    { question: "Which of the following best describes demand-pull inflation?", options: ["Inflation caused by increases in the costs of production","Inflation caused by excessive wage growth","Inflation caused by imported raw materials becoming more expensive","Inflation caused by aggregate demand exceeding aggregate supply at full employment"], correct: 3, explanation: "<strong>Correct!</strong> Demand-pull inflation occurs when aggregate demand grows faster than aggregate supply, particularly when the economy is operating near or at full capacity. This excess demand 'pulls' prices upward. It's often summarized as 'too much money chasing too few goods.'" },
+    { question: "What is stagflation, and why is it particularly problematic for policymakers?", options: ["High inflation combined with high unemployment and low economic growth — creating a policy dilemma","Low inflation with full employment — the desired economic state","Stable inflation with moderate economic growth — an ideal scenario","Falling prices combined with economic growth — typical of deflation"], correct: 0, explanation: "<strong>Correct!</strong> Stagflation is the simultaneous occurrence of high inflation, high unemployment, and stagnant growth. It's problematic because traditional demand-side policies face a trade-off: reducing inflation through contractionary policy worsens unemployment, while expansionary policy to reduce unemployment worsens inflation." },
+    { question: "If world commodity prices (such as oil) increase significantly, which type of inflation is the UK economy most likely to experience?", options: ["Demand-pull inflation, as consumers spend more on commodities","Deflation, as higher costs reduce consumption","No inflation, as it only affects specific sectors","Cost-push inflation, as higher input costs shift SRAS leftward"], correct: 3, explanation: "<strong>Correct!</strong> Increases in world commodity prices lead to cost-push inflation in the UK. Higher costs of oil, food, and raw materials increase firms' production costs, shifting the short-run aggregate supply (SRAS) curve leftward, resulting in higher prices and potentially lower output." },
+    { question: "How does Quantitative Easing (QE) work as a tool of monetary policy?", options: ["The central bank creates new money electronically to purchase government bonds and other assets, increasing the money supply","The government increases taxation to reduce money in circulation","The government prints physical currency to increase money supply","The central bank increases interest rates to reduce borrowing"], correct: 0, explanation: "<strong>Correct!</strong> QE involves the central bank creating new reserves electronically and using them to purchase assets (mainly government bonds) from financial institutions. This increases the money supply, pushes down long-term interest rates, and aims to stimulate lending and spending when conventional interest rate policy is exhausted." },
+    { question: "In Fisher's equation MV = PQ, what does 'V' represent and why is it significant for the Quantity Theory of Money?", options: ["V is the value of money, which determines purchasing power","V is the volume of transactions in the economy","V is the velocity of circulation — how many times money changes hands; monetarists assume it's stable in the short run","V is the variability of inflation over time"], correct: 2, explanation: "<strong>Correct!</strong> V represents the velocity of circulation — the average number of times money is used in transactions during a period. Monetarists assume V is relatively stable or predictable, which means changes in M will primarily affect nominal GDP (PQ), and if Q is at capacity, then P (prices) must rise." },
+    { question: "How can inflation affect the UK's balance of payments on the current account?", options: ["Higher domestic inflation makes exports less competitive and imports more attractive, worsening the current account","Inflation has no effect on the balance of payments","Higher inflation always improves the balance of payments by increasing export values","Higher inflation reduces imports, improving the trade balance"], correct: 0, explanation: "<strong>Correct!</strong> If UK inflation is higher than in competitor countries, British goods become relatively more expensive. This reduces demand for UK exports and makes imports relatively cheaper, increasing import demand. Both effects worsen the current account balance." },
+    { question: "What is the Consumer Price Index (CPI) and how is it calculated?", options: ["A weighted average of prices of a 'basket' of goods and services consumed by a typical household, with weights based on household spending patterns","The change in wages adjusted for productivity growth","The average price of all goods produced in the economy","The ratio of nominal GDP to real GDP"], correct: 0, explanation: "<strong>Correct!</strong> The CPI measures the average change in prices paid by households for a representative basket of goods and services. Items are weighted according to their importance in typical household spending. The inflation rate is the percentage change in CPI over time." },
+    { question: "What is a positive output gap, and what is its likely effect on inflation?", options: ["When actual GDP exceeds potential GDP, creating demand-pull inflationary pressure","When imports exceed exports, putting downward pressure on prices","When productivity growth exceeds wage growth, reducing inflation","When actual GDP is below potential GDP, creating deflationary pressure"], correct: 0, explanation: "<strong>Correct!</strong> A positive output gap occurs when actual output exceeds the economy's potential (full capacity) output. This indicates excess demand in the economy, putting upward pressure on prices (demand-pull inflation) and wages as firms compete for scarce resources and labour." },
+    { question: "How can changes in other economies affect UK inflation? Consider if the Eurozone experiences high inflation.", options: ["Eurozone inflation can increase UK import prices (imported inflation) and potentially increase demand for UK exports","Eurozone inflation automatically causes deflation in the UK","It only affects UK inflation if there's a currency union","Other countries' inflation has no impact on UK inflation"], correct: 0, explanation: "<strong>Correct!</strong> Inflation in trading partner countries can cause imported inflation in the UK as the price of imports rises. Additionally, if Eurozone inflation leads to euro depreciation, UK exports become less competitive. The interconnected nature of global trade means inflation can be 'imported' through higher import prices." },
+    { question: "Which of the following is a consequence of unexpected high inflation for individuals on fixed incomes?", options: ["Real income increases due to lower taxation","No effect on real income as wages are protected","Real income falls as the purchasing power of their fixed nominal income decreases","Real income increases as nominal income remains constant"], correct: 2, explanation: "<strong>Correct!</strong> Unexpected inflation erodes the purchasing power of fixed nominal incomes (like pensions or savings). If someone receives £20,000 per year and inflation is 5%, they can buy 5% less with that income. This redistributes real income from those on fixed incomes to those whose incomes can adjust upward." },
+    { question: "What are 'deflationary policies' and what is a common misconception about them?", options: ["Policies that increase aggregate supply to lower prices","Policies that always cause prices to fall continuously","Policies that only affect asset prices, not consumer prices","Policies to reduce aggregate demand; they don't necessarily cause deflation, just lower inflation or reduce demand"], correct: 3, explanation: "<strong>Correct!</strong> Deflationary policies are demand-side policies aimed at reducing aggregate demand (like increasing interest rates or reducing government spending). However, they don't necessarily cause deflation (falling prices); instead, they typically aim to reduce inflation or dampen demand. The term 'deflationary' can be misleading." },
+    { question: "According to the Quantity Theory of Money, if velocity (V) and real output (Q) are constant, what is the relationship between money supply growth and inflation?", options: ["Inflation will equal the rate of money supply growth — there is a direct proportional relationship","Inflation will be inversely related to money supply growth","Inflation will be half the rate of money supply growth","There is no relationship between money supply and inflation"], correct: 0, explanation: "<strong>Correct!</strong> If V and Q are constant in MV = PQ, then any increase in M must be matched by an equal proportional increase in P. This is the core monetarist proposition: inflation is always and everywhere a monetary phenomenon. For example, if M grows by 5% and V and Q are constant, P must also grow by 5%." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Reduces the real burden of debt for borrowers", category: "positive" },
+    { text: "Erodes the purchasing power of savings", category: "negative" },
+    { text: "Menu costs — firms must frequently update prices", category: "negative" },
+    { text: "Can encourage spending and investment rather than hoarding money", category: "positive" },
+    { text: "Redistributes income from lenders to borrowers", category: "positive" },
+    { text: "Creates uncertainty for businesses making long-term investment decisions", category: "negative" },
+    { text: "Shoe-leather costs — people make more trips to the bank", category: "negative" },
+    { text: "Reduces real wage costs if nominal wages are sticky", category: "positive" },
+    { text: "Fiscal drag — workers pushed into higher tax brackets without real income gains", category: "negative" },
+    { text: "Worsens international competitiveness if higher than trading partners", category: "negative" },
+    { text: "Allows real interest rates to be negative, stimulating borrowing", category: "positive" },
+    { text: "Creates confusion and money illusion, distorting economic decisions", category: "negative" }
+];
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    document.getElementById('positiveEffects').innerHTML = '';
+    document.getElementById('negativeEffects').innerHTML = '';
+    document.getElementById('sortingResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const targetId = colId === 'unsorted' ? 'unsortedItems' : colId === 'positive' ? 'positiveEffects' : 'negativeEffects';
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    const catMap = { positiveEffects: 'positive', negativeEffects: 'negative', unsortedItems: 'unsorted' };
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        const parentCat = catMap[item.parentElement.id] || item.parentElement.id;
+        if (item.dataset.category === parentCat) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortingResult');
+    const tail = pct===100 ? '🎉 Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again anytime.';
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${tail}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) {
+        setTimeout(() => {
+            document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort'));
+        }, 2500);
+    }
+}
+
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Inflation", definition: "A sustained increase in the general price level of goods and services in an economy over time" },
+    { concept: "Deflation", definition: "A sustained decrease in the general price level, where the inflation rate becomes negative" },
+    { concept: "Disinflation", definition: "A reduction in the rate of inflation — prices are still rising but at a slower rate" },
+    { concept: "Stagflation", definition: "The simultaneous occurrence of stagnant economic growth, high unemployment, and high inflation" },
+    { concept: "Demand-Pull Inflation", definition: "Inflation caused by aggregate demand exceeding aggregate supply, often when the economy is at or near full capacity" },
+    { concept: "Cost-Push Inflation", definition: "Inflation caused by increases in the costs of production, such as wages or raw materials, shifting SRAS leftward" },
+    { concept: "Quantitative Easing (QE)", definition: "The central bank creates new money electronically to purchase assets (mainly government bonds) to increase the money supply" },
+    { concept: "Velocity of Circulation (V)", definition: "The average number of times a unit of money is used in transactions during a given period" },
+    { concept: "Output Gap", definition: "The difference between actual GDP and potential GDP; positive gaps create inflationary pressure" },
+    { concept: "Imported Inflation", definition: "Inflation caused by increases in the price of imported goods, commodities, or raw materials" }
+];
+let selectedConcept = null, selectedDefinition = null, matchedPairs = 0;
+
+function initMatch() {
+    matchedPairs = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = matchPairs.map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-definition="${p.concept}" onclick="selectDefinition(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+
+function selectDefinition(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition === concept) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    document.querySelectorAll('[data-definition]').forEach(e => e.classList.remove('selected'));
+    selectedDefinition = concept; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (!selectedConcept || !selectedDefinition) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-definition="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedPairs++; updateMatchProgress();
+        if (matchedPairs === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedPairs} / ${matchPairs.length} matched`; }
+function resetMatch() { initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK (shared engine)
+══════════════════════════════════════ */
+const fillData = {
+    fisher: {
+        passage: "Fisher's Equation of Exchange is expressed as [blank0] where M represents the [blank1], V represents the [blank2], P represents the [blank3], and Q represents [blank4]. The Quantity Theory of Money, based on this equation, assumes that V is relatively [blank5] in the short run and that changes in the money supply primarily affect [blank6]. When the economy is operating at [blank7], increases in M will lead to proportional increases in P, causing [blank8]. This monetarist perspective suggests that inflation is always and everywhere a [blank9] phenomenon. If M increases by 8%, V remains constant, and Q increases by 3%, then P will increase by approximately [blank10]%.",
+        answers: ["MV = PQ","money supply","velocity of circulation","price level","real output","stable","nominal GDP","full capacity","inflation","monetary","5"]
+    },
+    boe: {
+        passage: "The Bank of England's Monetary Policy Committee (MPC) has a primary objective to maintain [blank0] stability by targeting [blank1]% inflation as measured by the [blank2]. The main tool for achieving this is setting the [blank3], which influences borrowing costs throughout the economy. When inflation is above target, the MPC may [blank4] interest rates to cool demand. Conversely, when inflation is below target or during recessions, rates may be [blank5]. When interest rates reach the [blank6], the Bank can implement [blank7], which involves creating new money electronically to purchase [blank8], thereby increasing the money supply and pushing down long-term interest rates. The Bank also uses [blank9] to guide market expectations about future policy. Forward guidance helps manage inflation expectations, which are crucial because they can become [blank10], causing actual inflation to persist.",
+        answers: ["price","2","CPI","Bank Rate","increase","reduced","zero lower bound","Quantitative Easing","government bonds","forward guidance","self-fulfilling"]
+    }
+};
+
+const fillState = {
+    fisher: { selectedWord: null, placed: {} },
+    boe: { selectedWord: null, placed: {} }
+};
+
+function initFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    state.selectedWord = null; state.placed = {};
+    document.getElementById(gameId+'WordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank</div>' +
+        [...data.answers].sort(()=>Math.random()-0.5).map(w =>
+            `<button class="word-option" data-word="${w}" onclick="selectFillWord('${gameId}','${w.replace(/'/g,"&#39;")}',this)">${w}</button>`
+        ).join('');
+    let html = data.passage;
+    data.answers.forEach((_,i) => {
+        html = html.replace(`[blank${i}]`, `<span class="word-blank" data-index="${i}" data-game="${gameId}" onclick="clickBlank('${gameId}',${i})">___</span>`);
+    });
+    document.getElementById(gameId+'Passage').innerHTML = html;
+    document.getElementById(gameId+'Result').classList.remove('show');
+}
+
+function selectFillWord(gameId, word, btn) {
+    const state = fillState[gameId];
+    document.getElementById(gameId+'WordBank').querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (state.selectedWord === word) { state.selectedWord = null; }
+    else { state.selectedWord = word; btn.classList.add('selected-word'); }
+}
+
+function clickBlank(gameId, index) {
+    const state = fillState[gameId];
+    const blank = document.querySelector(`[data-game="${gameId}"][data-index="${index}"]`);
+    if (!blank) return;
+    if (state.placed[index] !== undefined && !state.selectedWord) {
+        returnWordToBank(gameId, state.placed[index]); delete state.placed[index];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selectedWord) return;
+    if (state.placed[index] !== undefined) returnWordToBank(gameId, state.placed[index]);
+    state.placed[index] = state.selectedWord;
+    blank.textContent = state.selectedWord; blank.className = 'word-blank has-word';
+    markWordUsed(gameId, state.selectedWord); state.selectedWord = null;
+}
+
+function returnWordToBank(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function markWordUsed(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+}
+
+function checkFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-game="${gameId}"][data-index="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i] !== undefined) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(gameId+'Result');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(gameId) { initFill(gameId); }
+
+/* ── GAME NAV ── */
+function startGame(game) {
+    document.getElementById('gameSelector').style.display = 'none';
+    document.getElementById(game+'Game').classList.add('active');
+    if (game === 'match') initMatch(); else initFill(game);
+}
+
+function backToGameSelector() {
+    document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+    document.getElementById('gameSelector').style.display = 'block';
+}
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

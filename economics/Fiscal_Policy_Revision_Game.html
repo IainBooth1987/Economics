@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Fiscal Policy Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a; --surface: #111827; --surface2: #0d1526;
+            --accent: #3b82f6; --accent2: #60a5fa; --amber: #f59e0b;
+            --text: #f1f5f9; --muted: #94a3b8; --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12); --incorrect-bg: rgba(239,68,68,0.12); --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
+            --text: #0f172a; --muted: #64748b; --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1); --incorrect-bg: rgba(239,68,68,0.1); --warning-bg: rgba(245,158,11,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--ff-sans); background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.2s, color 0.2s; }
+
+        header { padding: 1.1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,14,26,0.96); backdrop-filter: blur(16px); z-index: 200; }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .theme-btn { padding: 0.35rem 0.6rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; line-height: 1; transition: all 0.18s; }
+        .theme-btn:hover { color: var(--text); }
+
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+        .tab { padding: 0.85rem 1.4rem; background: none; border: none; font-family: var(--ff-sans); font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.18s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .mono-label { font-family: var(--ff-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; display: block; }
+
+        /* PROGRESS */
+        .progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--accent); background: rgba(59,130,246,0.1); padding: 0.2rem 0.65rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); }
+        .progress-bar { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 2rem; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.5s ease; }
+
+        /* MCQ */
+        .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+        .q-num { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.7rem; }
+        .q-text { font-size: 1.08rem; font-weight: 600; color: var(--text); line-height: 1.6; margin-bottom: 1.5rem; }
+        .options { display: grid; gap: 0.55rem; }
+        .option { padding: 0.85rem 1.1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.9rem; line-height: 1.5; color: var(--text); text-align: left; transition: all 0.15s; }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+        .explanation { display: none; margin-top: 1.2rem; padding: 1rem 1.2rem; background: rgba(59,130,246,0.07); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.88rem; line-height: 1.75; color: var(--muted); }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+
+        /* BUTTONS */
+        .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.62rem 1.4rem; border-radius: 8px; border: none; font-family: var(--ff-sans); font-size: 0.87rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* RESULT PANEL */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg { display: inline-block; font-size: 0.87rem; font-weight: 600; color: var(--accent2); background: rgba(59,130,246,0.1); padding: 0.45rem 1.2rem; border-radius: 100px; border: 1px solid rgba(59,130,246,0.2); margin-bottom: 2.5rem; }
+
+        /* INLINE RESULT */
+        .inline-result { display: none; padding: 0.8rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.87rem; font-weight: 600; }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .inline-result.info { background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+        [data-theme="light"] .inline-result.info { color: #1d4ed8; }
+
+        /* TAB 2: STRUCTURAL vs CYCLICAL (immediate-feedback classification) */
+        .instructions-row { font-size: 0.84rem; color: var(--muted); margin-bottom: 1.5rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .deficit-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .deficit-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; min-height: 260px; cursor: pointer; transition: border-color 0.18s; }
+        .deficit-col:hover { border-color: rgba(59,130,246,0.3); }
+        .deficit-col.structural-col { border-color: rgba(59,130,246,0.25); }
+        .deficit-col.cyclical-col { border-color: rgba(16,185,129,0.25); }
+        .deficit-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.4rem; display: block; }
+        .deficit-col-desc { font-size: 0.79rem; color: var(--muted); margin-bottom: 1rem; }
+        .placed-items { display: flex; flex-direction: column; gap: 0.45rem; min-height: 120px; }
+        .placed-item { padding: 0.55rem 0.8rem; border-radius: 6px; font-size: 0.83rem; line-height: 1.4; }
+        .placed-item.structural { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .placed-item.cyclical { background: rgba(59,130,246,0.12); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); }
+        [data-theme="light"] .placed-item.structural { color: #065f46; }
+        [data-theme="light"] .placed-item.cyclical { color: #1d4ed8; }
+        .scenarios-pool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem; }
+        .scenarios-pool-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; display: block; }
+        .scenario-card { padding: 0.7rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 0.86rem; line-height: 1.5; color: var(--text); transition: all 0.15s; margin-bottom: 0.5rem; }
+        .scenario-card:last-child { margin-bottom: 0; }
+        .scenario-card:hover { border-color: rgba(59,130,246,0.3); }
+        .scenario-card.selected-scenario { background: var(--warning-bg); border-color: var(--amber); }
+        .scenario-card.correct { background: var(--correct-bg); border-color: #10b981; cursor: default; pointer-events: none; opacity: 0.35; text-decoration: line-through; }
+        .scenario-card.incorrect { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+        .sort-score-row { display: flex; justify-content: space-between; align-items: center; }
+
+        /* TAB 3: MATCH + FILL */
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item { padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.86rem; line-height: 1.55; color: var(--text); transition: all 0.15s; text-align: left; display: flex; align-items: center; min-height: 60px; }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; color: #34d399; }
+        .match-item.matched:hover { transform: none; border-color: #10b981; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        [data-theme="light"] .match-item.matched { color: #065f46; }
+
+        /* FILL IN BLANK */
+        .word-bank { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; min-height: 54px; align-items: flex-start; align-content: flex-start; }
+        .word-bank-label { width: 100%; font-family: var(--ff-mono); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+        .word-option { padding: 0.35rem 0.85rem; background: rgba(59,130,246,0.1); color: var(--accent2); border: 1px solid rgba(59,130,246,0.2); border-radius: 100px; cursor: pointer; font-family: var(--ff-sans); font-size: 0.82rem; font-weight: 600; transition: all 0.15s; }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+        .passage-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; margin-bottom: 1.25rem; line-height: 2.3; font-size: 0.95rem; color: var(--text); }
+        .word-blank { display: inline-block; min-width: 110px; padding: 2px 10px; background: var(--surface2); border: 1px dashed rgba(59,130,246,0.4); border-radius: 5px; cursor: pointer; text-align: center; font-weight: 600; color: var(--muted); font-size: 0.85rem; transition: all 0.15s; vertical-align: middle; }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        footer { border-top: 1px solid var(--border); padding: 1.2rem 2.5rem; font-family: var(--ff-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .deficit-cols, .match-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">Fiscal Policy Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_fiscrev_pw';
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_fiscrev_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">Fiscal Policy</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Structural or Cyclical</button>
+        <button class="tab" onclick="switchTab(2)">Quick Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: STRUCTURAL OR CYCLICAL ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Classification — Structural or Cyclical Deficit?</span>
+        <div class="instructions-row">
+            Click a scenario to select it (highlights in amber), then click the correct category. Right answers lock in — wrong answers shake and stay in the pool.
+        </div>
+        <div class="deficit-cols">
+            <div class="deficit-col structural-col" onclick="classifyScenario('structural')">
+                <span class="deficit-col-label">📊 Structural Deficit</span>
+                <p class="deficit-col-desc">Permanent features of fiscal policy — persists even at full employment</p>
+                <div class="placed-items" id="structural-placed"></div>
+            </div>
+            <div class="deficit-col cyclical-col" onclick="classifyScenario('cyclical')">
+                <span class="deficit-col-label">🔄 Cyclical Deficit</span>
+                <p class="deficit-col-desc">Temporary — caused by economic downturns, disappears at full employment</p>
+                <div class="placed-items" id="cyclical-placed"></div>
+            </div>
+        </div>
+        <div class="scenarios-pool">
+            <span class="scenarios-pool-label">Scenarios to classify</span>
+            <div id="scenarioPool"></div>
+        </div>
+        <div class="sort-score-row">
+            <span class="score-pill" id="sortScore">0 / 20 correct</span>
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+        </div>
+        <div id="sortComplete" class="inline-result" style="margin-top:1rem;"></div>
+    </div>
+
+    <!-- ══ TAB 3: QUICK GAMES ══ -->
+    <div class="tab-content">
+        <!-- Match -->
+        <span class="mono-label">Mix and Match — Key Concepts</span>
+        <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+        <div class="match-grid">
+            <div>
+                <span class="match-col-label">Concepts</span>
+                <div class="match-items" id="matchConcepts"></div>
+            </div>
+            <div>
+                <span class="match-col-label">Definitions</span>
+                <div class="match-items" id="matchDefinitions"></div>
+            </div>
+        </div>
+        <div id="matchResult" class="inline-result" style="margin-top:1rem;"></div>
+        <div class="nav-row" style="justify-content:flex-end; margin-top:0.75rem;">
+            <button class="btn btn-ghost" onclick="resetMatch()">Reset Matching</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Fill in blank -->
+        <span class="mono-label">Missing Words — Budget Deficits and Surpluses</span>
+        <div class="word-bank" id="wordBank"><div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div></div>
+        <div class="passage-box" id="fillPassage"></div>
+        <div id="fillResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetFill()">Reset</button>
+            <button class="btn btn-primary" onclick="checkFill()">Check Answers</button>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+    if (index === 2) { initMatch(); initFill(); }
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What is current expenditure in fiscal policy?", options: ["One-off payments to support businesses","Investment in productive capacity","Day-to-day spending on wages, supplies, and services","Government spending on long-term assets like infrastructure"], correct: 2, explanation: "Current expenditure refers to day-to-day government spending that does not create assets. This includes public sector wages, supplies for schools and hospitals, and routine maintenance. Unlike capital expenditure, current spending is consumed within the year and doesn't add to the productive capacity of the economy." },
+    { question: "Which of these is an example of capital expenditure?", options: ["Unemployment benefits","Teachers' salaries","Building a new motorway","NHS medication costs"], correct: 2, explanation: "Capital expenditure involves investment in long-term assets that create productive capacity. Building a new motorway is capital expenditure as it creates a lasting asset that will serve the economy for many years. This type of spending can boost potential output and improve long-run economic growth prospects." },
+    { question: "What are transfer payments?", options: ["Payments made between government departments","Money transferred to foreign governments","Bank transfers for tax collection","Welfare payments like pensions and unemployment benefits with no goods/services exchanged"], correct: 3, explanation: "Transfer payments are welfare payments made by the government where no goods or services are exchanged in return. Examples include state pensions, unemployment benefits, and child benefit. These redistribute income in the economy but don't directly contribute to GDP as no production occurs in exchange for the payment." },
+    { question: "What is a budget deficit?", options: ["When imports exceed exports","When tax revenue exceeds government spending","When government spending exceeds tax revenue in a fiscal year","When the national debt is increasing"], correct: 2, explanation: "A budget deficit occurs when government spending exceeds tax revenue in a given fiscal year. This means the government must borrow to finance the gap, typically by issuing bonds. The deficit adds to the national debt. It's measured as a flow over a period of time, unlike the national debt which is a stock." },
+    { question: "What causes a structural deficit?", options: ["An underlying imbalance between spending and revenue that persists even at full employment","A temporary fall in tax revenues during a recession","One-off emergency spending","Cyclical changes in the economy"], correct: 0, explanation: "A structural deficit is an underlying imbalance between government spending and tax revenue that exists even when the economy is at full employment. It reflects permanent features of fiscal policy, such as generous welfare systems or low tax rates, rather than temporary economic fluctuations. Closing a structural deficit requires policy changes like spending cuts or tax increases." },
+    { question: "What is a cyclical deficit?", options: ["A deficit caused by structural problems in the economy","A deficit that occurs every business cycle","A deficit caused by temporary economic conditions like recession, which disappears when the economy recovers","A planned deficit to stimulate growth"], correct: 2, explanation: "A cyclical deficit arises from temporary economic conditions, particularly during recessions. When unemployment rises, tax revenues fall (lower income tax, VAT) while spending increases (more welfare payments). This deficit automatically disappears when the economy returns to full employment as tax revenues recover and benefit payments fall." },
+    { question: "What is a potential benefit of a budget surplus?", options: ["It increases government spending","It allows the government to reduce national debt and lower future interest payments","It increases aggregate demand","It automatically creates jobs"], correct: 1, explanation: "A budget surplus allows the government to reduce national debt by paying off existing borrowing. This lowers future interest payments, freeing up revenue for other uses. Lower debt also improves the government's credit rating, potentially reducing borrowing costs. However, achieving a surplus requires spending restraint or higher taxes, which can constrain economic growth." },
+    { question: "What is a potential threat of maintaining a budget surplus?", options: ["It increases inflation rapidly","It increases the national debt","It automatically causes unemployment to rise","It may indicate the government is under-investing in public services and infrastructure, harming long-term growth"], correct: 3, explanation: "Maintaining a budget surplus can threaten long-term growth if it results from under-investment in essential public services and infrastructure. Cutting capital expenditure to achieve a surplus may reduce the economy's productive capacity. Additionally, tight fiscal policy during weak economic conditions can deepen recessions by reducing aggregate demand when stimulus is needed." },
+    { question: "What is austerity?", options: ["Borrowing from international organisations","Printing money to pay off debts","Increasing government spending to stimulate growth","Reducing government spending and/or raising taxes to reduce a budget deficit"], correct: 3, explanation: "Austerity refers to policies aimed at reducing a budget deficit through spending cuts and/or tax increases. These contractionary measures aim to restore fiscal sustainability but can deepen recessions by reducing aggregate demand. The effectiveness of austerity is debated: supporters argue it's necessary for credibility, while critics point to its negative impact on growth and employment." },
+    { question: "What is 'crowding in'?", options: ["When government investment stimulates private sector confidence and encourages additional private investment","When government borrowing raises interest rates and reduces private investment","When imports exceed exports","When too many people enter the workforce"], correct: 0, explanation: "Crowding in occurs when government spending, particularly on infrastructure, creates a more favourable business environment that encourages private investment. For example, building new roads or improving digital infrastructure can make an area more attractive for private firms. Government investment can also signal confidence in the economy, encouraging businesses to expand." },
+    { question: "What are direct taxes?", options: ["Taxes levied on income and wealth, paid directly to the government","Taxes on imports","Taxes collected by businesses on behalf of government","Taxes on spending and consumption"], correct: 0, explanation: "Direct taxes are levied directly on income and wealth and paid directly to the government by the individual or organisation. Examples include income tax, corporation tax, capital gains tax, and inheritance tax. Direct taxes are typically progressive, meaning higher earners pay a larger proportion of their income, making them effective for redistribution." },
+    { question: "What are indirect taxes?", options: ["Taxes on savings","Taxes paid directly by consumers to government","Taxes on income","Taxes on spending and consumption, collected by businesses on behalf of government"], correct: 3, explanation: "Indirect taxes are levied on spending and consumption rather than income. They're collected by businesses and passed to government. Examples include VAT, excise duties on alcohol and tobacco, and customs duties. Indirect taxes are often regressive as lower-income households spend a higher proportion of income on taxed goods, though they're harder to evade than direct taxes." },
+    { question: "What is a regressive tax?", options: ["A tax that only applies to high earners","A tax where the proportion paid increases as income rises","A tax where the proportion paid decreases as income rises","A tax where everyone pays the same amount regardless of income"], correct: 2, explanation: "A regressive tax takes a larger proportion of income from low earners than high earners. Indirect taxes like VAT are often regressive because poorer households spend a higher proportion of their income on consumption. For example, a £10 tax has a bigger proportional impact on someone earning £100 than someone earning £1,000." },
+    { question: "What is a progressive tax?", options: ["A tax where the proportion paid increases as income rises","A flat rate tax on all income","A tax that decreases as income rises","A tax on luxury goods only"], correct: 0, explanation: "A progressive tax takes an increasing proportion of income as income rises. The UK income tax system is progressive: the first £12,570 is tax-free, income up to £50,270 is taxed at 20%, and higher earnings face 40% or 45% rates. This helps redistribute income from rich to poor and reflects the principle of ability to pay." },
+    { question: "What is a proportionate tax?", options: ["A tax where everyone pays the same percentage of their income regardless of how much they earn","A tax where everyone pays the same amount","A tax that only applies to certain income levels","A tax where the proportion paid increases with income"], correct: 0, explanation: "A proportionate (or proportional) tax applies the same percentage rate to all income levels. For example, if the rate is 20%, someone earning £20,000 pays £4,000 and someone earning £100,000 pays £20,000. While the absolute amount differs, the proportion is constant. This is sometimes called a flat tax and is neither progressive nor regressive." },
+    { question: "What does the Laffer Curve illustrate?", options: ["The relationship between tax rates and tax revenue, showing that very high rates can reduce revenue","The relationship between interest rates and investment","The relationship between government spending and GDP","The relationship between inflation and unemployment"], correct: 0, explanation: "The Laffer Curve shows the relationship between tax rates and tax revenue. It demonstrates that at 0% tax rate, revenue is zero, and at 100% rate, revenue is also zero (as no one would work). Between these extremes is a revenue-maximising rate. Beyond this optimal point, higher tax rates discourage work and encourage avoidance, actually reducing total revenue collected." },
+    { question: "What is fiscal drag?", options: ["When tax collection becomes more difficult","When government spending is delayed","When fiscal policy reduces economic growth","When income tax thresholds aren't raised with inflation, pulling more people into higher tax bands and increasing real tax burden"], correct: 3, explanation: "Fiscal drag occurs when tax thresholds and allowances aren't increased in line with inflation or wage growth. As nominal incomes rise with inflation, more people are pulled into higher tax brackets, and the real value of tax-free allowances falls. This increases the effective tax burden without explicit tax rises, automatically increasing government revenue as a proportion of GDP." },
+    { question: "What are automatic stabilisers?", options: ["Economic mechanisms like progressive taxes and welfare benefits that automatically offset economic fluctuations without policy changes","Central bank interest rate changes","Fixed government spending amounts","Government policies that are manually adjusted each year"], correct: 0, explanation: "Automatic stabilisers are features of fiscal policy that automatically counteract economic fluctuations without requiring policy changes. In recessions, tax revenue automatically falls while welfare spending rises, providing stimulus. In booms, tax revenue rises and benefit payments fall, cooling the economy. This reduces the amplitude of the business cycle without the delays associated with discretionary policy changes." },
+    { question: "What is the National Debt?", options: ["Money owed to foreign countries only","The amount the government spends each year","The total accumulated borrowing by government over time, the stock of all past deficits minus surpluses","The annual difference between government spending and revenue"], correct: 2, explanation: "The National Debt (or public debt) is the total accumulated stock of government borrowing over time. It's the sum of all past budget deficits minus any surpluses. The UK national debt is typically measured as a percentage of GDP. Unlike the deficit which is a flow over a year, the debt is a stock at a point in time. Government must pay interest on this debt, which can constrain future fiscal policy." },
+    { question: "Why might a government choose to run a budget deficit?", options: ["To stimulate aggregate demand during a recession, fund investment, or respond to emergencies","To reduce government spending","To deliberately increase the national debt","Because tax revenues are too high"], correct: 0, explanation: "Governments may deliberately run deficits for several reasons: 1) Counter-cyclical fiscal policy to boost aggregate demand during recessions; 2) Finance important capital investment that will generate future returns; 3) Respond to emergencies like pandemics or wars. Keynesian economics argues that deficit spending during downturns can help maintain employment and output, with borrowing repaid during booms." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   STRUCTURAL OR CYCLICAL — immediate feedback
+══════════════════════════════════════ */
+const scenarios = [
+    { text: "Government permanently increases spending on healthcare without raising taxes", type: "structural" },
+    { text: "Tax revenues fall due to rising unemployment during a recession", type: "cyclical" },
+    { text: "Welfare spending increases due to a recession", type: "cyclical" },
+    { text: "Government introduces a new, permanent tax cut", type: "structural" },
+    { text: "Corporate tax receipts decline during an economic downturn", type: "cyclical" },
+    { text: "Government commits to long-term increases in defence spending", type: "structural" },
+    { text: "VAT revenues drop as consumer spending falls in a recession", type: "cyclical" },
+    { text: "Government reduces the state pension age permanently", type: "structural" },
+    { text: "Automatic stabilisers increase spending during economic slowdown", type: "cyclical" },
+    { text: "A permanent expansion of free school meals programme", type: "structural" },
+    { text: "Income tax receipts fall as bonuses decline in a financial crisis", type: "cyclical" },
+    { text: "Government implements a permanent universal basic income", type: "structural" },
+    { text: "Housing benefit claims rise during a recession", type: "cyclical" },
+    { text: "Structural reforms reduce the working age population", type: "structural" },
+    { text: "Corporation tax falls as business profits decline cyclically", type: "cyclical" },
+    { text: "Long-term commitment to increase foreign aid budget", type: "structural" },
+    { text: "Stamp duty revenues fall as housing market slows", type: "cyclical" },
+    { text: "Government permanently reduces income tax rates", type: "structural" },
+    { text: "Jobseeker's Allowance claims surge during recession", type: "cyclical" },
+    { text: "Ageing population requires permanent increases in healthcare spending", type: "structural" }
+];
+
+let selectedScenario = null;
+let sortScore = 0;
+
+function initSorting() {
+    selectedScenario = null; sortScore = 0;
+    document.getElementById('structural-placed').innerHTML = '';
+    document.getElementById('cyclical-placed').innerHTML = '';
+    document.getElementById('sortComplete').classList.remove('show');
+    document.getElementById('sortScore').textContent = `0 / ${scenarios.length} correct`;
+    document.getElementById('scenarioPool').innerHTML = [...scenarios].sort(()=>Math.random()-0.5).map((s,i) =>
+        `<div class="scenario-card" data-type="${s.type}" data-idx="${i}" onclick="selectScenario(this)">${s.text}</div>`
+    ).join('');
+}
+
+function selectScenario(el) {
+    if (el.classList.contains('correct')) return;
+    document.querySelectorAll('.scenario-card').forEach(c => { if (!c.classList.contains('correct')) c.classList.remove('selected-scenario'); });
+    if (selectedScenario === el) { selectedScenario = null; return; }
+    selectedScenario = el; el.classList.add('selected-scenario');
+}
+
+function classifyScenario(type) {
+    if (!selectedScenario) return;
+    const correct = selectedScenario.dataset.type === type;
+    if (correct) {
+        selectedScenario.classList.add('correct');
+        selectedScenario.classList.remove('selected-scenario');
+        const div = document.createElement('div');
+        div.className = `placed-item ${type}`;
+        div.textContent = selectedScenario.textContent.trim();
+        document.getElementById(`${type}-placed`).appendChild(div);
+        sortScore++;
+        document.getElementById('sortScore').textContent = `${sortScore} / ${scenarios.length} correct`;
+        if (sortScore === scenarios.length) {
+            const c = document.getElementById('sortComplete');
+            c.textContent = `🎉 All ${scenarios.length} scenarios classified correctly!`;
+            c.className = 'inline-result show success';
+        }
+    } else {
+        selectedScenario.classList.add('incorrect');
+        setTimeout(() => selectedScenario.classList.remove('incorrect'), 500);
+    }
+    selectedScenario = null;
+    document.querySelectorAll('.scenario-card').forEach(c => { if (!c.classList.contains('correct')) c.classList.remove('selected-scenario'); });
+}
+
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME — 10 random from 25
+══════════════════════════════════════ */
+const allMatchPairs = [
+    { concept: "Ricardian Equivalence", definition: "Theory that government borrowing has no effect on demand because people save to pay future taxes" },
+    { concept: "Fiscal Drag", definition: "When tax thresholds don't rise with inflation, increasing the real tax burden" },
+    { concept: "Automatic Stabilisers", definition: "Mechanisms like progressive taxes and benefits that automatically offset economic fluctuations" },
+    { concept: "Intergenerational Equity", definition: "Fairness in distributing costs and benefits between current and future generations" },
+    { concept: "Debt Cycle", definition: "Pattern where high debt leads to austerity, reducing growth and making debt harder to repay" },
+    { concept: "Canons of Taxation", definition: "Adam Smith's principles: equity, certainty, convenience, and efficiency" },
+    { concept: "Laffer Curve", definition: "Shows relationship between tax rates and revenue; very high rates can reduce total revenue" },
+    { concept: "Crowding In", definition: "Government spending stimulates confidence and encourages additional private investment" },
+    { concept: "Crowding Out", definition: "Government borrowing raises interest rates and reduces private sector investment" },
+    { concept: "Fiscal Multiplier", definition: "Measure of how much GDP increases for each pound of government spending" },
+    { concept: "Golden Rule", definition: "Government should only borrow to invest, not for current spending, over the economic cycle" },
+    { concept: "Cyclical Deficit", definition: "Budget deficit that arises from temporary economic conditions and disappears at full employment" },
+    { concept: "Structural Deficit", definition: "Underlying budget imbalance that persists even when the economy is at full employment" },
+    { concept: "Debt-to-GDP Ratio", definition: "National debt expressed as a percentage of annual GDP, measuring debt sustainability" },
+    { concept: "Fiscal Stance", definition: "Overall impact of government fiscal policy — expansionary, contractionary, or neutral" },
+    { concept: "Hypothecated Tax", definition: "Tax revenue dedicated to a specific purpose, like National Insurance for pensions" },
+    { concept: "Tax Incidence", definition: "Analysis of who ultimately bears the burden of a tax — producers or consumers" },
+    { concept: "Deadweight Loss", definition: "Economic efficiency loss from taxation reducing beneficial market transactions" },
+    { concept: "Progressive Taxation", definition: "Tax system where the proportion paid increases as income rises" },
+    { concept: "Regressive Taxation", definition: "Tax system where the proportion paid decreases as income rises" },
+    { concept: "Supply-Side Policies", definition: "Fiscal measures to increase productive capacity through lower taxes and incentives" },
+    { concept: "Demand-Side Policies", definition: "Fiscal measures to influence total spending in the economy through government action" },
+    { concept: "Fiscal Sustainability", definition: "Ability to maintain current fiscal policies without threatening government solvency" },
+    { concept: "Tax Wedge", definition: "Difference between gross wages and net take-home pay due to taxes and contributions" },
+    { concept: "Balanced Budget Multiplier", definition: "Equal increases in spending and taxes still boost GDP because spending multiplier is larger" }
+];
+
+let matchPairs = [], selectedConcept = null, selectedDefinition = null, matchedCount = 0;
+let matchInitialised = false;
+
+function initMatch() {
+    if (matchInitialised) return;
+    matchInitialised = true;
+    matchPairs = [...allMatchPairs].sort(()=>Math.random()-0.5).slice(0,10);
+    matchedCount = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffledD = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = matchPairs.map((p,i) =>
+        `<button class="match-item" data-ci="${i}" onclick="selectConcept(this,${i})">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffledD.map((p) => {
+        const oi = matchPairs.findIndex(x => x.concept === p.concept);
+        return `<button class="match-item" data-di="${oi}" onclick="selectDefinition(this,${oi})">${p.definition}</button>`;
+    }).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, idx) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept !== null && selectedConcept !== idx) {
+        document.querySelector(`[data-ci="${selectedConcept}"]`)?.classList.remove('selected');
+    }
+    if (selectedConcept === idx) { el.classList.remove('selected'); selectedConcept = null; return; }
+    selectedConcept = idx; el.classList.add('selected'); tryMatch();
+}
+
+function selectDefinition(el, idx) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition !== null && selectedDefinition !== idx) {
+        document.querySelector(`[data-di="${selectedDefinition}"]`)?.classList.remove('selected');
+    }
+    if (selectedDefinition === idx) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    selectedDefinition = idx; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (selectedConcept === null || selectedDefinition === null) return;
+    const cEl = document.querySelector(`[data-ci="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-di="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedCount++; updateMatchProgress();
+        if (matchedCount === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedCount} / ${matchPairs.length} matched`; }
+
+function resetMatch() {
+    matchInitialised = false;
+    initMatch();
+}
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK
+══════════════════════════════════════ */
+const fillAnswers = ["deficit","tax","structural","cyclical","full employment","policy","recessions","automatic stabilisers","aggregate demand","national debt","interest","surplus","reduce","under-investment"];
+const fillDistractors = ["inflation","spending","crowding out","progressive","investment","austerity"];
+const passageTemplate = "A budget [deficit] occurs when government spending exceeds [tax] revenue. This can be caused by either [structural] or [cyclical] factors. A structural deficit exists even at [full employment] and reflects permanent [policy] choices. In contrast, a cyclical deficit arises during [recessions] when [automatic stabilisers] increase spending and reduce revenue. Governments may choose to run deficits to stimulate [aggregate demand] during downturns. However, persistent deficits increase the [national debt], requiring higher [interest] payments. A budget [surplus] occurs when revenue exceeds spending, allowing governments to [reduce] debt. Critics argue surpluses may indicate [under-investment] in public services.";
+
+let fillSelected = null;
+let fillPlaced = {};
+let fillInitialised = false;
+
+function initFill() {
+    if (fillInitialised) return;
+    fillInitialised = true;
+    fillSelected = null; fillPlaced = {};
+    const allWords = [...fillAnswers, ...fillDistractors].sort(()=>Math.random()-0.5);
+    document.getElementById('wordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank. Click a filled blank to clear it.</div>' +
+        allWords.map((w,i) =>
+            `<button class="word-option" data-wid="${i}" data-word="${w}" onclick="selectFillWord('${w}',${i},this)">${w}</button>`
+        ).join('');
+    let html = passageTemplate;
+    fillAnswers.forEach((ans, i) => {
+        html = html.replace(`[${ans}]`, `<span class="word-blank" data-bid="${i}" onclick="clickFillBlank(${i})">___</span>`);
+    });
+    document.getElementById('fillPassage').innerHTML = html;
+    document.getElementById('fillResult').classList.remove('show');
+}
+
+function selectFillWord(word, wid, btn) {
+    document.querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (fillSelected && fillSelected.wid === wid) { fillSelected = null; }
+    else { fillSelected = { word, wid }; btn.classList.add('selected-word'); }
+}
+
+function clickFillBlank(bid) {
+    const blank = document.querySelector(`[data-bid="${bid}"]`);
+    if (!blank) return;
+    if (fillPlaced[bid] !== undefined && !fillSelected) {
+        returnFillWord(fillPlaced[bid].wid);
+        delete fillPlaced[bid];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!fillSelected) return;
+    if (fillPlaced[bid] !== undefined) returnFillWord(fillPlaced[bid].wid);
+    fillPlaced[bid] = { ...fillSelected };
+    blank.textContent = fillSelected.word; blank.className = 'word-blank has-word';
+    const btn = document.querySelector(`.word-option[data-wid="${fillSelected.wid}"]`);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+    fillSelected = null;
+}
+
+function returnFillWord(wid) {
+    const btn = document.querySelector(`.word-option[data-wid="${wid}"]`);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function checkFill() {
+    let correct = 0;
+    fillAnswers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-bid="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (fillPlaced[i] && fillPlaced[i].word === ans) { blank.classList.add('correct'); correct++; }
+        else if (fillPlaced[i]) blank.classList.add('incorrect');
+    });
+    const total = fillAnswers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById('fillResult');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill() { fillInitialised = false; initFill(); }
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>

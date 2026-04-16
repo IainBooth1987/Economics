@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIZ-OMICS — Economic Growth &amp; National Income Revision Game</title>
+    <style>
+        :root {
+            --ff-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --ff-mono: 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #0d1526;
+            --accent: #3b82f6;
+            --accent2: #60a5fa;
+            --amber: #f59e0b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --border: rgba(255,255,255,0.08);
+            --correct-bg: rgba(16,185,129,0.12);
+            --incorrect-bg: rgba(239,68,68,0.12);
+            --warning-bg: rgba(245,158,11,0.12);
+        }
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface2: #f1f5f9;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: rgba(0,0,0,0.09);
+            --correct-bg: rgba(16,185,129,0.1);
+            --incorrect-bg: rgba(239,68,68,0.1);
+            --warning-bg: rgba(245,158,11,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--ff-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* ── HEADER ── */
+        header {
+            padding: 1.1rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: rgba(10,14,26,0.96);
+            backdrop-filter: blur(16px);
+            z-index: 200;
+        }
+        [data-theme="light"] header { background: rgba(248,250,252,0.96); }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.02em; text-decoration: none; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .page-tag {
+            font-family: var(--ff-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            background: rgba(59,130,246,0.1);
+            padding: 0.28rem 0.7rem;
+            border-radius: 100px;
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .theme-btn {
+            padding: 0.35rem 0.6rem;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            line-height: 1;
+            transition: all 0.18s;
+        }
+        .theme-btn:hover { color: var(--text); }
+
+        /* ── LAYOUT ── */
+        main { max-width: 1080px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+        /* ── TABS ── */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2.5rem;
+        }
+        .tab {
+            padding: 0.85rem 1.4rem;
+            background: none;
+            border: none;
+            font-family: var(--ff-sans);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.18s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── MONO LABELS ── */
+        .mono-label {
+            font-family: var(--ff-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+            display: block;
+        }
+
+        /* ── PROGRESS ── */
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.55rem;
+        }
+        .progress-label { font-family: var(--ff-mono); font-size: 0.72rem; color: var(--muted); }
+        .score-pill {
+            font-family: var(--ff-mono);
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: rgba(59,130,246,0.1);
+            padding: 0.2rem 0.65rem;
+            border-radius: 100px;
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .progress-bar {
+            height: 3px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.5s ease;
+        }
+
+        /* ── QUESTION CARD ── */
+        .q-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .q-num {
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 0.7rem;
+        }
+        .q-text {
+            font-size: 1.08rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .options { display: grid; gap: 0.55rem; }
+        .option {
+            padding: 0.85rem 1.1rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--ff-sans);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text);
+            text-align: left;
+            transition: all 0.15s;
+        }
+        .option:hover { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.05); }
+        .option.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .option.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .option.disabled { cursor: not-allowed; }
+        [data-theme="light"] .option.correct { color: #065f46; }
+        [data-theme="light"] .option.incorrect { color: #991b1b; }
+
+        .explanation {
+            display: none;
+            margin-top: 1.2rem;
+            padding: 1rem 1.2rem;
+            background: rgba(59,130,246,0.07);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.88rem;
+            line-height: 1.75;
+            color: var(--muted);
+        }
+        .explanation.show { display: block; animation: fadeUp 0.25s ease; }
+        [data-theme="light"] .explanation { color: var(--text); }
+        .explanation strong { color: var(--accent2); }
+        [data-theme="light"] .explanation strong { color: #1d4ed8; }
+
+        /* ── BUTTONS ── */
+        .nav-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.62rem 1.4rem;
+            border-radius: 8px;
+            border: none;
+            font-family: var(--ff-sans);
+            font-size: 0.87rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent2); color: #0a0e1a; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        [data-theme="light"] .btn-ghost:hover { border-color: rgba(0,0,0,0.2); }
+
+        /* ── RESULT PANEL ── */
+        .result-panel { display: none; text-align: center; padding: 4rem 2rem; }
+        .result-panel.show { display: block; animation: fadeUp 0.4s ease; }
+        .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+        .result-panel h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .result-score { font-family: var(--ff-mono); font-size: 2.8rem; color: var(--accent); margin: 1rem 0; font-weight: 700; }
+        .result-pct { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+        .result-msg {
+            display: inline-block;
+            font-size: 0.87rem;
+            font-weight: 600;
+            color: var(--accent2);
+            background: rgba(59,130,246,0.1);
+            padding: 0.45rem 1.2rem;
+            border-radius: 100px;
+            border: 1px solid rgba(59,130,246,0.2);
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── INLINE RESULT ── */
+        .inline-result {
+            display: none;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.87rem;
+            font-weight: 600;
+        }
+        .inline-result.show { display: block; animation: fadeUp 0.25s ease; }
+        .inline-result.success { background: var(--correct-bg); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .inline-result.partial { background: var(--warning-bg); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .inline-result.poor { background: var(--incorrect-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        [data-theme="light"] .inline-result.success { color: #065f46; }
+        [data-theme="light"] .inline-result.partial { color: #92400e; }
+        [data-theme="light"] .inline-result.poor { color: #991b1b; }
+
+        /* ── SORTING ── */
+        .instructions-row {
+            font-size: 0.84rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            padding: 0.7rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .sorting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+        .sort-col {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            min-height: 300px;
+            cursor: pointer;
+            transition: border-color 0.18s;
+        }
+        .sort-col:hover { border-color: rgba(59,130,246,0.3); }
+        .col-label {
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .sort-items { display: flex; flex-direction: column; gap: 0.5rem; min-height: 200px; }
+        .sort-item {
+            padding: 0.7rem 0.9rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.86rem;
+            line-height: 1.5;
+            color: var(--text);
+            transition: all 0.15s;
+        }
+        .sort-item:hover { border-color: rgba(59,130,246,0.3); }
+        .sort-item.sorting-selected { background: var(--warning-bg); border-color: var(--amber); }
+        .sort-item.correct-sort { background: var(--correct-bg); border-color: #10b981; }
+        .sort-item.incorrect-sort { background: var(--incorrect-bg); border-color: #ef4444; }
+        .unsorted-panel {
+            background: var(--surface);
+            border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            cursor: pointer;
+        }
+        [data-theme="light"] .unsorted-panel { border-color: rgba(0,0,0,0.1); }
+
+        /* ── GAME SELECTOR ── */
+        .game-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+        .game-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.75rem 1.4rem;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .game-card:hover { border-color: rgba(59,130,246,0.35); transform: translateY(-2px); }
+        .game-icon { font-size: 1.6rem; margin-bottom: 0.75rem; display: block; }
+        .game-card h3 { font-size: 0.97rem; font-weight: 700; color: var(--text); margin-bottom: 0.35rem; }
+        .game-card p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+        .game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+        .game-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+        /* ── MATCH GAME ── */
+        .match-progress { font-family: var(--ff-mono); font-size: 0.7rem; color: var(--accent); text-align: right; margin-bottom: 1rem; }
+        .match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .match-col-label { font-family: var(--ff-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; display: block; }
+        .match-items { display: flex; flex-direction: column; gap: 0.55rem; }
+        .match-item {
+            padding: 0.8rem 1rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.86rem;
+            line-height: 1.55;
+            color: var(--text);
+            transition: all 0.15s;
+            text-align: left;
+        }
+        .match-item:hover { border-color: rgba(59,130,246,0.35); }
+        .match-item.selected { background: var(--warning-bg); border-color: var(--amber); }
+        .match-item.matched { background: var(--correct-bg); border-color: #10b981; cursor: default; }
+        .match-item.matched:hover { transform: none; border-color: #10b981; }
+        .match-item.wrong { background: var(--incorrect-bg); border-color: #ef4444; animation: shake 0.45s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+
+        /* ── FILL IN BLANK ── */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            min-height: 54px;
+            align-items: flex-start;
+            align-content: flex-start;
+        }
+        .word-bank-label {
+            width: 100%;
+            font-family: var(--ff-mono);
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+        }
+        .word-option {
+            padding: 0.35rem 0.85rem;
+            background: rgba(59,130,246,0.1);
+            color: var(--accent2);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 100px;
+            cursor: pointer;
+            font-family: var(--ff-sans);
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .word-option:hover { background: rgba(59,130,246,0.18); transform: translateY(-1px); }
+        .word-option.selected-word { background: var(--warning-bg); color: var(--amber); border-color: rgba(245,158,11,0.35); }
+        .word-option.used { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        [data-theme="light"] .word-option { color: #1d4ed8; }
+
+        .passage-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.75rem;
+            margin-bottom: 1.25rem;
+            line-height: 2.3;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+        .word-blank {
+            display: inline-block;
+            min-width: 95px;
+            padding: 2px 10px;
+            background: var(--surface2);
+            border: 1px dashed rgba(59,130,246,0.4);
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 0.85rem;
+            transition: all 0.15s;
+            vertical-align: middle;
+        }
+        .word-blank:hover { border-color: var(--accent); color: var(--accent); }
+        .word-blank.has-word { border-style: solid; border-color: rgba(59,130,246,0.35); color: var(--accent2); background: rgba(59,130,246,0.07); }
+        .word-blank.has-word::after { content: ' ×'; font-size: 0.68em; opacity: 0.4; }
+        .word-blank.correct { background: var(--correct-bg); border-color: #10b981; color: #34d399; }
+        .word-blank.correct::after { content: ' ✓'; opacity: 0.55; }
+        .word-blank.incorrect { background: var(--incorrect-bg); border-color: #ef4444; color: #fca5a5; }
+        .word-blank.incorrect::after { content: ''; }
+        [data-theme="light"] .word-blank.has-word { color: #1d4ed8; }
+        [data-theme="light"] .word-blank.correct { color: #065f46; }
+        [data-theme="light"] .word-blank.incorrect { color: #991b1b; }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.2rem 2.5rem;
+            font-family: var(--ff-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 680px) {
+            header { padding: 1rem 1.25rem; }
+            main { padding: 1.5rem 1rem 3rem; }
+            .sorting-grid, .match-grid, .game-grid { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; }
+            .tab { white-space: nowrap; font-size: 0.82rem; padding: 0.75rem 1rem; }
+        }
+    </style>
+<style>
+#bz-gate{position:fixed;inset:0;z-index:99999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+#bz-gate-box{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:2.5rem 2rem;width:360px;max-width:92vw;text-align:center;}
+#bz-gate-eye{font-size:2rem;margin-bottom:1rem;}
+#bz-gate-title{font-size:1rem;font-weight:800;color:#f1f5f9;letter-spacing:-0.01em;margin-bottom:0.35rem;}
+#bz-gate-sub{font-size:0.75rem;color:#94a3b8;line-height:1.5;margin-bottom:1.4rem;}
+#bz-gate-inp{width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:0.82rem;padding:0.65rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:#0d1526;color:#f1f5f9;outline:none;text-align:center;letter-spacing:0.06em;transition:border-color 0.18s;box-sizing:border-box;margin-bottom:0.75rem;}
+#bz-gate-inp:focus{border-color:#f59e0b;}
+#bz-gate-inp.shake{animation:bzShake 0.35s ease;}
+@keyframes bzShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+#bz-gate-btn{width:100%;padding:0.65rem;border-radius:9px;border:none;background:#f59e0b;color:#000;font-size:0.82rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+#bz-gate-btn:hover{opacity:0.88;}
+#bz-gate-err{font-size:0.72rem;color:#ef4444;margin-top:0.6rem;min-height:1rem;font-family:'SFMono-Regular',Consolas,monospace;}
+#bz-gate-buy{margin-top:1.2rem;font-size:0.7rem;color:#64748b;line-height:1.5;}
+#bz-gate-buy a{color:#f59e0b;text-decoration:none;}
+#bz-gate-buy a:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="bz-gate">
+  <div id="bz-gate-box">
+    <div id="bz-gate-eye">&#x1F512;</div>
+    <div id="bz-gate-title">National Income Revision Game</div>
+    <div id="bz-gate-sub">Enter your password to unlock this resource.</div>
+    <input id="bz-gate-inp" type="password" placeholder="Enter password" autocomplete="off">
+    <button id="bz-gate-btn" onclick="bzCheckPW()">Unlock &#x2192;</button>
+    <div id="bz-gate-err"></div>
+    <div id="bz-gate-buy">Don&#39;t have a password? <a href="https://biz-omics.co.uk/economics/shop.html">Visit the shop</a> or contact your teacher.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var k = 'bizomics_natincrev_pw';
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  var stored = localStorage.getItem(k);
+  if(stored && valid.indexOf(stored) !== -1){
+    var g = document.getElementById('bz-gate');
+    if(g) g.style.display = 'none';
+  }
+})();
+function bzCheckPW(){
+  var inp = document.getElementById('bz-gate-inp');
+  var err = document.getElementById('bz-gate-err');
+  var val = inp.value.trim();
+  var valid = ['MacroGames-3Kz!2026','BIZOMICS-PREMIUM-2026','GSALEconomics'];
+  if(valid.indexOf(val) !== -1){
+    localStorage.setItem('bizomics_natincrev_pw', val);
+    document.getElementById('bz-gate').style.display = 'none';
+  } else {
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    err.textContent = 'Incorrect password. Check your purchase email.';
+    inp.value = '';
+    setTimeout(function(){ err.textContent = ''; }, 3000);
+  }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bz-gate-inp');
+  if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') bzCheckPW(); });
+});
+</script>
+<!-- END PASSWORD GATE -->
+
+<header>
+    <div class="header-left">
+        <a class="logo" href="#">BIZ<span>-</span>OMICS</a>
+        <span class="page-tag">National Income</span>
+    </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab" onclick="switchTab(1)">Sorting Activity</button>
+        <button class="tab" onclick="switchTab(2)">Interactive Games</button>
+    </div>
+
+    <!-- ══ TAB 1: MCQ ══ -->
+    <div class="tab-content active">
+        <div id="mcqMain">
+            <div class="progress-row">
+                <span class="progress-label" id="questionLabel">Question 1 of 20</span>
+                <span class="score-pill" id="scoreDisplay">Score: 0 / 0</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:5%"></div></div>
+            <div id="questionContainer"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" id="prevBtn" onclick="previousQuestion()">← Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+            </div>
+        </div>
+        <div class="result-panel" id="mcqResult">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <h2>Quiz Complete</h2>
+            <div class="result-score" id="resultScore">0/20</div>
+            <p class="result-pct" id="resultPercent"></p>
+            <div class="result-msg" id="resultMessage"></div>
+            <div class="nav-row" style="justify-content:center;">
+                <button class="btn btn-ghost" onclick="restartQuiz()">↩ Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ TAB 2: SORTING ══ -->
+    <div class="tab-content">
+        <span class="mono-label">Sorting Activity — Economic Cycle Phases</span>
+        <div class="instructions-row">
+            Click an item to select it (highlights in amber), then click a category to place it. Click a placed item to return it to Unsorted.
+        </div>
+        <div class="sorting-grid">
+            <div class="sort-col" onclick="placeInCategory('boom')">
+                <span class="col-label">📊 Boom (Expansion)</span>
+                <div class="sort-items" id="boom"></div>
+            </div>
+            <div class="sort-col" onclick="placeInCategory('recession')">
+                <span class="col-label">📉 Recession (Contraction)</span>
+                <div class="sort-items" id="recession"></div>
+            </div>
+        </div>
+        <div class="unsorted-panel" onclick="placeInCategory('unsorted')">
+            <span class="col-label" style="color:var(--muted)">📦 Unsorted</span>
+            <div class="sort-items" id="unsortedItems"></div>
+        </div>
+        <div id="sortingResult" class="inline-result"></div>
+        <div class="nav-row">
+            <button class="btn btn-ghost" onclick="resetSorting()">Reset</button>
+            <button class="btn btn-primary" onclick="checkSorting()">Check Answers</button>
+        </div>
+    </div>
+
+    <!-- ══ TAB 3: INTERACTIVE GAMES ══ -->
+    <div class="tab-content">
+        <div id="gameSelector">
+            <span class="mono-label">Interactive Games</span>
+            <div class="game-grid">
+                <div class="game-card" onclick="startGame('match')">
+                    <span class="game-icon">🎯</span>
+                    <h3>Match the Pairs</h3>
+                    <p>Match economic growth concepts with their definitions</p>
+                </div>
+                <div class="game-card" onclick="startGame('circular')">
+                    <span class="game-icon">🔄</span>
+                    <h3>Circular Flow</h3>
+                    <p>Complete the passage about national income</p>
+                </div>
+                <div class="game-card" onclick="startGame('standards')">
+                    <span class="game-icon">📊</span>
+                    <h3>Living Standards</h3>
+                    <p>Fill in the blanks about GDP and comparisons</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Match Game -->
+        <div id="matchGame" class="game-area">
+            <div class="game-title">Match the Economic Growth Concepts</div>
+            <div class="game-subtitle">Click a concept, then click its matching definition</div>
+            <div class="match-progress" id="matchProgress">0 / 10 matched</div>
+            <div class="match-grid">
+                <div>
+                    <span class="match-col-label">Concepts</span>
+                    <div class="match-items" id="matchConcepts"></div>
+                </div>
+                <div>
+                    <span class="match-col-label">Definitions</span>
+                    <div class="match-items" id="matchDefinitions"></div>
+                </div>
+            </div>
+            <div id="matchResult" class="inline-result" style="margin-top:1.25rem;"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Circular Flow Game -->
+        <div id="circularGame" class="game-area">
+            <div class="game-title">Circular Flow of Income &amp; National Income</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="circularWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="circularPassage"></div>
+            <div id="circularResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('circular')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('circular')">Check Answers</button>
+            </div>
+        </div>
+
+        <!-- Living Standards Game -->
+        <div id="standardsGame" class="game-area">
+            <div class="game-title">Measuring &amp; Comparing Living Standards</div>
+            <div class="game-subtitle">Click a word to select it, then click a blank to place it. Click a filled blank to clear it.</div>
+            <div class="word-bank" id="standardsWordBank"><div class="word-bank-label">Word Bank</div></div>
+            <div class="passage-box" id="standardsPassage"></div>
+            <div id="standardsResult" class="inline-result"></div>
+            <div class="nav-row">
+                <button class="btn btn-ghost" onclick="backToGameSelector()">← Back</button>
+                <button class="btn btn-ghost" onclick="resetFill('standards')">Reset</button>
+                <button class="btn btn-primary" onclick="checkFill('standards')">Check Answers</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>biz-omics.co.uk &middot; A-Level Economics &middot; &copy; BIZ-OMICS</footer>
+
+<script>
+/* ── THEME ── */
+(function(){
+    var t = localStorage.getItem('biz-omics-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    var btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+})();
+function toggleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('biz-omics-theme', next);
+    document.getElementById('theme-btn').textContent = next === 'light' ? '🌙' : '☀';
+}
+
+/* ── TABS ── */
+function switchTab(index) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===index));
+    document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===index));
+    if (index === 1) initSorting();
+}
+
+/* ══════════════════════════════════════
+   MULTIPLE CHOICE
+══════════════════════════════════════ */
+const questions = [
+    { question: "What is the key difference between short-run and long-run economic growth?", options: ["Short-run growth only affects consumption; long-run growth affects investment","There is no meaningful difference between them","Short-run growth: actual GDP increases using existing capacity (movement toward PPF); long-run growth: productive capacity increases (PPF shifts outward) — the trend rate of growth","Short-run growth is temporary; long-run growth is permanent"], correct: 2, explanation: "<strong>Correct!</strong> Short-run growth occurs when the economy utilizes spare capacity more fully (moves from inside PPF toward the frontier or AD shifts rightward). Long-run growth occurs when the economy's productive potential increases through capital accumulation, technology, labour force growth, or productivity improvements (PPF shifts outward / LRAS shifts rightward)." },
+    { question: "On a production possibility curve (PPF), how is short-run growth shown versus long-run growth?", options: ["Both are shown by movements along the PPF","Short-run: outward shift of PPF; long-run: movement along PPF","Short-run: movement from inside the PPF toward the frontier (using spare capacity); long-run: outward shift of entire PPF (increased productive potential)","Neither can be shown on a PPF diagram"], correct: 2, explanation: "<strong>Correct!</strong> SHORT-RUN: Point inside PPF (recession, spare capacity) moving toward PPF = utilizing existing resources more fully. LONG-RUN: Entire PPF curve shifting outward = economy can produce more of both goods due to increased resources, better technology, or improved productivity." },
+    { question: "On an AD/AS diagram, how is short-run growth shown versus long-run growth?", options: ["Short-run: LRAS shifts; long-run: AD shifts","Short-run: AD shifts rightward (or movement along SRAS); long-run: LRAS shifts rightward (increased productive capacity)","Growth cannot be shown on AD/AS diagrams","Both shown by LRAS shifting rightward"], correct: 1, explanation: "<strong>Correct!</strong> SHORT-RUN: AD shifting right causes actual output to increase (Y↑), utilizing spare capacity — this is actual growth. LONG-RUN: LRAS shifting right shows productive capacity increasing — this is potential growth / trend rate. LRAS position represents full employment output." },
+    { question: "What are the main supply-side determinants of long-run economic growth?", options: ["Interest rates and exchange rates","Only consumer spending and government expenditure","Only population growth","Quantity/quality of factors of production: capital investment, labor force size/skills, technology, productivity, enterprise, competition, infrastructure, institutions"], correct: 3, explanation: "<strong>Correct!</strong> Long-run growth requires expanding the economy's productive capacity through: (1) Capital accumulation (investment in machinery, infrastructure); (2) Human capital (education, training, health); (3) Technological progress; (4) Labour force growth; (5) Improved productivity; (6) Better institutions (property rights, rule of law); (7) Enterprise and innovation. These shift LRAS rightward." },
+    { question: "What are the main demand-side determinants of short-run economic growth?", options: ["Only labor force growth","Only technological progress","Changes in consumption (C), investment (I), government spending (G), and net exports (X-M) — the components of aggregate demand","Supply-side improvements"], correct: 2, explanation: "<strong>Correct!</strong> Short-run actual growth occurs when AD increases: (1) Consumption rises (higher confidence, lower taxes, wealth effects); (2) Investment increases (lower interest rates, higher confidence, accelerator); (3) Government spending rises; (4) Net exports improve (depreciation, foreign income growth). These shift AD rightward, increasing actual output if spare capacity exists." },
+    { question: "What is a positive output gap, and what are its implications?", options: ["Actual GDP is below potential GDP","Economy is in recession","Actual GDP exceeds potential GDP (Y > Y*); economy is overheating with low unemployment and high inflationary pressure; unsustainable","Economy is in equilibrium"], correct: 2, explanation: "<strong>Correct!</strong> Positive output gap occurs when the economy operates beyond its sustainable capacity. Characteristics: unemployment below natural rate, resources overstretched, shortages emerge, strong demand-pull inflation, often caused by excessive AD growth. Cannot be maintained — eventually triggers inflation or supply constraints." },
+    { question: "What is a negative output gap, and what are its implications?", options: ["Actual GDP is below potential GDP (Y < Y*); economy has spare capacity with high cyclical unemployment and low/falling inflation; output is being wasted","Inflation is high","Economy is at full employment","Actual GDP exceeds potential GDP"], correct: 0, explanation: "<strong>Correct!</strong> Negative output gap indicates underutilization of resources. Characteristics: high cyclical unemployment (workers idle), factories operating below capacity, low inflation or deflation risk, output/income lost permanently. Requires expansionary demand-side policies to close the gap." },
+    { question: "What are the four main phases of the economic (business) cycle?", options: ["Boom (expansion), peak, recession (contraction), trough — repeated fluctuations in actual GDP around the long-run trend","Only growth and recession","Expansion and equilibrium","Inflation and deflation"], correct: 0, explanation: "<strong>Correct!</strong> Economic cycle phases: (1) BOOM/EXPANSION — GDP rising, unemployment falling, confidence high, investment strong, positive output gap; (2) PEAK — maximum output before downturn; (3) RECESSION/CONTRACTION — GDP falling for 2+ quarters, unemployment rising, negative output gap; (4) TROUGH — lowest point before recovery." },
+    { question: "Which economic indicators can be used to identify phases of the economic cycle?", options: ["Real GDP growth rate, unemployment rate, inflation rate, consumer/business confidence, investment levels, retail sales, manufacturing output","Stock market prices only","Only the unemployment rate","Only inflation"], correct: 0, explanation: "<strong>Correct!</strong> KEY INDICATORS: Real GDP growth (negative = recession); Unemployment (rising = recession, falling = boom); Inflation (high in boom, low in recession); Investment (procyclical — high in boom); Consumer confidence; Capacity utilization; Business surveys; Retail sales; House prices. These move together in predictable patterns across the cycle." },
+    { question: "What causes cyclical instability? Why do economies experience boom-bust cycles?", options: ["Cycles are completely random and unpredictable","Excessive credit growth and debt, asset price bubbles, destabilizing speculation, animal spirits/herding behavior, time lags in policy, external shocks","Only government policy mistakes","Only supply-side factors"], correct: 1, explanation: "<strong>Correct!</strong> Causes of cycles: (1) Credit/debt cycles — easy credit fuels boom, debt burden causes bust (2008); (2) Asset bubbles — irrational exuberance inflates prices, crash follows; (3) Animal spirits — Keynes' term for waves of optimism/pessimism; (4) Herding — investors/consumers copy others, amplifying swings; (5) Policy lags; (6) External shocks (oil, global recession)." },
+    { question: "What does national income measure, and what is the fundamental identity?", options: ["Only consumer spending","Only the output produced by firms","Only the income earned by households","National income measures the total value of output/income/expenditure in an economy; the identity is: Income = Output = Expenditure (measured three ways, same result)"], correct: 3, explanation: "<strong>Correct!</strong> National income (GDP) can be measured three ways, all giving the same total: (1) OUTPUT — value of goods/services produced; (2) INCOME — wages, profits, rent, interest earned; (3) EXPENDITURE — C+I+G+(X-M). This is the circular flow identity: one person's spending is another's income, which comes from output." },
+    { question: "What is the difference between nominal and real GDP?", options: ["There is no meaningful difference","Real GDP includes inflation; nominal doesn't","Nominal GDP is always higher than real GDP","Nominal GDP is measured at current prices (includes inflation); real GDP is adjusted for inflation (constant prices), showing actual volume of output"], correct: 3, explanation: "<strong>Correct!</strong> NOMINAL GDP = current year prices × current year quantities (includes inflation). REAL GDP = base year prices × current year quantities (removes inflation effect). Real GDP shows true volume changes. Example: If nominal GDP rises 5% but inflation is 3%, real GDP grew only 2%. Real GDP is the meaningful measure of economic growth and living standards." },
+    { question: "In the circular flow of income, what are injections and withdrawals?", options: ["Only imports and exports matter","Injections are withdrawals and vice versa","Consumption is the only injection","Injections: Investment (I), Government spending (G), Exports (X) — add to circular flow; Withdrawals: Saving (S), Taxation (T), Imports (M) — leak from flow"], correct: 3, explanation: "<strong>Correct!</strong> INJECTIONS (I+G+X) add spending to the circular flow. WITHDRAWALS (S+T+M) leak out: savings reduce consumption, taxes reduce disposable income, imports are spending on foreign goods. Equilibrium when I+G+X = S+T+M. If injections > withdrawals, economy expands; if injections < withdrawals, economy contracts." },
+    { question: "What happens to national income when injections exceed withdrawals (I+G+X > S+T+M)?", options: ["National income falls","Nothing happens","National income stays constant","National income rises — expansionary effect as more money enters the circular flow than leaks out, creating a multiplier effect"], correct: 3, explanation: "<strong>Correct!</strong> When injections > withdrawals, there's a net addition to circular flow. This stimulates spending, income, and output through the multiplier process. Economy expands until injections = withdrawals at new higher equilibrium. Opposite occurs when withdrawals > injections (contraction)." },
+    { question: "What are the main benefits of economic growth?", options: ["Higher living standards, increased employment, higher incomes, more tax revenue for public services, poverty reduction, improved technology/infrastructure","Only benefits the wealthy","Only higher GDP numbers","Growth has no benefits"], correct: 0, explanation: "<strong>Correct!</strong> Growth benefits: (1) Higher real incomes and consumption; (2) More jobs created; (3) Poverty reduction; (4) More tax revenue without raising rates — funds public services; (5) Improved infrastructure and technology; (6) Confidence and optimism; (7) Improved international competitiveness. However, distribution matters — not everyone benefits equally." },
+    { question: "What are the main costs of economic growth?", options: ["Only benefits the economy","Growth has no costs","Environmental damage (pollution, resource depletion), income inequality, negative externalities, current consumption sacrificed for investment, stress/longer hours, unsustainability","Only financial costs"], correct: 2, explanation: "<strong>Correct!</strong> Growth costs: (1) Environmental — CO2 emissions, deforestation, pollution, finite resource depletion; (2) Opportunity cost — investment means less current consumption; (3) Inequality may worsen; (4) Work-life balance — longer hours, stress; (5) Negative externalities — congestion, noise; (6) Unsustainability — if based on debt or resource exploitation." },
+    { question: "What are the main limitations of using GDP per capita to compare living standards between countries?", options: ["GDP per capita is a perfect measure with no limitations","Only population size matters","Doesn't account for: inequality of distribution, non-market activities, quality of life factors, purchasing power differences, environmental costs, black economy","Only currency differences matter"], correct: 2, explanation: "<strong>Correct!</strong> Limitations: (1) Distribution — average may hide inequality; (2) Non-market activity — subsistence farming, household work uncounted; (3) Quality of life — health, education, freedom not captured; (4) Purchasing power — $1 buys different amounts in different countries; (5) Environmental damage; (6) Underground economy — cash transactions uncounted." },
+    { question: "Why is purchasing power parity (PPP) important when comparing GDP between countries?", options: ["PPP adjusts for different price levels across countries — the same currency can buy different amounts, so PPP shows real purchasing power and living standards more accurately","PPP is the same as nominal exchange rates","PPP only matters for rich countries","PPP is unnecessary for comparisons"], correct: 0, explanation: "<strong>Correct!</strong> PPP adjusts GDP for cost of living differences. Example: $1,000/month in Switzerland vs India — buys far more in India due to lower prices. Nominal exchange rate conversion misleads — makes poor countries look poorer. PPP conversion uses actual purchasing power, giving truer comparison. Without PPP, comparing using market exchange rates understates living standards in low-price countries." },
+    { question: "How are index numbers calculated and what is the base year?", options: ["Index numbers don't require a base year","Index numbers are random numbers","Index = (current value ÷ base year value) × 100; base year is set to 100 as the reference point; shows percentage change from base year","Base year is always the current year"], correct: 2, explanation: "<strong>Correct!</strong> Index construction: (1) Choose base year = 100; (2) Index for other years = (value in that year ÷ base year value) × 100. Example: If 2020 is base (100) and price rises 15% by 2023, index = 115. Makes comparison easy — index of 115 means 15% increase from base. CPI, RPI use this method with weighted basket of goods." },
+    { question: "What are the main macroeconomic policy objectives of governments?", options: ["Economic growth (rising GDP), price stability (low inflation ~2%), full employment (low unemployment), balance of payments equilibrium on current account","Only maximizing GDP growth","Only reducing unemployment","Only controlling inflation"], correct: 0, explanation: "<strong>Correct!</strong> The FOUR MAIN objectives: (1) GROWTH — sustainable increase in real GDP; (2) PRICE STABILITY — low, stable inflation (UK: 2% CPI); (3) FULL EMPLOYMENT — low unemployment at natural rate; (4) BALANCE OF PAYMENTS — current account near balance. Relative importance changes over time — 1970s emphasized inflation control, 2008–10 emphasized growth." }
+];
+
+let currentQuestion = 0, score = 0;
+const userAnswers = new Array(questions.length).fill(null);
+
+function initMultipleChoice() { displayQuestion(); }
+
+function displayQuestion() {
+    const q = questions[currentQuestion];
+    const isAnswered = userAnswers[currentQuestion] !== null;
+    const userChoice = userAnswers[currentQuestion];
+    document.getElementById('questionContainer').innerHTML = `
+        <div class="q-card">
+            <div class="q-num">Question ${currentQuestion + 1} of ${questions.length}</div>
+            <div class="q-text">${q.question}</div>
+            <div class="options">
+                ${q.options.map((opt, i) => {
+                    let cls = 'option';
+                    if (isAnswered) { cls += ' disabled'; if (i === q.correct) cls += ' correct'; else if (i === userChoice) cls += ' incorrect'; }
+                    return `<button class="${cls}" onclick="selectAnswer(${i})">${opt}</button>`;
+                }).join('')}
+            </div>
+            <div class="explanation ${isAnswered ? 'show' : ''}">${q.explanation}</div>
+        </div>`;
+    updateProgress(); updateScoreDisplay(); updateButtons();
+}
+
+function selectAnswer(index) {
+    if (userAnswers[currentQuestion] !== null) return;
+    userAnswers[currentQuestion] = index;
+    if (index === questions[currentQuestion].correct) score++;
+    displayQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < questions.length - 1) { currentQuestion++; displayQuestion(); }
+    else showFinalResult();
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; displayQuestion(); }
+}
+
+function showFinalResult() {
+    document.getElementById('mcqMain').style.display = 'none';
+    document.getElementById('mcqResult').classList.add('show');
+    const pct = Math.round(score / questions.length * 100);
+    document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+    document.getElementById('resultPercent').textContent = `${pct}% correct`;
+    let emoji = '📚', msg = 'Keep studying — review the material and try again.';
+    if (pct >= 90) { emoji = '🌟'; msg = 'Outstanding — you\'ve mastered this topic!'; }
+    else if (pct >= 75) { emoji = '👏'; msg = 'Excellent work — strong understanding!'; }
+    else if (pct >= 60) { emoji = '✓'; msg = 'Good effort — review the areas you missed.'; }
+    document.getElementById('resultEmoji').textContent = emoji;
+    document.getElementById('resultMessage').textContent = msg;
+}
+
+function restartQuiz() {
+    currentQuestion = 0; score = 0; userAnswers.fill(null);
+    document.getElementById('mcqResult').classList.remove('show');
+    document.getElementById('mcqMain').style.display = 'block';
+    displayQuestion();
+}
+
+function updateProgress() {
+    document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100) + '%';
+    document.getElementById('questionLabel').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+}
+function updateScoreDisplay() {
+    const answered = userAnswers.filter(a => a !== null).length;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} / ${answered}`;
+}
+function updateButtons() {
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    document.getElementById('nextBtn').textContent = currentQuestion === questions.length-1 ? 'Finish ✓' : 'Next →';
+}
+
+/* ══════════════════════════════════════
+   SORTING
+══════════════════════════════════════ */
+const sortingItems = [
+    { text: "Real GDP growing rapidly above trend rate", category: "boom" },
+    { text: "Real GDP falling for two or more consecutive quarters (technical recession)", category: "recession" },
+    { text: "Unemployment rate falling below natural rate", category: "boom" },
+    { text: "Unemployment rate rising significantly above natural rate", category: "recession" },
+    { text: "Inflation rising due to demand-pull pressures", category: "boom" },
+    { text: "Inflation falling or deflation risk emerging", category: "recession" },
+    { text: "Consumer and business confidence very high", category: "boom" },
+    { text: "Consumer and business confidence collapsing", category: "recession" },
+    { text: "Investment spending increasing strongly (accelerator effect)", category: "boom" },
+    { text: "Investment spending falling sharply as firms cut back", category: "recession" },
+    { text: "Positive output gap — economy operating above potential", category: "boom" },
+    { text: "Negative output gap — significant spare capacity exists", category: "recession" },
+    { text: "Government tax revenues rising strongly", category: "boom" },
+    { text: "Government tax revenues falling, welfare spending rising", category: "recession" },
+    { text: "Asset prices (houses, stocks) rising rapidly", category: "boom" },
+    { text: "Asset prices falling, negative wealth effects", category: "recession" }
+];
+let selectedSortingItem = null;
+
+function initSorting() {
+    selectedSortingItem = null;
+    document.getElementById('unsortedItems').innerHTML = [...sortingItems].sort(()=>Math.random()-0.5).map(item =>
+        `<div class="sort-item" data-category="${item.category}" onclick="selectSortItem(this,event)">${item.text}</div>`
+    ).join('');
+    document.getElementById('boom').innerHTML = '';
+    document.getElementById('recession').innerHTML = '';
+    document.getElementById('sortingResult').classList.remove('show');
+}
+
+function selectSortItem(el, event) {
+    event.stopPropagation();
+    if (selectedSortingItem === el) { el.classList.remove('sorting-selected'); selectedSortingItem = null; return; }
+    if (selectedSortingItem) selectedSortingItem.classList.remove('sorting-selected');
+    selectedSortingItem = el; el.classList.add('sorting-selected');
+}
+
+function placeInCategory(colId) {
+    if (!selectedSortingItem) return;
+    const target = document.getElementById(colId === 'unsorted' ? 'unsortedItems' : colId);
+    if (!target) return;
+    selectedSortingItem.classList.remove('sorting-selected', 'correct-sort', 'incorrect-sort');
+    target.appendChild(selectedSortingItem);
+    selectedSortingItem = null;
+}
+
+function checkSorting() {
+    let correct = 0, total = 0;
+    document.querySelectorAll('.sort-item').forEach(item => {
+        item.classList.remove('correct-sort','incorrect-sort'); total++;
+        if (item.dataset.category === item.parentElement.id) { item.classList.add('correct-sort'); correct++; }
+        else item.classList.add('incorrect-sort');
+    });
+    const pct = Math.round(correct/total*100);
+    const res = document.getElementById('sortingResult');
+    const tail = pct===100 ? '🎉 Perfect!' : 'Green = correct, red = incorrect. Keep moving items and check again anytime.';
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${tail}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+    if (pct < 100) {
+        setTimeout(() => {
+            document.querySelectorAll('.sort-item').forEach(item => item.classList.remove('correct-sort','incorrect-sort'));
+        }, 2500);
+    }
+}
+
+function resetSorting() { initSorting(); }
+
+/* ══════════════════════════════════════
+   MATCH GAME
+══════════════════════════════════════ */
+const matchPairs = [
+    { concept: "Short-Run Economic Growth", definition: "Increase in actual GDP by utilizing existing spare capacity, moving toward the PPF or AD shifting rightward" },
+    { concept: "Long-Run Economic Growth", definition: "Increase in productive capacity of the economy — the trend rate of growth; PPF shifts outward or LRAS shifts right" },
+    { concept: "Positive Output Gap", definition: "Actual GDP exceeds potential GDP (Y > Y*); economy overheating with inflationary pressure" },
+    { concept: "Negative Output Gap", definition: "Actual GDP below potential GDP (Y < Y*); spare capacity exists with cyclical unemployment" },
+    { concept: "Economic (Business) Cycle", definition: "Repeated fluctuations in actual GDP around the long-run trend: boom, peak, recession, trough" },
+    { concept: "Injections", definition: "Investment (I), government spending (G), and exports (X) — flows that add to the circular flow of income" },
+    { concept: "Withdrawals", definition: "Saving (S), taxation (T), and imports (M) — leakages from the circular flow of income" },
+    { concept: "Real GDP", definition: "GDP adjusted for inflation (constant prices), showing actual volume of goods and services produced" },
+    { concept: "Purchasing Power Parity (PPP)", definition: "Adjustment for different price levels across countries to show what money can actually buy" },
+    { concept: "Animal Spirits", definition: "Keynes' term for waves of optimism and pessimism that drive investment and consumption decisions" }
+];
+let selectedConcept = null, selectedDefinition = null, matchedPairs = 0;
+
+function initMatch() {
+    matchedPairs = 0; selectedConcept = null; selectedDefinition = null;
+    document.getElementById('matchResult').classList.remove('show');
+    const shuffled = [...matchPairs].sort(()=>Math.random()-0.5);
+    document.getElementById('matchConcepts').innerHTML = matchPairs.map(p =>
+        `<button class="match-item" data-concept="${p.concept}" onclick="selectConcept(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.concept}</button>`
+    ).join('');
+    document.getElementById('matchDefinitions').innerHTML = shuffled.map(p =>
+        `<button class="match-item" data-definition="${p.concept}" onclick="selectDefinition(this,'${p.concept.replace(/'/g,"&#39;").replace(/\(/g,"&#40;").replace(/\)/g,"&#41;")}')">${p.definition}</button>`
+    ).join('');
+    updateMatchProgress();
+}
+
+function selectConcept(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedConcept === concept) { el.classList.remove('selected'); selectedConcept = null; return; }
+    document.querySelectorAll('[data-concept]').forEach(e => e.classList.remove('selected'));
+    selectedConcept = concept; el.classList.add('selected'); tryMatch();
+}
+
+function selectDefinition(el, concept) {
+    if (el.classList.contains('matched')) return;
+    if (selectedDefinition === concept) { el.classList.remove('selected'); selectedDefinition = null; return; }
+    document.querySelectorAll('[data-definition]').forEach(e => e.classList.remove('selected'));
+    selectedDefinition = concept; el.classList.add('selected'); tryMatch();
+}
+
+function tryMatch() {
+    if (!selectedConcept || !selectedDefinition) return;
+    const cEl = document.querySelector(`[data-concept="${selectedConcept}"]`);
+    const dEl = document.querySelector(`[data-definition="${selectedDefinition}"]`);
+    if (selectedConcept === selectedDefinition) {
+        cEl.classList.add('matched'); dEl.classList.add('matched');
+        cEl.classList.remove('selected'); dEl.classList.remove('selected');
+        matchedPairs++; updateMatchProgress();
+        if (matchedPairs === matchPairs.length) {
+            setTimeout(() => { const r = document.getElementById('matchResult'); r.textContent='🎉 All pairs matched — excellent work!'; r.className='inline-result show success'; }, 300);
+        }
+    } else {
+        cEl.classList.add('wrong'); dEl.classList.add('wrong');
+        setTimeout(() => { cEl.classList.remove('wrong','selected'); dEl.classList.remove('wrong','selected'); }, 800);
+    }
+    selectedConcept = null; selectedDefinition = null;
+}
+
+function updateMatchProgress() { document.getElementById('matchProgress').textContent = `${matchedPairs} / ${matchPairs.length} matched`; }
+function resetMatch() { initMatch(); }
+
+/* ══════════════════════════════════════
+   FILL IN THE BLANK (shared engine)
+══════════════════════════════════════ */
+const fillData = {
+    circular: {
+        passage: "National income can be measured three ways, all giving the same result: [blank0] (value of goods/services produced), [blank1] (wages, profits, rent, interest earned), and [blank2] (C+I+G+(X-M)). This illustrates the fundamental identity: Income = Output = Expenditure. The circular flow shows money moving between [blank3] (who supply factors and demand goods) and [blank4] (who demand factors and supply goods). [blank5] are flows into the circular flow: [blank6] (firms' spending on capital), [blank7] spending, and [blank8] (foreign purchases of domestic goods). [blank9] are leakages from the circular flow: [blank10] (income not spent), [blank11] (taken by government), and [blank12] (spending on foreign goods). When injections exceed withdrawals, national income [blank13]. Equilibrium occurs when total injections equal total [blank14], meaning I+G+X = [blank15]. [blank16] employment income is the level of output where all resources are fully utilized at the natural rate of unemployment.",
+        answers: ["output","income","expenditure","households","firms","Injections","investment","government","exports","Withdrawals","saving","taxation","imports","rises","withdrawals","S+T+M","Full"]
+    },
+    standards: {
+        passage: "GDP data can be used to assess living standards but has significant limitations. [blank0] GDP is measured at current prices including inflation, while [blank1] GDP is adjusted for inflation showing actual volume of output — real GDP is the meaningful measure for growth and living standards. When comparing over time, real GDP per [blank2] is better than total GDP as it accounts for population changes. However, GDP doesn't capture: [blank3] of income distribution (average may hide inequality), [blank4] activities like household work or subsistence farming, [blank5] of life factors (health, education, freedom, happiness), environmental [blank6] from pollution or resource depletion, or the [blank7] economy (unreported cash transactions). When comparing living standards between countries, [blank8] exchange rates must be used rather than market exchange rates. PPP adjusts for different [blank9] levels — the same amount of money buys different amounts in different countries. For example, $1,000 has much more [blank10] power in India than Switzerland. Without PPP adjustment, countries with low price levels appear artificially [blank11]. Index numbers are calculated by setting a [blank12] year = 100, then expressing other years as (current value ÷ base value) × 100. The CPI uses a weighted [blank13] of goods representing typical household spending.",
+        answers: ["Nominal","real","capita","inequality","non-market","quality","costs","underground","PPP","price","purchasing","poorer","base","basket"]
+    }
+};
+
+const fillState = {
+    circular: { selectedWord: null, placed: {} },
+    standards: { selectedWord: null, placed: {} }
+};
+
+function initFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    state.selectedWord = null; state.placed = {};
+    document.getElementById(gameId+'WordBank').innerHTML = '<div class="word-bank-label">Word Bank — click to select, then click a blank</div>' +
+        [...data.answers].sort(()=>Math.random()-0.5).map(w =>
+            `<button class="word-option" data-word="${w}" onclick="selectFillWord('${gameId}','${w.replace(/'/g,"&#39;").replace(/\+/g,"&#43;")}',this)">${w}</button>`
+        ).join('');
+    let html = data.passage;
+    data.answers.forEach((_,i) => {
+        html = html.replace(`[blank${i}]`, `<span class="word-blank" data-index="${i}" data-game="${gameId}" onclick="clickBlank('${gameId}',${i})">___</span>`);
+    });
+    document.getElementById(gameId+'Passage').innerHTML = html;
+    document.getElementById(gameId+'Result').classList.remove('show');
+}
+
+function selectFillWord(gameId, word, btn) {
+    const state = fillState[gameId];
+    document.getElementById(gameId+'WordBank').querySelectorAll('.word-option').forEach(b => b.classList.remove('selected-word'));
+    if (state.selectedWord === word) { state.selectedWord = null; }
+    else { state.selectedWord = word; btn.classList.add('selected-word'); }
+}
+
+function clickBlank(gameId, index) {
+    const state = fillState[gameId];
+    const blank = document.querySelector(`[data-game="${gameId}"][data-index="${index}"]`);
+    if (!blank) return;
+    if (state.placed[index] !== undefined && !state.selectedWord) {
+        returnWordToBank(gameId, state.placed[index]); delete state.placed[index];
+        blank.textContent = '___'; blank.className = 'word-blank'; return;
+    }
+    if (!state.selectedWord) return;
+    if (state.placed[index] !== undefined) returnWordToBank(gameId, state.placed[index]);
+    state.placed[index] = state.selectedWord;
+    blank.textContent = state.selectedWord; blank.className = 'word-blank has-word';
+    markWordUsed(gameId, state.selectedWord); state.selectedWord = null;
+}
+
+function returnWordToBank(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) btn.classList.remove('used','selected-word');
+}
+
+function markWordUsed(gameId, word) {
+    const btn = [...document.getElementById(gameId+'WordBank').querySelectorAll('.word-option')].find(b => b.dataset.word === word);
+    if (btn) { btn.classList.add('used'); btn.classList.remove('selected-word'); }
+}
+
+function checkFill(gameId) {
+    const data = fillData[gameId], state = fillState[gameId];
+    let correct = 0;
+    data.answers.forEach((ans, i) => {
+        const blank = document.querySelector(`[data-game="${gameId}"][data-index="${i}"]`);
+        blank.classList.remove('correct','incorrect','has-word');
+        if (state.placed[i] === ans) { blank.classList.add('correct'); correct++; }
+        else if (state.placed[i] !== undefined) blank.classList.add('incorrect');
+    });
+    const total = data.answers.length, pct = Math.round(correct/total*100);
+    const res = document.getElementById(gameId+'Result');
+    res.textContent = `${correct} / ${total} correct (${pct}%) — ${pct===100?'🎉 Perfect score!':pct>=70?'👍 Good — check the red blanks.':'📚 Review the passage and try again.'}`;
+    res.className = 'inline-result show ' + (pct===100?'success':pct>=60?'partial':'poor');
+}
+
+function resetFill(gameId) { initFill(gameId); }
+
+/* ── GAME NAV ── */
+function startGame(game) {
+    document.getElementById('gameSelector').style.display = 'none';
+    document.getElementById(game+'Game').classList.add('active');
+    if (game === 'match') initMatch(); else initFill(game);
+}
+
+function backToGameSelector() {
+    document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+    document.getElementById('gameSelector').style.display = 'block';
+}
+
+window.onload = function() { initMultipleChoice(); };
+</script>
+</body>
+</html>
