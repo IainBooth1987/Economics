@@ -151,9 +151,37 @@ header{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;border
 
 @media print{header,.input-wrap,#status,.mode-cards,.landing-sub,.landing-eyebrow,.landing-h1,.eq-intro,.ep-intro,.chat-mode-header{display:none!important;}body{background:#fff;color:#000;}.bubble{background:#fff!important;border:1px solid #ddd!important;color:#000!important;}}
 @media(max-width:520px){.bubble{max-width:100%;}.landing-h1{font-size:1.25rem;}}
+
+/* ── PASSWORD GATE ── */
+#pw-gate{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+.gate-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem 2rem 1.75rem;max-width:380px;width:100%;text-align:center;}
+.gate-logo{font-family:var(--fm);font-size:0.62rem;color:var(--amber);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+.gate-title{font-size:1.1rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:0.5rem;}
+.gate-sub{font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:1.25rem;}
+.gate-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.85rem;font-family:var(--fm);font-size:0.82rem;color:var(--text);outline:none;text-align:center;letter-spacing:0.08em;transition:border-color 0.15s;margin-bottom:0.65rem;}
+.gate-input:focus{border-color:var(--amber-border);}
+.gate-input.shake{animation:gshake 0.35s ease;}
+@keyframes gshake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+.gate-btn{width:100%;padding:0.65rem;border-radius:8px;background:var(--amber);border:none;color:#000;font-family:var(--ff);font-size:0.85rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;margin-bottom:0.75rem;}
+.gate-btn:hover{opacity:0.88;}
+.gate-msg{font-size:0.75rem;color:#ef4444;min-height:1rem;margin-bottom:0.5rem;}
+.gate-shop{font-size:0.72rem;color:var(--muted);text-decoration:none;}
+.gate-shop:hover{color:var(--amber);}
 </style>
 </head>
 <body>
+
+<div id="pw-gate">
+  <div class="gate-box">
+    <div class="gate-logo">BOT-OMICS</div>
+    <div class="gate-title">Access required</div>
+    <div class="gate-sub">BOT-OMICS is available as part of the full Economics Bundle or for GSAL students.</div>
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off">
+    <div class="gate-msg" id="gate-msg"></div>
+    <button class="gate-btn" onclick="checkGate()">Unlock</button>
+    <a class="gate-shop" href="https://biz-omics.co.uk/economics/shop.html">Visit the shop &rarr;</a>
+  </div>
+</div>
 
 <header>
   <div class="logo-mark">B</div>
@@ -567,6 +595,42 @@ function esc(str){
   if(!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// ════════════════════════════════════════════
+// PASSWORD GATE
+// ════════════════════════════════════════════
+(function(){
+  var PASSWORDS = ['BIZOMICS-PREMIUM-2026', 'GSALEconomics'];
+  var stored = localStorage.getItem('bot-omics-unlocked');
+  if(stored === '1'){
+    document.getElementById('pw-gate').style.display = 'none';
+  }
+  var inp = document.getElementById('gate-input');
+  if(inp){
+    inp.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') checkGate();
+    });
+  }
+  window.checkGate = function(){
+    var val = document.getElementById('gate-input').value.trim();
+    var msg = document.getElementById('gate-msg');
+    var valid = false;
+    for(var i = 0; i < PASSWORDS.length; i++){
+      if(val === PASSWORDS[i]){ valid = true; break; }
+    }
+    if(valid){
+      localStorage.setItem('bot-omics-unlocked', '1');
+      document.getElementById('pw-gate').style.display = 'none';
+    } else {
+      msg.textContent = 'Incorrect password. Check your bundle confirmation email.';
+      var inp2 = document.getElementById('gate-input');
+      inp2.classList.remove('shake');
+      void inp2.offsetWidth;
+      inp2.classList.add('shake');
+      inp2.value = '';
+    }
+  };
+})();
 </script>
 
 </body>
