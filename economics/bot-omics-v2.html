@@ -474,22 +474,57 @@ async function send(){
       var data = await res.json();
 
       // EcoQuestion: first response may include structured analysis
-      if(currentMode === 'question' && data.analysis && !data._analysisShown){
-        var a = data.analysis;
-        var analysisHtml = '<div class="q-analysis">';
-        if(a.commandTerm){
-          analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Command term</span><span class="q-analysis-val">' + esc(a.commandTerm) + '</span></div>';
-        }
-        if(a.assessmentObjectives){
-          analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">AOs tested</span><span class="q-analysis-val">' + esc(a.assessmentObjectives) + '</span></div>';
-        }
-        if(a.interpretation){
-          analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Interpretation</span><span class="q-analysis-val">' + esc(a.interpretation) + '</span></div>';
-        }
-        analysisHtml += '</div>';
+      // Support both: analysis as separate field (Worker parsed it) OR embedded in response text
+      if(currentMode === 'question' && chatHistory.length === 1){
+        var analysis = data.analysis || null;
         var botText = data.response || '';
-        addMsg('bot', analysisHtml + '<p>' + esc(botText) + '</p>');
-        chatHistory.push({ role: 'assistant', content: botText });
+
+        // Fallback: try to extract JSON from the start of the response text
+        if(!analysis && botText){
+          var jsonEnd = botText.indexOf('}');
+          if(jsonEnd !== -1){
+            var jsonStr = botText.slice(0, jsonEnd + 1).trim();
+            // Walk back to find opening brace in case there is preamble
+            var jsonStart = jsonStr.lastIndexOf('{');
+            if(jsonStart !== -1){
+              jsonStr = jsonStr.slice(jsonStart);
+              try {
+                analysis = JSON.parse(jsonStr);
+                // Remove the JSON block (and any markdown fences) from the displayed text
+                botText = botText.slice(jsonEnd + 1).replace(/^[\s`]+/, '').trim();
+              } catch(parseErr){
+                analysis = null;
+              }
+            }
+          }
+        }
+
+        if(analysis){
+          var a = analysis;
+          var analysisHtml = '<div class="q-analysis">';
+          if(a.commandTerm){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Command term</span><span class="q-analysis-val">' + esc(a.commandTerm) + '</span></div>';
+          }
+          if(a.assessmentObjectives){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">AOs tested</span><span class="q-analysis-val">' + esc(a.assessmentObjectives) + '</span></div>';
+          }
+          if(a.interpretation){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Interpretation</span><span class="q-analysis-val">' + esc(a.interpretation) + '</span></div>';
+          }
+          analysisHtml += '</div>';
+          addMsg('bot', analysisHtml + (botText ? '<p>' + esc(botText) + '</p>' : ''));
+          chatHistory.push({ role: 'assistant', content: (analysis.commandTerm ? '[Analysis shown] ' : '') + botText });
+        } else {
+          if(!botText){
+            addMsg('bot', '<p>No response received. Please try again.</p>');
+            setStatus('Empty response', 'err');
+            thinking = false;
+            document.getElementById('send-btn').disabled = false;
+            return;
+          }
+          addMsg('bot', '<p>' + esc(botText) + '</p>');
+          chatHistory.push({ role: 'assistant', content: botText });
+        }
       } else {
         var botText = data.response || '';
         if(!botText){
