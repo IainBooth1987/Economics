@@ -479,22 +479,35 @@ async function send(){
         var analysis = data.analysis || null;
         var botText = data.response || '';
 
-        // Fallback: try to extract JSON from the start of the response text
+        // Fallback: try to extract JSON from response text
+        // Handles both plain JSON on first line and markdown fenced blocks e.g. ```json ... ```
         if(!analysis && botText){
-          var jsonEnd = botText.indexOf('}');
-          if(jsonEnd !== -1){
-            var jsonStr = botText.slice(0, jsonEnd + 1).trim();
-            // Walk back to find opening brace in case there is preamble
-            var jsonStart = jsonStr.lastIndexOf('{');
-            if(jsonStart !== -1){
-              jsonStr = jsonStr.slice(jsonStart);
+          var cleaned = botText;
+          // Strip markdown fences if present
+          var fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if(fenceMatch){
+            var jsonCandidate = fenceMatch[1].trim();
+            var jsonStart2 = jsonCandidate.indexOf('{');
+            var jsonEnd2 = jsonCandidate.lastIndexOf('}');
+            if(jsonStart2 !== -1 && jsonEnd2 !== -1){
               try {
-                analysis = JSON.parse(jsonStr);
-                // Remove the JSON block (and any markdown fences) from the displayed text
-                botText = botText.slice(jsonEnd + 1).replace(/^[\s`]+/, '').trim();
-              } catch(parseErr){
-                analysis = null;
-              }
+                analysis = JSON.parse(jsonCandidate.slice(jsonStart2, jsonEnd2 + 1));
+                // Remove the entire fenced block from displayed text
+                botText = cleaned.replace(/```(?:json)?[\s\S]*?```/, '').trim();
+              } catch(parseErr){ analysis = null; }
+            }
+          }
+          // No fences - try first line
+          if(!analysis){
+            var firstNewline = cleaned.indexOf('\n');
+            var firstLine = firstNewline !== -1 ? cleaned.slice(0, firstNewline).trim() : cleaned.trim();
+            var jsonStart3 = firstLine.indexOf('{');
+            var jsonEnd3 = firstLine.lastIndexOf('}');
+            if(jsonStart3 !== -1 && jsonEnd3 !== -1){
+              try {
+                analysis = JSON.parse(firstLine.slice(jsonStart3, jsonEnd3 + 1));
+                botText = firstNewline !== -1 ? cleaned.slice(firstNewline + 1).trim() : '';
+              } catch(parseErr){ analysis = null; }
             }
           }
         }
