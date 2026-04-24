@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIZ-BOT — Socratic Business Tutor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#0d1526;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;
+  --muted:#64748b;--muted2:#475569;
+  --amber:#c9a227;--amber-dim:rgba(201,162,39,0.1);--amber-border:rgba(201,162,39,0.22);
+  --green:#10b981;--green-dim:rgba(16,185,129,0.1);--green-border:rgba(16,185,129,0.22);
+  --ff:"DM Sans",system-ui,sans-serif;--fm:"DM Mono",monospace;
+}
+[data-theme=light]{
+  --bg:#f5f3ef;--surface:#ffffff;--surface2:#ede9e0;
+  --border:rgba(0,0,0,0.08);--text:#1a1a1a;--muted:#6b6b6b;--muted2:#9b9b9b;
+}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background 0.2s,color 0.2s;}
+
+/* ── HEADER ── */
+header{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid var(--border);background:rgba(10,14,26,0.96);backdrop-filter:blur(12px);flex-shrink:0;position:sticky;top:0;z-index:100;}
+[data-theme=light] header{background:rgba(245,243,239,0.96);}
+.logo-mark{width:30px;height:30px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:0.65rem;font-weight:500;color:#000;flex-shrink:0;}
+.logo-text{font-size:0.88rem;font-weight:700;letter-spacing:-0.01em;}
+.logo-text span{color:var(--green);}
+.logo-sub{font-family:var(--fm);font-size:0.58rem;color:var(--muted);margin-top:0.1rem;}
+.hdr-right{margin-left:auto;display:flex;gap:0.5rem;align-items:center;}
+.hdr-btn{padding:0.28rem 0.6rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:0.7rem;font-family:var(--ff);transition:all 0.15s;}
+.hdr-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.18);}
+[data-theme=light] .hdr-btn:hover{border-color:rgba(0,0,0,0.18);}
+.back-link{font-family:var(--fm);font-size:0.58rem;color:var(--muted);text-decoration:none;padding:0.28rem 0.6rem;border-radius:6px;border:1px solid var(--border);transition:all 0.15s;}
+.back-link:hover{color:var(--green);border-color:var(--green-border);}
+.mode-badge{font-family:var(--fm);font-size:0.58rem;padding:0.2rem 0.55rem;border-radius:5px;font-weight:500;display:none;}
+.mode-badge.problem{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-border);}
+.mode-badge.question{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);}
+
+/* ── PAGE WRAPPER ── */
+.page{flex:1;max-width:680px;width:100%;margin:0 auto;padding:0 1.25rem;display:flex;flex-direction:column;}
+
+/* ══════════════════════════════
+   LANDING SCREEN
+══════════════════════════════ */
+#landing{padding:2.5rem 0 2rem;}
+.landing-eyebrow{font-family:var(--fm);font-size:0.58rem;color:var(--green);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.75rem;}
+.landing-h1{font-size:1.45rem;font-weight:700;letter-spacing:-0.02em;line-height:1.2;margin-bottom:0.75rem;}
+.landing-h1 span{color:var(--green);}
+.landing-sub{font-size:0.875rem;color:var(--muted);line-height:1.7;max-width:520px;margin-bottom:2rem;}
+.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;}
+@media(max-width:480px){.mode-cards{grid-template-columns:1fr;}}
+.mode-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.35rem 1.25rem;cursor:pointer;transition:all 0.18s;text-align:left;position:relative;overflow:hidden;color:var(--text);}
+.mode-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.18s;}
+.mode-card.problem::before{background:radial-gradient(ellipse at top left,rgba(201,162,39,0.07),transparent 70%);}
+.mode-card.question::before{background:radial-gradient(ellipse at top left,rgba(16,185,129,0.07),transparent 70%);}
+.mode-card:hover::before{opacity:1;}
+.mode-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+.mode-card.problem:hover{border-color:var(--amber-border);}
+.mode-card.question:hover{border-color:var(--green-border);}
+.card-label{font-family:var(--fm);font-size:0.6rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.55rem;}
+.mode-card.problem .card-label{color:var(--amber);}
+.mode-card.question .card-label{color:var(--green);}
+.card-title{font-size:1.05rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:0.5rem;}
+.card-desc{font-size:0.8rem;color:var(--text);opacity:0.55;line-height:1.6;}
+.card-icon{position:absolute;top:1.1rem;right:1.1rem;font-size:1.4rem;opacity:0.18;}
+
+/* ══════════════════════════════
+   CHAT SCREEN
+══════════════════════════════ */
+#chat-screen{display:none;flex:1;flex-direction:column;}
+.chat-mode-header{padding:1.1rem 0 0.9rem;border-bottom:1px solid var(--border);margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;}
+.chat-mode-title{font-size:0.8rem;font-weight:600;color:var(--muted);}
+.chat-mode-title span{font-weight:700;}
+.chat-mode-title.problem span{color:var(--amber);}
+.chat-mode-title.question span{color:var(--green);}
+.switch-mode-btn{font-family:var(--fm);font-size:0.58rem;color:var(--muted2);background:none;border:none;cursor:pointer;padding:0.2rem 0;transition:color 0.15s;}
+.switch-mode-btn:hover{color:var(--muted);}
+
+#chat-window{flex:1;display:flex;flex-direction:column;gap:1.1rem;padding-bottom:0.5rem;overflow-y:auto;}
+.msg{display:flex;gap:0.65rem;align-items:flex-start;}
+.msg.user{flex-direction:row-reverse;}
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:0.58rem;font-weight:500;flex-shrink:0;margin-top:2px;}
+.msg.bot .av{background:var(--green);color:#000;}
+.msg.bot.q-mode .av{background:var(--green);color:#000;}
+.msg.user .av{background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+.bubble{max-width:520px;padding:0.75rem 0.95rem;border-radius:11px;font-size:0.875rem;line-height:1.7;}
+.msg.bot .bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:3px;}
+.msg.user .bubble{background:var(--green-dim);border:1px solid var(--green-border);border-top-right-radius:3px;color:var(--text);}
+.msg.bot.q-mode .bubble{border-color:var(--green-border);}
+
+/* Question analysis block inside bubble */
+.q-analysis{background:var(--surface2);border:1px solid var(--green-border);border-radius:8px;padding:0.7rem 0.85rem;margin-bottom:0.65rem;font-size:0.8rem;}
+.q-analysis-row{display:flex;gap:0.5rem;align-items:baseline;margin-bottom:0.3rem;}
+.q-analysis-row:last-child{margin-bottom:0;}
+.q-analysis-label{font-family:var(--fm);font-size:0.56rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);flex-shrink:0;width:90px;}
+.q-analysis-val{color:var(--text);line-height:1.5;}
+
+.thinking{display:flex;gap:0.65rem;align-items:center;}
+.dots{display:flex;gap:4px;padding:0.75rem 0.95rem;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--muted2);animation:dotpulse 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes dotpulse{0%,80%,100%{opacity:0.25;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+
+/* ── INPUT ── */
+.input-wrap{padding:1rem 0 1.5rem;position:sticky;bottom:0;background:var(--bg);}
+.input-row{display:flex;gap:0.45rem;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:0.45rem 0.45rem 0.45rem 0.95rem;transition:border-color 0.15s;}
+.input-row:focus-within{border-color:var(--green-border);}
+.input-row.q-focus:focus-within{border-color:var(--green-border);}
+#user-input{flex:1;background:transparent;border:none;outline:none;font-family:var(--ff);font-size:0.875rem;color:var(--text);resize:none;min-height:22px;max-height:130px;line-height:1.5;padding:0;}
+#user-input::placeholder{color:var(--muted2);}
+#send-btn{width:32px;height:32px;border-radius:7px;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.15s;}
+#send-btn.q-mode{background:var(--green);}
+#send-btn:hover{opacity:0.85;}
+#send-btn:disabled{opacity:0.3;cursor:not-allowed;}
+#send-btn svg{width:14px;height:14px;fill:none;stroke:#000;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+#send-btn.q-mode svg{stroke:#000;}
+.input-hint{font-family:var(--fm);font-size:0.56rem;color:var(--muted2);text-align:center;margin-top:0.45rem;}
+.limit-bar{font-family:var(--fm);font-size:0.56rem;color:var(--muted2);text-align:right;margin-top:0.3rem;}
+.limit-bar.warn{color:var(--amber);}
+.limit-blocked{background:var(--surface);border:1px solid var(--amber-border);border-radius:10px;padding:1rem 1.1rem;text-align:center;margin-bottom:0.75rem;}
+.limit-blocked p{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+.limit-blocked strong{color:var(--amber);}
+
+#status{display:none;align-items:center;gap:0.45rem;padding:0.35rem 0.7rem;border-radius:7px;background:var(--surface2);border:1px solid var(--border);margin-bottom:0.65rem;font-size:0.7rem;color:var(--muted);font-family:var(--fm);}
+.sdot{width:5px;height:5px;border-radius:50%;background:#22c55e;flex-shrink:0;}
+#status.err .sdot{background:#ef4444;}
+#status.busy .sdot{background:var(--green);animation:dotpulse 1s ease-in-out infinite;}
+#status.busy.q-mode .sdot{background:var(--green);}
+
+/* ── BIZPROBLEM intro ── */
+.ep-intro{padding:1.5rem 0 0.5rem;}
+.ep-intro-eyebrow{font-family:var(--fm);font-size:0.58rem;color:var(--amber);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.75rem;}
+.ep-intro h2{font-size:1.2rem;font-weight:700;letter-spacing:-0.01em;line-height:1.25;margin-bottom:0.7rem;}
+.ep-intro h2 span{color:var(--amber);}
+.ep-intro-body{font-size:0.85rem;color:var(--muted);line-height:1.75;max-width:540px;margin-bottom:1.25rem;}
+.ep-intro-body p{margin-bottom:0.55rem;}
+.ep-intro-body p:last-child{margin-bottom:0;}
+.ep-intro-body strong{color:var(--text);font-weight:600;}
+
+/* ── BIZQUESTION intro ── */
+.eq-intro{padding:1.5rem 0 0.5rem;}
+.eq-intro-eyebrow{font-family:var(--fm);font-size:0.58rem;color:var(--green);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:0.75rem;}
+.eq-intro h2{font-size:1.2rem;font-weight:700;letter-spacing:-0.01em;line-height:1.25;margin-bottom:0.7rem;}
+.eq-intro h2 span{color:var(--green);}
+.eq-intro-body{font-size:0.85rem;color:var(--muted);line-height:1.75;max-width:540px;margin-bottom:1.25rem;}
+.eq-intro-body p{margin-bottom:0.55rem;}
+.eq-intro-body p:last-child{margin-bottom:0;}
+.eq-intro-body strong{color:var(--text);font-weight:600;}
+
+.divider{margin:1rem 0;border-top:1px dashed rgba(148,163,184,0.14);display:flex;align-items:center;gap:0.6rem;}
+.divider span{font-family:var(--fm);font-size:0.58rem;color:rgba(148,163,184,0.35);white-space:nowrap;}
+
+@media print{header,.input-wrap,#status,.mode-cards,.landing-sub,.landing-eyebrow,.landing-h1,.eq-intro,.ep-intro,.chat-mode-header{display:none!important;}body{background:#fff;color:#000;}.bubble{background:#fff!important;border:1px solid #ddd!important;color:#000!important;}}
+@media(max-width:520px){.bubble{max-width:100%;}.landing-h1{font-size:1.25rem;}}
+
+/* ── PASSWORD GATE ── */
+#pw-gate{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+.gate-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem 2rem 1.75rem;max-width:380px;width:100%;text-align:center;}
+.gate-logo{font-family:var(--fm);font-size:0.62rem;color:var(--green);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+.gate-title{font-size:1.1rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:0.5rem;}
+.gate-sub{font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:1.25rem;}
+.gate-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.85rem;font-family:var(--fm);font-size:0.82rem;color:var(--text);outline:none;text-align:center;letter-spacing:0.08em;transition:border-color 0.15s;margin-bottom:0.65rem;}
+.gate-input:focus{border-color:var(--green-border);}
+.gate-input.shake{animation:gshake 0.35s ease;}
+@keyframes gshake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+.gate-btn{width:100%;padding:0.65rem;border-radius:8px;background:var(--green);border:none;color:#000;font-family:var(--ff);font-size:0.85rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;margin-bottom:0.75rem;}
+.gate-btn:hover{opacity:0.88;}
+.gate-msg{font-size:0.75rem;color:#ef4444;min-height:1rem;margin-bottom:0.5rem;}
+.gate-shop{font-size:0.72rem;color:var(--muted);text-decoration:none;}
+.gate-shop:hover{color:var(--green);}
+</style>
+</head>
+<body>
+
+<div id="pw-gate">
+  <div class="gate-box">
+    <div class="gate-logo">BIZ-BOT</div>
+    <div class="gate-title">Access required</div>
+    <div class="gate-sub">Enter your school password to access BIZ-BOT.</div>
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off">
+    <div class="gate-msg" id="gate-msg"></div>
+    <button class="gate-btn" onclick="checkGate()">Unlock</button>
+    <a class="gate-shop" href="https://biz-omics.co.uk/business/index.html">&larr; Business Hub</a>
+  </div>
+</div>
+
+<header>
+  <div class="logo-mark">B</div>
+  <div>
+    <div class="logo-text">BIZ-<span>BOT</span></div>
+    <div class="logo-sub">Socratic Business Tutor</div>
+  </div>
+  <div class="hdr-right">
+    <span class="mode-badge problem" id="mode-badge-problem">BizProblem</span>
+    <span class="mode-badge question" id="mode-badge-question">BizQuestion</span>
+    <button class="hdr-btn" id="clear-btn" onclick="newChat()" style="display:none;">Clear chat</button>
+    <button class="hdr-btn" id="theme-btn" onclick="toggleTheme()">&#9728;</button>
+    <a class="back-link" href="../business/index.html">&larr; Business</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ══ LANDING ══ -->
+  <div id="landing">
+    <div class="landing-eyebrow">A-Level Business</div>
+    <h1 class="landing-h1">I won't give you the answer.<br><span>That's the point.</span></h1>
+    <p class="landing-sub">BIZ-BOT is a Socratic tutor. Choose how you want to be guided.</p>
+    <div class="mode-cards">
+
+      <button class="mode-card problem" onclick="enterMode('problem')">
+        <div class="card-icon">&#129504;</div>
+        <div class="card-label">BizProblem</div>
+        <div class="card-title">I don't understand a concept</div>
+        <div class="card-desc">Select this if you are struggling to understand a business idea, model, theory, or framework.</div>
+      </button>
+
+      <button class="mode-card question" onclick="enterMode('question')">
+        <div class="card-icon">&#128196;</div>
+        <div class="card-label">BizQuestion</div>
+        <div class="card-title">I don't know how to answer a question</div>
+        <div class="card-desc">Select this if you have an exam question and are unsure how to interpret or structure your answer.</div>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ══ CHAT SCREEN ══ -->
+  <div id="chat-screen">
+
+    <div class="chat-mode-header" id="chat-mode-header">
+      <div class="chat-mode-title" id="chat-mode-title"></div>
+      <button class="switch-mode-btn" onclick="goHome()">&#8592; Choose a different mode</button>
+    </div>
+
+    <!-- BizProblem intro -->
+    <div class="ep-intro" id="ep-intro" style="display:none;">
+      <div class="ep-intro-eyebrow">BizProblem</div>
+      <h2>I won't explain it.<br><span>I'll ask until you can.</span></h2>
+      <div class="ep-intro-body">
+        <p>Tell BIZ-BOT which concept, model, framework, or topic you are finding difficult. It will respond with a question, not an answer.</p>
+        <p>Research consistently shows that <strong>retrieving information from memory</strong> is far more effective for long-term learning than re-reading notes. Every time you struggle to produce an answer, you strengthen the neural pathway that holds it.</p>
+        <p>Keep going until you can explain the concept fully in your own words. <strong>That's when it's yours.</strong></p>
+      </div>
+    </div>
+
+    <!-- BizQuestion intro -->
+    <div class="eq-intro" id="eq-intro" style="display:none;">
+      <div class="eq-intro-eyebrow">BizQuestion</div>
+      <h2>Paste your question.<br><span>I'll break it down with you.</span></h2>
+      <div class="eq-intro-body">
+        <p>Type or paste an exam question below. BIZ-BOT will identify the <strong>command term</strong>, the <strong>assessment objectives</strong> being tested, and interpret what the question is actually asking.</p>
+        <p>It will then guide you towards a strong answer through a series of probing questions &mdash; drawing the argument out of you, rather than giving it to you.</p>
+        <p>Once you have written a paragraph or attempt, <strong>paste it in at any point.</strong> BIZ-BOT will read your reasoning, identify the most significant gap in your chain of argument, and ask you a question to help you develop it &mdash; without telling you what to write.</p>
+      </div>
+    </div>
+
+    <div id="chat-window"></div>
+    <div id="status"><div class="sdot"></div><span id="status-text">Thinking...</span></div>
+
+    <div class="input-wrap">
+      <div class="input-row" id="input-row">
+        <textarea id="user-input" placeholder="Ask about any Business topic..." rows="1" autocomplete="off"></textarea>
+        <button id="send-btn" onclick="send()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send &middot; Shift+Enter for new line</div>
+      <div class="limit-bar" id="limit-bar"></div>
+    </div>
+
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════
+var API_URL_PROBLEM  = 'YOUR_WORKER_URL_HERE/chat';
+var API_URL_QUESTION = 'YOUR_WORKER_URL_HERE/bizquestion';
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+var currentMode = null;
+var chatHistory = [];
+var thinking = false;
+var qIntroShown = false;
+
+// ════════════════════════════════════════════
+// THEME
+// ════════════════════════════════════════════
+(function(){
+  var t = localStorage.getItem('biz-omics-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  var btn = document.getElementById('theme-btn');
+  if(btn) btn.innerHTML = t === 'light' ? '&#127769;' : '&#9728;';
+})();
+function toggleTheme(){
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('biz-omics-theme', next);
+  document.getElementById('theme-btn').innerHTML = next === 'light' ? '&#127769;' : '&#9728;';
+}
+updateLimitBar();
+
+// ════════════════════════════════════════════
+// MODE ROUTING
+// ════════════════════════════════════════════
+function enterMode(mode){
+  currentMode = mode;
+  chatHistory = [];
+  qIntroShown = false;
+
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('chat-screen').style.display = 'flex';
+  document.getElementById('clear-btn').style.display = '';
+  document.getElementById('mode-badge-problem').style.display  = mode === 'problem'  ? '' : 'none';
+  document.getElementById('mode-badge-question').style.display = mode === 'question' ? '' : 'none';
+
+  document.getElementById('ep-intro').style.display = mode === 'problem'  ? '' : 'none';
+  document.getElementById('eq-intro').style.display = mode === 'question' ? '' : 'none';
+
+  var titleEl = document.getElementById('chat-mode-title');
+  if(mode === 'problem'){
+    titleEl.className = 'chat-mode-title problem';
+    titleEl.innerHTML = 'Mode: <span>BizProblem</span> &mdash; concept support';
+  } else {
+    titleEl.className = 'chat-mode-title question';
+    titleEl.innerHTML = 'Mode: <span>BizQuestion</span> &mdash; exam question guide';
+  }
+
+  var inputRow = document.getElementById('input-row');
+  var sendBtn  = document.getElementById('send-btn');
+  var statusEl = document.getElementById('status');
+  if(mode === 'question'){
+    inputRow.classList.add('q-focus');
+    sendBtn.classList.add('q-mode');
+    statusEl.classList.add('q-mode');
+    document.getElementById('user-input').placeholder = 'Paste your exam question here...';
+  } else {
+    inputRow.classList.remove('q-focus');
+    sendBtn.classList.remove('q-mode');
+    statusEl.classList.remove('q-mode');
+    document.getElementById('user-input').placeholder = 'Ask about any Business topic...';
+  }
+
+  document.getElementById('user-input').focus();
+}
+
+function goHome(){
+  currentMode = null;
+  chatHistory = [];
+  thinking = false;
+  document.getElementById('landing').style.display = '';
+  document.getElementById('chat-screen').style.display = 'none';
+  document.getElementById('clear-btn').style.display = 'none';
+  document.getElementById('mode-badge-problem').style.display  = 'none';
+  document.getElementById('mode-badge-question').style.display = 'none';
+  var cwin = document.getElementById('chat-window');
+  while(cwin.firstChild) cwin.removeChild(cwin.firstChild);
+  hideStatus();
+}
+
+function newChat(){
+  if(!currentMode) return;
+  var mode = currentMode;
+  chatHistory = [];
+  thinking = false;
+  var cwin = document.getElementById('chat-window');
+  while(cwin.firstChild) cwin.removeChild(cwin.firstChild);
+  hideStatus();
+  document.getElementById('user-input').value = '';
+  document.getElementById('user-input').style.height = 'auto';
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('ep-intro').style.display = mode === 'problem'  ? '' : 'none';
+  document.getElementById('eq-intro').style.display = mode === 'question' ? '' : 'none';
+  qIntroShown = false;
+  document.getElementById('user-input').focus();
+}
+
+// ════════════════════════════════════════════
+// CHAT UI HELPERS
+// ════════════════════════════════════════════
+function cw(){ return document.getElementById('chat-window'); }
+
+function addMsg(role, htmlContent){
+  var isQ = currentMode === 'question';
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ' + (role === 'bot' ? 'bot' + (isQ ? ' q-mode' : '') : 'user');
+  var av = document.createElement('div'); av.className = 'av';
+  av.textContent = role === 'bot' ? 'B' : 'S';
+  var bub = document.createElement('div'); bub.className = 'bubble';
+  bub.innerHTML = htmlContent;
+  if(role === 'bot'){ wrap.appendChild(av); wrap.appendChild(bub); }
+  else { wrap.appendChild(bub); wrap.appendChild(av); }
+  cw().appendChild(wrap);
+  cw().scrollTop = cw().scrollHeight;
+}
+
+function addDivider(){
+  var d = document.createElement('div'); d.className = 'divider';
+  d.innerHTML = '<span>new question</span>';
+  cw().appendChild(d);
+  cw().scrollTop = cw().scrollHeight;
+}
+
+function showThinking(){
+  var isQ = currentMode === 'question';
+  var wrap = document.createElement('div'); wrap.className = 'thinking'; wrap.id = 'think';
+  var av = document.createElement('div'); av.className = 'av';
+  av.textContent = 'B';
+  av.style.cssText = 'background:var(--green);color:#000;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:0.58rem;font-weight:500;flex-shrink:0;';
+  var dots = document.createElement('div'); dots.className = 'dots';
+  dots.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  wrap.appendChild(av); wrap.appendChild(dots);
+  cw().appendChild(wrap);
+  cw().scrollTop = cw().scrollHeight;
+}
+function rmThinking(){ var t = document.getElementById('think'); if(t) t.remove(); }
+
+function setStatus(msg, type){
+  var s = document.getElementById('status');
+  s.style.display = 'flex';
+  s.className = 'status' + (type ? ' ' + type : '') + (currentMode === 'question' ? ' q-mode' : '');
+  document.getElementById('status-text').textContent = msg;
+}
+function hideStatus(){ document.getElementById('status').style.display = 'none'; }
+
+// ════════════════════════════════════════════
+// TEXTAREA BEHAVIOUR
+// ════════════════════════════════════════════
+var ta = document.getElementById('user-input');
+ta.addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 130) + 'px';
+});
+ta.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
+
+// ════════════════════════════════════════════
+// SEND
+// ════════════════════════════════════════════
+async function send(){
+  var input = ta.value.trim();
+  if(!input || thinking || !currentMode) return;
+
+  if(isLimitReached()){
+    showLimitBlocked();
+    return;
+  }
+
+  ta.value = ''; ta.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  thinking = true;
+
+  if(!qIntroShown){
+    document.getElementById('ep-intro').style.display = 'none';
+    document.getElementById('eq-intro').style.display = 'none';
+    qIntroShown = true;
+  }
+
+  var escaped = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  addMsg('user', '<p>' + escaped + '</p>');
+  chatHistory.push({ role: 'user', content: input });
+  incrementMsgCount();
+  updateLimitBar();
+  if(isLimitReached()){
+    showLimitBlocked();
+    thinking = false;
+    document.getElementById('send-btn').disabled = true;
+    return;
+  }
+
+  showThinking();
+  setStatus('Thinking...', 'busy');
+
+  var apiUrl = currentMode === 'question' ? API_URL_QUESTION : API_URL_PROBLEM;
+
+  if(!apiUrl || apiUrl.indexOf('YOUR_WORKER_URL_HERE') !== -1){
+    rmThinking();
+    addMsg('bot', '<p>The API is not connected. Set the correct Worker URL in the script config.</p>');
+    thinking = false;
+    document.getElementById('send-btn').disabled = false;
+    hideStatus();
+    return;
+  }
+
+  try {
+    var res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chatHistory })
+    });
+    rmThinking();
+
+    if(!res.ok){
+      var err = await res.json().catch(function(){ return {}; });
+      if(err.error === 'rate_limited'){
+        addMsg('bot', '<p>Too many messages in the last hour. Take a short break and come back.</p>');
+      } else {
+        addMsg('bot', '<p>Something went wrong. Please try again.</p>');
+      }
+      setStatus('Error', 'err');
+    } else {
+      var data = await res.json();
+
+      if(currentMode === 'question' && chatHistory.length === 1){
+        var analysis = data.analysis || null;
+        var botText = data.response || '';
+
+        if(!analysis && botText){
+          var cleaned = botText;
+          var fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if(fenceMatch){
+            var jsonCandidate = fenceMatch[1].trim();
+            var jsonStart2 = jsonCandidate.indexOf('{');
+            var jsonEnd2 = jsonCandidate.lastIndexOf('}');
+            if(jsonStart2 !== -1 && jsonEnd2 !== -1){
+              try {
+                analysis = JSON.parse(jsonCandidate.slice(jsonStart2, jsonEnd2 + 1));
+                botText = cleaned.replace(/```(?:json)?[\s\S]*?```/, '').trim();
+              } catch(parseErr){ analysis = null; }
+            }
+          }
+          if(!analysis){
+            var firstNewline = cleaned.indexOf('\n');
+            var firstLine = firstNewline !== -1 ? cleaned.slice(0, firstNewline).trim() : cleaned.trim();
+            var jsonStart3 = firstLine.indexOf('{');
+            var jsonEnd3 = firstLine.lastIndexOf('}');
+            if(jsonStart3 !== -1 && jsonEnd3 !== -1){
+              try {
+                analysis = JSON.parse(firstLine.slice(jsonStart3, jsonEnd3 + 1));
+                botText = firstNewline !== -1 ? cleaned.slice(firstNewline + 1).trim() : '';
+              } catch(parseErr){ analysis = null; }
+            }
+          }
+        }
+
+        if(analysis){
+          var a = analysis;
+          var analysisHtml = '<div class="q-analysis">';
+          if(a.commandTerm){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Command term</span><span class="q-analysis-val">' + esc(a.commandTerm) + '</span></div>';
+          }
+          if(a.assessmentObjectives){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">AOs tested</span><span class="q-analysis-val">' + esc(a.assessmentObjectives) + '</span></div>';
+          }
+          if(a.interpretation){
+            analysisHtml += '<div class="q-analysis-row"><span class="q-analysis-label">Interpretation</span><span class="q-analysis-val">' + esc(a.interpretation) + '</span></div>';
+          }
+          analysisHtml += '</div>';
+          addMsg('bot', analysisHtml + (botText ? '<p>' + esc(botText) + '</p>' : ''));
+          chatHistory.push({ role: 'assistant', content: (analysis.commandTerm ? '[Analysis shown] ' : '') + botText });
+        } else {
+          if(!botText){
+            addMsg('bot', '<p>No response received. Please try again.</p>');
+            setStatus('Empty response', 'err');
+            thinking = false;
+            document.getElementById('send-btn').disabled = false;
+            return;
+          }
+          addMsg('bot', '<p>' + esc(botText) + '</p>');
+          chatHistory.push({ role: 'assistant', content: botText });
+        }
+      } else {
+        var botText = data.response || '';
+        if(!botText){
+          addMsg('bot', '<p>No response received. Please try again.</p>');
+          setStatus('Empty response', 'err');
+          thinking = false;
+          document.getElementById('send-btn').disabled = false;
+          return;
+        }
+        addMsg('bot', '<p>' + esc(botText) + '</p>');
+        chatHistory.push({ role: 'assistant', content: botText });
+      }
+      hideStatus();
+    }
+  } catch(e){
+    rmThinking();
+    addMsg('bot', '<p>Connection error. Check your internet and try again.</p>');
+    setStatus('Connection error', 'err');
+  }
+
+  thinking = false;
+  document.getElementById('send-btn').disabled = false;
+  ta.focus();
+}
+
+function esc(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════
+// DAILY MESSAGE CAP
+// ════════════════════════════════════════════
+var DAILY_LIMIT = 15;
+
+function getTodayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+
+function getMsgCount(){
+  var stored = localStorage.getItem('biz-bot-daily');
+  if(!stored) return 0;
+  try {
+    var obj = JSON.parse(stored);
+    if(obj.date !== getTodayKey()) return 0;
+    return obj.count || 0;
+  } catch(e){ return 0; }
+}
+
+function incrementMsgCount(){
+  var count = getMsgCount() + 1;
+  localStorage.setItem('biz-bot-daily', JSON.stringify({ date: getTodayKey(), count: count }));
+  return count;
+}
+
+function updateLimitBar(){
+  var bar = document.getElementById('limit-bar');
+  if(!bar) return;
+  var used = getMsgCount();
+  var remaining = DAILY_LIMIT - used;
+  if(remaining <= 0){
+    bar.textContent = 'Daily limit reached';
+    bar.className = 'limit-bar warn';
+  } else if(remaining <= 5){
+    bar.textContent = remaining + ' of ' + DAILY_LIMIT + ' messages remaining today';
+    bar.className = 'limit-bar warn';
+  } else {
+    bar.textContent = remaining + ' of ' + DAILY_LIMIT + ' messages remaining today';
+    bar.className = 'limit-bar';
+  }
+}
+
+function isLimitReached(){
+  return getMsgCount() >= DAILY_LIMIT;
+}
+
+function showLimitBlocked(){
+  var cwin = document.getElementById('chat-window');
+  var existing = document.getElementById('limit-msg');
+  if(existing) return;
+  var div = document.createElement('div');
+  div.className = 'limit-blocked';
+  div.id = 'limit-msg';
+  div.innerHTML = '<p><strong>Daily limit reached.</strong><br>You have used all 15 messages for today. Come back tomorrow to continue.</p>';
+  cwin.appendChild(div);
+  cwin.scrollTop = cwin.scrollHeight;
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('user-input').disabled = true;
+}
+
+// ════════════════════════════════════════════
+// PASSWORD GATE
+// ════════════════════════════════════════════
+(function(){
+  var PASSWORDS = ['GSALEconomics'];
+  var stored = localStorage.getItem('biz-bot-unlocked');
+  if(stored === '1'){
+    document.getElementById('pw-gate').style.display = 'none';
+  }
+  var inp = document.getElementById('gate-input');
+  if(inp){
+    inp.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') checkGate();
+    });
+  }
+  window.checkGate = function(){
+    var val = document.getElementById('gate-input').value.trim();
+    var msg = document.getElementById('gate-msg');
+    var valid = false;
+    for(var i = 0; i < PASSWORDS.length; i++){
+      if(val === PASSWORDS[i]){ valid = true; break; }
+    }
+    if(valid){
+      localStorage.setItem('biz-bot-unlocked', '1');
+      document.getElementById('pw-gate').style.display = 'none';
+    } else {
+      msg.textContent = 'Incorrect password.';
+      var inp2 = document.getElementById('gate-input');
+      inp2.classList.remove('shake');
+      void inp2.offsetWidth;
+      inp2.classList.add('shake');
+      inp2.value = '';
+    }
+  };
+})();
+</script>
+
+</body>
+</html>
