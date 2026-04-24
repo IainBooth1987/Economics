@@ -119,6 +119,11 @@ header{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;border
 #send-btn svg{width:14px;height:14px;fill:none;stroke:#000;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 #send-btn.q-mode svg{stroke:#fff;}
 .input-hint{font-family:var(--fm);font-size:0.56rem;color:var(--muted2);text-align:center;margin-top:0.45rem;}
+.limit-bar{font-family:var(--fm);font-size:0.56rem;color:var(--muted2);text-align:right;margin-top:0.3rem;}
+.limit-bar.warn{color:var(--amber);}
+.limit-blocked{background:var(--surface);border:1px solid var(--amber-border);border-radius:10px;padding:1rem 1.1rem;text-align:center;margin-bottom:0.75rem;}
+.limit-blocked p{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+.limit-blocked strong{color:var(--amber);}
 
 #status{display:none;align-items:center;gap:0.45rem;padding:0.35rem 0.7rem;border-radius:7px;background:var(--surface2);border:1px solid var(--border);margin-bottom:0.65rem;font-size:0.7rem;color:var(--muted);font-family:var(--fm);}
 .sdot{width:5px;height:5px;border-radius:50%;background:#22c55e;flex-shrink:0;}
@@ -175,7 +180,7 @@ header{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;border
   <div class="gate-box">
     <div class="gate-logo">BOT-OMICS</div>
     <div class="gate-title">Access required</div>
-    <div class="gate-sub">BOT-OMICS is available as part of the full Economics Bundle.</div>
+    <div class="gate-sub">Enter your school password to access BOT-OMICS.</div>
     <input class="gate-input" id="gate-input" type="password" placeholder="Enter password" autocomplete="off">
     <div class="gate-msg" id="gate-msg"></div>
     <button class="gate-btn" onclick="checkGate()">Unlock</button>
@@ -265,6 +270,7 @@ header{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;border
         </button>
       </div>
       <div class="input-hint">Enter to send &middot; Shift+Enter for new line</div>
+      <div class="limit-bar" id="limit-bar"></div>
     </div>
 
   </div>
@@ -302,6 +308,7 @@ function toggleTheme(){
   localStorage.setItem('biz-omics-theme', next);
   document.getElementById('theme-btn').innerHTML = next === 'light' ? '&#127769;' : '&#9728;';
 }
+updateLimitBar();
 
 // ════════════════════════════════════════════
 // MODE ROUTING
@@ -452,6 +459,11 @@ async function send(){
   var input = ta.value.trim();
   if(!input || thinking || !currentMode) return;
 
+  if(isLimitReached()){
+    showLimitBlocked();
+    return;
+  }
+
   ta.value = ''; ta.style.height = 'auto';
   document.getElementById('send-btn').disabled = true;
   thinking = true;
@@ -467,6 +479,14 @@ async function send(){
   var escaped = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   addMsg('user', '<p>' + escaped + '</p>');
   chatHistory.push({ role: 'user', content: input });
+  incrementMsgCount();
+  updateLimitBar();
+  if(isLimitReached()){
+    showLimitBlocked();
+    thinking = false;
+    document.getElementById('send-btn').disabled = true;
+    return;
+  }
 
   showThinking();
   setStatus('Thinking...', 'busy');
@@ -597,10 +617,71 @@ function esc(str){
 }
 
 // ════════════════════════════════════════════
+// DAILY MESSAGE CAP
+// ════════════════════════════════════════════
+var DAILY_LIMIT = 15;
+
+function getTodayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+}
+
+function getMsgCount(){
+  var stored = localStorage.getItem('bot-omics-daily');
+  if(!stored) return 0;
+  try {
+    var obj = JSON.parse(stored);
+    if(obj.date !== getTodayKey()) return 0;
+    return obj.count || 0;
+  } catch(e){ return 0; }
+}
+
+function incrementMsgCount(){
+  var count = getMsgCount() + 1;
+  localStorage.setItem('bot-omics-daily', JSON.stringify({ date: getTodayKey(), count: count }));
+  return count;
+}
+
+function updateLimitBar(){
+  var bar = document.getElementById('limit-bar');
+  if(!bar) return;
+  var used = getMsgCount();
+  var remaining = DAILY_LIMIT - used;
+  if(remaining <= 0){
+    bar.textContent = 'Daily limit reached';
+    bar.className = 'limit-bar warn';
+  } else if(remaining <= 5){
+    bar.textContent = remaining + ' of ' + DAILY_LIMIT + ' messages remaining today';
+    bar.className = 'limit-bar warn';
+  } else {
+    bar.textContent = remaining + ' of ' + DAILY_LIMIT + ' messages remaining today';
+    bar.className = 'limit-bar';
+  }
+}
+
+function isLimitReached(){
+  return getMsgCount() >= DAILY_LIMIT;
+}
+
+function showLimitBlocked(){
+  var cwin = document.getElementById('chat-window');
+  var existing = document.getElementById('limit-msg');
+  if(existing) return;
+  var div = document.createElement('div');
+  div.className = 'limit-blocked';
+  div.id = 'limit-msg';
+  div.innerHTML = '<p><strong>Daily limit reached.</strong><br>You have used all 15 messages for today. Come back tomorrow to continue.</p>';
+  cwin.appendChild(div);
+  cwin.scrollTop = cwin.scrollHeight;
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('user-input').disabled = true;
+}
+
+// ════════════════════════════════════════════
 // PASSWORD GATE
 // ════════════════════════════════════════════
 (function(){
-  var PASSWORDS = ['BIZOMICS-PREMIUM-2026', 'GSALEconomics'];
+  var PASSWORDS = ['GSALEconomics'];
   var stored = localStorage.getItem('bot-omics-unlocked');
   if(stored === '1'){
     document.getElementById('pw-gate').style.display = 'none';
