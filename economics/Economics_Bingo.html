@@ -181,6 +181,29 @@
     color: var(--navy);
     font-weight: 600;
   }
+  .topic-pill .pill-count {
+    display: inline-block;
+    background: rgba(0,0,0,0.15);
+    border-radius: 4px;
+    font-size: 10px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .topic-pill.selected .pill-count { background: rgba(26,39,68,0.25); }
+  .topic-pool-bar {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    display: none;
+  }
+  .topic-pool-bar.visible { display: block; }
+  .topic-pool-bar strong { color: var(--gold); }
 
   /* Grid Size Selector */
   .grid-options { display: flex; gap: 12px; }
@@ -1084,6 +1107,59 @@
   ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
   ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 3px; }
 
+  /* Resume banner */
+  .resume-banner {
+    display: none;
+    background: rgba(45,106,79,0.15);
+    border: 1px solid rgba(45,106,79,0.5);
+    border-left: 4px solid #6fcf97;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 28px;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .resume-banner.visible { display: flex; }
+  .resume-banner-info { flex: 1; }
+  .resume-banner-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #6fcf97;
+    margin-bottom: 4px;
+  }
+  .resume-banner-detail {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+  .resume-btn {
+    padding: 10px 22px;
+    background: #2d6a4f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .resume-btn:hover { background: #3a8a65; }
+  .discard-btn {
+    padding: 10px 16px;
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .discard-btn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+
   /* Responsive */
   @media (max-width: 768px) {
     .setup-grid { grid-template-columns: 1fr; }
@@ -1107,6 +1183,17 @@
 
 <!-- ══════════════════ SETUP SCREEN ══════════════════ -->
 <div id="setupScreen" class="screen active">
+
+  <!-- Resume banner (shown if saved game detected) -->
+  <div class="resume-banner" id="resumeBanner">
+    <div class="resume-banner-info">
+      <div class="resume-banner-title">⚡ Game in progress</div>
+      <div class="resume-banner-detail" id="resumeDetail">—</div>
+    </div>
+    <button class="resume-btn" onclick="resumeGame()">▶ Resume Game</button>
+    <button class="discard-btn" onclick="discardSave()">✕ Discard</button>
+  </div>
+
   <div class="setup-hero">
     <h1>Get Ready to Play<em>BINGO!</em></h1>
     <p>Choose your topic, grid size and win conditions — then let the definitions fly.</p>
@@ -1115,7 +1202,7 @@
   <div class="setup-grid">
     <!-- Topic Selection -->
     <div class="setup-card" style="grid-column: 1 / -1;">
-      <h3><span class="icon">📚</span> Choose a Topic</h3>
+      <h3><span class="icon">📚</span> Choose Topic(s) <span style="font-size:12px; font-weight:400; color:rgba(255,255,255,0.45); font-family:'DM Sans',sans-serif; margin-left:6px;">— select one or more</span></h3>
       <div class="topic-group">
         <div class="topic-group-label">Microeconomics</div>
         <div class="topic-pills" id="microPills"></div>
@@ -1123,6 +1210,9 @@
       <div class="topic-group" style="margin-top:20px;">
         <div class="topic-group-label">Macroeconomics</div>
         <div class="topic-pills" id="macroPills"></div>
+      </div>
+      <div class="topic-pool-bar" id="topicPoolBar">
+        <span id="topicPoolText">—</span>
       </div>
     </div>
 
@@ -1134,14 +1224,15 @@
           <div class="grid-visual" id="gv3"></div>
           <div class="grid-label">3×3</div>
         </div>
-        <div class="grid-option g4" data-size="4" onclick="selectSize(4, this)">
+        <div class="grid-option g4 selected" data-size="4" onclick="selectSize(4, this)">
           <div class="grid-visual" id="gv4"></div>
           <div class="grid-label">4×4</div>
         </div>
-        <div class="grid-option g5 selected" data-size="5" onclick="selectSize(5, this)">
+        <div class="grid-option g5" data-size="5" onclick="selectSize(5, this)">
           <div class="grid-visual" id="gv5"></div>
           <div class="grid-label">5×5</div>
         </div>
+
       </div>
       <div style="margin-top:14px; font-size:13px; color:rgba(255,255,255,0.45);" id="gridNote">
         Students fill <strong style="color:var(--gold)">25 terms</strong> on their card from the topic list.
@@ -1210,8 +1301,9 @@
 
   <div class="terms-instruction no-print">
     📋 <strong>Instructions for students:</strong> Below are all the key terms for this topic.
-    Choose <span class="grid-size-info" id="gridSizeInfo">25</span> terms and write one in each cell of your blank bingo card — you choose which cell to put each one in, just like real bingo!
-    When you're done, your teacher will start the game and read definitions. If the term matches, tick it off.
+    Choose any <span class="grid-size-info" id="gridSizeInfo">24</span> of the <span class="grid-size-info" id="gridSizeTotalInfo" style="background:rgba(201,168,76,0.25);">?</span> terms and write one in each cell of your blank bingo card — you choose which ones and where to put them, just like real bingo!
+    <strong style="color:var(--gold);">You won't use all the terms</strong> — that's what makes Full House a real challenge.
+    When you're done, your teacher will read definitions. If the term matches, tick it off.
   </div>
 
   <!-- Printable Bingo Card -->
@@ -1230,7 +1322,7 @@
     <!-- Terms bank printed on card -->
     <div id="printTermsBank" style="margin-top:16px; border-top:2px solid var(--navy); padding-top:12px;">
       <div style="font-family:'DM Sans',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#333; margin-bottom:8px;">
-        Key Terms Bank — Choose <span id="printTermsNeeded">—</span> and write them into your grid above
+        Key Terms Bank — Choose any <span id="printTermsNeeded">—</span> from the <span id="printTermsTotal">—</span> below and write them into your grid above
       </div>
       <div id="printTermsList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
     </div>
@@ -1652,8 +1744,8 @@ const TOPICS = {
 //  STATE
 // ═══════════════════════════════════════════════════
 let state = {
-  selectedTopic: null,
-  gridSize: 5,
+  selectedTopics: [],       // array of topic objects (multi-select)
+  gridSize: 4,
   stages: { line: true, twolines: true },   // fullhouse always active
   calledTerms: [],
   calledIndices: [],
@@ -1664,33 +1756,161 @@ let state = {
 };
 
 // ═══════════════════════════════════════════════════
+//  SAVE / RESUME
+// ═══════════════════════════════════════════════════
+var SAVE_KEY = 'bizomics_bingo_save';
+
+function saveGameState() {
+  var save = {
+    topicIds: state.selectedTopics.map(function(t) { return t.id; }),
+    gridSize: state.gridSize,
+    stages: state.stages,
+    calledIndices: state.calledIndices,
+    currentStageIndex: state.currentStageIndex,
+    activeStages: state.activeStages,
+    claimedStages: state.claimedStages,
+    savedAt: Date.now()
+  };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch(e) {}
+}
+
+function loadSave() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function discardSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+  document.getElementById('resumeBanner').classList.remove('visible');
+}
+
+function checkResumeBanner() {
+  var save = loadSave();
+  if (!save) return;
+  // Resolve topic names from saved IDs
+  var allTopics = TOPICS.micro.concat(TOPICS.macro);
+  var names = save.topicIds.map(function(id) {
+    var t = allTopics.find(function(x) { return x.id === id; });
+    return t ? t.name : id;
+  }).join(' + ');
+  var drawn = save.calledIndices.length;
+  var d = new Date(save.savedAt);
+  var timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('resumeDetail').innerHTML =
+    '<strong style="color:rgba(255,255,255,0.85);">' + names + '</strong> &nbsp;|&nbsp; ' +
+    save.gridSize + '&times;' + save.gridSize + ' grid &nbsp;|&nbsp; ' +
+    drawn + ' term' + (drawn !== 1 ? 's' : '') + ' drawn &nbsp;|&nbsp; Saved ' + timeStr;
+  document.getElementById('resumeBanner').classList.add('visible');
+}
+
+function resumeGame() {
+  var save = loadSave();
+  if (!save) return;
+  var allTopics = TOPICS.micro.concat(TOPICS.macro);
+  state.selectedTopics = save.topicIds.map(function(id) {
+    return allTopics.find(function(x) { return x.id === id; });
+  }).filter(Boolean);
+  state.gridSize = save.gridSize;
+  state.stages = save.stages;
+  state.activeStages = save.activeStages;
+  state.currentStageIndex = save.currentStageIndex;
+  state.claimedStages = save.claimedStages;
+
+  // Rebuild pool and restore called terms by index
+  var pool = getPoolTerms();
+  state.currentTopicTerms = pool;
+  state.calledIndices = save.calledIndices;
+  state.calledTerms = save.calledIndices.map(function(i) { return pool[i]; }).filter(Boolean);
+
+  // Restore UI
+  var topicNames = state.selectedTopics.map(function(t) { return t.name; }).join(' + ');
+  document.getElementById('totalTerms').textContent = pool.length;
+  document.getElementById('drawCounter').innerHTML = '<strong style="color:var(--gold)">' + state.calledTerms.length + '</strong> / ' + pool.length + ' terms drawn';
+  document.getElementById('gameTopicLabel').textContent = topicNames;
+  document.getElementById('gameGridLabel').textContent = state.gridSize + '\xD7' + state.gridSize + ' grid';
+  document.getElementById('calledChips').innerHTML = '';
+  state.calledTerms.forEach(function(item) {
+    if (!item) return;
+    var chip = document.createElement('div');
+    chip.className = 'called-chip';
+    chip.textContent = item.term;
+    document.getElementById('calledChips').appendChild(chip);
+  });
+  var hasCalled = state.calledTerms.length > 0;
+  document.getElementById('calledHistory').style.display = hasCalled ? 'block' : 'none';
+  document.getElementById('calledCount').textContent = state.calledTerms.length;
+  document.getElementById('calledChips').style.display = 'none';
+  document.getElementById('calledHidden').style.display = 'block';
+  document.getElementById('toggleCalledBtn').textContent = '👁 Show (Teacher Only)';
+  document.getElementById('toggleCalledBtn').style.color = 'rgba(255,255,255,0.6)';
+
+  ['claimLineBtn','claimTwoLinesBtn','claimFullHouseBtn'].forEach(function(id) {
+    document.getElementById(id).classList.remove('show');
+  });
+
+  // Restore stage tracker and mark already-claimed stages
+  buildStageTracker();
+  state.claimedStages.forEach(function(key) {
+    var el = document.getElementById('tracker-' + key);
+    if (el) el.className = el.className.replace('current','') + ' won';
+  });
+  showClaimButton();
+  populateGameTerms();
+
+  // Restore last drawn ball display
+  var chamber = document.getElementById('ballChamber');
+  if (chamber) { chamber.classList.remove('drawing'); chamber.classList.add('mixing'); }
+  var drawnArea = document.getElementById('drawnArea');
+  if (state.calledTerms.length > 0) {
+    var last = state.calledTerms[state.calledTerms.length - 1];
+    drawnArea.innerHTML =
+      '<div class="ejected-ball">' + state.calledTerms.length + '</div>' +
+      '<div style="text-align:center;">' +
+        '<span class="def-label">Definition</span>' +
+        '<div class="current-def">' + last.def + '</div>' +
+      '</div>';
+  } else {
+    drawnArea.innerHTML = '<div style="font-size:13px; color:rgba(255,255,255,0.25); font-style:italic;">Press Draw a Ball to begin</div>';
+  }
+  var allDrawn = state.calledIndices.length >= pool.length;
+  document.getElementById('drawBtn').disabled = allDrawn;
+  document.getElementById('drawBtn').innerHTML = allDrawn ? '✅ All Terms Called!' : '<span class="ball-icon">🎱</span> Draw a Ball';
+
+  document.getElementById('resumeBanner').classList.remove('visible');
+  showScreen('gameScreen');
+}
+
+// ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
 function init() {
   buildTopicPills();
   buildGridVisuals();
   updateGridNote();
+  checkResumeBanner();
 }
 
 function buildTopicPills() {
-  const microCon = document.getElementById('microPills');
-  const macroCon = document.getElementById('macroPills');
-  TOPICS.micro.forEach(t => {
-    const btn = document.createElement('button');
+  var microCon = document.getElementById('microPills');
+  var macroCon = document.getElementById('macroPills');
+  TOPICS.micro.forEach(function(t) {
+    var btn = document.createElement('button');
     btn.className = 'topic-pill';
-    btn.textContent = t.name;
+    btn.innerHTML = t.name + '<span class="pill-count">' + t.terms.length + '</span>';
     btn.dataset.id = t.id;
     btn.dataset.group = 'micro';
-    btn.onclick = () => selectTopic(t.id, 'micro', btn);
+    btn.onclick = function() { toggleTopic(t.id, 'micro', btn); };
     microCon.appendChild(btn);
   });
-  TOPICS.macro.forEach(t => {
-    const btn = document.createElement('button');
+  TOPICS.macro.forEach(function(t) {
+    var btn = document.createElement('button');
     btn.className = 'topic-pill';
-    btn.textContent = t.name;
+    btn.innerHTML = t.name + '<span class="pill-count">' + t.terms.length + '</span>';
     btn.dataset.id = t.id;
     btn.dataset.group = 'macro';
-    btn.onclick = () => selectTopic(t.id, 'macro', btn);
+    btn.onclick = function() { toggleTopic(t.id, 'macro', btn); };
     macroCon.appendChild(btn);
   });
 }
@@ -1706,29 +1926,48 @@ function buildGridVisuals() {
   });
 }
 
-function selectTopic(id, group, btn) {
-  document.querySelectorAll('.topic-pill').forEach(p => p.classList.remove('selected'));
-  btn.classList.add('selected');
-  const arr = group === 'micro' ? TOPICS.micro : TOPICS.macro;
-  state.selectedTopic = arr.find(t => t.id === id);
-
-  // Show term count feedback
-  const count = state.selectedTopic.terms.length;
-  let note = document.getElementById('topicFeedback');
-  if (!note) {
-    note = document.createElement('div');
-    note.id = 'topicFeedback';
-    note.style.cssText = 'margin-top:14px; font-size:13px; padding:10px 14px; border-radius:8px; border-left:3px solid var(--gold);';
-    document.querySelector('.setup-card').appendChild(note);
+function toggleTopic(id, group, btn) {
+  var arr = group === 'micro' ? TOPICS.micro : TOPICS.macro;
+  var topic = arr.find(function(t) { return t.id === id; });
+  var idx = state.selectedTopics.findIndex(function(t) { return t.id === id; });
+  if (idx === -1) {
+    state.selectedTopics.push(topic);
+    btn.classList.add('selected');
+  } else {
+    state.selectedTopics.splice(idx, 1);
+    btn.classList.remove('selected');
   }
-  note.style.background = count >= 24 ? 'rgba(45,106,79,0.15)' : 'rgba(201,168,76,0.1)';
-  note.style.color = count >= 24 ? '#6fcf97' : 'var(--gold)';
-  note.innerHTML = count >= 24
-    ? `<strong>${count} terms</strong> available — all grid sizes supported`
-    : `<strong>${count} terms</strong> available — grid will auto-adjust to fit`;
-
+  updatePoolBar();
   checkStartReady();
   updateGridNote();
+}
+
+function updatePoolBar() {
+  var bar = document.getElementById('topicPoolBar');
+  var txt = document.getElementById('topicPoolText');
+  if (state.selectedTopics.length === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+  var total = getPoolTerms().length;
+  var names = state.selectedTopics.map(function(t) { return t.name; }).join(', ');
+  bar.classList.add('visible');
+  txt.innerHTML = '<strong>' + total + ' terms</strong> in pool across: ' + names;
+}
+
+function getPoolTerms() {
+  var seen = {};
+  var pool = [];
+  state.selectedTopics.forEach(function(t) {
+    t.terms.forEach(function(item) {
+      var key = item.term;
+      if (!seen[key]) {
+        seen[key] = true;
+        pool.push({ term: item.term, def: item.def, topic: t.name });
+      }
+    });
+  });
+  return pool;
 }
 
 function selectSize(size, el) {
@@ -1740,11 +1979,15 @@ function selectSize(size, el) {
 }
 
 function updateGridNote() {
-  const n = state.gridSize * state.gridSize;
-  const hasFree = state.gridSize === 5;
-  const needed = hasFree ? n - 1 : n;
+  var n = state.gridSize * state.gridSize;
+  var needed = n;
+  var total = state.selectedTopics.length > 0 ? getPoolTerms().length : needed;
+  var surplus = total - needed;
+  var surplusNote = surplus > 0
+    ? ' <span style="color:rgba(255,255,255,0.5); font-size:12px;">(' + surplus + ' extra terms in the pool — full house is not guaranteed)</span>'
+    : '';
   document.getElementById('gridNote').innerHTML =
-    `Students fill <strong style="color:var(--gold)">${needed} terms</strong> on their card from the topic list${hasFree ? ' (centre cell is FREE)' : ''}.`;
+    'Students choose <strong style="color:var(--gold)">' + needed + ' terms</strong> from the list below for their card.' + surplusNote;
 }
 
 function toggleStage(key) {
@@ -1764,29 +2007,31 @@ function toggleStage(key) {
 }
 
 function checkStartReady() {
-  if (!state.selectedTopic) {
+  if (state.selectedTopics.length === 0) {
     document.getElementById('startBtn').disabled = true;
     return;
   }
-  const termCount = state.selectedTopic.terms.length;
-  const n = state.gridSize * state.gridSize;
-  const hasFree = state.gridSize === 5;
-  const needed = hasFree ? n - 1 : n;
+  var MIN_SURPLUS = 3;
+  var termCount = getPoolTerms().length;
+  var n = state.gridSize * state.gridSize;
+  var needed = n;
 
-  if (termCount < needed) {
-    // Auto-downgrade grid size to fit available terms
-    if (termCount >= 16) {
+  // Downgrade grid if pool too small
+  if (termCount < needed + MIN_SURPLUS) {
+    if (termCount >= 16 + MIN_SURPLUS && state.gridSize > 4) {
       selectSizeById(4);
-    } else if (termCount >= 9) {
+    } else if (termCount >= 9 + MIN_SURPLUS && state.gridSize > 3) {
       selectSizeById(3);
     }
   }
+  if (termCount < needed) {
+    if (termCount >= 16) { selectSizeById(4); }
+    else if (termCount >= 9) { selectSizeById(3); }
+  }
 
-  // Re-check after possible adjustment
-  const n2 = state.gridSize * state.gridSize;
-  const hasFree2 = state.gridSize === 5;
-  const needed2 = hasFree2 ? n2 - 1 : n2;
-  document.getElementById('startBtn').disabled = state.selectedTopic.terms.length < needed2;
+  var n2 = state.gridSize * state.gridSize;
+  document.getElementById('startBtn').disabled = termCount < n2;
+  updateGridNote();
 }
 
 function selectSizeById(size) {
@@ -1807,74 +2052,101 @@ function goToSetup() {
 }
 
 function goToTerms() {
-  if(!state.selectedTopic) return;
-  const t = state.selectedTopic;
-  document.getElementById('topicTitle').textContent = t.name;
-  const n = state.gridSize * state.gridSize;
-  const hasFree = state.gridSize === 5;
-  const needed = hasFree ? n - 1 : n;
-  document.getElementById('termsCount').textContent = `${t.terms.length} terms available`;
-  document.getElementById('gridSizeInfo').textContent = needed;
-  document.getElementById('printTopicLabel').textContent = `Topic: ${t.name}`;
+  if(state.selectedTopics.length === 0) return;
+  var pool = getPoolTerms();
+  var n = state.gridSize * state.gridSize;
+  var needed = n;
+  var topicNames = state.selectedTopics.map(function(t) { return t.name; }).join(' + ');
 
-  // Build terms grid (screen view)
-  const tg = document.getElementById('termsGrid');
+  document.getElementById('topicTitle').textContent = topicNames;
+  document.getElementById('termsCount').textContent = pool.length + ' terms available';
+  document.getElementById('gridSizeInfo').textContent = needed;
+  document.getElementById('gridSizeTotalInfo').textContent = pool.length;
+  document.getElementById('printTopicLabel').textContent = 'Topic(s): ' + topicNames;
+
+  // Build terms grid (screen view) — grouped by topic
+  var tg = document.getElementById('termsGrid');
   tg.innerHTML = '';
-  t.terms.forEach((item, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'term-chip';
-    chip.innerHTML = `<span class="term-num">${String(i+1).padStart(2,'0')}</span>${item.term}`;
-    tg.appendChild(chip);
+  state.selectedTopics.forEach(function(t) {
+    if (state.selectedTopics.length > 1) {
+      var label = document.createElement('div');
+      label.style.cssText = 'grid-column: 1 / -1; font-size:11px; text-transform:uppercase; letter-spacing:2px; color:rgba(255,255,255,0.35); font-weight:600; margin-top:12px; margin-bottom:2px;';
+      label.textContent = t.name;
+      tg.appendChild(label);
+    }
+    t.terms.forEach(function(item, i) {
+      var chip = document.createElement('div');
+      chip.className = 'term-chip';
+      chip.innerHTML = '<span class="term-num">' + String(i+1).padStart(2,'0') + '</span>' + item.term;
+      tg.appendChild(chip);
+    });
   });
 
-  // Build printable bingo card
-  buildPrintCard();
+  buildPrintCard(pool);
   showScreen('termsScreen');
 }
 
-function buildPrintCard() {
-  const size = state.gridSize;
-  const hasFree = size === 5;
-  const letters = ['B','I','N','G','O'];
-  const headerRow = document.getElementById('bingoHeaderRow');
-  headerRow.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+function buildPrintCard(pool) {
+  var size = state.gridSize;
+  var letters = ['B','I','N','G','O'];
+  var headerRow = document.getElementById('bingoHeaderRow');
+  headerRow.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
   headerRow.innerHTML = '';
-  for(let i=0; i<size; i++) {
-    const cell = document.createElement('div');
+  for(var i=0; i<size; i++) {
+    var cell = document.createElement('div');
     cell.className = 'bingo-header-cell';
     cell.textContent = size === 5 ? letters[i] : '';
     if(size !== 5) cell.style.display = 'none';
     headerRow.appendChild(cell);
   }
-  const grid = document.getElementById('printBingoGrid');
-  grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+  var grid = document.getElementById('printBingoGrid');
+  grid.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
   grid.innerHTML = '';
-  const total = size * size;
-  const mid = hasFree ? Math.floor(total / 2) : -1;
-  for(let i=0; i<total; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'bingo-cell' + (i === mid ? ' free' : '');
-    if(i === mid) cell.textContent = '★ FREE';
-    grid.appendChild(cell);
+  var total = size * size;
+  for(var j=0; j<total; j++) {
+    var c = document.createElement('div');
+    c.className = 'bingo-cell';
+    grid.appendChild(c);
   }
 
   // Populate print terms bank
-  const needed = hasFree ? total - 1 : total;
+  var needed = total;
   document.getElementById('printTermsNeeded').textContent = needed;
-  const printList = document.getElementById('printTermsList');
+  document.getElementById('printTermsTotal').textContent = pool.length;
+
+  var printList = document.getElementById('printTermsList');
   printList.innerHTML = '';
-  const sorted = [...state.selectedTopic.terms].sort((a, b) => a.term.localeCompare(b.term));
-  sorted.forEach(item => {
-    const chip = document.createElement('div');
-    chip.style.cssText = 'border:1px solid #333; border-radius:4px; padding:3px 8px; font-size:10pt; font-family:"DM Sans",sans-serif; color:#111; background:#f9f9f9;';
-    chip.textContent = item.term;
-    printList.appendChild(chip);
-  });
+
+  if (state.selectedTopics.length > 1) {
+    // Group by topic on print sheet
+    state.selectedTopics.forEach(function(t) {
+      var heading = document.createElement('div');
+      heading.style.cssText = 'width:100%; font-size:9pt; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#666; margin-top:8px; margin-bottom:4px; font-family:"DM Sans",sans-serif;';
+      heading.textContent = t.name;
+      printList.appendChild(heading);
+      var sorted = [...t.terms].sort(function(a,b){ return a.term.localeCompare(b.term); });
+      sorted.forEach(function(item) {
+        var chip = document.createElement('div');
+        chip.style.cssText = 'border:1px solid #333; border-radius:4px; padding:3px 8px; font-size:10pt; font-family:"DM Sans",sans-serif; color:#111; background:#f9f9f9;';
+        chip.textContent = item.term;
+        printList.appendChild(chip);
+      });
+    });
+  } else {
+    var sorted = [...pool].sort(function(a,b){ return a.term.localeCompare(b.term); });
+    sorted.forEach(function(item) {
+      var chip = document.createElement('div');
+      chip.style.cssText = 'border:1px solid #333; border-radius:4px; padding:3px 8px; font-size:10pt; font-family:"DM Sans",sans-serif; color:#111; background:#f9f9f9;';
+      chip.textContent = item.term;
+      printList.appendChild(chip);
+    });
+  }
 }
 
 function goToGame() {
-  const t = state.selectedTopic;
-  state.currentTopicTerms = [...t.terms];
+  var pool = getPoolTerms();
+  var topicNames = state.selectedTopics.map(function(t) { return t.name; }).join(' + ');
+  state.currentTopicTerms = pool;
   state.calledTerms = [];
   state.calledIndices = [];
   state.claimedStages = [];
@@ -1886,10 +2158,10 @@ function goToGame() {
   state.activeStages.push('fullhouse');
   state.currentStageIndex = 0;
 
-  document.getElementById('totalTerms').textContent = t.terms.length;
-  document.getElementById('drawCounter').innerHTML = `0 / <span id="totalTerms">${t.terms.length}</span> terms drawn`;
-  document.getElementById('gameTopicLabel').textContent = t.name;
-  document.getElementById('gameGridLabel').textContent = `${state.gridSize}×${state.gridSize} grid`;
+  document.getElementById('totalTerms').textContent = pool.length;
+  document.getElementById('drawCounter').innerHTML = '0 / <span id="totalTerms">' + pool.length + '</span> terms drawn';
+  document.getElementById('gameTopicLabel').textContent = topicNames;
+  document.getElementById('gameGridLabel').textContent = state.gridSize + '\xD7' + state.gridSize + ' grid';
   document.getElementById('calledChips').innerHTML = '';
   document.getElementById('calledHistory').style.display = 'none';
   document.getElementById('calledChips').style.display = 'none';
@@ -1915,6 +2187,7 @@ function goToGame() {
   }
   document.getElementById('drawBtn').disabled = false;
   document.getElementById('drawBtn').innerHTML = '<span class="ball-icon">🎱</span> Draw a Ball';
+  saveGameState();
   showScreen('gameScreen');
 }
 
@@ -2024,6 +2297,7 @@ function drawBall() {
     } else {
       drawBtn.disabled = false;
     }
+    saveGameState();
   }, 1100);
 }
 
@@ -2043,6 +2317,11 @@ function claimStage(key) {
   // Advance to next stage
   state.currentStageIndex++;
   const isGameOver = key === 'fullhouse';
+  if (isGameOver) {
+    discardSave();
+  } else {
+    saveGameState();
+  }
 
   // Update next stage to current in tracker
   if (!isGameOver && state.currentStageIndex < state.activeStages.length) {
@@ -2080,15 +2359,31 @@ function continueGame() {
 }
 
 function populateGameTerms() {
-  const grid = document.getElementById('gameTermsGrid');
+  var grid = document.getElementById('gameTermsGrid');
   grid.innerHTML = '';
-  const sorted = [...state.currentTopicTerms].sort((a, b) => a.term.localeCompare(b.term));
-  sorted.forEach(item => {
-    const chip = document.createElement('div');
-    chip.className = 'game-term-chip';
-    chip.textContent = item.term;
-    grid.appendChild(chip);
-  });
+  if (state.selectedTopics.length > 1) {
+    state.selectedTopics.forEach(function(t) {
+      var label = document.createElement('div');
+      label.style.cssText = 'width:100%; font-size:10px; text-transform:uppercase; letter-spacing:2px; color:rgba(255,255,255,0.3); font-weight:600; margin-top:10px; margin-bottom:4px;';
+      label.textContent = t.name;
+      grid.appendChild(label);
+      var sorted = [...t.terms].sort(function(a,b){ return a.term.localeCompare(b.term); });
+      sorted.forEach(function(item) {
+        var chip = document.createElement('div');
+        chip.className = 'game-term-chip';
+        chip.textContent = item.term;
+        grid.appendChild(chip);
+      });
+    });
+  } else {
+    var sorted = [...state.currentTopicTerms].sort(function(a,b){ return a.term.localeCompare(b.term); });
+    sorted.forEach(function(item) {
+      var chip = document.createElement('div');
+      chip.className = 'game-term-chip';
+      chip.textContent = item.term;
+      grid.appendChild(chip);
+    });
+  }
 }
 
 
