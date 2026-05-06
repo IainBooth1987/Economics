@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lean Production Revision Game | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2235;
+            --border: #1e2d45;
+            --blue: #3b82f6;
+            --blue-dim: #1d4ed8;
+            --amber: #f59e0b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --correct: #10b981;
+            --correct-bg: #052e1a;
+            --incorrect: #ef4444;
+            --incorrect-bg: #2d0a0a;
+            --jit: #3b82f6;
+            --jit-bg: #0d1f3c;
+            --jic: #f59e0b;
+            --jic-bg: #2a1e06;
+        }
+
+        body.light-mode {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface2: #e8edf4;
+            --border: #cbd5e1;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --correct-bg: #d1fae5;
+            --incorrect-bg: #fee2e2;
+            --jit-bg: #dbeafe;
+            --jic-bg: #fef3c7;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* PASSWORD OVERLAY */
+        .pw-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .pw-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .pw-box h2 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.8rem;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .pw-box p {
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .pw-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .pw-input:focus { border-color: var(--blue); }
+
+        .pw-input.shake {
+            animation: pwShake 0.4s ease;
+            border-color: var(--incorrect);
+        }
+
+        @keyframes pwShake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+
+        .pw-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s;
+        }
+
+        .pw-btn:hover { background: var(--blue-dim); }
+
+        .pw-error {
+            color: var(--incorrect);
+            font-size: 0.88rem;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        .pw-shop-link {
+            color: var(--amber);
+            font-size: 0.88rem;
+            text-decoration: none;
+        }
+
+        .pw-shop-link:hover { text-decoration: underline; }
+
+        /* HEADER */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-family: 'Fraunces', serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--blue);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .page-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--amber);
+            background: rgba(245,158,11,0.12);
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-link {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--blue); }
+
+        .theme-toggle {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+
+        .theme-toggle:hover { border-color: var(--blue); }
+
+        /* HERO */
+        .hero {
+            padding: 48px 32px 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-family: 'Fraunces', serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .hero h1 span { color: var(--blue); }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-width: 640px;
+        }
+
+        /* TABS */
+        .tabs-bar {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 14px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn:hover { color: var(--text); }
+
+        .tab-btn.active {
+            color: var(--blue);
+            border-bottom-color: var(--blue);
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active {
+            display: block;
+            animation: fadeUp 0.35s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* PROGRESS BAR */
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--surface2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--blue);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* QUESTION CARD */
+        .q-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 32px;
+            margin-bottom: 20px;
+        }
+
+        .q-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 16px 20px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.5;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--blue);
+            background: rgba(59,130,246,0.08);
+        }
+
+        .option-btn.correct {
+            background: var(--correct-bg);
+            border-color: var(--correct);
+            color: var(--correct);
+        }
+
+        .option-btn.incorrect {
+            background: var(--incorrect-bg);
+            border-color: var(--incorrect);
+            color: var(--incorrect);
+        }
+
+        .option-btn:disabled { cursor: default; }
+
+        /* EXPLANATION */
+        .explanation-box {
+            display: none;
+            margin-top: 16px;
+            padding: 18px 20px;
+            background: rgba(59,130,246,0.08);
+            border-left: 4px solid var(--blue);
+            border-radius: 0 8px 8px 0;
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .explanation-box.show { display: block; animation: fadeUp 0.3s ease; }
+
+        /* NAV BUTTONS */
+        .nav-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+        }
+
+        .btn-primary:hover { background: var(--blue-dim); }
+
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover { color: var(--text); border-color: var(--blue); }
+
+        /* SCORE PANEL */
+        .score-panel {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 48px 32px;
+            text-align: center;
+        }
+
+        .score-panel.show { display: block; animation: fadeUp 0.4s ease; }
+
+        .score-big {
+            font-family: 'Fraunces', serif;
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--blue);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .score-label {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        .score-message {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 28px;
+        }
+
+        /* SCENARIO TAB */
+        .section-heading {
+            font-family: 'Fraunces', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-heading span.jit-label { color: var(--jit); }
+        .section-heading span.jic-label { color: var(--jic); }
+
+        .section-block { margin-bottom: 40px; }
+
+        .scenario-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 22px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .scenario-card.selected { border-color: var(--blue); }
+        .scenario-card.result-jit { border-color: var(--jit); background: var(--jit-bg); }
+        .scenario-card.result-jic { border-color: var(--jic); background: var(--jic-bg); }
+        .scenario-card.result-wrong { border-color: var(--incorrect); background: var(--incorrect-bg); }
+
+        .scenario-text {
+            font-size: 0.97rem;
+            line-height: 1.7;
+            color: var(--text);
+            margin-bottom: 14px;
+        }
+
+        .scenario-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .scenario-opt {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .scenario-opt:hover { border-color: var(--blue); color: var(--blue); }
+
+        .scenario-opt.active-jit {
+            background: var(--jit-bg);
+            border-color: var(--jit);
+            color: var(--jit);
+        }
+
+        .scenario-opt.active-jic {
+            background: var(--jic-bg);
+            border-color: var(--jic);
+            color: var(--jic);
+        }
+
+        /* SCENARIO RESULT PANEL */
+        .scenario-result-panel {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 32px;
+            margin-top: 24px;
+        }
+
+        .scenario-result-panel.show { display: block; animation: fadeUp 0.3s ease; }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .result-stat {
+            background: var(--surface2);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .result-stat-num {
+            font-family: 'Fraunces', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .result-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* MATCH GAME */
+        .game-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .game-select-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 32px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .game-select-card:hover {
+            border-color: var(--blue);
+            transform: translateY(-3px);
+        }
+
+        .game-select-card h3 {
+            font-family: 'Fraunces', serif;
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .game-select-card p { color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; }
+
+        .game-area { display: none; }
+        .game-area.active { display: block; animation: fadeUp 0.3s ease; }
+
+        .match-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+        }
+
+        .match-col-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1rem;
+            color: var(--blue);
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .match-item {
+            padding: 16px 18px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .match-item:hover { border-color: var(--blue); }
+        .match-item.selected { border-color: var(--blue); background: rgba(59,130,246,0.1); }
+
+        .match-item.matched {
+            background: var(--correct-bg);
+            border-color: var(--correct);
+            color: var(--correct);
+            cursor: default;
+        }
+
+        .match-item.wrong {
+            background: var(--incorrect-bg);
+            border-color: var(--incorrect);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .match-complete-banner {
+            display: none;
+            background: var(--correct-bg);
+            border: 1px solid var(--correct);
+            border-radius: 10px;
+            padding: 18px 20px;
+            text-align: center;
+            color: var(--correct);
+            font-weight: 600;
+            font-size: 1.05rem;
+            margin-top: 20px;
+        }
+
+        .match-complete-banner.show { display: block; animation: fadeUp 0.3s ease; }
+
+        /* FILL BLANKS */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .word-chip {
+            padding: 8px 18px;
+            background: var(--surface2);
+            border: 2px solid var(--blue);
+            border-radius: 20px;
+            color: var(--blue);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .word-chip:hover { background: var(--blue); color: white; }
+
+        .word-chip.selected-chip {
+            background: var(--blue);
+            color: white;
+        }
+
+        .word-chip.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .passage-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            font-size: 1rem;
+            line-height: 2.2;
+            color: var(--text);
+        }
+
+        .blank {
+            display: inline-block;
+            min-width: 110px;
+            padding: 2px 10px;
+            border-bottom: 2px dashed var(--blue);
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .blank:hover { background: rgba(59,130,246,0.08); border-radius: 4px; }
+        .blank.filled { color: var(--text); border-bottom-style: solid; }
+        .blank.correct { color: var(--correct); border-color: var(--correct); }
+        .blank.incorrect { color: var(--incorrect); border-color: var(--incorrect); }
+
+        .fill-result-panel {
+            display: none;
+            margin-top: 20px;
+            padding: 18px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .fill-result-panel.show { display: block; animation: fadeUp 0.3s ease; }
+
+        .fill-score-num {
+            font-family: 'Fraunces', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .fill-score-label { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+        /* UTILITY */
+        .hidden { display: none !important; }
+
+        @media (max-width: 720px) {
+            .hero { padding: 32px 20px 24px; }
+            .hero h1 { font-size: 1.7rem; }
+            .tabs-bar { padding: 0 16px; overflow-x: auto; }
+            .main { padding: 28px 16px; }
+            .match-grid { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: 1fr; }
+            .scenario-btns { flex-direction: column; }
+            .site-header { padding: 0 16px; }
+            .back-link { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PASSWORD OVERLAY -->
+    <div class="pw-overlay" id="pwOverlay">
+        <div class="pw-box">
+            <h2>BIZ-OMICS</h2>
+            <p>Enter your password to access this resource.</p>
+            <input class="pw-input" type="password" id="pwInput" placeholder="Password" />
+            <div class="pw-error" id="pwError"></div>
+            <button class="pw-btn" onclick="checkPassword()">Unlock</button>
+            <a href="../business/index.html" class="pw-shop-link">Visit the shop to get access</a>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="site-header">
+        <div class="header-left">
+            <a href="../business/index.html" class="logo">BIZ-OMICS</a>
+            <span class="page-tag">Business</span>
+        </div>
+        <div class="header-right">
+            <a href="../business/index.html" class="back-link">Back to Hub</a>
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme">&#9790;</button>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Lean Production <span>Revision Game</span></h1>
+        <p>Master lean production techniques, JIT vs JIC inventory management, and continuous improvement principles through interactive activities.</p>
+    </div>
+
+    <!-- TABS BAR -->
+    <div class="tabs-bar">
+        <button class="tab-btn active" onclick="switchTab(0)">Multiple Choice</button>
+        <button class="tab-btn" onclick="switchTab(1)">JIT vs JIC Scenarios</button>
+        <button class="tab-btn" onclick="switchTab(2)">Quick Games</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- TAB 0: MULTIPLE CHOICE -->
+        <div class="tab-panel active" id="panel0">
+            <div class="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill" id="mcProgress" style="width:7%"></div></div>
+                <span class="progress-label" id="mcLabel">1 / 15</span>
+            </div>
+            <div id="mcQuestionArea"></div>
+            <div class="nav-row">
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevQ()" style="display:none">Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQ()">Next Question</button>
+            </div>
+            <div class="score-panel" id="mcScorePanel">
+                <div class="score-big" id="mcScoreBig"></div>
+                <div class="score-label">out of 15</div>
+                <div class="score-message" id="mcScoreMsg"></div>
+                <button class="btn btn-primary" onclick="resetMC()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- TAB 1: SCENARIO SORTING -->
+        <div class="tab-panel" id="panel1">
+            <div class="section-block">
+                <div class="section-heading">Business Scenarios &mdash; <span class="jit-label">JIT</span> or <span class="jic-label">JIC</span>?</div>
+                <div id="scenariosContainer"></div>
+            </div>
+            <div class="section-block">
+                <div class="section-heading">Benefits &mdash; <span class="jit-label">JIT</span> or <span class="jic-label">JIC</span>?</div>
+                <div id="benefitsContainer"></div>
+            </div>
+            <div class="section-block">
+                <div class="section-heading">Drawbacks &mdash; <span class="jit-label">JIT</span> or <span class="jic-label">JIC</span>?</div>
+                <div id="drawbacksContainer"></div>
+            </div>
+            <div class="nav-row">
+                <button class="btn btn-secondary" onclick="resetScenarios()">Reset All</button>
+                <button class="btn btn-primary" onclick="checkScenarios()">Check All Answers</button>
+            </div>
+            <div class="scenario-result-panel" id="scenarioResultPanel">
+                <div class="result-grid">
+                    <div class="result-stat">
+                        <div class="result-stat-num" id="srScenarios">-</div>
+                        <div class="result-stat-label">Scenarios correct</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-num" id="srBenefits">-</div>
+                        <div class="result-stat-label">Benefits correct</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-num" id="srDrawbacks">-</div>
+                        <div class="result-stat-label">Drawbacks correct</div>
+                    </div>
+                </div>
+                <div class="score-message" id="srMessage"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: QUICK GAMES -->
+        <div class="tab-panel" id="panel2">
+            <div id="gameSelector" class="game-selector-grid">
+                <div class="game-select-card" onclick="startGame('match')">
+                    <h3>Mix and Match</h3>
+                    <p>Match lean production concepts with their definitions</p>
+                </div>
+                <div class="game-select-card" onclick="startGame('fillblanks')">
+                    <h3>Fill in the Blanks</h3>
+                    <p>Complete the passage on lean production culture</p>
+                </div>
+            </div>
+
+            <!-- MATCH GAME -->
+            <div id="matchGame" class="game-area">
+                <div class="match-grid" id="matchContainer"></div>
+                <div class="match-complete-banner" id="matchBanner">All pairs matched correctly! Well done.</div>
+                <div class="nav-row">
+                    <button class="btn btn-secondary" onclick="backToGames()">Back</button>
+                    <button class="btn btn-primary" onclick="resetMatch()">Reset</button>
+                </div>
+            </div>
+
+            <!-- FILL BLANKS GAME -->
+            <div id="fillblanksGame" class="game-area">
+                <div class="word-bank" id="wordBank"></div>
+                <div class="passage-box" id="passage"></div>
+                <div class="fill-result-panel" id="fillResultPanel">
+                    <div class="fill-score-num" id="fillScoreNum"></div>
+                    <div class="fill-score-label">blanks correct</div>
+                </div>
+                <div class="nav-row">
+                    <button class="btn btn-secondary" onclick="backToGames()">Back</button>
+                    <button class="btn btn-secondary" onclick="resetFillBlanks()">Reset</button>
+                    <button class="btn btn-primary" onclick="checkFillBlanks()">Check Answers</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /main -->
+
+    <script>
+        // ===================== PASSWORD =====================
+        var VALID_PASSWORDS = [
+            'BizAQA-SM4RT!2026',
+            'BizEDX-AL9K!2026',
+            'BizOCR-AL7M!2026',
+            'BizOCR-GC4X!2026',
+            'GSALEconomics'
+        ];
+
+        var STORAGE_KEY = 'biz-lean-production-unlocked';
+
+        function checkPassword() {
+            var val = document.getElementById('pwInput').value.trim();
+            var valid = false;
+            for (var i = 0; i < VALID_PASSWORDS.length; i++) {
+                if (val === VALID_PASSWORDS[i]) { valid = true; break; }
+            }
+            if (valid) {
+                localStorage.setItem(STORAGE_KEY, '1');
+                document.getElementById('pwOverlay').style.display = 'none';
+            } else {
+                var inp = document.getElementById('pwInput');
+                var err = document.getElementById('pwError');
+                err.textContent = 'Incorrect password. Please try again.';
+                inp.classList.remove('shake');
+                void inp.offsetWidth;
+                inp.classList.add('shake');
+            }
+        }
+
+        document.getElementById('pwInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { checkPassword(); }
+        });
+
+        if (localStorage.getItem(STORAGE_KEY) === '1') {
+            document.getElementById('pwOverlay').style.display = 'none';
+        }
+
+        // ===================== THEME =====================
+        var THEME_KEY = 'biz-omics-theme';
+
+        function applyTheme(t) {
+            if (t === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeToggle').innerHTML = '&#9728;';
+            } else {
+                document.body.classList.remove('light-mode');
+                document.getElementById('themeToggle').innerHTML = '&#9790;';
+            }
+        }
+
+        applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            var current = localStorage.getItem(THEME_KEY) || 'dark';
+            var next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem(THEME_KEY, next);
+            applyTheme(next);
+        });
+
+        // ===================== TABS =====================
+        function switchTab(idx) {
+            var btns = document.querySelectorAll('.tab-btn');
+            var panels = document.querySelectorAll('.tab-panel');
+            for (var i = 0; i < btns.length; i++) {
+                btns[i].classList.toggle('active', i === idx);
+                panels[i].classList.toggle('active', i === idx);
+            }
+            if (idx === 1) { initScenarios(); }
+        }
+
+        // ===================== MCQ DATA =====================
+        var mcQuestions = [
+            {
+                question: "What is the definition of Lean Production?",
+                options: [
+                    "A production method that focuses on reducing employee numbers to cut costs",
+                    "An approach to management that focuses on cutting out waste and increasing efficiency while ensuring quality",
+                    "A system where products are made using the cheapest materials available",
+                    "A production strategy that maximizes inventory levels to prevent stockouts"
+                ],
+                correct: 1,
+                explanation: "Lean Production is an approach to management that focuses on cutting out waste (anything that doesn't add value) while ensuring quality. It originated from the Toyota Production System and emphasises efficiency, continuous improvement, and respect for people."
+            },
+            {
+                question: "What does 'Kaizen' mean?",
+                options: [
+                    "Just in Time production",
+                    "Continuous improvement through small, incremental changes",
+                    "Zero defects in production",
+                    "Elimination of all inventory"
+                ],
+                correct: 1,
+                explanation: "Kaizen is a Japanese term meaning 'continuous improvement'. It involves making small, incremental changes regularly rather than large, occasional changes. Kaizen encourages all employees to contribute ideas for improvement, creating a culture of continuous enhancement."
+            },
+            {
+                question: "What is Just in Time (JIT) production?",
+                options: [
+                    "Producing goods at the last possible moment to meet customer demand",
+                    "A method where raw materials and components arrive exactly when needed in the production process, minimising inventory",
+                    "Making products very quickly to reduce lead time",
+                    "Scheduling production to finish just before the factory closes"
+                ],
+                correct: 1,
+                explanation: "Just in Time (JIT) is a production strategy where raw materials and components arrive exactly when needed in the production process. This minimises inventory holding costs and waste, but requires reliable suppliers and efficient logistics."
+            },
+            {
+                question: "Which of the following is a key benefit of Kaizen?",
+                options: [
+                    "It requires large capital investment upfront",
+                    "It only involves senior management in improvement processes",
+                    "It creates a culture of continuous improvement and employee empowerment",
+                    "It focuses solely on cost reduction regardless of quality"
+                ],
+                correct: 2,
+                explanation: "A key benefit of Kaizen is that it creates a culture of continuous improvement where all employees are encouraged to suggest and implement improvements. This empowers workers, increases engagement, improves quality, reduces waste, and enhances productivity over time."
+            },
+            {
+                question: "What is a major drawback of Just in Time production?",
+                options: [
+                    "It increases inventory holding costs significantly",
+                    "It requires excess warehouse space",
+                    "The business is vulnerable to supply chain disruptions - any delay can halt production",
+                    "It always results in lower quality products"
+                ],
+                correct: 2,
+                explanation: "A major drawback of JIT is vulnerability to supply chain disruptions. Because inventory levels are minimal, any delay from suppliers can cause production to stop completely. This risk became evident during events such as the COVID-19 pandemic."
+            },
+            {
+                question: "Which of these is NOT a type of waste ('Muda') eliminated in Lean Production?",
+                options: [
+                    "Overproduction",
+                    "Waiting time",
+                    "Employee training",
+                    "Defects"
+                ],
+                correct: 2,
+                explanation: "Employee training is NOT considered waste in Lean Production - it is actually essential. The seven types of waste (Muda) are: Overproduction, Waiting, Transportation, Over-processing, Inventory, Motion, and Defects. Some frameworks add an eighth: unused employee creativity."
+            },
+            {
+                question: "In which business context would Lean Production be MOST suitable?",
+                options: [
+                    "A luxury car manufacturer with stable demand and reliable suppliers",
+                    "A business producing customised, one-off products with unpredictable demand",
+                    "A company operating in a country with unreliable infrastructure",
+                    "A startup with highly volatile and uncertain sales patterns"
+                ],
+                correct: 0,
+                explanation: "Lean Production works best with stable demand patterns, reliable suppliers, good infrastructure, and standardised processes. A luxury car manufacturer with these characteristics can benefit from reduced waste and inventory costs while maintaining quality."
+            },
+            {
+                question: "Which situation would make Just in Time production UNSUITABLE?",
+                options: [
+                    "When suppliers are reliable and located nearby",
+                    "When demand patterns are stable and predictable",
+                    "When the business faces highly volatile demand and unreliable suppliers",
+                    "When the business wants to reduce inventory holding costs"
+                ],
+                correct: 2,
+                explanation: "JIT is unsuitable when demand is highly volatile or suppliers are unreliable. In these conditions, the business cannot accurately predict when materials will be needed, and supplier delays will cause production stoppages. Just in Case (JIC) inventory management would be more appropriate."
+            },
+            {
+                question: "What is a 'Quality Circle'?",
+                options: [
+                    "A group of workers who meet regularly to discuss and solve quality and production problems",
+                    "A certification that products meet quality standards",
+                    "The circular flow of products through the production process",
+                    "A statistical tool used to measure defect rates"
+                ],
+                correct: 0,
+                explanation: "Quality Circles are small groups of workers (typically 6-12 people) who meet regularly to identify, analyse, and solve work-related problems, particularly quality and productivity issues. This empowers employees and utilises their expertise to continuously improve processes."
+            },
+            {
+                question: "What does Total Quality Management (TQM) involve?",
+                options: [
+                    "Only the quality control department checking for defects",
+                    "Achieving quality by inspecting finished products",
+                    "A culture where every employee is responsible for quality and continuous improvement throughout all processes",
+                    "Accepting a certain level of defects as normal"
+                ],
+                correct: 2,
+                explanation: "TQM is an organisation-wide approach where quality is everyone's responsibility. It focuses on preventing defects rather than inspecting them out, involves continuous improvement, emphasises customer satisfaction, and requires commitment from all employees and management."
+            },
+            {
+                question: "Which of the following is a benefit of Lean Production?",
+                options: [
+                    "Increased inventory holding costs",
+                    "Reduced efficiency and productivity",
+                    "Lower costs through waste reduction and improved efficiency",
+                    "Decreased product quality"
+                ],
+                correct: 2,
+                explanation: "Lean Production reduces costs by eliminating waste including overproduction, waiting time, unnecessary transportation, over-processing, excess inventory, unnecessary motion, and defects. This improves efficiency, reduces inventory costs, improves cash flow, and often increases quality."
+            },
+            {
+                question: "What is a potential drawback of Kaizen?",
+                options: [
+                    "Improvements happen too quickly to control",
+                    "It can take a long time to see significant results as changes are small and incremental",
+                    "It reduces employee engagement",
+                    "It only works in manufacturing industries"
+                ],
+                correct: 1,
+                explanation: "Because Kaizen focuses on small, incremental improvements, it can take considerable time to see major results. Some businesses may prefer larger, more dramatic changes. However, Kaizen's gradual approach means changes are less disruptive and more sustainable."
+            },
+            {
+                question: "In which scenario would Just in Case (JIC) inventory management be preferable to JIT?",
+                options: [
+                    "When storage space is very limited and expensive",
+                    "When suppliers are extremely reliable with short lead times",
+                    "When the business operates in an area prone to natural disasters affecting supply chains",
+                    "When the business wants to minimise working capital tied up in inventory"
+                ],
+                correct: 2,
+                explanation: "Just in Case (JIC) involves holding buffer stock to protect against supply chain disruptions. It is preferable when suppliers are unreliable, lead times are long, demand is unpredictable, or external factors such as natural disasters or pandemics threaten supply chains."
+            },
+            {
+                question: "How does Lean Production aim to reduce waste?",
+                options: [
+                    "By reducing employee numbers",
+                    "By identifying and eliminating activities that don't add value to the customer",
+                    "By using cheaper, lower-quality materials",
+                    "By reducing product variety"
+                ],
+                correct: 1,
+                explanation: "Lean Production identifies and eliminates activities that do not add value from the customer's perspective. This includes reducing overproduction, minimising waiting time, eliminating unnecessary transportation and motion, reducing excess inventory, avoiding over-processing, and preventing defects."
+            },
+            {
+                question: "Which of these best describes the relationship between Kaizen and Lean Production?",
+                options: [
+                    "They are completely separate and unrelated approaches",
+                    "Kaizen is a competitor to Lean Production",
+                    "Kaizen is a key principle within Lean Production, providing the continuous improvement philosophy",
+                    "Kaizen is only relevant to Japanese businesses"
+                ],
+                correct: 2,
+                explanation: "Kaizen (continuous improvement) is a fundamental principle of Lean Production. While Lean Production provides the overall framework for eliminating waste and improving efficiency, Kaizen provides the cultural and methodological approach for making ongoing improvements."
+            }
+        ];
+
+        var currentQ = 0;
+        var mcAnswered = [];
+        var mcCorrect = [];
+
+        for (var qi = 0; qi < mcQuestions.length; qi++) {
+            mcAnswered.push(false);
+            mcCorrect.push(false);
+        }
+
+        function renderQ(idx) {
+            var q = mcQuestions[idx];
+            var html = '<div class="q-card"><div class="q-text">' + q.question + '</div><div class="options-grid">';
+            for (var i = 0; i < q.options.length; i++) {
+                html += '<button class="option-btn" id="opt' + i + '" onclick="selectAnswer(' + i + ')">' + q.options[i] + '</button>';
+            }
+            html += '</div><div class="explanation-box" id="explanBox">' + q.explanation + '</div></div>';
+            document.getElementById('mcQuestionArea').innerHTML = html;
+
+            if (mcAnswered[idx]) {
+                var opts = document.querySelectorAll('.option-btn');
+                for (var j = 0; j < opts.length; j++) {
+                    opts[j].disabled = true;
+                    if (j === q.correct) { opts[j].classList.add('correct'); }
+                }
+                document.getElementById('explanBox').classList.add('show');
+            }
+
+            document.getElementById('prevBtn').style.display = idx === 0 ? 'none' : '';
+            document.getElementById('nextBtn').textContent = idx === mcQuestions.length - 1 ? 'See Results' : 'Next Question';
+
+            var pct = ((idx + 1) / mcQuestions.length * 100).toFixed(0);
+            document.getElementById('mcProgress').style.width = pct + '%';
+            document.getElementById('mcLabel').textContent = (idx + 1) + ' / ' + mcQuestions.length;
+        }
+
+        function selectAnswer(selected) {
+            if (mcAnswered[currentQ]) { return; }
+            var q = mcQuestions[currentQ];
+            mcAnswered[currentQ] = true;
+            if (selected === q.correct) { mcCorrect[currentQ] = true; }
+
+            var opts = document.querySelectorAll('.option-btn');
+            for (var i = 0; i < opts.length; i++) {
+                opts[i].disabled = true;
+                if (i === q.correct) {
+                    opts[i].classList.add('correct');
+                } else if (i === selected) {
+                    opts[i].classList.add('incorrect');
+                }
+            }
+            document.getElementById('explanBox').classList.add('show');
+        }
+
+        function nextQ() {
+            if (currentQ < mcQuestions.length - 1) {
+                currentQ++;
+                renderQ(currentQ);
+            } else {
+                showMCScore();
+            }
+        }
+
+        function prevQ() {
+            if (currentQ > 0) {
+                currentQ--;
+                renderQ(currentQ);
+            }
+        }
+
+        function showMCScore() {
+            var total = 0;
+            for (var i = 0; i < mcCorrect.length; i++) { if (mcCorrect[i]) { total++; } }
+            document.getElementById('mcQuestionArea').style.display = 'none';
+            document.querySelector('.progress-wrap').style.display = 'none';
+            document.querySelector('.nav-row').style.display = 'none';
+            document.getElementById('mcScoreBig').textContent = total;
+            var pct = Math.round((total / mcQuestions.length) * 100);
+            var msg = '';
+            if (pct >= 87) { msg = 'Excellent work - clear understanding of lean production.'; }
+            else if (pct >= 67) { msg = 'Good effort. Review the areas you found tricky.'; }
+            else { msg = 'Keep revising - focus on JIT/JIC and the types of waste.'; }
+            document.getElementById('mcScoreMsg').textContent = msg;
+            document.getElementById('mcScorePanel').classList.add('show');
+        }
+
+        function resetMC() {
+            currentQ = 0;
+            for (var i = 0; i < mcQuestions.length; i++) {
+                mcAnswered[i] = false;
+                mcCorrect[i] = false;
+            }
+            document.getElementById('mcQuestionArea').style.display = '';
+            document.querySelector('.progress-wrap').style.display = '';
+            document.querySelector('.nav-row').style.display = '';
+            document.getElementById('mcScorePanel').classList.remove('show');
+            renderQ(0);
+        }
+
+        renderQ(0);
+
+        // ===================== SCENARIO DATA =====================
+        var scenarios = [
+            { text: "A smartphone manufacturer receives hourly deliveries of camera modules from a supplier 15 minutes away, with components arriving exactly as needed on the assembly line.", correct: "jit" },
+            { text: "A hospital maintains a 3-month stockpile of essential medical supplies and PPE after experiencing shortages during the pandemic.", correct: "jic" },
+            { text: "An automotive plant holds only 2 hours' worth of parts inventory, relying on suppliers to deliver multiple times per day in sequence.", correct: "jit" },
+            { text: "A bakery orders large quantities of flour and sugar to take advantage of bulk discounts, storing them in a warehouse for several months.", correct: "jic" },
+            { text: "A clothing retailer keeps large stocks of basic items in various sizes and colours to ensure availability regardless of demand fluctuations.", correct: "jic" },
+            { text: "A computer manufacturer uses real-time inventory systems where components are ordered automatically when the previous batch enters production.", correct: "jit" },
+            { text: "An electronics company maintains extra semiconductor inventory due to concerns about potential supply chain disruptions from geopolitical tensions.", correct: "jic" },
+            { text: "A luxury watch manufacturer receives Swiss movement components on a strict schedule, with each delivery timed to arrive within a 30-minute window of when production needs them.", correct: "jit" },
+            { text: "A pharmaceutical company stores 6 months' worth of active ingredients in case of supplier issues or regulatory delays.", correct: "jic" },
+            { text: "A furniture manufacturer requests wood deliveries daily, with the exact quantity needed for that day's production schedule.", correct: "jit" }
+        ];
+
+        var benefits = [
+            { text: "Significantly reduces inventory holding costs including storage, insurance, and security", correct: "jit" },
+            { text: "Improves cash flow as less working capital is tied up in stock", correct: "jit" },
+            { text: "Reduces waste from obsolete or expired inventory", correct: "jit" },
+            { text: "Encourages strong supplier relationships and quality improvement", correct: "jit" },
+            { text: "Reveals production inefficiencies that were previously hidden by excess inventory", correct: "jit" },
+            { text: "Provides protection against supply chain disruptions and delays", correct: "jic" },
+            { text: "Allows business to continue operating even if suppliers face problems", correct: "jic" },
+            { text: "Enables the business to meet unexpected spikes in customer demand", correct: "jic" },
+            { text: "Can take advantage of bulk purchase discounts from suppliers", correct: "jic" },
+            { text: "Provides security during seasonal demand fluctuations or market uncertainty", correct: "jic" }
+        ];
+
+        var drawbacks = [
+            { text: "Highly vulnerable to supply chain disruptions - any delay can halt production completely", correct: "jit" },
+            { text: "Requires extremely reliable suppliers with consistent quality and delivery", correct: "jit" },
+            { text: "Little flexibility to handle unexpected increases in demand", correct: "jit" },
+            { text: "May increase ordering and delivery costs due to frequent small orders", correct: "jit" },
+            { text: "Requires sophisticated IT systems and strong supplier relationships", correct: "jit" },
+            { text: "Significant capital tied up in inventory reduces available cash flow", correct: "jic" },
+            { text: "High storage costs including warehouse space, insurance, and security", correct: "jic" },
+            { text: "Risk of stock becoming obsolete, damaged, or out of date", correct: "jic" },
+            { text: "Opportunity cost - money in inventory could be invested elsewhere for returns", correct: "jic" },
+            { text: "May encourage complacency about supplier quality and production efficiency", correct: "jic" }
+        ];
+
+        var scenarioAnswers = {};
+        var benefitAnswers = {};
+        var drawbackAnswers = {};
+        var scenariosInited = false;
+
+        function buildCards(data, prefix, answerObj, container) {
+            var html = '';
+            for (var i = 0; i < data.length; i++) {
+                html += '<div class="scenario-card" id="' + prefix + i + '">';
+                html += '<div class="scenario-text">' + data[i].text + '</div>';
+                html += '<div class="scenario-btns">';
+                html += '<button class="scenario-opt" id="' + prefix + 'btnJIT' + i + '" onclick="pickScenario(\'' + prefix + '\',' + i + ',\'jit\')">Just in Time (JIT)</button>';
+                html += '<button class="scenario-opt" id="' + prefix + 'btnJIC' + i + '" onclick="pickScenario(\'' + prefix + '\',' + i + ',\'jic\')">Just in Case (JIC)</button>';
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function initScenarios() {
+            if (scenariosInited) { return; }
+            buildCards(scenarios, 'sc', scenarioAnswers, document.getElementById('scenariosContainer'));
+            buildCards(benefits, 'bn', benefitAnswers, document.getElementById('benefitsContainer'));
+            buildCards(drawbacks, 'dk', drawbackAnswers, document.getElementById('drawbacksContainer'));
+            scenariosInited = true;
+        }
+
+        function pickScenario(prefix, idx, type) {
+            var dataMap = { sc: scenarioAnswers, bn: benefitAnswers, dk: drawbackAnswers };
+            dataMap[prefix][idx] = type;
+
+            var card = document.getElementById(prefix + idx);
+            card.classList.remove('result-jit', 'result-jic', 'result-wrong');
+            card.classList.add('selected');
+
+            var jitBtn = document.getElementById(prefix + 'btnJIT' + idx);
+            var jicBtn = document.getElementById(prefix + 'btnJIC' + idx);
+            jitBtn.className = 'scenario-opt' + (type === 'jit' ? ' active-jit' : '');
+            jicBtn.className = 'scenario-opt' + (type === 'jic' ? ' active-jic' : '');
+        }
+
+        function checkScenarios() {
+            var sCorrect = 0, bCorrect = 0, dCorrect = 0;
+
+            for (var i = 0; i < scenarios.length; i++) {
+                var card = document.getElementById('sc' + i);
+                card.classList.remove('selected');
+                if (scenarioAnswers[i] === scenarios[i].correct) {
+                    card.classList.add('result-' + scenarios[i].correct);
+                    sCorrect++;
+                } else if (scenarioAnswers[i]) {
+                    card.classList.add('result-wrong');
+                }
+            }
+            for (var j = 0; j < benefits.length; j++) {
+                var bc = document.getElementById('bn' + j);
+                bc.classList.remove('selected');
+                if (benefitAnswers[j] === benefits[j].correct) {
+                    bc.classList.add('result-' + benefits[j].correct);
+                    bCorrect++;
+                } else if (benefitAnswers[j]) {
+                    bc.classList.add('result-wrong');
+                }
+            }
+            for (var k = 0; k < drawbacks.length; k++) {
+                var dc = document.getElementById('dk' + k);
+                dc.classList.remove('selected');
+                if (drawbackAnswers[k] === drawbacks[k].correct) {
+                    dc.classList.add('result-' + drawbacks[k].correct);
+                    dCorrect++;
+                } else if (drawbackAnswers[k]) {
+                    dc.classList.add('result-wrong');
+                }
+            }
+
+            var total = sCorrect + bCorrect + dCorrect;
+            var max = scenarios.length + benefits.length + drawbacks.length;
+            var pct = Math.round((total / max) * 100);
+
+            document.getElementById('srScenarios').textContent = sCorrect + '/' + scenarios.length;
+            document.getElementById('srBenefits').textContent = bCorrect + '/' + benefits.length;
+            document.getElementById('srDrawbacks').textContent = dCorrect + '/' + drawbacks.length;
+
+            var msg = '';
+            if (pct >= 87) { msg = 'Excellent - strong understanding of JIT and JIC.'; }
+            else if (pct >= 60) { msg = 'Good effort. ' + (max - total) + ' to revisit.'; }
+            else { msg = 'Keep practising. Review the JIT vs JIC distinctions carefully.'; }
+            document.getElementById('srMessage').textContent = msg;
+
+            document.getElementById('scenarioResultPanel').classList.add('show');
+            document.getElementById('scenarioResultPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function resetScenarios() {
+            scenarioAnswers = {};
+            benefitAnswers = {};
+            drawbackAnswers = {};
+            scenariosInited = false;
+            document.getElementById('scenarioResultPanel').classList.remove('show');
+            initScenarios();
+        }
+
+        // ===================== MATCH GAME =====================
+        var matchPairs = [
+            { concept: "Kaizen", definition: "Continuous improvement through small, incremental changes involving all employees" },
+            { concept: "Just in Time (JIT)", definition: "Materials and components arrive exactly when needed in production, minimising inventory" },
+            { concept: "Just in Case (JIC)", definition: "Holding buffer stock to protect against supply chain disruptions" },
+            { concept: "Quality Circles", definition: "Groups of workers who meet regularly to identify and solve quality and production problems" },
+            { concept: "Total Quality Management (TQM)", definition: "Organisation-wide approach where all employees are responsible for quality and continuous improvement" },
+            { concept: "Lean Production", definition: "Management approach focused on eliminating waste while ensuring quality and efficiency" },
+            { concept: "Muda (Waste)", definition: "Any activity that consumes resources but creates no value for the customer" },
+            { concept: "Cell Production", definition: "Organising production into self-contained units where teams complete whole sections of work" }
+        ];
+
+        var selConcept = null;
+        var selDefinition = null;
+        var matchedCount = 0;
+
+        function initMatch() {
+            matchedCount = 0;
+            selConcept = null;
+            selDefinition = null;
+
+            var shuffled = matchPairs.slice(0).sort(function() { return Math.random() - 0.5; });
+
+            var html = '<div><div class="match-col-title">Concepts</div>';
+            for (var i = 0; i < matchPairs.length; i++) {
+                var c = matchPairs[i].concept;
+                html += '<div class="match-item" data-concept="' + c + '" onclick="pickConcept(\'' + c.replace(/'/g, "&#39;") + '\')">' + c + '</div>';
+            }
+            html += '</div><div><div class="match-col-title">Definitions</div>';
+            for (var j = 0; j < shuffled.length; j++) {
+                var d = shuffled[j].concept;
+                html += '<div class="match-item" data-def="' + d + '" onclick="pickDef(\'' + d.replace(/'/g, "&#39;") + '\')">' + shuffled[j].definition + '</div>';
+            }
+            html += '</div>';
+
+            document.getElementById('matchContainer').innerHTML = html;
+            document.getElementById('matchBanner').classList.remove('show');
+        }
+
+        function pickConcept(c) {
+            var el = document.querySelector('[data-concept="' + c + '"]');
+            if (!el || el.classList.contains('matched')) { return; }
+            document.querySelectorAll('[data-concept]').forEach(function(e) { e.classList.remove('selected'); });
+            selConcept = c;
+            el.classList.add('selected');
+            tryMatch();
+        }
+
+        function pickDef(c) {
+            var el = document.querySelector('[data-def="' + c + '"]');
+            if (!el || el.classList.contains('matched')) { return; }
+            document.querySelectorAll('[data-def]').forEach(function(e) { e.classList.remove('selected'); });
+            selDefinition = c;
+            el.classList.add('selected');
+            tryMatch();
+        }
+
+        function tryMatch() {
+            if (!selConcept || !selDefinition) { return; }
+            var ce = document.querySelector('[data-concept="' + selConcept + '"]');
+            var de = document.querySelector('[data-def="' + selDefinition + '"]');
+            if (selConcept === selDefinition) {
+                ce.classList.remove('selected');
+                de.classList.remove('selected');
+                ce.classList.add('matched');
+                de.classList.add('matched');
+                matchedCount++;
+                if (matchedCount === matchPairs.length) {
+                    document.getElementById('matchBanner').classList.add('show');
+                }
+            } else {
+                ce.classList.add('wrong');
+                de.classList.add('wrong');
+                (function(c2, d2) {
+                    setTimeout(function() {
+                        var c3 = document.querySelector('[data-concept="' + c2 + '"]');
+                        var d3 = document.querySelector('[data-def="' + d2 + '"]');
+                        if (c3) { c3.classList.remove('wrong', 'selected'); }
+                        if (d3) { d3.classList.remove('wrong', 'selected'); }
+                    }, 900);
+                })(selConcept, selDefinition);
+            }
+            selConcept = null;
+            selDefinition = null;
+        }
+
+        function resetMatch() { initMatch(); }
+
+        // ===================== FILL BLANKS =====================
+        var fbPassage = "Implementing Lean Production requires more than just new techniques - it demands a fundamental shift in organisational [b0]. At the heart of lean thinking is [b1], the philosophy of continuous improvement through small, incremental changes. This approach recognises that workers on the [b2] often have the best insights into how processes can be improved. Successful lean organisations empower employees through [b3], where small groups meet regularly to identify and solve problems. This creates a culture of [b4] where everyone feels responsible for quality and efficiency. The transition to lean production requires strong [b5] from management and a commitment to [b6] all employees in proper lean techniques and principles. Organisations must overcome resistance to change by demonstrating that lean production aims to eliminate [b7], not jobs. Workers need to understand that reducing unnecessary [b8] and improving processes benefits everyone through enhanced competitiveness and job security. The cultural foundation of lean production emphasises [b9] for people, recognising that engaged, empowered employees are essential for sustainable improvement. Without embedding these values deeply into the organisational culture, lean techniques become mere [b10] exercises that fail to deliver lasting results.";
+
+        var fbWords = ["culture", "Kaizen", "shop floor", "Quality Circles", "ownership", "commitment", "training", "waste", "motion", "respect", "efficiency"];
+        var fbAnswers = ["culture", "Kaizen", "shop floor", "Quality Circles", "ownership", "commitment", "training", "waste", "motion", "respect", "efficiency"];
+        var fbSelected = null;
+        var fbUserAnswers = {};
+
+        function initFillBlanks() {
+            fbSelected = null;
+            fbUserAnswers = {};
+
+            var shuffled = fbWords.slice(0).sort(function() { return Math.random() - 0.5; });
+            var bankHtml = '';
+            for (var i = 0; i < shuffled.length; i++) {
+                bankHtml += '<button class="word-chip" id="chip-' + shuffled[i].replace(/ /g,'_') + '" onclick="selectChip(\'' + shuffled[i].replace(/'/g, "&#39;") + '\', this)">' + shuffled[i] + '</button>';
+            }
+            document.getElementById('wordBank').innerHTML = bankHtml;
+
+            var text = fbPassage;
+            for (var j = 0; j < fbAnswers.length; j++) {
+                text = text.replace('[b' + j + ']', '<span class="blank" id="blank' + j + '" onclick="fillBlank(' + j + ')">___</span>');
+            }
+            document.getElementById('passage').innerHTML = text;
+            document.getElementById('fillResultPanel').classList.remove('show');
+        }
+
+        function selectChip(word, el) {
+            document.querySelectorAll('.word-chip').forEach(function(c) {
+                if (!c.classList.contains('used')) { c.classList.remove('selected-chip'); }
+            });
+            fbSelected = word;
+            el.classList.add('selected-chip');
+        }
+
+        function fillBlank(idx) {
+            if (!fbSelected) { return; }
+
+            var prevWord = fbUserAnswers[idx];
+            if (prevWord) {
+                var prevChip = document.getElementById('chip-' + prevWord.replace(/ /g, '_'));
+                if (prevChip) { prevChip.classList.remove('used', 'selected-chip'); }
+            }
+
+            fbUserAnswers[idx] = fbSelected;
+            var blank = document.getElementById('blank' + idx);
+            blank.textContent = fbSelected;
+            blank.classList.add('filled');
+            blank.classList.remove('correct', 'incorrect');
+
+            var chip = document.getElementById('chip-' + fbSelected.replace(/ /g, '_'));
+            if (chip) { chip.classList.add('used'); chip.classList.remove('selected-chip'); }
+
+            fbSelected = null;
+        }
+
+        function checkFillBlanks() {
+            var correct = 0;
+            for (var i = 0; i < fbAnswers.length; i++) {
+                var blank = document.getElementById('blank' + i);
+                blank.classList.remove('correct', 'incorrect');
+                if (fbUserAnswers[i] === fbAnswers[i]) {
+                    blank.classList.add('correct');
+                    correct++;
+                } else if (fbUserAnswers[i]) {
+                    blank.classList.add('incorrect');
+                }
+            }
+            document.getElementById('fillScoreNum').textContent = correct + ' / ' + fbAnswers.length;
+            document.getElementById('fillResultPanel').classList.add('show');
+        }
+
+        function resetFillBlanks() { initFillBlanks(); }
+
+        // ===================== GAME NAV =====================
+        function startGame(game) {
+            document.getElementById('gameSelector').style.display = 'none';
+            if (game === 'match') {
+                document.getElementById('matchGame').classList.add('active');
+                initMatch();
+            } else if (game === 'fillblanks') {
+                document.getElementById('fillblanksGame').classList.add('active');
+                initFillBlanks();
+            }
+        }
+
+        function backToGames() {
+            document.querySelectorAll('.game-area').forEach(function(el) { el.classList.remove('active'); });
+            document.getElementById('gameSelector').style.display = '';
+        }
+    </script>
+
+</body>
+</html>

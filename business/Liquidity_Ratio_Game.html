@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquidity Ratios | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,300;9..144,0,700;9..144,0,900;9..144,1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:         #0a0e1a;
+  --bg-card:    #0f1629;
+  --bg-hover:   #141d35;
+  --accent:     #3b82f6;
+  --accent-lt:  #60a5fa;
+  --text:       #eef2ff;
+  --text-muted: rgba(238,242,255,0.55);
+  --text-dim:   rgba(238,242,255,0.28);
+  --border:     rgba(255,255,255,0.07);
+  --green:      #10b981;
+  --green-lt:   #34d399;
+  --gold:       #f59e0b;
+  --red:        #ef4444;
+  --red-lt:     #f87171;
+  --purple:     #8b5cf6;
+  --purple-lt:  #a78bfa;
+  --radius:     16px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 15% 0%, rgba(59,130,246,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(16,185,129,0.04) 0%, transparent 50%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── Password Gate ── */
+.pw-overlay {
+  position:fixed;inset:0;
+  background:rgba(10,14,26,0.97);
+  backdrop-filter:blur(12px);
+  z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+.pw-box {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:20px;padding:48px 40px;
+  max-width:420px;width:90%;text-align:center;
+}
+.pw-icon {
+  width:56px;height:56px;
+  background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+}
+.pw-icon svg { width:26px;height:26px;stroke:var(--accent); }
+.pw-box h2 {
+  font-family:'Fraunces',serif;font-size:22px;font-weight:700;
+  margin-bottom:8px;letter-spacing:-0.3px;
+}
+.pw-box p { font-size:13px;color:var(--text-muted);margin-bottom:28px;line-height:1.6; }
+.pw-input {
+  width:100%;font-family:'DM Sans',sans-serif;font-size:14px;
+  padding:12px 16px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.04);color:var(--text);outline:none;
+  margin-bottom:12px;transition:border-color 0.2s;
+}
+.pw-input:focus { border-color:var(--accent); }
+.pw-btn {
+  width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
+  padding:12px;border-radius:10px;border:none;background:var(--accent);
+  color:#fff;cursor:pointer;transition:opacity 0.15s;margin-bottom:12px;
+}
+.pw-btn:hover { opacity:0.85; }
+.pw-msg { font-size:12px;min-height:18px;margin-bottom:10px; }
+.pw-shop { font-size:12px;color:var(--text-dim); }
+.pw-shop a { color:var(--accent-lt);text-decoration:none; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}
+}
+.shake { animation:shake 0.35s ease; }
+
+/* ── Header ── */
+.header {
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;padding:0 48px;height:64px;
+  background:rgba(10,14,26,0.9);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.back-btn {
+  display:flex;align-items:center;gap:8px;color:var(--text-muted);
+  text-decoration:none;font-size:13px;font-weight:500;
+  padding:8px 16px 8px 0;margin-right:24px;
+  border-right:1px solid var(--border);transition:color 0.2s;
+}
+.back-btn:hover { color:var(--text); }
+.back-btn svg { width:15px;height:15px; }
+.brand { display:flex;align-items:center;gap:10px;flex:1; }
+.brand-mark {
+  width:32px;height:32px;background:linear-gradient(135deg,#10b981,#059669);
+  border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:900;font-size:13px;color:white;
+}
+.brand-text { font-family:'Fraunces',serif;font-size:17px;font-weight:700; }
+.brand-text span { color:#10b981; }
+.header-tag {
+  font-size:11px;color:var(--text-dim);text-transform:uppercase;
+  letter-spacing:2.5px;border:1px solid var(--border);padding:5px 12px;border-radius:20px;
+}
+
+/* ── Main ── */
+.main {
+  position:relative;z-index:1;
+  max-width:1200px;margin:0 auto;padding:40px 48px 80px;
+}
+
+.page-eyebrow {
+  font-size:10px;text-transform:uppercase;letter-spacing:3.5px;
+  color:var(--accent);font-weight:700;margin-bottom:10px;
+}
+.page-title {
+  font-family:'Fraunces',serif;font-size:clamp(32px,4vw,48px);
+  font-weight:900;letter-spacing:-1.5px;line-height:1.05;margin-bottom:10px;
+}
+.page-title em { color:var(--accent);font-style:italic;font-weight:300; }
+.page-desc {
+  font-size:14px;color:var(--text-muted);font-weight:300;
+  line-height:1.65;max-width:520px;margin-bottom:32px;
+}
+
+/* ── Tab bar ── */
+.tab-bar {
+  display:inline-flex;background:var(--bg-card);
+  border:1px solid var(--border);border-radius:12px;
+  padding:4px;gap:4px;margin-bottom:32px;flex-wrap:wrap;
+}
+.tab-btn {
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  padding:9px 20px;border-radius:9px;border:1px solid transparent;
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;
+}
+.tab-btn:hover:not(.active) { color:var(--text);background:rgba(255,255,255,0.03); }
+.tab-btn.active {
+  background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:var(--accent-lt);
+}
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── Theory tab ── */
+.theory-wrap { max-width:900px; }
+.theory-intro {
+  font-size:14px;color:var(--text-muted);line-height:1.7;
+  margin-bottom:32px;font-weight:300;
+}
+.theory-intro strong { color:var(--text);font-weight:600; }
+
+.ratio-cards {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;
+  margin-bottom:36px;
+}
+.ratio-theory-card {
+  border-radius:14px;padding:22px 18px;border:1px solid;
+  cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;
+}
+.ratio-theory-card::after {
+  content:'Click to explore';position:absolute;bottom:10px;right:12px;
+  font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;
+  opacity:0.35;transition:opacity 0.2s;
+}
+.ratio-theory-card:hover::after { opacity:0.7; }
+.ratio-theory-card:hover { transform:translateY(-2px); }
+
+.rtc-current { background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25); }
+.rtc-current:hover { box-shadow:0 8px 24px rgba(59,130,246,0.15); }
+.rtc-acid { background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.25); }
+.rtc-acid:hover { box-shadow:0 8px 24px rgba(139,92,246,0.15); }
+.rtc-rec { background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.25); }
+.rtc-rec:hover { box-shadow:0 8px 24px rgba(16,185,129,0.15); }
+.rtc-pay { background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25); }
+.rtc-pay:hover { box-shadow:0 8px 24px rgba(245,158,11,0.15); }
+
+.rtc-name {
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:2px;margin-bottom:8px;
+}
+.rtc-current .rtc-name { color:var(--accent-lt); }
+.rtc-acid .rtc-name { color:var(--purple-lt); }
+.rtc-rec .rtc-name { color:var(--green-lt); }
+.rtc-pay .rtc-name { color:var(--gold); }
+
+.rtc-title {
+  font-family:'Fraunces',serif;font-size:16px;font-weight:700;
+  margin-bottom:8px;letter-spacing:-0.2px;line-height:1.3;
+}
+.rtc-current .rtc-title { color:var(--accent-lt); }
+.rtc-acid .rtc-title { color:var(--purple-lt); }
+.rtc-rec .rtc-title { color:var(--green-lt); }
+.rtc-pay .rtc-title { color:var(--gold); }
+
+.rtc-formula {
+  font-size:12px;color:var(--text-muted);font-weight:400;
+  font-style:italic;line-height:1.5;
+}
+
+.benchmark-strip {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:24px 28px;
+}
+.benchmark-title {
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:2.5px;color:var(--text-dim);margin-bottom:16px;
+}
+.benchmark-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;
+}
+.benchmark-item {
+  border-radius:10px;padding:14px 16px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.benchmark-ratio { font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:1.5px; }
+.benchmark-good { font-size:12px;color:var(--green-lt);margin-bottom:3px; }
+.benchmark-warn { font-size:12px;color:var(--gold);margin-bottom:3px; }
+.benchmark-bad  { font-size:12px;color:var(--red-lt); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position:fixed;inset:0;background:rgba(10,14,26,0.88);
+  backdrop-filter:blur(8px);z-index:500;display:none;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:20px;padding:36px 40px;max-width:580px;
+  width:100%;max-height:85vh;overflow-y:auto;position:relative;
+}
+.modal-close {
+  position:absolute;top:16px;right:16px;width:32px;height:32px;
+  border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.04);
+  color:var(--text-muted);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:16px;transition:all 0.2s;
+}
+.modal-close:hover { color:var(--text);background:rgba(255,255,255,0.08); }
+.modal-eyebrow { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px; }
+.modal-title { font-family:'Fraunces',serif;font-size:26px;font-weight:900;letter-spacing:-0.5px;margin-bottom:6px; }
+.modal-formula {
+  font-size:13px;font-style:italic;color:var(--text-muted);
+  margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);
+}
+.modal-section { margin-bottom:16px; }
+.modal-section-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:7px; }
+.modal-section-body { font-size:13px;color:var(--text-muted);line-height:1.7;font-weight:300; }
+.modal-section-body strong { color:var(--text);font-weight:600; }
+.modal-bullets { list-style:none;display:flex;flex-direction:column;gap:5px; }
+.modal-bullets li { font-size:13px;color:var(--text-muted);line-height:1.6;padding-left:16px;position:relative;font-weight:300; }
+.modal-bullets li::before { content:'—';position:absolute;left:0;color:var(--text-dim); }
+
+/* ── Detective tab ── */
+.detective-wrap { max-width:1100px; }
+.detective-intro { font-size:14px;color:var(--text-muted);line-height:1.65;margin-bottom:24px;font-weight:300; }
+
+.round-nav { display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap; }
+.round-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-right:4px; }
+.round-btn {
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  padding:7px 16px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;
+}
+.round-btn:hover { background:rgba(255,255,255,0.04);color:var(--text); }
+.round-btn.active { background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.35);color:var(--accent-lt); }
+
+.companies-pool {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:14px;margin-bottom:28px;
+}
+
+.company-card {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:18px 20px;cursor:grab;
+  transition:all 0.2s;user-select:none;position:relative;overflow:hidden;
+}
+.company-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent) 0%,transparent 100%);
+}
+.company-card:hover { background:var(--bg-hover);border-color:rgba(59,130,246,0.25);transform:translateY(-2px); }
+.company-card:active { cursor:grabbing; }
+.company-card.dragging { opacity:0.4;transform:rotate(1.5deg); }
+.company-card.placed { display:none; }
+
+.card-sector {
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:2px;color:var(--accent);margin-bottom:6px;
+}
+.card-name {
+  font-family:'Fraunces',serif;font-size:16px;font-weight:700;
+  margin-bottom:4px;letter-spacing:-0.2px;
+}
+.card-desc { font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.5; }
+
+.card-ratios {
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+}
+.card-ratio {
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:7px;padding:7px 9px;
+}
+.card-ratio-label { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:2px; }
+.card-ratio-value { font-size:13px;font-weight:700;color:var(--text); }
+
+.ranking-zones { display:flex;flex-direction:column;gap:10px;margin-bottom:20px; }
+.drop-zone {
+  border-radius:12px;padding:16px 20px;min-height:90px;
+  border:2px dashed;transition:all 0.2s;
+  display:flex;flex-direction:column;gap:8px;
+}
+.dz-1 { background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.25); }
+.dz-2 { background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.2); }
+.dz-3 { background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.2); }
+.dz-4 { background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.2); }
+
+.drop-zone.drag-over { transform:scale(1.01); }
+.dz-1.drag-over { box-shadow:0 0 0 2px rgba(16,185,129,0.4); }
+.dz-2.drag-over { box-shadow:0 0 0 2px rgba(59,130,246,0.4); }
+.dz-3.drag-over { box-shadow:0 0 0 2px rgba(245,158,11,0.4); }
+.dz-4.drag-over { box-shadow:0 0 0 2px rgba(239,68,68,0.4); }
+
+.dz-label {
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+}
+.dz-1 .dz-label { color:#34d399; }
+.dz-2 .dz-label { color:var(--accent-lt); }
+.dz-3 .dz-label { color:var(--gold); }
+.dz-4 .dz-label { color:var(--red-lt); }
+
+.placed-item {
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;
+  cursor:grab;display:flex;align-items:center;justify-content:space-between;
+  transition:all 0.2s;
+}
+.placed-item:hover { background:rgba(255,255,255,0.08); }
+.placed-item.correct { background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.35); }
+.placed-item.incorrect { background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.35); }
+
+.det-controls { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px; }
+.btn-primary {
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;
+  padding:11px 24px;border-radius:10px;border:none;background:var(--accent);
+  color:#fff;cursor:pointer;transition:opacity 0.15s;
+}
+.btn-primary:hover { opacity:0.85; }
+.btn-secondary {
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  padding:11px 20px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;
+}
+.btn-secondary:hover { background:rgba(255,255,255,0.04);color:var(--text); }
+
+.det-feedback {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;display:none;
+}
+.det-feedback.show { display:block; }
+.det-feedback-title { font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:12px; }
+.det-result-row {
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.det-result-row:last-child { border-bottom:none; }
+.det-status { font-size:15px;flex-shrink:0;margin-top:1px; }
+.det-result-name { font-weight:700;margin-bottom:3px; }
+.det-result-why { font-size:12px;color:var(--text-muted);line-height:1.6;font-weight:300; }
+
+/* ── What Happens If tab ── */
+.whi-wrap { max-width:900px; }
+.whi-scenario-bar {
+  display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;
+}
+.whi-scenario-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim); }
+.whi-scenario-btn {
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  padding:6px 14px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;
+}
+.whi-scenario-btn:hover { background:rgba(255,255,255,0.04);color:var(--text); }
+.whi-scenario-btn.active { background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:var(--accent-lt); }
+
+.whi-company-banner {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:20px 24px;margin-bottom:20px;
+}
+.whi-company-name { font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:4px; }
+.whi-company-desc { font-size:13px;color:var(--text-muted);font-weight:300; }
+
+.fin-data-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;margin-bottom:24px;
+}
+.fin-item {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.fin-item-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:4px; }
+.fin-item-value { font-size:15px;font-weight:700;color:var(--text); }
+
+.ratio-display-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;margin-bottom:24px;
+}
+.ratio-display-card {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:12px;padding:18px;text-align:center;transition:all 0.4s;
+}
+.rdc-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:8px; }
+.rdc-value { font-size:28px;font-weight:700;color:var(--text);margin-bottom:8px; }
+.rdc-bar-wrap { height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden; }
+.rdc-bar { height:100%;border-radius:3px;transition:width 0.6s ease-out;background:var(--accent); }
+
+.decisions-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:10px;margin-bottom:20px;
+}
+.decision-btn {
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  padding:16px 14px;border-radius:11px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.02);color:var(--text-muted);
+  cursor:pointer;text-align:left;transition:all 0.2s;line-height:1.5;
+}
+.decision-btn:hover { background:rgba(59,130,246,0.07);border-color:rgba(59,130,246,0.3);color:var(--text); }
+.decision-btn:disabled { opacity:0.4;cursor:default; }
+.decision-btn strong { display:block;font-weight:700;color:var(--text);margin-bottom:4px; }
+
+.whi-feedback {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;display:none;margin-bottom:16px;
+}
+.whi-feedback.show { display:block; }
+.whi-feedback-title { font-family:'Fraunces',serif;font-size:17px;font-weight:700;margin-bottom:10px; }
+.whi-feedback-body { font-size:13px;color:var(--text-muted);line-height:1.7;font-weight:300; }
+.whi-feedback-body strong { color:var(--text);font-weight:600; }
+.ratio-delta-row {
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
+.ratio-delta-row:last-child { border-bottom:none; }
+.ratio-delta-name { font-weight:600;min-width:160px; }
+.ratio-delta-change { font-size:16px;flex-shrink:0; }
+.ratio-delta-vals { color:var(--text-muted); }
+
+/* ── Forecasting tab ── */
+.forecast-wrap { max-width:820px; }
+.forecast-progress { display:flex;align-items:center;gap:12px;margin-bottom:28px; }
+.forecast-progress-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim); }
+.forecast-pips { display:flex;gap:6px; }
+.forecast-pip {
+  width:28px;height:6px;border-radius:3px;
+  background:rgba(255,255,255,0.07);border:1px solid var(--border);transition:all 0.3s;
+}
+.forecast-pip.done { background:var(--accent);border-color:var(--accent); }
+.forecast-pip.current { background:rgba(59,130,246,0.35);border-color:rgba(59,130,246,0.5); }
+
+.forecast-card {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;margin-bottom:20px;
+}
+.forecast-header { padding:24px 28px 20px;border-bottom:1px solid var(--border); }
+.forecast-num { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--text-dim);margin-bottom:10px; }
+.forecast-title { font-family:'Fraunces',serif;font-size:19px;font-weight:700;margin-bottom:10px;letter-spacing:-0.3px; }
+.forecast-text { font-size:14px;color:var(--text-muted);line-height:1.7;font-weight:300; }
+.forecast-text strong { color:var(--text);font-weight:600; }
+
+.forecast-predictions { padding:20px 28px;border-bottom:1px solid var(--border); }
+.fp-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:16px; }
+.fp-row { display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap; }
+.fp-ratio-name { font-size:13px;font-weight:600;min-width:160px; }
+.fp-btns { display:flex;gap:6px; }
+.fp-btn {
+  font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;
+  padding:6px 14px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;
+}
+.fp-btn:hover { background:rgba(255,255,255,0.04);color:var(--text); }
+.fp-btn.chosen { background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.35);color:var(--accent-lt); }
+.fp-btn:disabled { cursor:default; }
+
+.forecast-footer {
+  padding:16px 28px;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+.forecast-footer-note { font-size:12px;color:var(--text-dim); }
+
+.forecast-results {
+  display:none;padding:20px 28px;border-top:1px solid var(--border);
+}
+.forecast-results.show { display:block; }
+.fr-row {
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.fr-row:last-child { border-bottom:none; }
+.fr-status { font-size:15px;flex-shrink:0;margin-top:1px; }
+.fr-ratio { font-size:13px;font-weight:700;margin-bottom:3px; }
+.fr-explanation { font-size:12px;color:var(--text-muted);line-height:1.6;font-weight:300; }
+
+.forecast-complete {
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:56px 40px;text-align:center;display:none;
+}
+.forecast-complete.show { display:block; }
+.forecast-complete-title { font-family:'Fraunces',serif;font-size:28px;font-weight:900;letter-spacing:-0.5px;margin-bottom:10px;color:var(--accent-lt); }
+.forecast-complete-desc { font-size:14px;color:var(--text-muted);font-weight:300;line-height:1.65;max-width:400px;margin:0 auto 24px; }
+
+/* ── Footer ── */
+.footer {
+  position:relative;z-index:1;padding:20px 48px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.footer-left  { font-size:12px;color:var(--text-dim); }
+.footer-right { font-size:12px;color:rgba(238,242,255,0.15); }
+
+/* ── Responsive ── */
+@media(max-width:860px) {
+  .main { padding:32px 20px 60px; }
+  .header { padding:0 20px; }
+  .footer { padding:16px 20px;flex-direction:column;gap:6px; }
+}
+@media(max-width:580px) {
+  .tab-bar { width:100%; }
+  .tab-btn { flex:1;text-align:center;padding:9px 10px;font-size:11px; }
+  .ratio-cards { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div id="pwOverlay" class="pw-overlay">
+  <div class="pw-box">
+    <div class="pw-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2>Liquidity Ratios</h2>
+    <p>Enter your password to access this resource. Your password was provided at purchase.</p>
+    <input id="pwInput" class="pw-input" type="text" placeholder="Enter password&hellip;"
+      onkeydown="if(event.key==='Enter')checkPW()"
+      onfocus="this.style.borderColor='var(--accent)'"
+      onblur="this.style.borderColor='var(--border)'">
+    <button class="pw-btn" onclick="checkPW()">Unlock &rarr;</button>
+    <div id="pwMsg" class="pw-msg"></div>
+    <div class="pw-shop">Don&rsquo;t have a password? <a href="aqa.html">Visit the shop</a></div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <a href="aqa.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    AQA Business
+  </a>
+  <div class="brand">
+    <div class="brand-mark">B</div>
+    <div class="brand-text">BIZ-<span>OMICS</span></div>
+  </div>
+  <div class="header-tag">Financial Analysis</div>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+  <div class="page-eyebrow">Interactive Learning Tool</div>
+  <h1 class="page-title">Liquidity<br><em>Ratios</em></h1>
+  <p class="page-desc">Master the four key liquidity ratios through theory, ranking activities, decision simulations and forecasting challenges.</p>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('theory')">Theory</button>
+    <button class="tab-btn" onclick="switchTab('detective')">Ratio Detective</button>
+    <button class="tab-btn" onclick="switchTab('whi')">What Happens If</button>
+    <button class="tab-btn" onclick="switchTab('forecast')">Forecasting</button>
+  </div>
+
+  <!-- Theory Tab -->
+  <div id="tab-theory" class="tab-panel active">
+    <div class="theory-wrap">
+      <p class="theory-intro">Liquidity ratios measure a firm's ability to meet its <strong>short-term financial obligations</strong> using its current assets. A firm can be profitable but still fail if it cannot pay its debts when they fall due. Click each ratio card to explore the full theory.</p>
+
+      <div class="ratio-cards">
+        <div class="ratio-theory-card rtc-current" onclick="openRatioModal('current')">
+          <div class="rtc-name">Ratio 1</div>
+          <div class="rtc-title">Current Ratio</div>
+          <div class="rtc-formula">Current Assets &divide; Current Liabilities</div>
+        </div>
+        <div class="ratio-theory-card rtc-acid" onclick="openRatioModal('acid')">
+          <div class="rtc-name">Ratio 2</div>
+          <div class="rtc-title">Acid Test Ratio</div>
+          <div class="rtc-formula">(Current Assets &minus; Inventory) &divide; Current Liabilities</div>
+        </div>
+        <div class="ratio-theory-card rtc-rec" onclick="openRatioModal('receivables')">
+          <div class="rtc-name">Ratio 3</div>
+          <div class="rtc-title">Receivables Days</div>
+          <div class="rtc-formula">(Receivables &divide; Sales) &times; 365</div>
+        </div>
+        <div class="ratio-theory-card rtc-pay" onclick="openRatioModal('payables')">
+          <div class="rtc-name">Ratio 4</div>
+          <div class="rtc-title">Payables Days</div>
+          <div class="rtc-formula">(Payables &divide; Purchases) &times; 365</div>
+        </div>
+      </div>
+
+      <div class="benchmark-strip">
+        <div class="benchmark-title">Benchmark Guide</div>
+        <div class="benchmark-grid">
+          <div class="benchmark-item">
+            <div class="benchmark-ratio">Current Ratio</div>
+            <div class="benchmark-good">1.5&ndash;2.0 : 1 &mdash; Healthy</div>
+            <div class="benchmark-warn">1.0&ndash;1.5 : 1 &mdash; Caution</div>
+            <div class="benchmark-bad">Below 1.0 : 1 &mdash; Risk</div>
+          </div>
+          <div class="benchmark-item">
+            <div class="benchmark-ratio">Acid Test</div>
+            <div class="benchmark-good">Above 1.0 : 1 &mdash; Healthy</div>
+            <div class="benchmark-warn">0.8&ndash;1.0 : 1 &mdash; Caution</div>
+            <div class="benchmark-bad">Below 0.8 : 1 &mdash; Risk</div>
+          </div>
+          <div class="benchmark-item">
+            <div class="benchmark-ratio">Receivables Days</div>
+            <div class="benchmark-good">Under 30 days &mdash; Fast</div>
+            <div class="benchmark-warn">30&ndash;60 days &mdash; Typical</div>
+            <div class="benchmark-bad">Over 60 days &mdash; Slow</div>
+          </div>
+          <div class="benchmark-item">
+            <div class="benchmark-ratio">Payables Days</div>
+            <div class="benchmark-good">30&ndash;60 days &mdash; Balanced</div>
+            <div class="benchmark-warn">Over 90 days &mdash; Stretching</div>
+            <div class="benchmark-bad">Under 15 days &mdash; Too fast</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detective Tab -->
+  <div id="tab-detective" class="tab-panel">
+    <div class="detective-wrap">
+      <p class="detective-intro">Drag and drop each company into the correct position — from strongest to weakest liquidity. Three rounds, each with a different set of companies. Consider all four ratios together before deciding.</p>
+
+      <div class="round-nav">
+        <span class="round-label">Round</span>
+        <button class="round-btn active" onclick="loadDetRound(0)">1</button>
+        <button class="round-btn" onclick="loadDetRound(1)">2</button>
+        <button class="round-btn" onclick="loadDetRound(2)">3</button>
+      </div>
+
+      <div class="companies-pool" id="detPool"></div>
+
+      <div class="ranking-zones" id="detZones">
+        <div class="drop-zone dz-1" data-rank="1"
+          ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this)">
+          <div class="dz-label">Strongest Liquidity</div>
+        </div>
+        <div class="drop-zone dz-2" data-rank="2"
+          ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this)">
+          <div class="dz-label">Strong Liquidity</div>
+        </div>
+        <div class="drop-zone dz-3" data-rank="3"
+          ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this)">
+          <div class="dz-label">Moderate Liquidity</div>
+        </div>
+        <div class="drop-zone dz-4" data-rank="4"
+          ondragover="dzOver(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,this)">
+          <div class="dz-label">Weakest Liquidity</div>
+        </div>
+      </div>
+
+      <div class="det-controls">
+        <button class="btn-primary" onclick="checkDetective()">Check Answers</button>
+        <button class="btn-secondary" onclick="resetDetective()">Reset</button>
+      </div>
+
+      <div id="detFeedback" class="det-feedback"></div>
+    </div>
+  </div>
+
+  <!-- What Happens If Tab -->
+  <div id="tab-whi" class="tab-panel">
+    <div class="whi-wrap">
+      <div class="whi-scenario-bar">
+        <span class="whi-scenario-label">Company</span>
+        <button class="whi-scenario-btn active" onclick="loadWhiScenario(0)">Hartfield Retail</button>
+        <button class="whi-scenario-btn" onclick="loadWhiScenario(1)">Nexova Tech</button>
+        <button class="whi-scenario-btn" onclick="loadWhiScenario(2)">Bridgeway Construction</button>
+        <button class="whi-scenario-btn" onclick="loadWhiScenario(3)">Clearfield Foods</button>
+      </div>
+
+      <div class="whi-company-banner">
+        <div class="whi-company-name" id="whiCompanyName"></div>
+        <div class="whi-company-desc" id="whiCompanyDesc"></div>
+      </div>
+
+      <div class="fin-data-grid" id="whiFinData"></div>
+      <div class="ratio-display-grid" id="whiRatios"></div>
+
+      <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:14px;">Make a Decision</h3>
+      <div class="decisions-grid" id="whiDecisions"></div>
+
+      <div id="whiFeedback" class="whi-feedback"></div>
+      <button class="btn-secondary" onclick="resetWhi()" style="margin-top:4px;">Reset</button>
+    </div>
+  </div>
+
+  <!-- Forecasting Tab -->
+  <div id="tab-forecast" class="tab-panel">
+    <div class="forecast-wrap">
+      <div class="forecast-progress">
+        <span class="forecast-progress-label">Scenario</span>
+        <div class="forecast-pips" id="forecastPips"></div>
+        <button class="btn-secondary" onclick="startForecast()" style="margin-left:auto;font-size:12px;padding:7px 14px;">New Set</button>
+      </div>
+
+      <div id="forecastCard" class="forecast-card">
+        <div class="forecast-header">
+          <div class="forecast-num" id="fcNum"></div>
+          <div class="forecast-title" id="fcTitle"></div>
+          <div class="forecast-text" id="fcText"></div>
+        </div>
+        <div class="forecast-predictions">
+          <div class="fp-label">Predict the change to each ratio next quarter</div>
+          <div id="fpRows"></div>
+        </div>
+        <div class="forecast-results" id="fcResults"></div>
+        <div class="forecast-footer">
+          <span class="forecast-footer-note">Select one prediction per ratio, then submit.</span>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-primary" id="fcSubmitBtn" onclick="checkForecast()">Submit</button>
+            <button class="btn-primary" id="fcNextBtn" onclick="nextForecast()" style="display:none;">Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="forecast-complete" id="forecastComplete">
+        <div class="forecast-complete-title">Set complete</div>
+        <div class="forecast-complete-desc">You have worked through all five scenarios. Try a new set for a different selection.</div>
+        <button class="btn-primary" onclick="startForecast()">New Set &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Modal -->
+<div id="modalOverlay" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-left">BIZ-OMICS &middot; Liquidity Ratios</div>
+  <div class="footer-right">biz-omics.co.uk</div>
+</footer>
+
+<script>
+var VALID_PASSWORDS = ['BIZ-LIQ-7M3K', 'BizAQA-SM4RT!2026', 'BizEDX-AL9K!2026', 'BizOCR-AL7M!2026', 'BizOCR-GC4X!2026', 'GSALEconomics'];
+var PW_KEY = 'biz_liquidity_unlocked';
+var detDragEl = null;
+var currentDetRound = 0;
+var whiCurrentScenario = 0;
+var whiData = null;
+var forecastQueue = [];
+var forecastIndex = 0;
+var forecastPredictions = {};
+var forecastSubmitted = false;
+
+/* ── Password ── */
+function checkPW() {
+  var input = document.getElementById('pwInput');
+  var msg = document.getElementById('pwMsg');
+  var val = input.value.trim().toUpperCase();
+  var ok = false;
+  var i;
+  for (i = 0; i < VALID_PASSWORDS.length; i++) {
+    if (val === VALID_PASSWORDS[i]) { ok = true; break; }
+  }
+  if (ok) {
+    msg.style.color = '#10b981';
+    msg.textContent = 'Unlocking\u2026';
+    localStorage.setItem(PW_KEY, '1');
+    setTimeout(function() {
+      document.getElementById('pwOverlay').style.display = 'none';
+    }, 400);
+  } else {
+    msg.style.color = '#ef4444';
+    msg.textContent = 'Incorrect password. Try again.';
+    input.classList.remove('shake');
+    void input.offsetWidth;
+    input.classList.add('shake');
+    setTimeout(function() { input.classList.remove('shake'); }, 400);
+  }
+}
+
+function initPW() {
+  if (localStorage.getItem(PW_KEY) === '1') {
+    document.getElementById('pwOverlay').style.display = 'none';
+  }
+}
+
+/* ── Tabs ── */
+function switchTab(which) {
+  var btns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+  var order = ['theory', 'detective', 'whi', 'forecast'];
+  var i;
+  for (i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  for (i = 0; i < panels.length; i++) { panels[i].classList.remove('active'); }
+  document.getElementById('tab-' + which).classList.add('active');
+  for (i = 0; i < order.length; i++) {
+    if (order[i] === which) { btns[i].classList.add('active'); break; }
+  }
+}
+
+/* ── Modal ── */
+var RATIO_MODALS = {
+  current: {
+    color: 'var(--accent-lt)',
+    eyebrow: 'Liquidity Ratio 1',
+    title: 'Current Ratio',
+    formula: 'Current Assets &divide; Current Liabilities',
+    sections: [
+      {
+        title: 'What it measures',
+        body: 'The current ratio measures whether a firm has enough <strong>current assets to cover its current liabilities</strong> — debts due within 12 months. A ratio of 2:1 means the firm holds £2 of current assets for every £1 it owes short-term.'
+      },
+      {
+        title: 'What counts as current assets and liabilities?',
+        bullets: [
+          'Current assets: cash, trade receivables, inventory, short-term investments',
+          'Current liabilities: trade payables, bank overdraft, tax due, short-term loans'
+        ]
+      },
+      {
+        title: 'Interpreting the result',
+        body: 'A ratio <strong>above 1.5:1</strong> is generally healthy. <strong>Below 1.0:1</strong> is a warning sign — the firm cannot cover short-term debts from current assets alone. However, a very high ratio (above 3.0:1) may suggest inefficient use of assets — too much idle cash or excess inventory.'
+      },
+      {
+        title: 'Key limitation',
+        body: 'The current ratio <strong>includes inventory</strong>, which may not convert quickly to cash. A retail firm with a large stockroom may look liquid on paper but struggle to pay suppliers at short notice. This is why the acid test ratio is also used.'
+      }
+    ]
+  },
+  acid: {
+    color: 'var(--purple-lt)',
+    eyebrow: 'Liquidity Ratio 2',
+    title: 'Acid Test Ratio',
+    formula: '(Current Assets &minus; Inventory) &divide; Current Liabilities',
+    sections: [
+      {
+        title: 'What it measures',
+        body: 'The acid test (or quick ratio) is a <strong>stricter test of short-term liquidity</strong> that excludes inventory. It measures whether a firm can meet its current liabilities using only its most liquid assets — cash, receivables, and short-term investments.'
+      },
+      {
+        title: 'Why exclude inventory?',
+        body: 'Inventory must first be <strong>sold and payment received</strong> before it becomes cash. In a crisis, unsold stock may be difficult to convert quickly. For manufacturers or retailers with slow-moving stock, the acid test gives a more conservative and realistic picture of liquidity.'
+      },
+      {
+        title: 'Interpreting the result',
+        body: 'A ratio <strong>above 1.0:1</strong> is generally considered healthy — the firm can cover all current liabilities without relying on inventory sales. <strong>Below 0.8:1</strong> may indicate liquidity risk, particularly if receivables collection is slow.'
+      },
+      {
+        title: 'Sector context matters',
+        body: 'Supermarkets typically have acid test ratios <strong>below 0.5:1</strong> — they hold vast inventories, pay suppliers on credit, and collect cash immediately from customers. This is not necessarily a problem if cash flows are strong and predictable.'
+      }
+    ]
+  },
+  receivables: {
+    color: 'var(--green-lt)',
+    eyebrow: 'Liquidity Ratio 3',
+    title: 'Receivables Days',
+    formula: '(Trade Receivables &divide; Annual Sales) &times; 365',
+    sections: [
+      {
+        title: 'What it measures',
+        body: 'Receivables days estimates the <strong>average number of days it takes a firm to collect payment</strong> from its customers after a sale is made on credit. A lower number is generally better — the faster cash is collected, the more liquid the firm.'
+      },
+      {
+        title: 'Why it matters',
+        body: 'A firm can be profitable but cash-poor if customers take a long time to pay. <strong>Slow collection stretches the cash cycle</strong> — the firm has delivered goods or services but has not yet received cash. In extreme cases this can cause insolvency despite healthy profits.'
+      },
+      {
+        title: 'How to improve it',
+        bullets: [
+          'Offer early payment discounts to incentivise faster settlement',
+          'Tighten credit terms — reduce the number of days customers are allowed to pay',
+          'Chase overdue invoices more actively',
+          'Use invoice factoring to convert receivables to immediate cash'
+        ]
+      },
+      {
+        title: 'Evaluative point',
+        body: 'Extending credit terms (increasing receivables days) can be a <strong>deliberate commercial strategy</strong> — offering customers more time to pay can win contracts and build loyalty, particularly in B2B markets. The trade-off is a longer cash cycle and greater liquidity risk.'
+      }
+    ]
+  },
+  payables: {
+    color: 'var(--gold)',
+    eyebrow: 'Liquidity Ratio 4',
+    title: 'Payables Days',
+    formula: '(Trade Payables &divide; Annual Purchases) &times; 365',
+    sections: [
+      {
+        title: 'What it measures',
+        body: 'Payables days estimates the <strong>average number of days a firm takes to pay its own suppliers</strong>. A higher number means the firm is holding onto cash longer before paying — which can benefit liquidity but may damage supplier relationships.'
+      },
+      {
+        title: 'The liquidity benefit',
+        body: 'Taking longer to pay suppliers is essentially <strong>using supplier credit as a form of short-term financing</strong>. A firm with payables days of 60 has effectively borrowed from its suppliers for two months, keeping its own cash available for other purposes.'
+      },
+      {
+        title: 'The risks of stretching payables',
+        bullets: [
+          'Suppliers may withdraw credit terms or demand upfront payment',
+          'Loss of early payment discounts',
+          'Damage to supplier relationships — critical in supply-dependent industries',
+          'Reputational risk if delays become widely known'
+        ]
+      },
+      {
+        title: 'Cash conversion cycle',
+        body: 'Receivables days minus payables days gives a sense of the <strong>net cash conversion cycle</strong>. A firm that collects in 30 days but pays suppliers in 60 days has a favourable cash position. One that collects in 60 days but pays in 30 is funding the gap from its own cash reserves.'
+      }
+    ]
+  }
+};
+
+function openRatioModal(type) {
+  var data = RATIO_MODALS[type];
+  if (!data) return;
+  var html = '';
+  html += '<div class="modal-eyebrow" style="color:' + data.color + '">' + data.eyebrow + '</div>';
+  html += '<div class="modal-title" style="color:' + data.color + '">' + data.title + '</div>';
+  html += '<div class="modal-formula">' + data.formula + '</div>';
+  var i, j, s;
+  for (i = 0; i < data.sections.length; i++) {
+    s = data.sections[i];
+    html += '<div class="modal-section">';
+    html += '<div class="modal-section-title" style="color:' + data.color + '">' + s.title + '</div>';
+    if (s.body) { html += '<div class="modal-section-body">' + s.body + '</div>'; }
+    if (s.bullets) {
+      html += '<ul class="modal-bullets">';
+      for (j = 0; j < s.bullets.length; j++) {
+        html += '<li>' + s.bullets[j] + '</li>';
+      }
+      html += '</ul>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) { closeModal(); }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeModal(); }
+});
+
+/* ── Detective data ── */
+var DET_ROUNDS = [
+  {
+    companies: [
+      {
+        id:'d1a', rank:1, sector:'Technology Services',
+        name:'Vertex Digital Ltd',
+        desc:'A B2B software consultancy with long-term contracts and minimal physical inventory.',
+        cr:'2.8:1', at:'2.6:1', rd:'28 days', pd:'45 days',
+        why:'Very high acid test (close to current ratio) confirms minimal inventory. Fast receivables and favourable payables gap makes this the strongest liquidity position.'
+      },
+      {
+        id:'d1b', rank:2, sector:'Food Manufacturing',
+        name:'Granfield Foods plc',
+        desc:'A producer of chilled ready meals supplying major supermarket chains.',
+        cr:'2.1:1', at:'1.4:1', rd:'35 days', pd:'50 days',
+        why:'Solid ratios with a healthy gap between payables and receivables days. The difference between current and acid test ratios reflects significant food inventory — normal for this sector.'
+      },
+      {
+        id:'d1c', rank:3, sector:'Retail',
+        name:'Hartfield Retail plc',
+        desc:'A mid-size clothing retailer with 80 stores and a growing online channel.',
+        cr:'1.4:1', at:'0.7:1', rd:'18 days', pd:'55 days',
+        why:'Typical retail profile — current ratio looks reasonable but acid test reveals heavy reliance on inventory. Fast customer collection and extended supplier credit partially offset this, but inventory risk is significant.'
+      },
+      {
+        id:'d1d', rank:4, sector:'Construction',
+        name:'Bridgeway Build Ltd',
+        desc:'A regional construction contractor working on fixed-price residential projects.',
+        cr:'1.1:1', at:'0.6:1', rd:'72 days', pd:'30 days',
+        why:'Weakest position. Very slow receivables collection (clients are slow to pay on completion) combined with paying suppliers faster than collecting creates a dangerous cash gap. Low acid test confirms limited liquid buffer.'
+      }
+    ]
+  },
+  {
+    companies: [
+      {
+        id:'d2a', rank:2, sector:'Pharmaceutical',
+        name:'Thornwick Pharma Ltd',
+        desc:'A generic medicines manufacturer supplying NHS hospitals and independent pharmacies.',
+        cr:'2.4:1', at:'1.9:1', rd:'42 days', pd:'60 days',
+        why:'Strong ratios with a favourable payables/receivables balance. Acid test is high because pharmaceutical inventory turns over relatively quickly. A solid second-place liquidity position.'
+      },
+      {
+        id:'d2b', rank:4, sector:'Car Dealership',
+        name:'Prestige Autos Ltd',
+        desc:'A franchised car dealership holding significant vehicle inventory on site.',
+        cr:'1.2:1', at:'0.3:1', rd:'14 days', pd:'45 days',
+        why:'The vast gap between current ratio and acid test exposes extreme inventory dependency — unsold cars are illiquid assets. Despite fast receivables, the acid test of 0.3:1 is dangerously low without guaranteed stock sales.'
+      },
+      {
+        id:'d2c', rank:1, sector:'Accountancy Services',
+        name:'Clearwater Advisory LLP',
+        desc:'A professional services partnership with no physical inventory and predictable monthly fee income.',
+        cr:'3.1:1', at:'3.0:1', rd:'25 days', pd:'30 days',
+        why:'Near-identical current and acid test ratios confirm negligible inventory — typical of professional services. Very high ratios, fast receivables and modest payables make this the strongest position of the four.'
+      },
+      {
+        id:'d2d', rank:3, sector:'Logistics',
+        name:'Redline Freight Ltd',
+        desc:'A road haulage company with a fleet of owned vehicles and significant fuel costs.',
+        cr:'1.6:1', at:'1.3:1', rd:'38 days', pd:'28 days',
+        why:'Moderate ratios. The small gap between current and acid test is explained by fuel and parts inventory rather than finished goods. The unfavourable payables/receivables gap (paying faster than collecting) is a mild concern.'
+      }
+    ]
+  },
+  {
+    companies: [
+      {
+        id:'d3a', rank:3, sector:'Hospitality',
+        name:'Crestmoor Hotels Ltd',
+        desc:'An owner-operator of four-star hotels with restaurant and conference facilities.',
+        cr:'1.3:1', at:'1.0:1', rd:'30 days', pd:'55 days',
+        why:'Low but acceptable ratios for a hospitality business. Much of the revenue is prepaid (bookings), limiting receivables. Favourable payables terms with food suppliers help. Not strong, but manageable for the sector.'
+      },
+      {
+        id:'d3b', rank:1, sector:'Insurance',
+        name:'Solent Insurance plc',
+        desc:'A commercial insurance provider collecting premiums upfront and paying claims over time.',
+        cr:'3.8:1', at:'3.8:1', rd:'12 days', pd:'90 days',
+        why:'Exceptional liquidity. Insurance businesses collect cash before they owe it, creating structurally strong current ratios. No inventory, extremely fast collection, very extended payables — the strongest position by a significant margin.'
+      },
+      {
+        id:'d3c', rank:4, sector:'Fashion Retail',
+        name:'Mosaic Fashion Ltd',
+        desc:'A fast-fashion retailer importing seasonal clothing from overseas manufacturers.',
+        cr:'1.1:1', at:'0.5:1', rd:'8 days', pd:'35 days',
+        why:'Weakest position. Heavy seasonal inventory of imported stock creates a very low acid test despite a just-acceptable current ratio. Paying suppliers faster than is comfortable for the business. A poor cash position heading into season.'
+      },
+      {
+        id:'d3d', rank:2, sector:'Engineering',
+        name:'Axford Precision Ltd',
+        desc:'A precision engineering firm producing specialist components for aerospace clients.',
+        cr:'2.5:1', at:'1.8:1', rd:'48 days', pd:'60 days',
+        why:'Good ratios. Work-in-progress and raw materials account for the gap between current and acid test. Long production cycles explain extended receivables but this is offset by strong payables management. Second-best position.'
+      }
+    ]
+  }
+];
+
+function loadDetRound(idx) {
+  currentDetRound = idx;
+  var btns = document.querySelectorAll('.round-btn');
+  var i;
+  for (i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  btns[idx].classList.add('active');
+
+  var pool = document.getElementById('detPool');
+  pool.innerHTML = '';
+
+  var zones = document.querySelectorAll('.drop-zone');
+  for (i = 0; i < zones.length; i++) {
+    var labels = zones[i].querySelectorAll('.dz-label');
+    while (zones[i].firstChild && zones[i].firstChild !== labels[0]) {
+      zones[i].removeChild(zones[i].firstChild);
+    }
+    zones[i].innerHTML = '<div class="dz-label">' + zones[i].querySelector('.dz-label').textContent + '</div>';
+  }
+
+  document.getElementById('detFeedback').classList.remove('show');
+  document.getElementById('detFeedback').innerHTML = '';
+
+  var companies = shuffleArray(DET_ROUNDS[idx].companies.slice());
+  for (i = 0; i < companies.length; i++) {
+    var c = companies[i];
+    var card = document.createElement('div');
+    card.className = 'company-card';
+    card.setAttribute('draggable', 'true');
+    card.setAttribute('data-id', c.id);
+    card.setAttribute('data-rank', c.rank);
+    card.innerHTML =
+      '<div class="card-sector">' + c.sector + '</div>' +
+      '<div class="card-name">' + c.name + '</div>' +
+      '<div class="card-desc">' + c.desc + '</div>' +
+      '<div class="card-ratios">' +
+        '<div class="card-ratio"><div class="card-ratio-label">Current Ratio</div><div class="card-ratio-value">' + c.cr + '</div></div>' +
+        '<div class="card-ratio"><div class="card-ratio-label">Acid Test</div><div class="card-ratio-value">' + c.at + '</div></div>' +
+        '<div class="card-ratio"><div class="card-ratio-label">Receivables</div><div class="card-ratio-value">' + c.rd + '</div></div>' +
+        '<div class="card-ratio"><div class="card-ratio-label">Payables</div><div class="card-ratio-value">' + c.pd + '</div></div>' +
+      '</div>';
+    card.addEventListener('dragstart', function(e) {
+      detDragEl = e.currentTarget;
+      e.currentTarget.classList.add('dragging');
+    });
+    card.addEventListener('dragend', function(e) {
+      e.currentTarget.classList.remove('dragging');
+    });
+    pool.appendChild(card);
+  }
+
+  document.addEventListener('dragover', function(e) { e.preventDefault(); });
+  document.addEventListener('drop', function(e) {
+    var p = document.getElementById('detPool');
+    if (e.target === p || p.contains(e.target)) {
+      if (detDragEl) {
+        var origId = detDragEl.getAttribute('data-id');
+        var orig = document.querySelector('.company-card[data-id="' + origId + '"]');
+        if (orig) { orig.classList.remove('placed'); }
+        if (detDragEl.classList.contains('placed-item')) { detDragEl.remove(); }
+        detDragEl = null;
+      }
+    }
+  });
+}
+
+function dzOver(e, el) { e.preventDefault(); el.classList.add('drag-over'); }
+function dzLeave(el) { el.classList.remove('drag-over'); }
+function dzDrop(e, zoneEl) {
+  e.preventDefault();
+  zoneEl.classList.remove('drag-over');
+  if (!detDragEl) return;
+
+  var id = detDragEl.getAttribute('data-id');
+  var rank = detDragEl.getAttribute('data-rank');
+
+  var existing = zoneEl.querySelector('.placed-item[data-id="' + id + '"]');
+  if (!existing) {
+    var oldItem = document.querySelector('.placed-item[data-id="' + id + '"]');
+    if (oldItem) { oldItem.remove(); }
+  }
+
+  var company = getCompanyById(id);
+  if (!company) return;
+
+  var item = document.createElement('div');
+  item.className = 'placed-item';
+  item.setAttribute('draggable', 'true');
+  item.setAttribute('data-id', id);
+  item.setAttribute('data-rank', rank);
+  item.innerHTML = '<span>' + company.name + '</span><span style="font-size:11px;color:var(--text-dim);">' + company.sector + '</span>';
+  item.addEventListener('dragstart', function(e) {
+    detDragEl = e.currentTarget;
+  });
+
+  var orig = document.querySelector('.company-card[data-id="' + id + '"]');
+  if (orig) { orig.classList.add('placed'); }
+
+  if (existing) { existing.replaceWith(item); }
+  else { zoneEl.appendChild(item); }
+
+  detDragEl = null;
+}
+
+function getCompanyById(id) {
+  var i, j;
+  for (i = 0; i < DET_ROUNDS.length; i++) {
+    for (j = 0; j < DET_ROUNDS[i].companies.length; j++) {
+      if (DET_ROUNDS[i].companies[j].id === id) { return DET_ROUNDS[i].companies[j]; }
+    }
+  }
+  return null;
+}
+
+function checkDetective() {
+  var items = document.querySelectorAll('.placed-item');
+  if (items.length === 0) {
+    alert('Place at least one company first.');
+    return;
+  }
+  var allCorrect = true;
+  var i;
+  for (i = 0; i < items.length; i++) {
+    var item = items[i];
+    var zone = item.closest('.drop-zone');
+    var zoneRank = parseInt(zone.getAttribute('data-rank'), 10);
+    var cardRank = parseInt(item.getAttribute('data-rank'), 10);
+    item.classList.remove('correct', 'incorrect');
+    if (zoneRank === cardRank) { item.classList.add('correct'); }
+    else { item.classList.add('incorrect'); allCorrect = false; }
+  }
+
+  var fb = document.getElementById('detFeedback');
+  var round = DET_ROUNDS[currentDetRound];
+  var html = '<div class="det-feedback-title">' + (allCorrect ? 'All correct' : 'Not quite') + '</div>';
+  var sorted = round.companies.slice().sort(function(a, b) { return a.rank - b.rank; });
+  for (i = 0; i < sorted.length; i++) {
+    var c = sorted[i];
+    html +=
+      '<div class="det-result-row">' +
+        '<div class="det-status">' + (['1','2','3','4'][i]) + '</div>' +
+        '<div>' +
+          '<div class="det-result-name">' + c.name + ' <span style="font-size:11px;color:var(--text-dim);font-weight:400;">' + c.sector + '</span></div>' +
+          '<div class="det-result-why">' + c.why + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+  fb.innerHTML = html;
+  fb.classList.add('show');
+}
+
+function resetDetective() {
+  loadDetRound(currentDetRound);
+}
+
+/* ── What Happens If data ── */
+var WHI_SCENARIOS = [
+  {
+    name: 'Hartfield Retail plc',
+    desc: 'A mid-size clothing retailer. Current assets include significant seasonal stock held in a central warehouse.',
+    data: { ca:180000, cl:90000, inv:60000, rec:35000, pay:45000, sales:710000, purch:420000 },
+    decisions: [
+      {
+        label: 'Run a clearance sale',
+        detail: 'Sell £25,000 of inventory for cash (at cost price)',
+        apply: function(d) { d.inv -= 25000; },
+        feedback: 'Converting inventory to cash <strong>reduces current assets slightly</strong> (inventory is replaced by cash — same total) but <strong>improves the acid test</strong> because inventory falls. Cash position is stronger and more liquid.'
+      },
+      {
+        label: 'Buy new fixtures on credit',
+        detail: 'Purchase £30,000 of shop fittings — increases current liabilities',
+        apply: function(d) { d.cl += 30000; },
+        feedback: '<strong>Current liabilities increase</strong> while assets are unchanged (fittings are fixed assets, not current). Both the current ratio and acid test <strong>deteriorate</strong>. This is a liquidity risk if cash is already tight.'
+      },
+      {
+        label: 'Collect outstanding receivables',
+        detail: 'Chase and collect £20,000 owed by wholesale customers',
+        apply: function(d) { d.rec -= 20000; },
+        feedback: 'Receivables fall and cash rises by the same amount — <strong>both are current assets</strong>, so the current ratio and acid test are unchanged. However, <strong>receivables days improve significantly</strong> — cash is being collected faster.'
+      },
+      {
+        label: 'Pay off a supplier early',
+        detail: 'Pay £15,000 of payables before the due date',
+        apply: function(d) { d.ca -= 15000; d.cl -= 15000; d.pay -= 15000; },
+        feedback: 'Both current assets (cash) and current liabilities (payables) fall equally. When the ratio is <strong>above 1:1, this improves both ratios</strong> — a smaller denominator has a proportionally larger effect. Payables days fall.'
+      }
+    ]
+  },
+  {
+    name: 'Nexova Tech Ltd',
+    desc: 'A B2B software firm with subscription contracts. Minimal inventory — most assets are cash and receivables.',
+    data: { ca:220000, cl:80000, inv:8000, rec:95000, pay:30000, sales:860000, purch:190000 },
+    decisions: [
+      {
+        label: 'Invest in a new server',
+        detail: 'Spend £40,000 cash on IT infrastructure (fixed asset)',
+        apply: function(d) { d.ca -= 40000; },
+        feedback: '<strong>Cash (a current asset) falls</strong> as it converts to a fixed asset. Both current ratio and acid test <strong>deteriorate</strong>. The firm has less liquid buffer for short-term obligations.'
+      },
+      {
+        label: 'Offer early payment discount',
+        detail: 'Clients pay £30,000 early in exchange for a 2% discount',
+        apply: function(d) { d.rec -= 30000; d.ca -= 600; },
+        feedback: 'Receivables fall and cash rises (net of the small discount). <strong>Receivables days improve significantly</strong>. The ratios stay broadly stable since receivables and cash are both current assets, but liquidity quality improves — cash is more liquid than a receivable.'
+      },
+      {
+        label: 'Take on a short-term overdraft',
+        detail: 'Draw £25,000 overdraft to fund marketing campaign',
+        apply: function(d) { d.ca += 25000; d.cl += 25000; },
+        feedback: 'Both sides increase equally. When the ratio is <strong>above 1:1, this reduces both ratios</strong> — adding equal amounts makes the ratio converge towards 1. The firm has more cash but also more short-term debt.'
+      },
+      {
+        label: 'Renegotiate supplier terms',
+        detail: 'Extend payment terms from 30 to 60 days — payables rise by £15,000',
+        apply: function(d) { d.pay += 15000; d.cl += 15000; },
+        feedback: '<strong>Current liabilities increase</strong> as the outstanding payables balance grows. Both ratios fall slightly. However, <strong>payables days increase</strong> — the firm holds cash longer before paying, which is a liquidity benefit day-to-day despite the ratio impact.'
+      }
+    ]
+  },
+  {
+    name: 'Bridgeway Build Ltd',
+    desc: 'A construction contractor. Projects are long-running and clients pay on completion, creating long receivables cycles.',
+    data: { ca:140000, cl:110000, inv:30000, rec:85000, pay:25000, sales:920000, purch:380000 },
+    decisions: [
+      {
+        label: 'Invoice clients immediately',
+        detail: 'Bill £40,000 of completed work — receivables increase before cash is collected',
+        apply: function(d) { d.rec += 40000; d.ca += 40000; },
+        feedback: '<strong>Receivables rise as a current asset</strong> — both ratios improve. However, the cash has not yet arrived. This highlights the difference between recognising revenue and collecting cash. <strong>Receivables days worsen</strong> until payment is received.'
+      },
+      {
+        label: 'Purchase materials upfront',
+        detail: 'Buy £20,000 of building materials on credit for the next project',
+        apply: function(d) { d.inv += 20000; d.ca += 20000; d.cl += 20000; d.pay += 20000; },
+        feedback: '<strong>Both current assets and current liabilities rise equally</strong>. Current ratio barely changes, but <strong>acid test falls</strong> because inventory (materials) increases. Payables days rise. This is typical in construction — materials acquired before cash from the project arrives.'
+      },
+      {
+        label: 'Negotiate a progress payment',
+        detail: 'Receive £30,000 cash mid-project — converts receivable to cash',
+        apply: function(d) { d.rec -= 30000; },
+        feedback: 'Receivables fall, cash rises by the same amount. <strong>Ratios unchanged</strong> but <strong>receivables days fall significantly</strong> — one of the best liquidity improvements Bridgeway can make given its structural challenge with slow-paying clients.'
+      },
+      {
+        label: 'Take a short-term bank loan',
+        detail: 'Borrow £35,000 repayable within 12 months to cover a cash shortfall',
+        apply: function(d) { d.ca += 35000; d.cl += 35000; },
+        feedback: 'Cash rises but so do current liabilities (loan due within 12 months). Both ratios are <strong>pulled towards 1:1</strong>. This is a stopgap — it maintains cash flow but does not improve the underlying liquidity position and increases financial risk.'
+      }
+    ]
+  },
+  {
+    name: 'Clearfield Foods plc',
+    desc: 'A food manufacturer supplying supermarkets. High inventory of perishable goods and extended customer payment terms.',
+    data: { ca:195000, cl:105000, inv:80000, rec:70000, pay:55000, sales:1250000, purch:680000 },
+    decisions: [
+      {
+        label: 'Reduce inventory levels',
+        detail: 'Implement just-in-time ordering — reduce inventory by £30,000',
+        apply: function(d) { d.inv -= 30000; d.ca -= 30000; },
+        feedback: '<strong>Current assets fall</strong> as inventory reduces. Current ratio falls slightly. However, <strong>acid test improves</strong> because the proportion of liquid assets (cash/receivables) within current assets rises. JIT improves liquidity quality even if the headline current ratio falls.'
+      },
+      {
+        label: 'Offer supermarkets extended credit',
+        detail: 'Allow key customers an extra 15 days to pay — receivables rise by £50,000',
+        apply: function(d) { d.rec += 50000; d.ca += 50000; },
+        feedback: '<strong>Receivables and current assets both rise</strong> — ratios improve on paper. But <strong>receivables days worsen significantly</strong> — cash is being collected more slowly. The ratio improvement is misleading; actual cash flow is weaker.'
+      },
+      {
+        label: 'Pay a tax liability early',
+        detail: 'Settle £25,000 corporation tax due (reduces both cash and current liabilities)',
+        apply: function(d) { d.ca -= 25000; d.cl -= 25000; },
+        feedback: 'Equal reductions on both sides. Since the ratio is <strong>above 1:1, both ratios improve</strong> — the same logic as early loan repayment. Less cash on hand but also less short-term obligation. A marginally stronger liquidity position.'
+      },
+      {
+        label: 'Borrow from suppliers',
+        detail: 'Take an extra 30 days from suppliers — payables rise by £55,000',
+        apply: function(d) { d.pay += 55000; d.cl += 55000; },
+        feedback: '<strong>Current liabilities rise</strong> without a corresponding asset change. Both ratios fall. However, <strong>payables days increase</strong> — the firm holds its cash longer. This is a classic short-term liquidity management tool: use supplier credit to preserve cash, accepting a weaker ratio in exchange.'
+      }
+    ]
+  }
+];
+
+function calcRatios(d) {
+  return {
+    cr:  (d.ca / d.cl),
+    at:  ((d.ca - d.inv) / d.cl),
+    rd:  ((d.rec / d.sales) * 365),
+    pd:  ((d.pay / d.purch) * 365)
+  };
+}
+
+function copyData(d) {
+  return { ca:d.ca, cl:d.cl, inv:d.inv, rec:d.rec, pay:d.pay, sales:d.sales, purch:d.purch };
+}
+
+function loadWhiScenario(idx) {
+  whiCurrentScenario = idx;
+  var btns = document.querySelectorAll('.whi-scenario-btn');
+  var i;
+  for (i = 0; i < btns.length; i++) { btns[i].classList.remove('active'); }
+  btns[idx].classList.add('active');
+
+  var sc = WHI_SCENARIOS[idx];
+  whiData = copyData(sc.data);
+
+  document.getElementById('whiCompanyName').textContent = sc.name;
+  document.getElementById('whiCompanyDesc').textContent = sc.desc;
+
+  renderWhiFinData();
+  renderWhiRatios();
+  renderWhiDecisions();
+
+  var fb = document.getElementById('whiFeedback');
+  fb.classList.remove('show');
+  fb.innerHTML = '';
+}
+
+function renderWhiFinData() {
+  var sc = WHI_SCENARIOS[whiCurrentScenario];
+  var d = whiData;
+  var html = '';
+  var items = [
+    ['Current Assets', d.ca],
+    ['Current Liabilities', d.cl],
+    ['Inventory', d.inv],
+    ['Receivables', d.rec],
+    ['Payables', d.pay],
+    ['Annual Sales', d.sales],
+    ['Annual Purchases', d.purch]
+  ];
+  var i;
+  for (i = 0; i < items.length; i++) {
+    html += '<div class="fin-item"><div class="fin-item-label">' + items[i][0] + '</div><div class="fin-item-value">&pound;' + items[i][1].toLocaleString() + '</div></div>';
+  }
+  document.getElementById('whiFinData').innerHTML = html;
+}
+
+function renderWhiRatios() {
+  var r = calcRatios(whiData);
+  var cards = [
+    { id:'rdc-cr',  label:'Current Ratio',     val:r.cr.toFixed(2) + ':1', bar:Math.min(r.cr * 40, 100) },
+    { id:'rdc-at',  label:'Acid Test Ratio',    val:r.at.toFixed(2) + ':1', bar:Math.min(r.at * 40, 100) },
+    { id:'rdc-rd',  label:'Receivables Days',   val:Math.round(r.rd) + ' days', bar:Math.min(r.rd / 90 * 100, 100) },
+    { id:'rdc-pd',  label:'Payables Days',      val:Math.round(r.pd) + ' days', bar:Math.min(r.pd / 90 * 100, 100) }
+  ];
+  var html = '';
+  var i;
+  for (i = 0; i < cards.length; i++) {
+    html += '<div class="ratio-display-card">' +
+      '<div class="rdc-label">' + cards[i].label + '</div>' +
+      '<div class="rdc-value" id="' + cards[i].id + '">' + cards[i].val + '</div>' +
+      '<div class="rdc-bar-wrap"><div class="rdc-bar" id="bar-' + cards[i].id + '" style="width:' + cards[i].bar + '%"></div></div>' +
+      '</div>';
+  }
+  document.getElementById('whiRatios').innerHTML = html;
+}
+
+function renderWhiDecisions() {
+  var sc = WHI_SCENARIOS[whiCurrentScenario];
+  var html = '';
+  var i;
+  for (i = 0; i < sc.decisions.length; i++) {
+    var d = sc.decisions[i];
+    html += '<button class="decision-btn" onclick="makeWhiDecision(' + i + ')">' +
+      '<strong>' + d.label + '</strong>' + d.detail +
+      '</button>';
+  }
+  document.getElementById('whiDecisions').innerHTML = html;
+}
+
+function makeWhiDecision(idx) {
+  var sc = WHI_SCENARIOS[whiCurrentScenario];
+  var dec = sc.decisions[idx];
+  var oldR = calcRatios(whiData);
+
+  dec.apply(whiData);
+
+  var newR = calcRatios(whiData);
+  renderWhiFinData();
+  renderWhiRatios();
+
+  var ratioRows = [
+    { name:'Current Ratio',   oldV:oldR.cr.toFixed(2), newV:newR.cr.toFixed(2), up:newR.cr > oldR.cr, same:Math.abs(newR.cr - oldR.cr) < 0.005 },
+    { name:'Acid Test',       oldV:oldR.at.toFixed(2), newV:newR.at.toFixed(2), up:newR.at > oldR.at, same:Math.abs(newR.at - oldR.at) < 0.005 },
+    { name:'Receivables Days',oldV:Math.round(oldR.rd), newV:Math.round(newR.rd), up:newR.rd > oldR.rd, same:Math.round(newR.rd) === Math.round(oldR.rd) },
+    { name:'Payables Days',   oldV:Math.round(oldR.pd), newV:Math.round(newR.pd), up:newR.pd > oldR.pd, same:Math.round(newR.pd) === Math.round(oldR.pd) }
+  ];
+
+  var html = '<div class="whi-feedback-title">' + dec.label + '</div>';
+  html += '<div class="whi-feedback-body" style="margin-bottom:16px;">' + dec.feedback + '</div>';
+  var i;
+  for (i = 0; i < ratioRows.length; i++) {
+    var row = ratioRows[i];
+    var arrow = row.same ? '&rarr;' : (row.up ? '&#8593;' : '&#8595;');
+    var arrowColor = row.same ? 'var(--text-dim)' : (row.up ? 'var(--green-lt)' : 'var(--red-lt)');
+    html += '<div class="ratio-delta-row">' +
+      '<span class="ratio-delta-name">' + row.name + '</span>' +
+      '<span class="ratio-delta-change" style="color:' + arrowColor + '">' + arrow + '</span>' +
+      '<span class="ratio-delta-vals">' + row.oldV + ' &rarr; ' + row.newV + '</span>' +
+      '</div>';
+  }
+  var fb = document.getElementById('whiFeedback');
+  fb.innerHTML = html;
+  fb.classList.add('show');
+}
+
+function resetWhi() {
+  loadWhiScenario(whiCurrentScenario);
+}
+
+/* ── Forecasting data ── */
+var ALL_FORECASTS = [
+  {
+    title: 'Credit sales surge',
+    text: 'A regional wholesaler has signed three new large B2B clients who all pay on 60-day credit terms. Sales volume rises 15%. The firm buys more inventory on credit from suppliers to meet demand.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'up',   expl:'Both receivables and inventory rise as current assets — current ratio improves.' },
+      { ratio:'Acid Test',        dir:'up',   expl:'Receivables increase and are included in the acid test calculation — the ratio rises.' },
+      { ratio:'Receivables Days', dir:'up',   expl:'New clients on 60-day terms drag the average collection period higher.' },
+      { ratio:'Payables Days',    dir:'up',   expl:'More purchases on credit means a higher payables balance, extending payables days.' }
+    ]
+  },
+  {
+    title: 'Just-in-time switch',
+    text: 'A food manufacturer moves to just-in-time production, reducing average inventory held by 40%. It also negotiates an extra 20 days from its main supplier.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'down', expl:'Inventory (a current asset) falls significantly — current ratio decreases.' },
+      { ratio:'Acid Test',        dir:'same', expl:'Acid test excludes inventory — the fall in stock has no effect on this ratio.' },
+      { ratio:'Receivables Days', dir:'same', expl:'Customer payment terms are unchanged — receivables days stay the same.' },
+      { ratio:'Payables Days',    dir:'up',   expl:'The extra 20 days agreed with the supplier extends average payables days.' }
+    ]
+  },
+  {
+    title: 'Short-term cash squeeze',
+    text: 'An engineering firm pays a large corporation tax bill and settles a bank overdraft simultaneously, using £80,000 of cash. No new borrowing is taken on.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'up',   expl:'Cash and current liabilities both fall — when CR is above 1:1, equal reductions improve the ratio.' },
+      { ratio:'Acid Test',        dir:'up',   expl:'Same logic applies — both the numerator and denominator fall, improving the ratio above 1:1.' },
+      { ratio:'Receivables Days', dir:'same', expl:'Nothing about customer payment has changed — receivables days are unaffected.' },
+      { ratio:'Payables Days',    dir:'down', expl:'Paying off the overdraft and tax reduces outstanding obligations — payables days fall.' }
+    ]
+  },
+  {
+    title: 'Seasonal inventory build',
+    text: 'A toy retailer purchases £120,000 of Christmas stock on 45-day credit terms in October. No additional sales have been made yet.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'same', expl:'Inventory rises as a current asset, payables rise as a current liability — both sides increase equally, ratio barely changes.' },
+      { ratio:'Acid Test',        dir:'down', expl:'Inventory rises but is excluded from the acid test — only liabilities go up, so the ratio falls.' },
+      { ratio:'Receivables Days', dir:'same', expl:'No change in customer credit terms or sales — receivables days unaffected.' },
+      { ratio:'Payables Days',    dir:'up',   expl:'A larger payables balance on the same annual purchases base extends payables days.' }
+    ]
+  },
+  {
+    title: 'Early payment incentive',
+    text: 'A B2B services firm offers a 1.5% discount to clients who pay within 10 days instead of 30. Take-up is high — receivables fall by £45,000. The firm uses the cash to pay down a short-term loan.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'same', expl:'Receivables fall but cash rises initially, then cash falls as the loan is repaid and current liabilities fall by the same amount — net effect near zero.' },
+      { ratio:'Acid Test',        dir:'same', expl:'Receivables and cash both feature in the acid test — the substitution and then repayment cancel out.' },
+      { ratio:'Receivables Days', dir:'down', expl:'The core improvement — receivables fall significantly, so collection days reduce sharply.' },
+      { ratio:'Payables Days',    dir:'same', expl:'Supplier payment terms are unchanged — payables days are unaffected.' }
+    ]
+  },
+  {
+    title: 'Overdraft to fund growth',
+    text: 'A logistics firm takes a £60,000 overdraft to fund the purchase of a new vehicle (fixed asset). The overdraft appears as a current liability.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'down', expl:'Current liabilities rise (overdraft) but current assets do not increase — the van is a fixed asset. Current ratio falls.' },
+      { ratio:'Acid Test',        dir:'down', expl:'Same logic — current liabilities rise without a corresponding current asset increase. Acid test falls.' },
+      { ratio:'Receivables Days', dir:'same', expl:'Customer payment behaviour is unchanged — receivables days unaffected.' },
+      { ratio:'Payables Days',    dir:'same', expl:'Supplier payment terms are unchanged — payables days unaffected.' }
+    ]
+  },
+  {
+    title: 'Debt factoring agreement',
+    text: 'A small manufacturer sells £50,000 of its trade receivables to a factoring company, receiving £47,500 in immediate cash (a 5% fee). Current liabilities are unchanged.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'same', expl:'Receivables fall but cash rises by £47,500 — both are current assets. Current ratio barely changes (small reduction from the fee).' },
+      { ratio:'Acid Test',        dir:'same', expl:'Same substitution within current assets — acid test changes minimally.' },
+      { ratio:'Receivables Days', dir:'down', expl:'Receivables fall significantly — collection days improve substantially. This is the primary purpose of factoring.' },
+      { ratio:'Payables Days',    dir:'same', expl:'Supplier payment terms are unchanged — payables days unaffected.' }
+    ]
+  },
+  {
+    title: 'Supplier relationship breakdown',
+    text: 'A retailer loses favourable credit terms with its largest supplier after a dispute. It must now pay within 14 days instead of 60 days. It pays down the outstanding balance immediately.',
+    predictions: [
+      { ratio:'Current Ratio',    dir:'down', expl:'Cash (current asset) falls as the payables balance is settled early. Current ratio decreases.' },
+      { ratio:'Acid Test',        dir:'down', expl:'Cash falls without inventory changing — acid test deteriorates.' },
+      { ratio:'Receivables Days', dir:'same', expl:'Customer payment terms are unchanged — receivables days unaffected.' },
+      { ratio:'Payables Days',    dir:'down', expl:'The shorter payment window means payables days fall dramatically — the firm must pay far faster.' }
+    ]
+  }
+];
+
+function startForecast() {
+  var shuffled = shuffleArray(ALL_FORECASTS.slice());
+  forecastQueue = shuffled.slice(0, 5);
+  forecastIndex = 0;
+  forecastSubmitted = false;
+  forecastPredictions = {};
+  document.getElementById('forecastComplete').classList.remove('show');
+  document.getElementById('forecastCard').style.display = '';
+  buildForecastPips();
+  renderForecast();
+}
+
+function buildForecastPips() {
+  var pips = document.getElementById('forecastPips');
+  pips.innerHTML = '';
+  var i;
+  for (i = 0; i < forecastQueue.length; i++) {
+    var pip = document.createElement('div');
+    pip.className = 'forecast-pip' + (i === 0 ? ' current' : '');
+    pip.id = 'fpip-' + i;
+    pips.appendChild(pip);
+  }
+}
+
+function updateForecastPips() {
+  var i;
+  for (i = 0; i < forecastQueue.length; i++) {
+    var pip = document.getElementById('fpip-' + i);
+    if (!pip) continue;
+    pip.className = 'forecast-pip';
+    if (i < forecastIndex) { pip.classList.add('done'); }
+    else if (i === forecastIndex) { pip.classList.add('current'); }
+  }
+}
+
+function renderForecast() {
+  forecastSubmitted = false;
+  forecastPredictions = {};
+  var sc = forecastQueue[forecastIndex];
+
+  document.getElementById('fcNum').textContent = 'Scenario ' + (forecastIndex + 1) + ' of ' + forecastQueue.length;
+  document.getElementById('fcTitle').textContent = sc.title;
+  document.getElementById('fcText').innerHTML = sc.text;
+  document.getElementById('fcResults').classList.remove('show');
+  document.getElementById('fcResults').innerHTML = '';
+  document.getElementById('fcSubmitBtn').style.display = '';
+  document.getElementById('fcNextBtn').style.display = 'none';
+  updateForecastPips();
+
+  var rows = '';
+  var i;
+  for (i = 0; i < sc.predictions.length; i++) {
+    var p = sc.predictions[i];
+    var key = 'fp' + i;
+    rows +=
+      '<div class="fp-row">' +
+        '<span class="fp-ratio-name">' + p.ratio + '</span>' +
+        '<div class="fp-btns">' +
+          '<button class="fp-btn" id="' + key + '-up"   onclick="selectFP(' + i + ',\'up\')"   data-key="' + key + '" data-dir="up">Increase</button>' +
+          '<button class="fp-btn" id="' + key + '-same" onclick="selectFP(' + i + ',\'same\')" data-key="' + key + '" data-dir="same">No Change</button>' +
+          '<button class="fp-btn" id="' + key + '-down" onclick="selectFP(' + i + ',\'down\')" data-key="' + key + '" data-dir="down">Decrease</button>' +
+        '</div>' +
+      '</div>';
+  }
+  document.getElementById('fpRows').innerHTML = rows;
+}
+
+function selectFP(idx, dir) {
+  if (forecastSubmitted) return;
+  var key = 'fp' + idx;
+  var dirs = ['up', 'same', 'down'];
+  var i;
+  for (i = 0; i < dirs.length; i++) {
+    var btn = document.getElementById(key + '-' + dirs[i]);
+    if (btn) { btn.classList.remove('chosen'); }
+  }
+  var chosen = document.getElementById(key + '-' + dir);
+  if (chosen) { chosen.classList.add('chosen'); }
+  forecastPredictions[idx] = dir;
+}
+
+function checkForecast() {
+  var sc = forecastQueue[forecastIndex];
+  var i;
+  for (i = 0; i < sc.predictions.length; i++) {
+    if (!forecastPredictions[i]) {
+      alert('Please make a prediction for all ratios.');
+      return;
+    }
+  }
+  forecastSubmitted = true;
+
+  var allBtns = document.querySelectorAll('.fp-btn');
+  var j;
+  for (j = 0; j < allBtns.length; j++) { allBtns[j].disabled = true; }
+
+  var html = '';
+  for (i = 0; i < sc.predictions.length; i++) {
+    var p = sc.predictions[i];
+    var chosen = forecastPredictions[i];
+    var correct = chosen === p.dir;
+    var dirLabel = { up:'Increase', same:'No Change', down:'Decrease' };
+    html +=
+      '<div class="fr-row">' +
+        '<div class="fr-status">' + (correct ? '\u2713' : '\u2717') + '</div>' +
+        '<div>' +
+          '<div class="fr-ratio">' + p.ratio + ' &mdash; ' +
+            (correct
+              ? '<span style="color:var(--green-lt);">Correct (' + dirLabel[p.dir] + ')</span>'
+              : '<span style="color:var(--red-lt);">You chose ' + dirLabel[chosen] + ' &mdash; answer: ' + dirLabel[p.dir] + '</span>') +
+          '</div>' +
+          '<div class="fr-explanation">' + p.expl + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  var results = document.getElementById('fcResults');
+  results.innerHTML = html;
+  results.classList.add('show');
+
+  document.getElementById('fcSubmitBtn').style.display = 'none';
+  document.getElementById('fcNextBtn').style.display = '';
+}
+
+function nextForecast() {
+  forecastIndex++;
+  if (forecastIndex >= forecastQueue.length) {
+    document.getElementById('forecastCard').style.display = 'none';
+    document.getElementById('forecastComplete').classList.add('show');
+    return;
+  }
+  renderForecast();
+}
+
+/* ── Utilities ── */
+function shuffleArray(arr) {
+  var i, j, tmp;
+  for (i = arr.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+
+/* ── Init ── */
+initPW();
+loadDetRound(0);
+loadWhiScenario(0);
+startForecast();
+</script>
+</body>
+</html>
