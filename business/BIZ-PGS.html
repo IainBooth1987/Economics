@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Porter's Generic Strategies | BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#1e2a3f;
+  --blue:#3b82f6;--blue-dark:#2563eb;--amber:#f59e0b;--red:#ef4444;--green:#22c55e;
+  --purple:#a78bfa;--cyan:#06b6d4;
+  --text:#e2e8f0;--text-dim:#94a3b8;--text-muted:#475569;--border:#1e2d45;--radius:12px;
+  --cl:#3b82f6;--df:#22c55e;--fc:#f59e0b;--fd:#a78bfa;--sm:#ef4444;
+}
+[data-theme="light"]{
+  --bg:#f1f5f9;--surface:#fff;--surface2:#f8fafc;--surface3:#f1f5f9;
+  --text:#1e293b;--text-dim:#64748b;--text-muted:#94a3b8;--border:#cbd5e1;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+
+/* PASSWORD */
+#pwGate{position:fixed;inset:0;z-index:9999;background:#0a0e1a;display:flex;align-items:center;justify-content:center;padding:20px}
+#pwBox{background:#111827;border:1px solid #1e2d45;border-radius:16px;padding:40px 36px;max-width:420px;width:100%;text-align:center}
+.pw-logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:#3b82f6;letter-spacing:1px;margin-bottom:6px}
+.pw-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;color:#e2e8f0;margin-bottom:8px}
+.pw-sub{color:#94a3b8;font-size:.88rem;margin-bottom:28px;line-height:1.6}
+#pwInput{width:100%;padding:12px 16px;background:#0a0e1a;border:2px solid #1e2d45;border-radius:8px;color:#e2e8f0;font-family:'DM Sans',sans-serif;font-size:1rem;text-align:center;margin-bottom:14px;outline:none;transition:border-color .2s}
+#pwInput:focus{border-color:#3b82f6}
+#pwBtn{width:100%;padding:12px;background:#3b82f6;border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:14px;transition:background .2s}
+#pwBtn:hover{background:#2563eb}
+#pwError{display:none;color:#ef4444;font-size:.85rem;font-weight:600;margin-bottom:12px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.shake{animation:shake .4s ease}
+
+/* HEADER */
+.site-header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:900;color:var(--blue);letter-spacing:1px;text-decoration:none}
+.page-tag{background:var(--amber);color:#000;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.5px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:14px}
+.back-link{font-size:.85rem;color:var(--text-dim);text-decoration:none;font-weight:500}
+.back-link:hover{color:var(--blue)}
+.theme-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text-dim);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600}
+.theme-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+/* HERO */
+.hero{padding:40px 28px 26px;max-width:1200px;margin:0 auto}
+.hero h1{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:900;line-height:1.1;margin-bottom:8px}
+.hero h1 span{color:var(--blue)}
+.hero p{color:var(--text-dim);font-size:1rem}
+
+/* TABS */
+.container{max-width:1200px;margin:0 auto;padding:0 28px 60px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);flex-wrap:wrap;margin-bottom:0;overflow-x:auto}
+.tab-btn{padding:11px 18px;background:transparent;border:none;border-bottom:3px solid transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .2s;margin-bottom:-1px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none;padding-top:28px}
+.tab-panel.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMMON */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px}
+.card-title{font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:14px}
+.tblock{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px}
+.tblock h4{font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;margin-bottom:7px;color:var(--blue)}
+.tblock p,.tblock li{font-size:.88rem;color:var(--text-dim);line-height:1.75}
+.tblock ul{margin:6px 0 0 16px}
+.tblock li{margin:3px 0}
+.tblock p strong,.tblock li strong{color:var(--text)}
+.callout{border-radius:8px;padding:12px 15px;margin:12px 0;font-size:.87rem;line-height:1.7;border-left:4px solid}
+.callout strong{display:block;margin-bottom:2px;font-size:.82rem}
+.cb{background:rgba(59,130,246,.08);border-color:var(--blue)}
+.ca{background:rgba(245,158,11,.08);border-color:var(--amber)}
+.cg{background:rgba(34,197,94,.08);border-color:var(--green)}
+.cr{background:rgba(239,68,68,.08);border-color:var(--red)}
+.eval-box{background:var(--bg);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px}
+.eval-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);margin-bottom:5px}
+.eval-box p{font-size:.85rem;color:var(--text-dim);line-height:1.65;margin:0}
+.key-term{background:rgba(245,158,11,.12);color:var(--amber);padding:2px 6px;border-radius:4px;font-weight:600;font-size:.9em}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.comp-table{width:100%;border-collapse:collapse;font-size:.84rem;margin-bottom:16px}
+.comp-table th{background:var(--surface2);color:var(--text-dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;padding:10px 14px;text-align:left;border-bottom:2px solid var(--border)}
+.comp-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-dim);vertical-align:top;line-height:1.55}
+.comp-table td:first-child{font-weight:700;color:var(--text)}
+.comp-table tr:last-child td{border-bottom:none}
+.btn{padding:9px 20px;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-dark)}
+.btn-outline{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue)}
+
+/* PORTER VISUAL MATRIX */
+.porter-matrix-display{display:grid;grid-template-columns:48px 1fr 1fr;grid-template-rows:36px 1fr 1fr;gap:3px;margin:20px auto;max-width:680px;background:var(--border);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.pm-corner{background:var(--surface2)}
+.pm-col-hdr{background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);padding:8px;text-align:center}
+.pm-row-hdr{background:var(--surface2);display:flex;align-items:center;justify-content:center;writing-mode:vertical-lr;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);padding:8px}
+.pm-cell{padding:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100px}
+.pm-cell.cl{background:rgba(59,130,246,.12);border-top:3px solid var(--cl)}
+.pm-cell.df{background:rgba(34,197,94,.12);border-top:3px solid var(--df)}
+.pm-cell.fc{background:rgba(245,158,11,.12);border-top:3px solid var(--fc)}
+.pm-cell.fd{background:rgba(167,139,250,.12);border-top:3px solid var(--fd)}
+.pm-name{font-family:'Fraunces',serif;font-size:.92rem;font-weight:700;margin-bottom:3px}
+.pm-cell.cl .pm-name{color:var(--cl)}
+.pm-cell.df .pm-name{color:var(--df)}
+.pm-cell.fc .pm-name{color:var(--fc)}
+.pm-cell.fd .pm-name{color:var(--fd)}
+.pm-sub{font-size:.72rem;color:var(--text-muted)}
+.pm-sitm{grid-column:2/4;background:rgba(239,68,68,.08);border:2px dashed rgba(239,68,68,.4);border-radius:0 0 var(--radius) 0;padding:12px;text-align:center;margin-top:1px}
+.pm-sitm-label{font-family:'Fraunces',serif;font-size:.88rem;font-weight:700;color:var(--red);margin-bottom:3px}
+.pm-sitm-sub{font-size:.72rem;color:var(--text-muted)}
+
+/* STRATEGY DETAIL CARDS */
+.strat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.strat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px}
+.strat-card.sc-cl{border-top:4px solid var(--cl)}
+.strat-card.sc-df{border-top:4px solid var(--df)}
+.strat-card.sc-fc{border-top:4px solid var(--fc)}
+.strat-card.sc-fd{border-top:4px solid var(--fd)}
+.strat-card.sc-sm{border-top:4px solid var(--sm);border-style:dashed}
+.strat-title{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.sc-cl .strat-title{color:var(--cl)}
+.sc-df .strat-title{color:var(--df)}
+.sc-fc .strat-title{color:var(--fc)}
+.sc-fd .strat-title{color:var(--fd)}
+.sc-sm .strat-title{color:var(--sm)}
+.strat-tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);margin-bottom:10px}
+.strat-card p{font-size:.86rem;color:var(--text-dim);line-height:1.7;margin-bottom:8px}
+.strat-card p:last-child{margin-bottom:0}
+.strat-card strong{color:var(--text)}
+.strat-card ul{margin:4px 0 8px 14px}
+.strat-card li{font-size:.84rem;color:var(--text-dim);line-height:1.6;margin:3px 0}
+
+/* CASE STUDY CARDS */
+.cs-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.cs-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.cs-label.cl{color:var(--cl)}
+.cs-label.df{color:var(--df)}
+.cs-label.fc{color:var(--fc)}
+.cs-label.fd{color:var(--fd)}
+.cs-label.sm{color:var(--sm)}
+.cs-co{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.cs-card p{font-size:.86rem;color:var(--text-dim);line-height:1.7;margin-bottom:8px}
+.cs-card p:last-child{margin-bottom:0}
+.cs-card strong{color:var(--text)}
+.cs-card ul{margin:4px 0 8px 14px}
+.cs-card li{font-size:.84rem;color:var(--text-dim);line-height:1.6;margin:3px 0}
+
+/* GAME */
+.game-intro-box{background:var(--surface2);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:var(--radius);padding:18px 20px;margin-bottom:22px;font-size:.88rem;color:var(--text-dim);line-height:1.7}
+.game-intro-box strong{color:var(--text)}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.mode-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans',sans-serif}
+.mode-card:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.mc-practice{border-top:3px solid var(--green)}
+.mc-speed{border-top:3px solid var(--amber)}
+.mc-boss{border-top:3px solid var(--purple)}
+.mode-card h3{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;margin-bottom:8px}
+.mc-practice h3{color:var(--green)}
+.mc-speed h3{color:var(--amber)}
+.mc-boss h3{color:var(--purple)}
+.mode-card p{font-size:.83rem;color:var(--text-dim);line-height:1.6}
+#gameArea{display:none}
+.game-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.game-stats{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stat-pill{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:.8rem;font-weight:700;color:var(--text-dim)}
+.stat-pill span{color:var(--blue)}
+#timerPill span{color:var(--red)}
+.streak-pill{background:rgba(245,158,11,.15);border-color:var(--amber);display:none}
+.streak-pill.show{display:inline-block}
+.streak-pill span{color:var(--amber)}
+
+/* DROP ZONES — 5 zones: 2x2 + SITM full-width */
+.drop-matrix{max-width:760px;margin:0 auto 20px}
+.drop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.drop-zone{border:2px dashed;border-radius:var(--radius);padding:16px;min-height:100px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:filter .15s,transform .15s}
+.dz-cl{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.05)}
+.dz-df{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.05)}
+.dz-fc{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.05)}
+.dz-fd{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.05)}
+.dz-sm{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05);border-style:dashed;min-height:70px}
+.drop-zone.dragover{filter:brightness(1.3);transform:scale(1.03)}
+.drop-zone.flash-ok{animation:flashOk .6s ease}
+.drop-zone.flash-no{animation:flashNo .6s ease}
+@keyframes flashOk{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@keyframes flashNo{0%,100%{filter:brightness(1)}50%{background:rgba(239,68,68,.18)}}
+.dz-label{font-family:'Fraunces',serif;font-size:.92rem;font-weight:700;margin-bottom:3px}
+.dz-cl .dz-label{color:var(--cl)}
+.dz-df .dz-label{color:var(--df)}
+.dz-fc .dz-label{color:var(--fc)}
+.dz-fd .dz-label{color:var(--fd)}
+.dz-sm .dz-label{color:var(--sm)}
+.dz-sub{font-size:.7rem;color:var(--text-muted)}
+.scenario-wrap{max-width:600px;margin:0 auto 16px}
+.scenario-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:20px;cursor:grab;user-select:none;transition:box-shadow .2s,transform .2s}
+.scenario-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(-2px)}
+.scenario-card.dragging{opacity:.5;cursor:grabbing}
+.sc-title{font-family:'Fraunces',serif;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.sc-desc{font-size:.87rem;color:var(--text-dim);line-height:1.6}
+.game-feedback{display:none;max-width:600px;margin:0 auto 16px;border-radius:var(--radius);padding:14px 18px;font-size:.87rem;line-height:1.65}
+.game-feedback.show{display:block;animation:fadeUp .3s ease}
+.game-feedback h4{font-size:.9rem;font-weight:700;margin-bottom:6px}
+.game-feedback p{color:var(--text-dim)}
+.gf-ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3)}
+.gf-ok h4{color:var(--green)}
+.gf-no{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3)}
+.gf-no h4{color:var(--red)}
+.end-screen{display:none;text-align:center;padding:40px 20px;animation:fadeUp .4s ease}
+.end-screen.show{display:block}
+.end-big{font-family:'Fraunces',serif;font-size:3.5rem;font-weight:900;margin:12px 0 6px}
+.end-grade{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:12px}
+.end-msg{color:var(--text-dim);font-size:.9rem;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto}
+
+@media(max-width:700px){
+  .hero h1{font-size:1.8rem}
+  .g2,.g3,.strat-grid,.drop-grid,.mode-grid{grid-template-columns:1fr}
+  .porter-matrix-display{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+  .pm-corner,.pm-row-hdr,.pm-col-hdr{display:none}
+  .site-header{padding:0 16px}
+  .hero,.container{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="pwGate">
+  <div id="pwBox">
+    <div class="pw-logo">BIZ-OMICS</div>
+    <div class="pw-title">Porter's Generic Strategies</div>
+    <p class="pw-sub">Enter your access password to continue.</p>
+    <input type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <button id="pwBtn" onclick="checkPw()">Unlock</button>
+    <div id="pwError">Incorrect password. Please try again.</div>
+    <a href="../business/index.html" style="color:#475569;font-size:.82rem;text-decoration:none;border-bottom:1px solid #1e2d45;">Back to Business Hub</a>
+  </div>
+</div>
+
+<script>
+(function(){
+  var PW=['BIZ-PGS-2N6R','GSALEconomics','BizAQA-SM4RT!2026','BizEDX-AL9K!2026','BizOCR-AL7M!2026','BizOCR-GC4X!2026'];
+  var KEY='biz-pgs-unlocked';
+  if(localStorage.getItem(KEY)==='true'){document.getElementById('pwGate').style.display='none';}
+  window.checkPw=function(){
+    var v=document.getElementById('pwInput').value.trim();
+    var ok=false;
+    for(var i=0;i<PW.length;i++){if(v===PW[i]){ok=true;break;}}
+    if(ok){localStorage.setItem(KEY,'true');document.getElementById('pwGate').style.display='none';}
+    else{var b=document.getElementById('pwBox');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');document.getElementById('pwError').style.display='block';document.getElementById('pwInput').value='';}
+  };
+})();
+</script>
+
+<header class="site-header">
+  <div class="header-left">
+    <a class="logo" href="../index.html">BIZ-OMICS</a>
+    <span class="page-tag">Business</span>
+  </div>
+  <div class="header-right">
+    <a class="back-link" href="../business/index.html">Business Hub</a>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">Light mode</button>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Porter's <span>Generic Strategies</span></h1>
+  <p>Competitive positioning framework — theory, UK case studies, evaluation, and interactive practice</p>
+</div>
+
+<div class="container">
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('theory')">The Framework</button>
+  <button class="tab-btn" onclick="switchTab('cases')">UK Case Studies</button>
+  <button class="tab-btn" onclick="switchTab('eval')">Evaluation</button>
+  <button class="tab-btn" onclick="switchTab('game')">Strategy Game</button>
+</div>
+
+<!-- ================================================================ TAB 1: FRAMEWORK -->
+<div id="theory-panel" class="tab-panel active">
+
+  <div class="card">
+    <div class="card-title">What are Porter's Generic Strategies?</div>
+    <p style="font-size:.9rem;color:var(--text-dim);line-height:1.8;margin-bottom:14px;">Michael Porter's Generic Strategies model, introduced in <em>Competitive Strategy</em> (1980), argues that businesses achieve sustainable competitive advantage by making a clear choice about <em>how</em> they compete. The framework is built on two dimensions: <span class="key-term">competitive scope</span> (broad market vs narrow niche) and <span class="key-term">competitive advantage</span> (low cost vs differentiation). These produce four strategic positions — plus Porter's warning about firms that fail to choose.</p>
+    <div class="callout cb"><strong>Porter's central argument</strong>"The essence of strategy is choosing what not to do. Without trade-offs, there would be no need for choice and thus no need for strategy." A business trying to be all things to all people ends up being nothing to anyone.</div>
+
+    <div class="porter-matrix-display">
+      <div class="pm-corner"></div>
+      <div class="pm-col-hdr">Low Cost Advantage</div>
+      <div class="pm-col-hdr">Differentiation Advantage</div>
+      <div class="pm-row-hdr">Broad Market</div>
+      <div class="pm-cell cl">
+        <div class="pm-name">Cost Leadership</div>
+        <div class="pm-sub">Lowest cost in industry</div>
+      </div>
+      <div class="pm-cell df">
+        <div class="pm-name">Differentiation</div>
+        <div class="pm-sub">Unique value industry-wide</div>
+      </div>
+      <div class="pm-row-hdr">Narrow Niche</div>
+      <div class="pm-cell fc">
+        <div class="pm-name">Cost Focus</div>
+        <div class="pm-sub">Lowest cost in segment</div>
+      </div>
+      <div class="pm-cell fd">
+        <div class="pm-name">Differentiation Focus</div>
+        <div class="pm-sub">Unique value in segment</div>
+      </div>
+      <div class="pm-sitm">
+        <div class="pm-sitm-label">Stuck in the Middle</div>
+        <div class="pm-sitm-sub">No clear competitive advantage — Porter's warning</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">The Four Strategic Positions</div>
+    <div class="strat-grid">
+      <div class="strat-card sc-cl">
+        <div class="strat-title">Cost Leadership</div>
+        <div class="strat-tag">Broad market — low cost advantage</div>
+        <p><strong>Objective:</strong> Become the lowest-cost producer in the industry while serving a broad market. The competitive advantage is either passing cost savings to customers through lower prices, or maintaining industry-average prices to generate above-average margins.</p>
+        <p><strong>Sources of cost advantage:</strong></p>
+        <ul>
+          <li>Economies of scale from high volume production</li>
+          <li>Experience curve effects — costs fall as cumulative output rises</li>
+          <li>Tight control of overheads and operational efficiency</li>
+          <li>Proprietary technology or process innovations</li>
+          <li>Preferential access to raw materials through buying power</li>
+          <li>Standardisation reducing complexity and waste</li>
+        </ul>
+        <p><strong>Risk:</strong> Technological change that nullifies cost advantages; competitors matching costs through imitation; over-focus on cost that leads to quality failure.</p>
+      </div>
+
+      <div class="strat-card sc-df">
+        <div class="strat-title">Differentiation</div>
+        <div class="strat-tag">Broad market — differentiation advantage</div>
+        <p><strong>Objective:</strong> Create products or services perceived as unique and valuable across the broad market. Premium pricing is sustainable because customers are willing to pay for differentiated features they cannot find elsewhere.</p>
+        <p><strong>Sources of differentiation:</strong></p>
+        <ul>
+          <li>Brand identity and reputation built over time</li>
+          <li>Product design, quality, or performance superiority</li>
+          <li>Technology or innovation (patents, proprietary features)</li>
+          <li>Customer service and experience</li>
+          <li>Distribution network or channel exclusivity</li>
+          <li>Reliability and after-sales support</li>
+        </ul>
+        <p><strong>Risk:</strong> The cost premium to achieve differentiation exceeds the price premium customers will pay; competitors imitate the differentiating features; customer tastes shift; differentiation becomes less valued.</p>
+      </div>
+
+      <div class="strat-card sc-fc">
+        <div class="strat-title">Cost Focus</div>
+        <div class="strat-tag">Narrow niche — low cost advantage</div>
+        <p><strong>Objective:</strong> Target a specific market segment and achieve the lowest cost of serving that segment. The focuser exploits differences between the target segment and the broader market — segment-specific cost drivers are different from those in the wider industry.</p>
+        <p><strong>When it works:</strong> When a segment has distinctive cost requirements that broad cost leaders do not optimise for. The focuser achieves superior economics in the niche by dedicating its entire cost structure to that one segment.</p>
+        <p><strong>Risk:</strong> The target segment may shrink or disappear; a broad cost leader may decide to serve the segment directly; the cost differences between the niche and the broader market erode.</p>
+      </div>
+
+      <div class="strat-card sc-fd">
+        <div class="strat-title">Differentiation Focus</div>
+        <div class="strat-tag">Narrow niche — differentiation advantage</div>
+        <p><strong>Objective:</strong> Provide superior differentiated value to a specific, narrow customer segment that has unusual or distinctive needs. The premium is justified by specialisation that broad differentiators cannot replicate.</p>
+        <p><strong>When it works:</strong> When the target segment's needs are sufficiently different from the broad market that broad differentiators cannot serve them well. Deep expertise in the niche creates competitive protection from larger rivals.</p>
+        <p><strong>Risk:</strong> The segment's distinctive needs converge with the broad market over time; competitors enter and erode the niche; the segment is too small to be profitable.</p>
+      </div>
+    </div>
+
+    <div class="strat-card sc-sm" style="margin-bottom:16px">
+      <div class="strat-title">Stuck in the Middle — Porter's Warning</div>
+      <div class="strat-tag">No clear competitive advantage</div>
+      <p><strong>What it is:</strong> Porter argued that firms which fail to commit clearly to either cost leadership or differentiation — or fail to define a focused niche — become "stuck in the middle." They have higher costs than cost leaders but cannot charge premium prices because they lack sufficient differentiation.</p>
+      <p><strong>Why it happens:</strong> Strategic drift when a business grows beyond its original focus; failure to make difficult trade-off decisions; attempting to serve everyone; loss of original competitive advantage without developing a new one.</p>
+      <p><strong>The consequence:</strong> Below-average profitability. Cost leaders take the price-sensitive customers; differentiators take the quality-seeking customers. The firm in the middle serves no one well.</p>
+      <div class="callout cr" style="margin-top:12px"><strong>Porter's direct warning</strong>"The firm stuck in the middle is almost guaranteed low profitability. It either loses the high-volume customers who demand low prices or must bid away its profits to get this business away from low-cost firms."</div>
+    </div>
+    <div class="eval-box"><div class="eval-label">Exam Evaluation Point</div><p>Porter's "stuck in the middle" concept is contested. Critics argue that some businesses — particularly digital platforms like Amazon — successfully combine cost leadership (through scale) with differentiation (through innovation and experience). Porter's response is that these businesses have genuinely separate strategies for separate business units, not a single hybrid strategy. This debate is worth raising in any evaluation of the framework.</p></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Michael Porter and the Framework's Origins</div>
+    <div class="g2">
+      <div class="tblock">
+        <h4>Background</h4>
+        <p>Michael E. Porter (born 1947) is a Harvard Business School professor widely regarded as the leading authority on competitive strategy. His 1980 book <em>Competitive Strategy</em> introduced both the Generic Strategies framework and the Five Forces model, transforming strategic management into a rigorous analytical discipline.</p>
+        <p style="margin-top:8px">Porter's core argument was that competitive advantage is not accidental — it flows from deliberate strategic positioning that requires trade-offs. A business cannot be all things to all people because activities that support cost leadership (standardisation, scale, efficiency) conflict directly with activities that support differentiation (customisation, quality investment, innovation).</p>
+      </div>
+      <div class="tblock">
+        <h4>Relationship to Other Porter Frameworks</h4>
+        <p>Generic Strategies should be read alongside Porter's other models for a complete picture:</p>
+        <ul>
+          <li><strong>Five Forces:</strong> Determines industry attractiveness — identifies <em>where</em> to compete</li>
+          <li><strong>Generic Strategies:</strong> Determines competitive positioning — identifies <em>how</em> to compete</li>
+          <li><strong>Value Chain:</strong> Maps the activities that create competitive advantage — identifies <em>what</em> to optimise</li>
+        </ul>
+        <p style="margin-top:8px">Together these three frameworks form a coherent approach to strategy: analyse the industry, choose a position, then align internal activities to sustain that position.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================================================================ TAB 2: UK CASE STUDIES -->
+<div id="cases-panel" class="tab-panel">
+
+  <div class="card">
+    <div class="card-title">Cost Leadership — UK Examples</div>
+    <p style="font-size:.87rem;color:var(--text-dim);line-height:1.7;margin-bottom:16px;">Achieving the lowest cost structure in the broad market. The test: does the business compete across the full market, and is its primary advantage being cheaper to operate than rivals?</p>
+
+    <div class="cs-card">
+      <div class="cs-label cl">Cost Leadership</div>
+      <div class="cs-co">Primark</div>
+      <p><strong>Strategy:</strong> Primark competes across the broad clothing and homeware market by relentlessly minimising costs — no e-commerce, no advertising spend, no loyalty programmes, no delivery infrastructure. Every cost is stripped back.</p>
+      <p><strong>Sources of cost advantage:</strong> No online retail eliminates fulfilment, returns, and digital infrastructure costs; global sourcing from low-cost manufacturers; high-volume, fast-turnover stock model; minimal store service; no advertising (word-of-mouth and store presence only); tight control of product complexity.</p>
+      <p><strong>Result:</strong> Revenues exceeded £8 billion in 2023. Primark is the UK's largest clothing retailer by volume. Profit margins are maintained despite industry-lowest prices because the cost structure is genuinely lower than competitors — not subsidised.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Primark's cost leadership is structurally robust because it is not based on one efficiency — it is a system of mutually reinforcing choices (no ecommerce, no ads, no returns infrastructure, high volume). This is what Porter means by "fit" — the activities reinforce each other. The risk is that consumer expectations shift toward ethical supply chains; Primark's low-cost model depends on global sourcing that is increasingly scrutinised. A regulatory or reputational crisis in its supply chain would strike at the heart of its cost structure.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label cl">Cost Leadership</div>
+      <div class="cs-co">Ryanair</div>
+      <p><strong>Strategy:</strong> Europe's largest airline by passenger numbers competes across the broad short-haul aviation market with the lowest operating costs in the industry, enabling fares often 30–50% below full-service rivals.</p>
+      <p><strong>Sources of cost advantage:</strong> Single aircraft type (Boeing 737) — one set of pilots, maintenance engineers, and spare parts; secondary airports with lower landing fees and faster turnarounds; no seat assignment reducing boarding time; unbundled pricing (base fare + add-ons); ancillary revenue from baggage, priority boarding, car hire, hotels; direct booking eliminating travel agent commissions.</p>
+      <p><strong>Result:</strong> Consistent profitability across most market cycles, including periods when full-service carriers made losses. Revenue of €10 billion+ in 2023.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Ryanair's cost leadership is genuine and structural — it is not merely a pricing strategy. Its cost per available seat kilometre (CASK) is materially lower than easyJet's, let alone BA's. The strategic risk is that the Boeing 737 dependency (all eggs in one aircraft type) creates vulnerability: the 737 MAX grounding in 2019–20 directly constrained Ryanair's capacity. A cost leadership strategy built on one supplier or one aircraft type has a single point of structural failure.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label cl">Cost Leadership</div>
+      <div class="cs-co">Aldi UK</div>
+      <p><strong>Strategy:</strong> Competes across the broad UK grocery market with a tightly controlled, low-cost operating model. Limited SKU range (circa 1,400 vs 30,000+ at a full-line supermarket), own-label dominance, and no-frills store format.</p>
+      <p><strong>Sources of cost advantage:</strong> ~90% own-label products eliminate brand premium; limited range reduces supply chain complexity and enables bulk buying; smaller store footprint reduces occupancy costs; faster checkout with larger barcodes; no customer service counters or fresh fish counters; simple store layouts requiring minimal staffing.</p>
+      <p><strong>Result:</strong> Market share grew from under 3% in 2010 to over 10% in 2024 — the fastest sustained growth of any major UK retailer in a generation.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Aldi's UK success challenges the conventional view that British consumers always trade up given the option. The 2008 recession brought middle-income shoppers to Aldi for the first time; many stayed as they discovered quality was acceptable. However, Aldi's cost leadership model has a ceiling: as it expands into more affluent catchments, it faces pressure to offer broader ranges and fresher formats that incrementally add cost. Managing this tension — growth vs cost purity — is the central strategic challenge for Aldi's next decade.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Differentiation — UK Examples</div>
+    <p style="font-size:.87rem;color:var(--text-dim);line-height:1.7;margin-bottom:16px;">Creating unique value perceived across the broad market that justifies premium prices. The test: do customers consistently choose this business over cheaper alternatives, and do they pay more for it?</p>
+
+    <div class="cs-card">
+      <div class="cs-label df">Differentiation</div>
+      <div class="cs-co">Dyson</div>
+      <p><strong>Strategy:</strong> Dyson competes across the broad home appliance market — vacuums, hair care, air purifiers, lighting — through engineering innovation and industrial design that commands prices 2–5x the market average.</p>
+      <p><strong>Sources of differentiation:</strong> Genuine patented technology (cyclone separation, digital motors, Dyson Hyperdymium motor); design language that signals quality; £800m+ annual R&amp;D investment; direct-to-consumer sales reducing channel commoditisation; warranty and service quality; consistent brand communication around technology.</p>
+      <p><strong>Result:</strong> The Dyson V15 vacuum retails at £600+; direct equivalents cost £100–200. The Airwrap retails at £400–500, creating a new premium category. Revenue exceeded £6 billion in 2022.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Dyson illustrates that differentiation requires active maintenance — the premium must be continuously re-earned through innovation. When Dyson's cyclone technology was novel, the premium was self-evident. As competitors have developed comparable (if inferior) technology, Dyson has had to expand into new categories (hair care, lighting) and invest more heavily in R&amp;D to maintain price separation. A differentiation strategy that stops innovating becomes vulnerable to "good enough" competition from below.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label df">Differentiation</div>
+      <div class="cs-co">Rolls-Royce (Aerospace)</div>
+      <p><strong>Strategy:</strong> Rolls-Royce competes in the broad commercial aviation, defence, and power systems markets through technological superiority and engineering heritage that commands significant price premiums over competitors GE Aviation and Pratt &amp; Whitney.</p>
+      <p><strong>Sources of differentiation:</strong> Trent engine family reputation for fuel efficiency; "Power by the Hour" service model creating long-term customer relationships; defence contracts reinforcing technological credibility; heritage and brand trust in safety-critical applications where price is secondary to reliability.</p>
+      <p><strong>Result:</strong> Despite significant financial difficulties during the pandemic (revenues fell £4bn in 2020), Rolls-Royce retained its position because customers do not switch engine manufacturers mid-fleet. The switching costs embedded in its differentiation provide a durable moat.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Rolls-Royce demonstrates that the strongest differentiation creates switching costs — once an airline has built its maintenance capability around Trent engines, the cost of switching to GE or Pratt &amp; Whitney is enormous. This is Porter's "fit" argument applied to differentiation: the value proposition is not just the engine but the entire ecosystem of training, spare parts, service, and data analytics built around it. Replicating this takes decades, not years.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cost Focus — UK Examples</div>
+    <p style="font-size:.87rem;color:var(--text-dim);line-height:1.7;margin-bottom:16px;">Achieving the lowest cost of serving a specific, narrow segment. The test: is the business targeting a defined niche, and is cost the primary source of its competitive advantage within that niche?</p>
+
+    <div class="cs-card">
+      <div class="cs-label fc">Cost Focus</div>
+      <div class="cs-co">easyJet (Early Model)</div>
+      <p><strong>Strategy:</strong> In its early years, easyJet targeted the specific segment of price-sensitive leisure travellers on defined short-haul European routes — a narrower target than Ryanair's eventual broad-market ambitions.</p>
+      <p><strong>Sources of cost focus:</strong> Focus on specific route pairs rather than network-wide operations; direct online booking from inception; no-frills cabin; secondary airport preference; efficient turnaround operations within defined geography.</p>
+      <p><strong>Note:</strong> easyJet has since moved toward broad-market cost leadership as it scaled. This illustrates how successful focus strategies often evolve: as the focuser grows, it either widens scope (becoming a broad cost leader) or deepens niche expertise.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>The easyJet trajectory shows that cost focus and cost leadership are not permanently distinct positions — they can be stages in a business's development. A cost focuser that executes well in its niche builds the operational capabilities and scale to compete more broadly. This challenges Porter's framework as static: in practice, strategy evolves as businesses grow.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label fc">Cost Focus</div>
+      <div class="cs-co">Poundland</div>
+      <p><strong>Strategy:</strong> Targets the specific segment of low-income and bargain-seeking UK consumers with a single-price-point (originally £1) retail model, keeping costs low through limited range, direct import sourcing, and secondary retail locations.</p>
+      <p><strong>Sources of cost focus:</strong> Originally single price point eliminating price complexity; secondary high-street and retail park locations reducing rents; direct sourcing of surplus, clearance, and own-label stock; minimal store fit-out and services; high footfall on low-margin items generating volume.</p>
+      <p><strong>Result:</strong> 800+ stores and one of the most visited retail brands in the UK. However, the shift away from a strict £1 price point illustrates the fragility of a cost focus built on a single pricing mechanic.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Differentiation Focus — UK Examples</div>
+    <p style="font-size:.87rem;color:var(--text-dim);line-height:1.7;margin-bottom:16px;">Providing unique value to a narrow segment with distinctive needs. The test: is the niche genuinely different from the broad market in ways that justify specialisation?</p>
+
+    <div class="cs-card">
+      <div class="cs-label fd">Differentiation Focus</div>
+      <div class="cs-co">Brompton Bicycle</div>
+      <p><strong>Strategy:</strong> Brompton targets the specific segment of urban commuters who need a premium, foldable bicycle small enough for public transport, office storage, and city living. No other manufacturer serves this niche with Brompton's quality and heritage.</p>
+      <p><strong>Sources of differentiation focus:</strong> Proprietary folding mechanism patented and continuously refined; handmade in West London — provenance matters to the target customer; personalisation (colour, gearing, handlebar type) unusual at this price point; active owner community and Brompton World Championship events; premium pricing (£900–3,000) justified by quality and exclusivity.</p>
+      <p><strong>Result:</strong> Over 100,000 bicycles sold per year, 80% exported globally. Waitlists for popular configurations. Profitable and growing without compromising the niche proposition.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Brompton is a near-perfect differentiation focus strategy: the segment (urban commuter cyclists) has genuinely distinctive needs (foldability, quality, portability) that the broader cycling market does not optimise for. The risk Porter identifies — that a broad differentiator enters the niche — has not materialised because no major manufacturer has been willing to invest in the specialised tooling required to match Brompton's fold mechanism. This is competitive protection through operational complexity.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label fd">Differentiation Focus</div>
+      <div class="cs-co">Fever-Tree</div>
+      <p><strong>Strategy:</strong> Fever-Tree targets the specific segment of premium spirits drinkers who seek high-quality mixers to accompany premium gin, whisky, and rum. The proposition: "If three-quarters of your drink is the mixer, shouldn't it be as good as your spirit?"</p>
+      <p><strong>Sources of differentiation focus:</strong> Natural ingredients (quinine from Congo, ginger from Ivory Coast) distinguishing it from mass-market mixers; premium glass bottle premium positioning; endorsed by premium spirit brands and bartenders; premium on-trade placement in high-end bars and restaurants; no artificial flavours or sweeteners.</p>
+      <p><strong>Result:</strong> From launch in 2005 to a £1bn+ valuation at peak. Now holds ~40% UK premium mixer market. Premium tonic market grew largely because Fever-Tree created it.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>Fever-Tree illustrates that the most successful differentiation focus strategies do not just serve an existing niche — they create one. Before Fever-Tree, premium mixers were not a recognised category. This is both an opportunity and a risk: the brand that creates a category owns it first, but also educates consumers that premium mixers are worth paying for — which eventually attracts competitors. Schweppes, 1724, and Fentimans have all entered the premium mixer space. Fever-Tree must continuously innovate and defend its position.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Stuck in the Middle — UK Examples</div>
+    <div class="callout cr"><strong>Important framing</strong>Stuck in the Middle is not a strategy — it is a failure state. These examples show businesses where strategic ambiguity, drift, or poor positioning led to below-average performance. The learning is about what happens when trade-off decisions are avoided.</div>
+
+    <div class="cs-card">
+      <div class="cs-label sm">Stuck in the Middle</div>
+      <div class="cs-co">Marks &amp; Spencer (Clothing, 1999–2019)</div>
+      <p><strong>Strategic problem:</strong> M&amp;S clothing lost its position as the UK's most trusted general clothing retailer without clearly repositioning as either a cost leader or a premium differentiator. Prices were higher than Primark, Zara, and H&amp;M but without the differentiation to justify the gap. Style was perceived as dated relative to mid-market competitors.</p>
+      <p><strong>Key manifestation:</strong> M&amp;S could not match Primark on price (cost structure was too high) but failed to offer sufficient differentiation from mid-market rivals like Next, which offered better style at comparable prices. The result was two decades of market share erosion in its core clothing business.</p>
+      <p><strong>Resolution:</strong> From 2019, M&amp;S deliberately shifted toward differentiated quality positioning — "Only at M&amp;S" messaging, improving design, and accepting it would not compete on price. Clothing profits recovered. The lesson: clarity of strategic position, however late, beats continued drift.</p>
+      <div class="eval-box"><div class="eval-label">Evaluation</div><p>M&amp;S's clothing struggles demonstrate that being stuck in the middle is not a permanent condition — it is a strategic problem with a strategic solution. However, recovery required accepting that M&amp;S would serve fewer customers at higher margins rather than many customers at mediocre margins. That is precisely Porter's point: strategy requires choosing what not to do, even when that means losing volume.</p></div>
+    </div>
+
+    <div class="cs-card">
+      <div class="cs-label sm">Stuck in the Middle</div>
+      <div class="cs-co">Debenhams</div>
+      <p><strong>Strategic problem:</strong> Debenhams collapsed into administration in 2020 (and again in 2021 for the online brand) after years of strategic confusion. It was neither the cheapest department store nor sufficiently differentiated to justify its prices against online-first competitors.</p>
+      <p><strong>Key manifestation:</strong> Discount events (Blue Cross Sale) eroded brand premium without achieving cost leader pricing. Concession brands within stores cannibalised Debenhams' own-brand margins. High property costs from long leases on large stores increased the break-even threshold. Digital investment was consistently underfunded relative to pure-play competitors.</p>
+      <p><strong>Underlying problem:</strong> Debenhams tried to be a broad market department store with a wide range of brands and price points — appealing to everyone, compelling to no one. Without the cost structure of Amazon or the brand equity of John Lewis, it occupied the middle ground from which it could not profitably escape.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================================================================ TAB 3: EVALUATION -->
+<div id="eval-panel" class="tab-panel">
+
+  <div class="card">
+    <div class="card-title">Strengths of Porter's Generic Strategies</div>
+    <div class="g2">
+      <div class="tblock">
+        <h4>Forces Explicit Trade-off Decisions</h4>
+        <p>Porter's most important contribution is not the four quadrants — it is the insistence on trade-offs. Activities that support cost leadership (standardisation, volume, efficiency) directly conflict with activities that support differentiation (customisation, R&amp;D, service). Making this conflict explicit forces managers to choose and to stop trying to do everything simultaneously.</p>
+      </div>
+      <div class="tblock">
+        <h4>Clear Strategic Language</h4>
+        <p>The framework gives organisations a shared vocabulary for strategic debate. "Are we a cost leader or a differentiator?" is a useful question in board discussions, investment decisions, and hiring. Without this language, strategic drift is hard to name and therefore hard to correct.</p>
+      </div>
+      <div class="tblock">
+        <h4>Diagnostic Power</h4>
+        <p>The "stuck in the middle" concept is genuinely useful for diagnosing underperforming businesses. When a business has neither the cost structure of its cheapest competitor nor the premium of its most differentiated competitor, it is almost certainly stuck in the middle — and the framework provides a clear diagnosis of why performance is weak.</p>
+      </div>
+      <div class="tblock">
+        <h4>Enduring Relevance Across Sectors</h4>
+        <p>The framework applies to manufacturing, services, digital, retail, healthcare, and financial services. Four decades after publication it remains one of the most widely used strategy frameworks in business education and practice — suggesting it captures something genuinely fundamental about competition.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Limitations and Criticisms</div>
+    <div class="g2">
+      <div class="tblock">
+        <h4>The "Stuck in the Middle" Challenge from Digital Firms</h4>
+        <p>Amazon, Google, and Apple appear to combine cost leadership (scale, automation, efficiency) with differentiation (design, ecosystem, innovation). Porter's response — that these are separate strategies for separate business units — is contested. Critics argue that digital platform economics genuinely allow simultaneous pursuit of low cost and high differentiation in ways that asset-heavy industries cannot achieve.</p>
+      </div>
+      <div class="tblock">
+        <h4>Static in a Dynamic World</h4>
+        <p>The framework assumes industry structure is relatively stable. In markets characterised by rapid technological disruption — streaming, fintech, electric vehicles — a strategy that is clearly "differentiation" today may be "stuck in the middle" within three years as competitors close the gap. The framework tells you where to be but not how to move when the landscape shifts.</p>
+      </div>
+      <div class="tblock">
+        <h4>Ignores Collaboration and Ecosystems</h4>
+        <p>Porter's framework is fundamentally competitive — it asks how a firm outperforms rivals. It has limited application to businesses that create value through ecosystem orchestration (platforms, marketplaces, open-source communities) where "competing" and "cooperating" with the same firm simultaneously is normal.</p>
+      </div>
+      <div class="tblock">
+        <h4>Bowman's Strategic Clock — An Extension</h4>
+        <p>Bowman and Faulkner (1996) developed the Strategic Clock, which maps similar dimensions but with eight strategic positions rather than four — recognising more gradations of price/perceived value combinations. The Clock argues that "hybrid" strategies (moderate differentiation at moderate cost) can be sustainable, directly contradicting Porter's stuck-in-the-middle thesis. This is a high-value evaluation point for A-level answers.</p>
+      </div>
+      <div class="tblock">
+        <h4>No Guidance on Implementation</h4>
+        <p>Porter's framework is a positioning tool — it identifies which position to occupy but provides no guidance on how to build the capabilities, processes, and culture needed to sustain that position. The Value Chain addresses this partially, but many businesses understand their desired position without knowing how to execute it.</p>
+      </div>
+      <div class="tblock">
+        <h4>Scope Definition is Ambiguous</h4>
+        <p>"Broad" and "narrow" are relative terms. Is Rolls-Royce a broad differentiator (aerospace industry) or a differentiation focuser (commercial aviation niche)? Is Aldi a cost leader (broad grocery market) or a cost focuser (discount grocery segment)? The framework provides no objective criteria for classifying scope, which makes classification exercises somewhat subjective.</p>
+      </div>
+    </div>
+    <div class="eval-box"><div class="eval-label">The Strongest Evaluation Argument for A-Level</div><p>Porter's Generic Strategies framework is most valuable as a diagnostic tool and a language for strategic debate — not as a prescriptive guide to what a business should do. Its enduring usefulness lies in forcing explicit discussion of trade-offs and strategic clarity. Its limitations are most acute in digital markets, platform businesses, and rapidly changing industries. The sophisticated answer acknowledges both: Porter's insight about trade-offs is genuinely important; his specific claims about what is and isn't possible (particularly "stuck in the middle") are empirically contested by successful hybrid businesses.</p></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Factors Determining Which Strategy is Appropriate</div>
+    <table class="comp-table">
+      <thead><tr><th>Factor</th><th>Favours Cost Leadership / Cost Focus</th><th>Favours Differentiation / Differentiation Focus</th></tr></thead>
+      <tbody>
+        <tr><td>Customer price sensitivity</td><td style="color:var(--text-dim)">High — customers make decisions primarily on price</td><td style="color:var(--text-dim)">Low — customers value quality, features, or brand above price</td></tr>
+        <tr><td>Product standardisation</td><td style="color:var(--text-dim)">High — products are commodities with low switching costs</td><td style="color:var(--text-dim)">Low — products can be meaningfully differentiated on features, quality, or experience</td></tr>
+        <tr><td>Scale economies available</td><td style="color:var(--text-dim)">Strong — size creates genuine cost advantages</td><td style="color:var(--text-dim)">Limited — size does not confer significant cost reduction</td></tr>
+        <tr><td>Brand importance to customers</td><td style="color:var(--text-dim)">Low — brand matters little relative to price in buying decisions</td><td style="color:var(--text-dim)">High — brand trust, prestige, or identity is central to the purchase decision</td></tr>
+        <tr><td>Rate of technological change</td><td style="color:var(--text-dim)">Slow — efficiency improvements compound over time</td><td style="color:var(--text-dim)">Fast — differentiation through innovation is continuously refreshed</td></tr>
+        <tr><td>Business resources</td><td style="color:var(--text-dim)">Large scale, efficient processes, strong buying power</td><td style="color:var(--text-dim)">Strong R&amp;D, design capability, brand investment, customer insight</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ================================================================ TAB 4: GAME -->
+<div id="game-panel" class="tab-panel">
+
+  <div class="game-intro-box">
+    <p><strong>How to play:</strong> Drag each scenario to the correct Porter strategy zone. For every scenario, ask yourself two questions: (1) Is this business targeting a <em>broad market or a narrow niche</em>? (2) Is the competitive advantage based on <em>low cost or differentiation</em>? The "Stuck in the Middle" zone is for businesses with no clear competitive advantage.</p>
+    <p style="margin-top:6px"><strong>Three modes:</strong> Practice includes full explanations after each answer. Speed gives you 60 seconds with a 5-second penalty per error. Boss round features genuine edge cases requiring careful analysis.</p>
+  </div>
+
+  <div id="modeSelect">
+    <div class="mode-grid">
+      <button class="mode-card mc-practice" onclick="startGame('practice')">
+        <h3>Practice Mode</h3>
+        <p>Work through scenarios with detailed explanations. Focus on building the habit of asking: broad or niche? cost or differentiation?</p>
+      </button>
+      <button class="mode-card mc-speed" onclick="startGame('speed')">
+        <h3>Speed Round</h3>
+        <p>60 seconds — classify as many as possible. Wrong answers cost 5 seconds. Build streaks for bonus points.</p>
+      </button>
+      <button class="mode-card mc-boss" onclick="startGame('boss')">
+        <h3>Boss Round</h3>
+        <p>Genuinely ambiguous scenarios where the correct classification requires careful reasoning. For confident strategists only.</p>
+      </button>
+    </div>
+  </div>
+
+  <div id="gameArea">
+    <div class="game-hdr">
+      <button class="btn btn-outline" onclick="backToModes()">Back to Modes</button>
+      <div class="game-stats">
+        <div class="stat-pill">Score: <span id="gScore">0</span></div>
+        <div class="stat-pill">Correct: <span id="gCorrect">0</span></div>
+        <div class="stat-pill streak-pill" id="gStreak">Streak: <span id="gStreakN">0</span></div>
+        <div class="stat-pill" id="timerPill" style="display:none;">Time: <span id="gTime">60</span>s</div>
+      </div>
+    </div>
+
+    <div class="drop-matrix">
+      <div class="drop-grid">
+        <div class="drop-zone dz-cl" ondragover="onDragOver(event)" ondrop="onDrop(event,'cost-leadership')" ondragleave="onDragLeave(event)">
+          <div class="dz-label">Cost Leadership</div>
+          <div class="dz-sub">Broad market · low cost</div>
+        </div>
+        <div class="drop-zone dz-df" ondragover="onDragOver(event)" ondrop="onDrop(event,'differentiation')" ondragleave="onDragLeave(event)">
+          <div class="dz-label">Differentiation</div>
+          <div class="dz-sub">Broad market · unique value</div>
+        </div>
+        <div class="drop-zone dz-fc" ondragover="onDragOver(event)" ondrop="onDrop(event,'cost-focus')" ondragleave="onDragLeave(event)">
+          <div class="dz-label">Cost Focus</div>
+          <div class="dz-sub">Narrow niche · low cost</div>
+        </div>
+        <div class="drop-zone dz-fd" ondragover="onDragOver(event)" ondrop="onDrop(event,'diff-focus')" ondragleave="onDragLeave(event)">
+          <div class="dz-label">Differentiation Focus</div>
+          <div class="dz-sub">Narrow niche · unique value</div>
+        </div>
+      </div>
+      <div class="drop-zone dz-sm" ondragover="onDragOver(event)" ondrop="onDrop(event,'stuck-middle')" ondragleave="onDragLeave(event)">
+        <div class="dz-label">Stuck in the Middle</div>
+        <div class="dz-sub">No clear competitive advantage</div>
+      </div>
+    </div>
+
+    <div class="scenario-wrap">
+      <div class="scenario-card" draggable="true" id="scenCard" ondragstart="onDragStart(event)">
+        <div class="sc-title" id="scTitle">Loading...</div>
+        <div class="sc-desc" id="scDesc"></div>
+      </div>
+    </div>
+
+    <div class="game-feedback" id="gameFeedback"></div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn btn-blue" id="nextBtn" onclick="nextScenario()" style="display:none;">Next Scenario</button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <p style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Game Over</p>
+    <div class="end-big" id="endBig"></div>
+    <div class="end-grade" id="endGrade"></div>
+    <p class="end-msg" id="endMsg"></p>
+    <button class="btn btn-blue" onclick="backToModes()" style="margin-right:8px">Play Again</button>
+    <button class="btn btn-outline" onclick="switchTab('theory')">Review Theory</button>
+  </div>
+
+</div>
+</div>
+
+<script>
+// THEME
+var savedTheme=localStorage.getItem('biz-omics-theme')||'dark';
+if(savedTheme==='light'){document.documentElement.setAttribute('data-theme','light');document.getElementById('themeBtn').textContent='Dark mode';}
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme');
+  if(cur==='light'){document.documentElement.removeAttribute('data-theme');localStorage.setItem('biz-omics-theme','dark');document.getElementById('themeBtn').textContent='Light mode';}
+  else{document.documentElement.setAttribute('data-theme','light');localStorage.setItem('biz-omics-theme','light');document.getElementById('themeBtn').textContent='Dark mode';}
+}
+
+// TABS
+function switchTab(name){
+  var panels=document.querySelectorAll('.tab-panel');
+  var btns=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<panels.length;i++) panels[i].classList.remove('active');
+  for(var j=0;j<btns.length;j++) btns[j].classList.remove('active');
+  document.getElementById(name+'-panel').classList.add('active');
+  var all=document.querySelectorAll('.tab-btn');
+  for(var k=0;k<all.length;k++){
+    if(all[k].getAttribute('onclick')==="switchTab('"+name+"')") all[k].classList.add('active');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// GAME DATA — all UK/European contexts, ES5
+var SCENARIOS = {
+  practice:[
+    {title:'Primark Everyday Clothing',description:'Primark sells fashion clothing and homeware across the UK at prices consistently 30–50% below high-street rivals, achieved through no online sales, no advertising, and global bulk sourcing.',correct:'cost-leadership',exp:'Cost Leadership — Primark targets the broad clothing and homeware market (not a niche) and its competitive advantage is structural low cost: no ecommerce, no advertising, bulk buying. This is the textbook cost leadership position.'},
+    {title:'Ryanair Short-Haul Flights',description:'Ryanair offers the lowest fares in European short-haul aviation by operating a single aircraft type, using secondary airports, and unbundling all add-on services.',correct:'cost-leadership',exp:'Cost Leadership — Ryanair targets the broad European short-haul aviation market and its advantage is the lowest cost per available seat kilometre in the industry. Every operational decision reinforces cost leadership across the broad market.'},
+    {title:'Dyson Vacuum Cleaners',description:'Dyson charges £400–600 for vacuum cleaners in the broad UK home appliance market, justified by patented cyclone technology, engineering quality, and distinctive industrial design.',correct:'differentiation',exp:'Differentiation — Dyson competes in the broad home appliance market (any household that needs a vacuum) and its advantage is genuine technological and design differentiation. Customers pay a significant premium over adequate alternatives because of perceived unique value.'},
+    {title:'Rolls-Royce Aero Engines',description:'Rolls-Royce supplies jet engines to airlines and defence customers worldwide, commanding premium prices through engineering heritage, fuel efficiency technology, and long-term service contracts.',correct:'differentiation',exp:'Differentiation — Rolls-Royce competes in the broad commercial aviation and defence market (not a niche) with an advantage based on technical superiority and brand trust in safety-critical applications. Customers pay a premium because reliability and performance genuinely differ from alternatives.'},
+    {title:'Brompton Folding Bicycles',description:'Brompton makes premium hand-built folding bicycles at £900–3,000 for urban commuters who need a bike small enough for public transport and office storage — a very specific customer need.',correct:'diff-focus',exp:'Differentiation Focus — Brompton targets a narrow niche (urban commuters needing a foldable bicycle) and differentiates within that niche through precision engineering, UK manufacturing heritage, and personalisation. The niche is specific enough that broader bicycle manufacturers have not chosen to serve it with comparable quality.'},
+    {title:'Fever-Tree Premium Mixers',description:'Fever-Tree sells tonic water and other mixers at 3–4x the price of mainstream brands, targeting consumers of premium spirits who want mixer quality to match their spirit.',correct:'diff-focus',exp:'Differentiation Focus — Fever-Tree targets a narrow segment (premium spirit drinkers who care about mixer quality) and differentiates within it through natural ingredients, provenance, and premium positioning. The broader soft drinks market is not their target — this is a focused, differentiated niche strategy.'},
+    {title:'Poundland Value Retail',description:'Poundland targets the specific segment of UK bargain shoppers and low-income consumers with a limited-range, single-price-point retail model in secondary locations.',correct:'cost-focus',exp:'Cost Focus — Poundland targets a specific segment (value-seeking consumers) rather than the broad retail market, and its advantage within that segment is low cost through simplified operations, single-price-point merchandising, and secondary site locations.'},
+    {title:'Gym Box (Budget Gyms)',description:'A budget gym chain targets cost-conscious fitness consumers with no-contract monthly memberships at £20–25, stripped-back facilities, and no swimming pools or classes.',correct:'cost-focus',exp:'Cost Focus — a budget gym targets a specific niche (price-sensitive gym users who want basic facilities) and competes within that niche on cost. It does not serve the broad fitness market (no premium services, no pools, no classes) — this is cost focus, not cost leadership.'},
+    {title:'Marks & Spencer Clothing (2010s)',description:'During the 2010s, M&S clothing was priced higher than Primark and Zara but was not perceived as stylish or differentiated enough to justify the premium over Next or John Lewis.',correct:'stuck-middle',exp:'Stuck in the Middle — M&S clothing in this period had higher costs than Primark so could not compete on price, but insufficient differentiation to justify its premium over mid-market rivals. This is the classic stuck-in-the-middle position: squeezed from below on cost and from above on quality perception.'},
+    {title:'Debenhams Department Stores',description:'Debenhams attempted to serve the broad UK market through department stores with a mix of concession brands and own-label, at mid-range prices, before collapsing in 2020.',correct:'stuck-middle',exp:'Stuck in the Middle — Debenhams was neither the cheapest (high property costs, complex operations) nor sufficiently differentiated (no compelling own-brand story, no clear price-value proposition). It could not compete with Amazon, Primark, or John Lewis on their own terms.'}
+  ],
+  speed:[
+    {title:'Aldi UK Supermarket',description:'Aldi offers own-label groceries at consistently lower prices than the major supermarkets through limited range and efficient operations.',correct:'cost-leadership',exp:'Cost Leadership — broad grocery market, cost advantage.'},
+    {title:'Rolls-Royce Marine Engines',description:'Rolls-Royce supplies propulsion systems for naval ships and commercial vessels at premium prices based on engineering capability.',correct:'differentiation',exp:'Differentiation — broad marine/defence market, differentiated through engineering quality.'},
+    {title:'Wetherspoons Pubs',description:'JD Wetherspoon offers the cheapest food and drink of any UK pub chain through efficient operations and bulk purchasing power.',correct:'cost-leadership',exp:'Cost Leadership — broad pub/eating out market, lowest cost structure.'},
+    {title:'Burberry Fashion',description:'Burberry sells luxury clothing and accessories to affluent consumers worldwide at significant premiums through its British heritage and iconic check.',correct:'differentiation',exp:'Differentiation — broad luxury fashion market, differentiated through brand heritage and design.'},
+    {title:'Lidl UK',description:'Lidl targets value-seeking grocery shoppers across the UK with own-label products, limited range, and no-frills stores.',correct:'cost-leadership',exp:'Cost Leadership — broad UK grocery market, competing on lowest cost structure.'},
+    {title:'Brompton Bicycles',description:'Brompton sells hand-built foldable bikes at premium prices to urban commuters who need a bike that fits on public transport.',correct:'diff-focus',exp:'Differentiation Focus — narrow niche (urban folding-bike commuters), differentiated within it.'},
+    {title:'Flybe Regional Airlines',description:'Flybe targeted regional UK routes (Exeter-Edinburgh, Southampton-Glasgow) with competitive fares where major carriers do not operate.',correct:'cost-focus',exp:'Cost Focus — narrow niche (regional UK routes underserved by full-service carriers), competing on cost within that niche.'},
+    {title:'The Fat Duck Restaurant',description:'Heston Blumenthal\'s Bray restaurant charges £325+ per person for molecular gastronomy dining experiences targeting food enthusiasts seeking unique culinary art.',correct:'diff-focus',exp:'Differentiation Focus — narrow niche (serious food enthusiasts seeking exceptional dining), differentiated within it through unique culinary innovation.'},
+    {title:'British Home Stores (BHS)',description:'BHS tried to compete with Primark on price while also offering a department store experience — but was neither cheap enough nor differentiated enough before collapsing in 2016.',correct:'stuck-middle',exp:'Stuck in the Middle — could not match Primark on cost or department stores on experience. Classic SITM.'},
+    {title:'easyJet Budget Flights',description:'easyJet offers low-cost short-haul European flights across a broad route network, competing primarily on price with operational efficiency.',correct:'cost-leadership',exp:'Cost Leadership — now operating across the broad European short-haul market with a cost-focused operating model.'},
+    {title:'Fever-Tree Tonics',description:'Fever-Tree sells premium tonic water to premium gin and spirits drinkers at 3x the price of mainstream alternatives.',correct:'diff-focus',exp:'Differentiation Focus — narrow premium mixer niche, differentiated through natural ingredients.'},
+    {title:'Next Retail',description:'Next attempts to serve mid-market clothing customers with moderate prices and moderate quality — positioned between Primark and premium brands without a clear competitive advantage in either direction.',correct:'stuck-middle',exp:'This is debatable — Next has actually been more successful than SITM suggests, with strong online capabilities. However classifying it as SITM is a valid exam answer given its positioning between clear cost leaders (Primark) and clear differentiators (M&S food, John Lewis). The ambiguity is precisely the point.'}
+  ],
+  boss:[
+    {title:'Amazon UK Retail',description:'Amazon offers the broadest product range at highly competitive prices through operational scale, while simultaneously differentiating through Prime, Alexa, and delivery reliability. It invests billions in both cost reduction and service innovation.',correct:'cost-leadership',exp:'Cost Leadership is the best primary classification for Amazon\'s retail business. Despite significant differentiation through Prime and Alexa, the fundamental competitive advantage in retail is scale-driven cost efficiency: lowest prices, fastest fulfilment, highest selection. The differentiation serves to lock in customers to the cost-leadership model. This is a classic example of the Porter debate — those who argue Amazon is a hybrid are making a valid point, and raising this debate in an exam answer adds evaluation marks.'},
+    {title:'Greggs the Bakery',description:'Greggs offers fresh pastries, sandwiches, and hot drinks across the broad UK market at consistently low prices (sausage roll at £1.25). However, it has invested heavily in vegan products, premium sandwiches, and brand repositioning to improve quality perception.',correct:'cost-leadership',exp:'Cost Leadership with evolving differentiation elements. Greggs\' primary advantage remains low cost through efficient bakery operations, centralised production, and high-street volume. The brand repositioning and product innovation are enhancing value perception but have not shifted Greggs into a differentiation strategy — it still competes primarily on price and accessibility. A strong exam answer would note the strategic tension: can Greggs add perceived quality without losing cost leadership? This is the hybrid strategy challenge.'},
+    {title:'Ocado Online Grocery',description:'Ocado operates an online-only grocery model in the UK, targeting time-poor consumers who value convenience and quality. It charges higher prices than Tesco or Sainsbury\'s but lower than M&S Food. It has built proprietary robotic warehouse technology.',correct:'diff-focus',exp:'Differentiation Focus — Ocado targets a specific segment (affluent, time-poor consumers willing to pay for premium online grocery delivery) and differentiates within that segment through service quality, technology, and curated premium range. It does not try to compete with Aldi or Asda on price, nor does it serve the full UK grocery market.'},
+    {title:'Wetherspoons (after Brexit campaign)',description:'JD Wetherspoon actively promoted Brexit through its founder Tim Martin\'s public statements, removing European products, and rebranding around British identity. This attracted some consumers and alienated others.',correct:'cost-leadership',exp:'Cost Leadership remains the correct classification despite the brand activism. Wetherspoon\'s competitive advantage is structural low cost — the Brexit positioning was a communication tactic, not a strategic repositioning. Customers still primarily choose Wetherspoons for price, not politics. Distinguishing between strategy (what creates competitive advantage) and tactics (communications and campaigns) is a high-value analytical point.'},
+    {title:'JD Sports Fashion',description:'JD Sports targets urban youth and streetwear consumers with premium branded trainers (Nike, Adidas, Jordan) and exclusive colourway releases at full price, alongside its own JD-branded ranges at more accessible prices.',correct:'diff-focus',exp:'Differentiation Focus — JD Sports has carved out a specific niche: urban youth culture and streetwear, where exclusive trainer releases and brand curation are the primary value proposition. This is not broad market differentiation (JD does not compete with M&S or Next) and it is not cost focus (full-price premium trainers are not a cost strategy). The exclusive access to limited-edition Nike and Jordan releases is a genuine differentiation advantage within a focused niche.'},
+    {title:'Marks & Spencer Food',description:'M&S Food has consistently differentiated through premium quality, innovation, and provenance, with no own-label basic tier. Its "This is not just food..." positioning has commanded consistent price premiums over Waitrose, Tesco, and Sainsbury\'s.',correct:'differentiation',exp:'Differentiation — M&S Food competes in the broad food retail market (anyone in the UK who buys food) and differentiates through quality, innovation, and premium positioning. Unlike M&S clothing (which was stuck in the middle), M&S Food has maintained a clear and credible differentiation strategy — customers pay more because they genuinely believe the quality is superior. This contrast between M&S Food (successful differentiation) and M&S clothing (historical SITM) is an excellent evaluation point in any exam answer about the framework.'}
+  ]
+};
+
+var gMode='',gScenarios=[],gScore=0,gCorrect=0,gStreak=0,gTimer=null,gTimeLeft=60,gAnswered=false,gCurrent=null;
+
+var LABELS={'cost-leadership':'Cost Leadership','differentiation':'Differentiation','cost-focus':'Cost Focus','diff-focus':'Differentiation Focus','stuck-middle':'Stuck in the Middle'};
+
+function shuffleArr(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+
+function startGame(mode){
+  gMode=mode;gScore=0;gCorrect=0;gStreak=0;gAnswered=false;
+  gScenarios=shuffleArr(SCENARIOS[mode].slice());
+  document.getElementById('modeSelect').style.display='none';
+  document.getElementById('gameArea').style.display='block';
+  document.getElementById('endScreen').className='end-screen';
+  document.getElementById('timerPill').style.display=mode==='speed'?'inline-block':'none';
+  if(mode==='speed'){
+    gTimeLeft=60;
+    document.getElementById('gTime').textContent='60';
+    gTimer=setInterval(function(){
+      gTimeLeft--;
+      document.getElementById('gTime').textContent=gTimeLeft;
+      if(gTimeLeft<=0){clearInterval(gTimer);showEndScreen();}
+    },1000);
+  }
+  updateStats();
+  loadScenario();
+}
+
+function loadScenario(){
+  if(gScenarios.length===0) gScenarios=shuffleArr(SCENARIOS[gMode].slice());
+  gCurrent=gScenarios.pop();
+  gAnswered=false;
+  document.getElementById('scTitle').textContent=gCurrent.title;
+  document.getElementById('scDesc').textContent=gCurrent.description;
+  document.getElementById('scenCard').style.display='block';
+  var fb=document.getElementById('gameFeedback');fb.className='game-feedback';fb.innerHTML='';
+  document.getElementById('nextBtn').style.display='none';
+}
+
+function updateStats(){
+  document.getElementById('gScore').textContent=gScore;
+  document.getElementById('gCorrect').textContent=gCorrect;
+  document.getElementById('gStreakN').textContent=gStreak;
+  var sp=document.getElementById('gStreak');
+  if(gStreak>=3){sp.classList.add('show');}else{sp.classList.remove('show');}
+}
+
+function onDragStart(e){e.dataTransfer.setData('text/plain','card');document.getElementById('scenCard').classList.add('dragging');}
+function onDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover');}
+function onDragLeave(e){e.currentTarget.classList.remove('dragover');}
+
+function onDrop(e,zone){
+  e.preventDefault();e.currentTarget.classList.remove('dragover');
+  document.getElementById('scenCard').classList.remove('dragging');
+  if(gAnswered||!gCurrent) return;
+  gAnswered=true;
+  var correct=(zone===gCurrent.correct);
+  if(correct){
+    gScore+=10;gCorrect++;gStreak++;
+    var dz=e.currentTarget;
+    dz.classList.add('flash-ok');
+    setTimeout(function(){dz.classList.remove('flash-ok');},600);
+  } else {
+    gStreak=0;
+    if(gMode==='speed'){
+      gTimeLeft=Math.max(0,gTimeLeft-5);
+      document.getElementById('gTime').textContent=gTimeLeft;
+      if(gTimeLeft<=0){clearInterval(gTimer);showEndScreen();return;}
+    }
+    var dzw=e.currentTarget;
+    dzw.classList.add('flash-no');
+    setTimeout(function(){dzw.classList.remove('flash-no');},600);
+  }
+  updateStats();
+  document.getElementById('scenCard').style.display='none';
+  var fb=document.getElementById('gameFeedback');
+  if(correct){
+    fb.className='game-feedback gf-ok show';
+    fb.innerHTML='<h4>Correct — '+LABELS[gCurrent.correct]+'</h4><p>'+gCurrent.exp+'</p>';
+  } else {
+    fb.className='game-feedback gf-no show';
+    fb.innerHTML='<h4>Incorrect — this is '+LABELS[gCurrent.correct]+'</h4><p>'+gCurrent.exp+'</p>';
+  }
+  document.getElementById('nextBtn').style.display='inline-block';
+}
+
+document.addEventListener('dragend',function(){
+  var c=document.getElementById('scenCard');if(c)c.classList.remove('dragging');
+  var zones=document.querySelectorAll('.drop-zone');
+  for(var i=0;i<zones.length;i++) zones[i].classList.remove('dragover');
+});
+
+function nextScenario(){
+  if(gMode==='speed'&&gTimeLeft<=0){showEndScreen();return;}
+  loadScenario();
+}
+
+function showEndScreen(){
+  clearInterval(gTimer);
+  document.getElementById('gameArea').style.display='none';
+  var scr=document.getElementById('endScreen');
+  scr.className='end-screen show';
+  var grade,msg,col;
+  if(gCorrect>=10){grade='Outstanding';msg='Excellent command of Porter\'s Generic Strategies. You can reliably classify complex competitive positions across all five zones.';col='var(--green)';}
+  else if(gCorrect>=7){grade='Strong';msg='Good understanding. Review any explanations that surprised you — focus on broad vs niche scope and the cost vs differentiation distinction.';col='var(--blue)';}
+  else if(gCorrect>=4){grade='Developing';msg='Reasonable attempt. Revisit the Framework tab and work through the four strategy definitions before replaying.';col='var(--amber)';}
+  else{grade='Keep Practising';msg='Review the Theory and Case Studies tabs carefully, then replay. Ask yourself two questions for every scenario: broad or niche? cost or differentiation?';col='var(--red)';}
+  document.getElementById('endBig').style.color=col;
+  document.getElementById('endBig').textContent=gCorrect+' correct';
+  document.getElementById('endGrade').textContent=grade;
+  document.getElementById('endMsg').textContent=msg;
+}
+
+function backToModes(){
+  clearInterval(gTimer);
+  document.getElementById('gameArea').style.display='none';
+  document.getElementById('endScreen').className='end-screen';
+  document.getElementById('modeSelect').style.display='block';
+  var fb=document.getElementById('gameFeedback');fb.className='game-feedback';fb.innerHTML='';
+  document.getElementById('nextBtn').style.display='none';
+  document.getElementById('scenCard').style.display='block';
+}
+</script>
+</body>
+</html>
