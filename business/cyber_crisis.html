@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crisis Hour — BIZ-OMICS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f4f6f0;
+  --surface:#ffffff;
+  --surface2:#edf0e8;
+  --border:rgba(0,0,0,0.09);
+  --text:#1a1f14;
+  --muted:#5a6350;
+  --muted2:#8a9480;
+  --green:#1a472a;
+  --green-mid:#2d6a4f;
+  --green-light:#52b788;
+  --green-dim:rgba(26,71,42,0.07);
+  --green-border:rgba(26,71,42,0.2);
+  --gold:#b8860b;
+  --gold-dim:rgba(184,134,11,0.08);
+  --gold-border:rgba(184,134,11,0.22);
+  --gold-bright:#d4a017;
+  --red:#c0392b;
+  --red-dim:rgba(192,57,43,0.08);
+  --red-border:rgba(192,57,43,0.2);
+  --amber:#e67e22;
+  --blue:#1a3a5c;
+  --blue-dim:rgba(26,58,92,0.07);
+  --blue-border:rgba(26,58,92,0.18);
+  --ff:'DM Sans',system-ui,sans-serif;
+  --ff-head:'Fraunces',Georgia,serif;
+  --ff-mono:'SFMono-Regular',Consolas,monospace;
+}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+
+/* ── PASSWORD GATE ── */
+#pw-gate{position:fixed;inset:0;background:var(--green);z-index:999;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+.gate-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;max-width:380px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.3);}
+.gate-logo{font-family:var(--ff-mono);font-size:0.6rem;color:var(--green);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:1rem;}
+.gate-title{font-family:var(--ff-head);font-size:1.1rem;font-weight:700;margin-bottom:0.4rem;}
+.gate-sub{font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:1.25rem;}
+.gate-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.85rem;font-family:var(--ff-mono);font-size:0.82rem;color:var(--text);outline:none;text-align:center;letter-spacing:0.08em;transition:border-color 0.15s;margin-bottom:0.65rem;}
+.gate-input:focus{border-color:var(--green-border);}
+.gate-input.shake{animation:gshake 0.35s ease;}
+@keyframes gshake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+.gate-btn{width:100%;padding:0.65rem;border-radius:8px;background:var(--green);border:none;color:#fff;font-family:var(--ff);font-size:0.85rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;margin-bottom:0.75rem;}
+.gate-btn:hover{opacity:0.88;}
+.gate-msg{font-size:0.75rem;color:var(--red);min-height:1rem;margin-bottom:0.5rem;}
+.gate-back{font-size:0.72rem;color:var(--muted);text-decoration:none;}
+.gate-back:hover{color:var(--green);}
+
+/* ── HEADER ── */
+header{padding:0;border-bottom:1px solid var(--border);background:var(--green);position:sticky;top:0;z-index:100;}
+.header-main{padding:0.7rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+.logo-wrap{display:flex;align-items:center;gap:0.6rem;}
+.logo-text{font-size:0.95rem;font-weight:900;letter-spacing:-0.01em;color:#fff;}
+.logo-text span{color:var(--gold-bright);}
+.hdr-tag{font-family:var(--ff-mono);font-size:0.55rem;color:var(--gold-bright);letter-spacing:0.16em;text-transform:uppercase;border:1px solid rgba(212,160,23,0.4);padding:0.18rem 0.5rem;border-radius:4px;margin-left:0.5rem;}
+.hdr-right{display:flex;gap:0.5rem;align-items:center;}
+.back-link{font-family:var(--ff-mono);font-size:0.58rem;color:rgba(255,255,255,0.7);text-decoration:none;padding:0.28rem 0.6rem;border-radius:6px;border:1px solid rgba(255,255,255,0.25);transition:all 0.15s;}
+.back-link:hover{color:#fff;border-color:rgba(255,255,255,0.6);}
+
+/* ── ALERT TICKER ── */
+.alert-ticker{background:#0f2d1a;border-top:2px solid var(--red);padding:0.6rem 1.5rem;display:flex;align-items:center;gap:0.85rem;overflow:hidden;}
+.ticker-label{font-family:var(--ff-mono);font-size:0.65rem;background:var(--red);color:#fff;padding:0.2rem 0.65rem;border-radius:3px;white-space:nowrap;letter-spacing:0.12em;text-transform:uppercase;flex-shrink:0;font-weight:700;animation:pulse 1.5s ease-in-out infinite;}
+.ticker-text{font-family:var(--ff-mono);font-size:0.75rem;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;letter-spacing:0.01em;}
+
+/* ── PAGE LAYOUT ── */
+.page-wrap{max-width:1200px;margin:0 auto;padding:1.5rem 1.25rem 4rem;display:grid;grid-template-columns:1fr 280px;gap:1.25rem;align-items:start;}
+@media(max-width:860px){.page-wrap{grid-template-columns:1fr;}}
+
+/* ── MAIN CONTENT ── */
+.main-col{}
+
+/* Game hero */
+.game-hero{padding:1.25rem 0 1.25rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.crisis-eyebrow{font-family:var(--ff-mono);font-size:0.6rem;color:var(--red);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.5rem;}
+.crisis-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.game-title{font-family:var(--ff-head);font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;letter-spacing:-0.02em;line-height:1.1;margin-bottom:0.4rem;}
+.game-sub{font-size:0.85rem;color:var(--muted);line-height:1.7;max-width:560px;}
+
+/* Countdown */
+.countdown-wrap{display:flex;align-items:center;gap:1rem;margin:1rem 0;flex-wrap:wrap;}
+.countdown-block{background:var(--green);color:#fff;border-radius:8px;padding:0.6rem 1rem;text-align:center;min-width:80px;}
+.countdown-num{font-family:var(--ff-mono);font-size:1.4rem;font-weight:700;line-height:1;color:var(--gold-bright);}
+.countdown-label{font-family:var(--ff-mono);font-size:0.55rem;color:rgba(255,255,255,0.6);letter-spacing:0.12em;text-transform:uppercase;margin-top:0.2rem;}
+.countdown-divider{font-family:var(--ff-mono);font-size:1.4rem;color:var(--muted2);font-weight:700;}
+.phase-clock{font-family:var(--ff-mono);font-size:0.72rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.35rem 0.75rem;}
+
+/* Progress dots */
+.progress-dots{display:flex;gap:6px;margin-bottom:1.25rem;align-items:center;}
+.pdot{width:10px;height:10px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);transition:all 0.2s;}
+.pdot.done{background:var(--green-mid);border-color:var(--green-mid);}
+.pdot.current{background:transparent;border-color:var(--red);box-shadow:0 0 8px rgba(192,57,43,0.5);}
+.pdot-label{font-family:var(--ff-mono);font-size:0.58rem;color:var(--muted2);margin-left:0.5rem;}
+
+/* Main panel */
+.main-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;min-height:400px;}
+
+/* Welcome */
+.welcome{text-align:center;padding:2.5rem 1rem;}
+.welcome-icon{font-size:2.5rem;margin-bottom:1rem;}
+.welcome h2{font-family:var(--ff-head);font-size:1.4rem;font-weight:700;margin-bottom:0.75rem;}
+.welcome p{font-size:0.85rem;color:var(--muted);line-height:1.75;max-width:480px;margin:0 auto 0.6rem;}
+.welcome-meta{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.25rem;}
+.welcome-chip{font-family:var(--ff-mono);font-size:0.62rem;padding:0.3rem 0.7rem;border-radius:5px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+.start-btn{display:inline-block;margin-top:1.5rem;padding:0.75rem 2rem;border-radius:8px;background:var(--green);border:none;color:#fff;font-family:var(--ff);font-size:0.9rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+.start-btn:hover{opacity:0.88;}
+
+/* Phase content */
+.phase-header{margin-bottom:1.1rem;}
+.phase-hour{font-family:var(--ff-mono);font-size:0.62rem;color:var(--red);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.4rem;}
+.phase-title{font-family:var(--ff-head);font-size:1.15rem;font-weight:700;margin-bottom:0.2rem;}
+.phase-sub{font-size:0.72rem;color:var(--muted);font-family:var(--ff-mono);}
+
+/* Briefing box */
+.briefing{background:var(--green-dim);border:1px solid var(--green-border);border-left:3px solid var(--green-mid);border-radius:8px;padding:1rem 1.1rem;margin-bottom:0.75rem;font-size:0.875rem;line-height:1.75;color:var(--text);}
+.briefing-label{font-family:var(--ff-mono);font-size:0.58rem;color:var(--green-mid);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;font-weight:600;}
+
+/* Intel box */
+.intel{background:var(--gold-dim);border:1px solid var(--gold-border);border-left:3px solid var(--gold);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.8rem;line-height:1.65;color:var(--text);}
+.intel-label{font-family:var(--ff-mono);font-size:0.56rem;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;}
+
+/* Choices */
+.choices{display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1rem;}
+.choice-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.9rem 1rem 0.9rem 1.1rem;text-align:left;cursor:pointer;font-size:0.825rem;font-family:var(--ff);color:var(--text);line-height:1.5;transition:all 0.18s;border-left-width:3px;}
+.choice-btn.decisive{border-left-color:var(--green-mid);}
+.choice-btn.cautious{border-left-color:var(--gold);}
+.choice-btn.reactive{border-left-color:var(--red);}
+.choice-btn:hover:not(:disabled){border-color:var(--green-border);background:var(--green-dim);transform:translateX(3px);}
+.choice-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.choice-tag{display:inline-block;font-family:var(--ff-mono);font-size:0.56rem;letter-spacing:0.08em;padding:0.1rem 0.4rem;border-radius:3px;margin-right:0.5rem;font-weight:600;}
+.tag-decisive{background:rgba(45,106,79,0.12);color:var(--green-mid);}
+.tag-cautious{background:var(--gold-dim);color:var(--gold);}
+.tag-reactive{background:var(--red-dim);color:var(--red);}
+
+/* Outcome */
+.outcome-box{background:var(--blue-dim);border:1px solid var(--blue-border);border-radius:8px;padding:1rem 1.1rem;font-size:0.825rem;line-height:1.75;display:none;animation:fadeUp 0.35s ease;}
+.outcome-box.show{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.outcome-label{font-family:var(--ff-mono);font-size:0.58rem;color:var(--blue);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;font-weight:600;}
+
+/* ── RIGHT SIDEBAR ── */
+.sidebar{}
+
+/* Share price */
+.share-panel{background:var(--green);border-radius:12px;padding:1.1rem;margin-bottom:1rem;color:#fff;}
+.share-label{font-family:var(--ff-mono);font-size:0.58rem;color:rgba(255,255,255,0.6);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.3rem;}
+.share-price{font-family:var(--ff-mono);font-size:1.6rem;font-weight:700;color:var(--gold-bright);line-height:1;}
+.share-change{font-family:var(--ff-mono);font-size:0.72rem;margin-top:0.25rem;}
+.share-up{color:#4ade80;}
+.share-down{color:#f87171;}
+.share-chart{margin-top:0.85rem;height:50px;width:100%;position:relative;}
+#priceCanvas{width:100%;height:50px;display:block;}
+
+/* Metrics */
+.metrics-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;margin-bottom:1rem;}
+.metrics-title{font-family:var(--ff-mono);font-size:0.6rem;color:var(--green);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:1rem;font-weight:600;}
+.metric-item{margin-bottom:0.9rem;}
+.metric-item:last-child{margin-bottom:0;}
+.metric-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.metric-name{font-size:0.72rem;font-weight:600;color:var(--text);}
+.metric-val{font-family:var(--ff-mono);font-size:0.65rem;color:var(--muted);}
+.metric-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.metric-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+.fill-brand{background:var(--green-mid);}
+.fill-market{background:var(--gold);}
+.fill-shareholder{background:var(--blue);}
+.fill-regulatory{background:var(--amber);}
+
+/* News feed */
+.news-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;}
+.news-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;}
+.news-title{font-family:var(--ff-mono);font-size:0.6rem;color:var(--red);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:0.4rem;}
+.news-live{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s ease-in-out infinite;}
+.news-scroll{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;}
+.news-item{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.55rem 0.65rem;}
+.news-time{font-family:var(--ff-mono);font-size:0.56rem;color:var(--muted2);margin-bottom:0.2rem;}
+.news-headline{font-size:0.75rem;line-height:1.5;color:var(--text);font-weight:500;}
+.news-item.breaking{border-color:var(--red-border);background:var(--red-dim);}
+.news-item.breaking .news-headline{color:var(--red);}
+.news-item.positive{border-color:var(--green-border);background:var(--green-dim);}
+.news-item.positive .news-headline{color:var(--green-mid);}
+
+/* Reset btn */
+.reset-btn{width:100%;margin-top:1rem;padding:0.5rem;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:0.72rem;font-family:var(--ff);cursor:pointer;transition:all 0.15s;}
+.reset-btn:hover{border-color:var(--green-border);color:var(--green);}
+
+/* ── END SCREEN ── */
+.end-screen{padding:0.5rem;}
+.end-eyebrow{font-family:var(--ff-mono);font-size:0.6rem;color:var(--red);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:0.5rem;}
+.end-title{font-family:var(--ff-head);font-size:1.3rem;font-weight:700;margin-bottom:0.5rem;line-height:1.2;}
+.end-verdict{font-size:0.875rem;color:var(--muted);line-height:1.75;margin-bottom:1.25rem;padding:1rem;background:var(--surface2);border-radius:8px;border-left:3px solid var(--green-mid);}
+.end-stats{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.5rem;}
+.end-stat{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:0.6rem 0.75rem;}
+.end-stat-label{font-family:var(--ff-mono);font-size:0.56rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.2rem;}
+.end-stat-val{font-size:1rem;font-weight:700;color:var(--green);}
+
+/* Debrief */
+.debrief{background:var(--surface2);border:1px solid var(--green-border);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;}
+.debrief-label{font-family:var(--ff-mono);font-size:0.58rem;color:var(--green-mid);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:0.6rem;font-weight:600;}
+.debrief-title{font-family:var(--ff-head);font-size:0.95rem;font-weight:700;margin-bottom:0.75rem;}
+.debrief-concepts{display:flex;flex-direction:column;gap:0.6rem;}
+.concept{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:0.75rem 0.85rem;}
+.concept-name{font-size:0.78rem;font-weight:700;color:var(--green-mid);margin-bottom:0.25rem;}
+.concept-body{font-size:0.77rem;color:var(--muted);line-height:1.65;}
+.concept-tag{display:inline-block;font-family:var(--ff-mono);font-size:0.56rem;letter-spacing:0.08em;background:var(--green-dim);border:1px solid var(--green-border);color:var(--green-mid);padding:0.1rem 0.4rem;border-radius:3px;margin-top:0.3rem;}
+.play-again-btn{display:inline-block;padding:0.65rem 1.5rem;border-radius:8px;background:var(--green);border:none;color:#fff;font-family:var(--ff);font-size:0.85rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+.play-again-btn:hover{opacity:0.88;}
+
+@media(max-width:640px){
+  .end-stats{grid-template-columns:1fr 1fr;}
+  .countdown-wrap{gap:0.5rem;}
+  .countdown-block{min-width:60px;padding:0.5rem 0.75rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div class="gate-box">
+    <div class="gate-logo">BIZ-OMICS</div>
+    <div class="gate-title">Access</div>
+    <div class="gate-sub">Enter your access code to continue.</div>
+    <input class="gate-input" id="gate-input" type="password" placeholder="Enter access code" autocomplete="off">
+    <div class="gate-msg" id="gate-msg"></div>
+    <button class="gate-btn" onclick="checkGate()">Unlock</button>
+    <a class="gate-back" href="../business/index.html">&larr; Business Hub</a>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-main">
+    <div class="logo-wrap">
+      <span class="logo-text">BIZ-<span>OMICS</span></span>
+      <span class="hdr-tag">Research</span>
+    </div>
+    <div class="hdr-right">
+      <a class="back-link" href="../business/index.html">&larr; Business Hub</a>
+    </div>
+  </div>
+  <div class="alert-ticker">
+    <span class="ticker-label">Breaking</span>
+    <span class="ticker-text" id="ticker-text">Meridian Retail PLC — monitoring situation. No further details available.</span>
+  </div>
+</header>
+
+<div class="page-wrap">
+
+  <!-- MAIN COLUMN -->
+  <div class="main-col">
+
+    <div class="game-hero">
+      <div class="crisis-eyebrow"><span class="crisis-dot"></span>Live Crisis Simulation</div>
+      <h1 class="game-title">Crisis Hour</h1>
+      <p class="game-sub">A cyberattack has compromised Meridian Retail PLC's payment infrastructure. You are the crisis management team. You have 72 hours before this becomes uncontrollable. Every decision matters.</p>
+    </div>
+
+    <div class="countdown-wrap" id="countdown-wrap">
+      <div class="countdown-block">
+        <div class="countdown-num" id="count-hours">00</div>
+        <div class="countdown-label">Hours</div>
+      </div>
+      <div class="countdown-divider">:</div>
+      <div class="countdown-block">
+        <div class="countdown-num" id="count-mins">00</div>
+        <div class="countdown-label">Minutes</div>
+      </div>
+      <div class="phase-clock" id="phase-clock">Simulation not started</div>
+    </div>
+
+    <div class="progress-dots" id="progress-dots" style="display:none;">
+      <div class="pdot" id="pd0"></div>
+      <div class="pdot" id="pd1"></div>
+      <div class="pdot" id="pd2"></div>
+      <div class="pdot" id="pd3"></div>
+      <div class="pdot" id="pd4"></div>
+      <div class="pdot" id="pd5"></div>
+      <span class="pdot-label" id="pdot-label"></span>
+    </div>
+
+    <div class="main-panel" id="main-panel">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">&#128187;</div>
+        <h2>Meridian Retail PLC — Cyber Incident</h2>
+        <p>It is 06:14 on a Monday morning. The IT Security team has flagged an anomaly in the payment processing system. Initial indicators suggest a sophisticated ransomware attack. Customer data may be compromised. The story has not broken yet — but it will.</p>
+        <p>You are the crisis management team. Your decisions over the next 72 hours will determine whether Meridian survives this with its reputation intact.</p>
+        <div class="welcome-meta">
+          <span class="welcome-chip">6 critical decisions</span>
+          <span class="welcome-chip">72-hour timeline</span>
+          <span class="welcome-chip">Live media feed</span>
+          <span class="welcome-chip">Real share price impact</span>
+        </div>
+        <button class="start-btn" onclick="startGame()">Begin crisis response &rarr;</button>
+      </div>
+      <div id="game-content" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Share price -->
+    <div class="share-panel">
+      <div class="share-label">MRD.L — Share Price</div>
+      <div class="share-price" id="share-price">£18.42</div>
+      <div class="share-change" id="share-change"><span class="share-up">&#9650; Pre-market</span></div>
+      <div class="share-chart">
+        <canvas id="priceCanvas" width="240" height="50"></canvas>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics-panel">
+      <div class="metrics-title">Crisis Metrics</div>
+
+      <div class="metric-item">
+        <div class="metric-row">
+          <span class="metric-name">Brand Reputation</span>
+          <span class="metric-val" id="brand-val">82%</span>
+        </div>
+        <div class="metric-bar"><div class="metric-fill fill-brand" id="brand-bar" style="width:82%"></div></div>
+      </div>
+
+      <div class="metric-item">
+        <div class="metric-row">
+          <span class="metric-name">Market Share</span>
+          <span class="metric-val" id="market-val">74%</span>
+        </div>
+        <div class="metric-bar"><div class="metric-fill fill-market" id="market-bar" style="width:74%"></div></div>
+      </div>
+
+      <div class="metric-item">
+        <div class="metric-row">
+          <span class="metric-name">Shareholder Confidence</span>
+          <span class="metric-val" id="shareholder-val">78%</span>
+        </div>
+        <div class="metric-bar"><div class="metric-fill fill-shareholder" id="shareholder-bar" style="width:78%"></div></div>
+      </div>
+
+      <div class="metric-item">
+        <div class="metric-row">
+          <span class="metric-name">Regulatory Standing</span>
+          <span class="metric-val" id="regulatory-val">90%</span>
+        </div>
+        <div class="metric-bar"><div class="metric-fill fill-regulatory" id="regulatory-bar" style="width:90%"></div></div>
+      </div>
+
+      <button class="reset-btn" onclick="resetGame()">Reset simulation</button>
+    </div>
+
+    <!-- News feed -->
+    <div class="news-panel">
+      <div class="news-header">
+        <div class="news-title"><span class="news-live"></span>Media Feed</div>
+      </div>
+      <div class="news-scroll" id="news-feed">
+        <div class="news-item">
+          <div class="news-time">06:14 — Hour 0</div>
+          <div class="news-headline">Internal IT alert: anomalous activity detected on payment servers. Incident response team notified.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──
+var gameState = {
+  phase: -1,
+  started: false,
+  metrics: { brand: 82, market: 74, shareholder: 78, regulatory: 90 },
+  sharePrice: 18.42,
+  sharePriceHistory: [18.42],
+  tickerInterval: null
+};
+
+// ── PHASES ──
+var phases = [
+  {
+    hour: 0,
+    clockLabel: "Hour 0 — Attack Detected",
+    title: "The Breach",
+    hourLabel: "Hour 0 — 06:14",
+    briefing: "Your Head of IT Security has just called the emergency line. Ransomware has encrypted approximately 40% of the payment processing infrastructure. Point-of-sale systems in 180 stores are offline. Online checkout is returning errors. The attackers have left a ransom note demanding £4.2 million in cryptocurrency within 48 hours. No customer data breach has been confirmed yet — but it has not been ruled out. The story is not yet public.",
+    intel: "The ICO requires notification within 72 hours of becoming aware of a personal data breach. GDPR fines can reach 4% of annual global turnover. Meridian's annual turnover: £2.1 billion.",
+    choices: [
+      { text: "Convene the full crisis management team immediately, brief the board, and begin drafting a public statement for release within two hours.", type: "decisive", outcome: "The crisis team assembles within 20 minutes. The board is briefed at 07:00. Legal, communications, and IT are aligned before the story breaks. You are ahead of the news cycle rather than behind it. The ICO is notified proactively within the first hour.", effects: { brand: 5, market: 2, shareholder: 3, regulatory: 8 }, shareChange: -0.42, ticker: "Meridian Retail convenes emergency board meeting amid reports of IT disruption — sources", newsItems: [ { type: "positive", time: "07:15 — Hour 1", headline: "Meridian Retail PLC confirms IT incident and activates crisis response team. Board briefed." }, { type: "", time: "07:45 — Hour 1", headline: "ICO confirms receipt of preliminary notification from Meridian Retail PLC." } ] },
+      { text: "Lock down information internally — do not notify the board yet. Bring in a specialist cybersecurity firm first to understand the full scale before making any external moves.", type: "cautious", outcome: "The cybersecurity firm is on-site by 09:00. Their initial assessment is thorough but takes four hours. By the time the board is briefed, a journalist has already called the press office. You are now responding rather than leading.", effects: { brand: -5, market: -3, shareholder: -8, regulatory: -5 }, shareChange: -0.85, ticker: "Sources: Meridian Retail payment systems down since early morning — staff briefed to say 'technical issues'", newsItems: [ { type: "breaking", time: "10:30 — Hour 4", headline: "BREAKING: Meridian Retail payment systems down across 180 stores. Company silent on cause." }, { type: "", time: "11:00 — Hour 5", headline: "Press office confirms 'technical difficulties'. No timeline given for resolution." } ] },
+      { text: "Pay the ransom quietly. Restore systems within 24 hours and manage this as an IT incident, not a crisis.", type: "reactive", outcome: "The payment is made via a third-party intermediary. Systems begin restoring after 31 hours. But ransomware groups routinely sell data regardless of payment. Three days later, customer records appear on a dark web forum. The ICO investigation finds you paid the ransom and did not notify them within 72 hours.", effects: { brand: -20, market: -15, shareholder: -20, regulatory: -30 }, shareChange: -2.10, ticker: "Meridian Retail paid £4.2m ransomware demand — ICO launches investigation", newsItems: [ { type: "breaking", time: "72:00 — Hour 72", headline: "BREAKING: Meridian Retail paid £4.2m ransom. Customer data now circulating on dark web forums." }, { type: "breaking", time: "72:30 — Hour 72", headline: "ICO confirms formal investigation into Meridian Retail data breach and ransom payment." } ] }
+    ]
+  },
+  {
+    hour: 4,
+    clockLabel: "Hour 4 — Story Breaking",
+    title: "The First Leak",
+    hourLabel: "Hour 4 — 10:14",
+    briefing: "A thread on a popular retail industry forum has begun circulating screenshots of the ransom note. It is not yet verified but it is gaining traction. A journalist from a national newspaper has emailed the press office asking for comment on 'reports of a significant cyberattack'. Your communications director has drafted three possible responses. Social media is beginning to fill with customer complaints about failed transactions. You have approximately 90 minutes before this goes mainstream.",
+    intel: "A company's first public statement in a crisis is almost always quoted in every subsequent piece of coverage. Tone and content set the narrative. Companies that get ahead of the story typically recover brand value 40% faster than those that are caught managing it reactively.",
+    choices: [
+      { text: "Publish a full proactive statement confirming the attack, what is known, what is being done, and that customer safety is the absolute priority.", type: "decisive", outcome: "The statement is published at 10:45. Every subsequent news report leads with your words rather than the forum screenshots. The narrative is yours. Customers are frustrated but feel informed. The share price falls on the news but analysts note the 'mature crisis communication'.", effects: { brand: 8, market: 3, shareholder: 5, regulatory: 5 }, shareChange: -0.65, ticker: "Meridian Retail confirms cyberattack — CEO: 'We are being transparent because our customers deserve that'", newsItems: [ { type: "positive", time: "10:45 — Hour 4", headline: "Meridian Retail publishes full statement: attack confirmed, customer data under investigation, stores working on manual systems." }, { type: "positive", time: "11:30 — Hour 5", headline: "Crisis communications experts praise Meridian's 'textbook' early disclosure. Share price stabilises." } ] },
+      { text: "Issue a minimal statement confirming 'an IT incident' without mentioning cyberattack or ransomware, and buy time for legal to review the full disclosure obligations.", type: "cautious", outcome: "Legal signs off on the statement at 11:30. By then, three national journalists have published pieces based on the forum screenshots. Your minimal statement looks evasive next to the leaked ransom note. Customers feel misled.", effects: { brand: -8, market: -5, shareholder: -5, regulatory: -5 }, shareChange: -0.95, ticker: "Meridian Retail issues vague 'IT incident' statement as ransom note screenshots circulate online", newsItems: [ { type: "breaking", time: "11:30 — Hour 5", headline: "Ransom note screenshots confirmed as genuine. Meridian's 'IT incident' statement branded 'deliberately misleading'." }, { type: "", time: "12:00 — Hour 6", headline: "Consumer groups call for immediate clarity on whether customer payment data has been compromised." } ] },
+      { text: "Say nothing and brief selected journalists off the record with a positive spin — frame it as a sophisticated state-sponsored attack rather than a company security failure.", type: "reactive", outcome: "The off-the-record briefing backfires when one of the journalists publishes the spin angle and attributes it to 'company sources'. You are now accused of attempting to manipulate coverage on top of the original incident. The story becomes about the cover-up.", effects: { brand: -15, market: -10, shareholder: -12, regulatory: -8 }, shareChange: -1.40, ticker: "Meridian Retail accused of media manipulation after off-record briefing leaked — 'cover-up worse than the crime'", newsItems: [ { type: "breaking", time: "13:00 — Hour 7", headline: "EXCLUSIVE: Meridian sources tried to frame attack as 'state-sponsored' in off-record briefing. Journalist refuses." }, { type: "breaking", time: "13:30 — Hour 7", headline: "Reputational crisis deepens as Meridian accused of media manipulation. CEO faces calls to resign." } ] }
+    ]
+  },
+  {
+    hour: 12,
+    clockLabel: "Hour 12 — Customer Data",
+    title: "The Data Question",
+    hourLabel: "Hour 12 — 18:14",
+    briefing: "Your forensics team has completed an initial assessment. Approximately 1.4 million customer records — names, email addresses, and encrypted payment card data — were accessed during the breach. The encryption on the card data is strong but not unbreakable. The ICO has been in contact and wants a full preliminary report by 09:00 tomorrow. Meanwhile, the BBC has a camera crew outside your headquarters and the ITV News is leading their 6pm bulletin with your story. Your customer service lines have received 47,000 calls today.",
+    intel: "Under GDPR Article 34, if the breach is likely to result in high risk to individuals, you must notify affected customers 'without undue delay'. Failure to notify can result in fines of up to £17.5 million or 4% of annual global turnover — whichever is higher.",
+    choices: [
+      { text: "Notify all 1.4 million affected customers tonight by email, offer 12 months of free credit monitoring, and publish a detailed FAQ on the website.", type: "decisive", outcome: "The email goes out at 21:00. Customer service volume peaks then begins to fall as questions are answered proactively. A consumer rights organisation describes the response as 'genuinely responsible'. The ICO notes the speed of notification positively. Several competitors quietly begin reviewing their own security posture.", effects: { brand: 10, market: 5, shareholder: 8, regulatory: 12 }, shareChange: 0.35, ticker: "Meridian notifies 1.4m customers tonight — free credit monitoring offered. Consumer groups praise response.", newsItems: [ { type: "positive", time: "21:15 — Hour 15", headline: "Meridian customers receive direct email notification. 12-month credit monitoring offered at company's cost." }, { type: "positive", time: "22:00 — Hour 16", headline: "ICO acknowledges 'exemplary speed' of customer notification. Formal investigation continues but tone positive." } ] },
+      { text: "Notify customers but only confirm that 'some data may have been accessed' — do not specify the number or type of data until the forensic report is finalised.", type: "cautious", outcome: "The vague notification frustrates customers more than reassures them. A data rights law firm announces it is investigating a potential class action. When the full figures emerge two days later, the gap between what you said tonight and the reality becomes the new story.", effects: { brand: -5, market: -3, shareholder: -3, regulatory: -8 }, shareChange: -0.55, ticker: "Meridian's vague customer notification draws criticism — data rights lawyers announce class action investigation", newsItems: [ { type: "breaking", time: "21:30 — Hour 15", headline: "Meridian's notification email described as 'deliberately vague' by data protection lawyers." }, { type: "", time: "08:00 — Hour 26", headline: "Full breach figures: 1.4m records accessed. Gap between tonight's statement and reality noted by press." } ] },
+      { text: "Do not notify customers yet — wait for the forensic report to be complete so you can give a definitive rather than provisional answer.", type: "reactive", outcome: "The ICO issues a formal warning at 09:15 the following morning when your preliminary report does not include customer notification steps. The warning is public. A national newspaper runs the ICO letter in full. You are now legally exposed as well as reputationally damaged.", effects: { brand: -15, market: -10, shareholder: -15, regulatory: -25 }, shareChange: -1.20, ticker: "ICO issues public warning to Meridian Retail for failure to notify affected customers within required timeframe", newsItems: [ { type: "breaking", time: "09:15 — Hour 27", headline: "BREAKING: ICO issues public formal warning to Meridian Retail. Customer notification still not sent." }, { type: "breaking", time: "10:00 — Hour 28", headline: "MP calls for emergency parliamentary question on Meridian data handling. ICO letter published in full." } ] }
+    ]
+  },
+  {
+    hour: 24,
+    clockLabel: "Hour 24 — The Board",
+    title: "Shareholder Pressure",
+    hourLabel: "Hour 24 — 06:14",
+    briefing: "The share price has fallen 11% since Monday morning. An institutional investor holding 8.3% of Meridian's shares has called the Chairman demanding an emergency board meeting and asking whether the CEO has 'the confidence of the board'. A separate activist investor has published an open letter arguing the breach reveals 'systemic governance failures in technology risk management'. The contingency plan that existed for cyber incidents was last tested 18 months ago. A section of it refers to systems that no longer exist. The board wants answers.",
+    intel: "The UK Corporate Governance Code requires boards to assess and monitor risk management systems. A cyber incident that exposes an untested or outdated contingency plan may trigger questions about director liability under the Companies Act 2006.",
+    choices: [
+      { text: "Convene the board meeting and present a full, honest account — including that the contingency plan was not current. Commission an immediate independent review.", type: "decisive", outcome: "The board meeting is difficult but constructive. Your honesty about the plan's deficiencies is noted positively by three non-executive directors. The independent review is announced publicly. Institutional investors broadly welcome the governance response. The activist investor pauses their campaign.", effects: { brand: 5, market: 5, shareholder: 15, regulatory: 8 }, shareChange: 0.55, ticker: "Meridian board meets: CEO gives full account, independent governance review commissioned. Investors cautiously positive.", newsItems: [ { type: "positive", time: "14:00 — Hour 32", headline: "Meridian announces independent review of technology risk governance. Chaired by former NCSC director." }, { type: "positive", time: "15:30 — Hour 33", headline: "Institutional investor withdraws demand for CEO removal after board statement. Share price recovers 3%." } ] },
+      { text: "Brief the institutional investor privately before the board meeting to manage their position — then present a more controlled version to the full board.", type: "cautious", outcome: "The institutional investor is partially reassured. But the activist investor obtains a whistleblower account of the private briefing and publishes it. The selective disclosure compounds the governance concerns.", effects: { brand: -5, market: -3, shareholder: -8, regulatory: -5 }, shareChange: -0.65, ticker: "Meridian accused of selective investor briefing — activist investor publishes whistleblower account of private meeting", newsItems: [ { type: "breaking", time: "16:00 — Hour 34", headline: "Activist investor: 'Meridian briefed favoured shareholders privately while others were kept in the dark.'" }, { type: "", time: "17:00 — Hour 35", headline: "FCA reviewing whether private investor briefing constitutes selective disclosure under MAR rules." } ] },
+      { text: "Delay the board meeting until the forensic and ICO processes are further advanced — you cannot present a clear picture yet and premature disclosure may worsen the situation.", type: "reactive", outcome: "The delay is interpreted as the CEO avoiding accountability. The institutional investor sells its 8.3% stake the following morning. The share price falls a further 6% on the news. A second major investor issues a statement expressing 'serious concerns about board leadership'.", effects: { brand: -10, market: -12, shareholder: -20, regulatory: -5 }, shareChange: -1.85, ticker: "Meridian delays board meeting — 8.3% institutional stake sold this morning as confidence collapses", newsItems: [ { type: "breaking", time: "09:00 — Hour 27", headline: "Major Meridian investor dumps 8.3% stake. 'Lack of board leadership is disqualifying.'" }, { type: "breaking", time: "10:30 — Hour 28", headline: "Second institutional investor signals 'loss of confidence in current executive team'." } ] }
+    ]
+  },
+  {
+    hour: 48,
+    clockLabel: "Hour 48 — Regulatory",
+    title: "The Regulator Arrives",
+    hourLabel: "Hour 48 — 06:14",
+    briefing: "The ICO has arrived on site with a formal investigation team. The FCA has issued a notice requiring updates on the potential market disclosure obligations. NCA's National Cyber Crime Unit is involved given the scale of the ransom demand. Meanwhile, a rival retailer has begun running targeted social media advertising directly at Meridian's customer base with the message 'Switch today — your data is safe with us.' Your Head of Business Continuity has just told you privately that the section of the crisis plan dealing with multi-agency regulatory response was never completed — it reads 'TBC' in three places.",
+    intel: "Contingency planning best practice (ISO 22301) requires plans to be tested, reviewed, and maintained. An incomplete plan that is presented to regulators may be treated as evidence of inadequate governance rather than a mitigating factor.",
+    choices: [
+      { text: "Be fully transparent with the ICO about the gap in the contingency plan and present a remediation timeline alongside the investigation cooperation.", type: "decisive", outcome: "The ICO lead investigator notes in their file that the organisation 'demonstrated unusual candour about governance gaps'. The remediation plan is assessed as credible. A competitor's predatory advertising campaign is condemned by consumer groups as 'opportunistic' — Meridian's honesty contrast works in your favour.", effects: { brand: 8, market: 6, shareholder: 5, regulatory: 15 }, shareChange: 0.45, ticker: "ICO praises Meridian's 'unusual candour' in investigation cooperation. Remediation plan assessed as credible.", newsItems: [ { type: "positive", time: "14:00 — Hour 62", headline: "ICO investigation update: Meridian cooperation described as 'exemplary'. Fine assessment ongoing but tone constructive." }, { type: "positive", time: "15:00 — Hour 63", headline: "Consumer groups condemn rival retailer's predatory advertising. Meridian's transparent response wins sympathy." } ] },
+      { text: "Present the plan as substantially complete and quietly commission a contractor to fill the gaps before the ICO reviews the documentation.", type: "cautious", outcome: "The contractor works overnight. The gaps are partially filled but inconsistencies in date formatting alert the ICO's document examiner. They request the version history. The cover-up is significantly worse than the original gap would have been.", effects: { brand: -15, market: -8, shareholder: -15, regulatory: -30 }, shareChange: -1.50, ticker: "ICO discovers Meridian attempted to backfill contingency plan documentation. Criminal referral possible.", newsItems: [ { type: "breaking", time: "16:00 — Hour 64", headline: "BREAKING: ICO finds evidence of document manipulation. Criminal referral to NCA under consideration." }, { type: "breaking", time: "17:30 — Hour 65", headline: "Meridian CEO summoned for formal interview under caution. Board calls emergency meeting." } ] },
+      { text: "Engage a specialist regulatory PR firm to manage all communications with the ICO — present a polished but carefully managed response.", type: "reactive", outcome: "The ICO is experienced with regulatory PR management. The polished presentation feels evasive compared to the direct questions they are asking. They expand the scope of their investigation to include 'the culture of transparency within senior management'.", effects: { brand: -5, market: -5, shareholder: -8, regulatory: -15 }, shareChange: -0.80, ticker: "ICO expands Meridian investigation scope to include 'senior management transparency culture'", newsItems: [ { type: "breaking", time: "15:00 — Hour 63", headline: "ICO widens investigation after Meridian's heavily managed response raises further questions." }, { type: "", time: "16:00 — Hour 64", headline: "Regulatory PR firm involvement noted in ICO file as 'potentially obstructive engagement style'." } ] }
+    ]
+  },
+  {
+    hour: 72,
+    clockLabel: "Hour 72 — The Reckoning",
+    title: "72 Hours",
+    hourLabel: "Hour 72 — 06:14",
+    briefing: "The 72-hour window is closing. The ICO has indicated a preliminary fine of between £12 million and £28 million, subject to the cooperation assessment. The share price is down between 8% and 19% depending on your decisions. A major supplier has invoked a 'reputational risk' clause in their contract and requested renegotiation. The CEO is facing a media interview on the Today programme in 90 minutes. Internally, your Head of Business Continuity has drafted a full post-incident review — including a brutal assessment of where the contingency plan failed. Do you publish it?",
+    intel: "Post-incident transparency has been shown to significantly reduce long-term brand damage. Johnson and Johnson's 1982 Tylenol recall — in which the company recalled 31 million bottles, communicated proactively, and accepted short-term losses — is studied as the gold standard of crisis management. Companies that attempt to minimise or conceal tend to face a second reputational crisis when the truth emerges.",
+    choices: [
+      { text: "Publish the post-incident review in full, including the contingency plan failures. Commission an independent cyber security audit and commit to publishing results.", type: "decisive", outcome: "The review is published at 05:30, two hours before the Today programme interview. The CEO's interview is now about accountability and reform rather than cover-up. Analysts note the share price has 'priced in the worst' and begin issuing buy ratings. The ICO reduces the preliminary fine to £14 million, citing 'exceptional cooperation and transparency'.", effects: { brand: 15, market: 10, shareholder: 18, regulatory: 15 }, shareChange: 1.20, ticker: "Meridian publishes full post-incident review including own failures. Analysts: 'This is how you rebuild trust.'", newsItems: [ { type: "positive", time: "05:30 — Hour 72", headline: "Meridian publishes full post-incident review including contingency plan gaps. CEO: 'We failed and we are saying so publicly.'" }, { type: "positive", time: "09:00 — Hour 75", headline: "ICO reduces preliminary fine to £14m citing 'exceptional transparency'. Three analysts upgrade Meridian stock." } ] },
+      { text: "Publish a summary of the review that acknowledges failures at a high level but does not include the specific contingency plan assessment.", type: "cautious", outcome: "A journalist obtains the full internal review via a freedom of information request three weeks later. The gap between the summary and the full document becomes the definitive story. 'What Meridian chose not to tell you' runs as a three-part investigation in a national broadsheet.", effects: { brand: -8, market: -5, shareholder: -8, regulatory: -5 }, shareChange: -0.55, ticker: "Full internal review leaked: 'What Meridian chose not to publish' — three-part investigation begins", newsItems: [ { type: "breaking", time: "09:00 — Hour 75", headline: "Today programme: CEO struggles to explain gap between published summary and full internal review." }, { type: "breaking", time: "14:00 — Week 3", headline: "National paper begins three-part investigation: 'The Meridian Cover-Up — what they knew and when'." } ] },
+      { text: "Do not publish the review — it is an internal document and publishing it sets a dangerous precedent for future litigation.", type: "reactive", outcome: "Legal's instinct is understandable but wrong for the context. The ICO requests the document as part of the investigation. When they receive it, the fact that it was not published voluntarily is noted. The preliminary fine increases to £26 million. The Today programme interview becomes the defining low point.", effects: { brand: -20, market: -15, shareholder: -20, regulatory: -20 }, shareChange: -1.80, ticker: "ICO receives Meridian internal review — was not published voluntarily. Fine increased to £26m.", newsItems: [ { type: "breaking", time: "09:30 — Hour 75", headline: "Today programme: CEO unable to answer why internal review was withheld. 'Train crash interview' trending." }, { type: "breaking", time: "11:00 — Hour 75", headline: "ICO preliminary fine revised upward to £26m after receiving unpublished internal review." } ] }
+    ]
+  }
+];
+
+// ── COUNTDOWN ──
+var hourMappings = [0, 4, 12, 24, 48, 72];
+var maxHours = 72;
+
+function updateCountdown(hoursElapsed) {
+  var remaining = maxHours - hoursElapsed;
+  if(remaining < 0) remaining = 0;
+  var h = Math.floor(remaining);
+  var m = Math.floor((remaining - h) * 60);
+  document.getElementById('count-hours').textContent = String(h).padStart(2,'0');
+  document.getElementById('count-mins').textContent = String(m).padStart(2,'0');
+}
+
+// ── SHARE PRICE CHART ──
+function drawChart() {
+  var canvas = document.getElementById('priceCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width;
+  var h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  var prices = gameState.sharePriceHistory;
+  if(prices.length < 2) return;
+  var min = Math.min.apply(null, prices) - 0.5;
+  var max = Math.max.apply(null, prices) + 0.5;
+  var range = max - min || 1;
+  ctx.beginPath();
+  ctx.strokeStyle = gameState.sharePrice >= prices[0] ? '#4ade80' : '#f87171';
+  ctx.lineWidth = 1.5;
+  for(var i = 0; i < prices.length; i++) {
+    var x = (i / (prices.length - 1)) * w;
+    var y = h - ((prices[i] - min) / range) * h;
+    if(i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function updateSharePrice(change) {
+  gameState.sharePrice = Math.max(1, gameState.sharePrice + change);
+  gameState.sharePriceHistory.push(gameState.sharePrice);
+  var priceStr = '£' + gameState.sharePrice.toFixed(2);
+  var basePrice = 18.42;
+  var totalChange = gameState.sharePrice - basePrice;
+  var pct = ((totalChange / basePrice) * 100).toFixed(1);
+  document.getElementById('share-price').textContent = priceStr;
+  var changeEl = document.getElementById('share-change');
+  if(totalChange >= 0) {
+    changeEl.innerHTML = '<span class="share-up">&#9650; +£' + totalChange.toFixed(2) + ' (+' + pct + '%)</span>';
+  } else {
+    changeEl.innerHTML = '<span class="share-down">&#9660; -£' + Math.abs(totalChange).toFixed(2) + ' (' + pct + '%)</span>';
+  }
+  drawChart();
+}
+
+// ── METRICS ──
+function updateMetrics() {
+  var m = gameState.metrics;
+  var ids = ['brand','market','shareholder','regulatory'];
+  var vals = [m.brand, m.market, m.shareholder, m.regulatory];
+  for(var i = 0; i < ids.length; i++) {
+    var v = Math.max(0, Math.min(100, vals[i]));
+    document.getElementById(ids[i] + '-val').textContent = v + '%';
+    document.getElementById(ids[i] + '-bar').style.width = v + '%';
+  }
+}
+
+// ── NEWS FEED ──
+function addNewsItem(item) {
+  var feed = document.getElementById('news-feed');
+  var div = document.createElement('div');
+  div.className = 'news-item' + (item.type ? ' ' + item.type : '');
+  div.innerHTML = '<div class="news-time">' + item.time + '</div><div class="news-headline">' + item.headline + '</div>';
+  feed.insertBefore(div, feed.firstChild);
+}
+
+// ── TICKER ──
+var tickerMessages = [
+  "Meridian Retail PLC — monitoring situation. No further details available.",
+  "City sources watching Meridian share price closely after IT disruption reports.",
+  "Consumer helpline volumes at Meridian Retail reported as 'extremely high' — sources",
+  "Analysts: 'Too early to assess Meridian incident impact. Watching communications closely.'"
+];
+var tickerIdx = 0;
+
+function rotateTicker() {
+  tickerIdx = (tickerIdx + 1) % tickerMessages.length;
+  document.getElementById('ticker-text').textContent = tickerMessages[tickerIdx];
+}
+
+function setTicker(msg) {
+  tickerMessages.unshift(msg);
+  tickerIdx = 0;
+  document.getElementById('ticker-text').textContent = msg;
+}
+
+// ── PROGRESS DOTS ──
+function updateDots(phaseIndex) {
+  for(var i = 0; i < 6; i++) {
+    var dot = document.getElementById('pd' + i);
+    dot.className = 'pdot';
+    if(i < phaseIndex) dot.className = 'pdot done';
+    else if(i === phaseIndex) dot.className = 'pdot current';
+  }
+  document.getElementById('pdot-label').textContent = phases[phaseIndex].clockLabel;
+}
+
+// ── GAME LOGIC ──
+function startGame() {
+  gameState.phase = 0;
+  gameState.started = true;
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('game-content').style.display = 'block';
+  document.getElementById('progress-dots').style.display = 'flex';
+  if(gameState.tickerInterval) clearInterval(gameState.tickerInterval);
+  gameState.tickerInterval = setInterval(rotateTicker, 4000);
+  showPhase();
+}
+
+function showPhase() {
+  var p = phases[gameState.phase];
+  updateDots(gameState.phase);
+  updateCountdown(hourMappings[gameState.phase]);
+  document.getElementById('phase-clock').textContent = p.clockLabel;
+
+  var choicesHtml = '';
+  for(var i = 0; i < p.choices.length; i++) {
+    var c = p.choices[i];
+    var tagLabel = c.type === 'decisive' ? 'Decisive' : c.type === 'cautious' ? 'Cautious' : 'Reactive';
+    choicesHtml += '<button class="choice-btn ' + c.type + '" onclick="makeChoice(' + i + ')">' +
+      '<span class="choice-tag tag-' + c.type + '">' + tagLabel + '</span>' + c.text +
+      '</button>';
+  }
+
+  document.getElementById('game-content').innerHTML =
+    '<div class="phase-header">' +
+    '<div class="phase-hour">' + p.hourLabel + '</div>' +
+    '<div class="phase-title">' + p.title + '</div>' +
+    '</div>' +
+    '<div class="briefing"><div class="briefing-label">Situation Report</div>' + p.briefing + '</div>' +
+    '<div class="intel"><div class="intel-label">Legal &amp; Regulatory Intel</div>' + p.intel + '</div>' +
+    '<div class="choices">' + choicesHtml + '</div>' +
+    '<div class="outcome-box" id="outcome-box"><div class="outcome-label">Outcome</div><span id="outcome-text"></span></div>';
+}
+
+function makeChoice(idx) {
+  var p = phases[gameState.phase];
+  var c = p.choices[idx];
+
+  gameState.metrics.brand      = Math.max(0, Math.min(100, gameState.metrics.brand      + c.effects.brand));
+  gameState.metrics.market     = Math.max(0, Math.min(100, gameState.metrics.market     + c.effects.market));
+  gameState.metrics.shareholder = Math.max(0, Math.min(100, gameState.metrics.shareholder + c.effects.shareholder));
+  gameState.metrics.regulatory = Math.max(0, Math.min(100, gameState.metrics.regulatory + c.effects.regulatory));
+
+  updateMetrics();
+  updateSharePrice(c.shareChange);
+  setTicker(c.ticker);
+
+  for(var n = 0; n < c.newsItems.length; n++) {
+    addNewsItem(c.newsItems[n]);
+  }
+
+  document.getElementById('outcome-text').textContent = c.outcome;
+  document.getElementById('outcome-box').classList.add('show');
+
+  document.querySelectorAll('.choice-btn').forEach(function(b){ b.disabled = true; });
+
+  setTimeout(function(){
+    gameState.phase++;
+    if(gameState.phase < phases.length) {
+      showPhase();
+    } else {
+      showEndGame();
+    }
+  }, 8000);
+}
+
+function showEndGame() {
+  document.getElementById('phase-clock').textContent = 'Simulation Complete';
+  updateCountdown(72);
+
+  var m = gameState.metrics;
+  var overall = Math.round((m.brand + m.market + m.shareholder + m.regulatory) / 4);
+  var verdict = '';
+  var priceChange = ((gameState.sharePrice - 18.42) / 18.42 * 100).toFixed(1);
+
+  if(overall >= 75) {
+    verdict = 'Meridian Retail PLC has navigated the crisis with its core reputation largely intact. Your decisions prioritised transparency, regulatory cooperation, and customer communication ahead of short-term share price management. The ICO investigation will result in a fine but cooperation is cited as a mitigating factor. Institutional investors have stabilised their positions. The long-term prognosis is cautiously positive.';
+  } else if(overall >= 55) {
+    verdict = 'Meridian Retail PLC has survived the crisis but with significant damage. Some decisions were well-handled; others allowed the situation to escalate beyond what was necessary. The company faces a protracted ICO investigation, moderate shareholder pressure, and a brand that will require sustained investment to rebuild. Recovery is possible but it will take at least 18 months.';
+  } else {
+    verdict = 'Meridian Retail PLC is in serious difficulty. A combination of delayed disclosure, regulatory friction, and shareholder confidence collapse has compounded the original breach significantly. The crisis management response is now under independent review. The CEO\'s position is under discussion at board level. This is a case study in how poor crisis decisions multiply the damage from an already serious incident.';
+  }
+
+  document.getElementById('game-content').innerHTML =
+    '<div class="end-screen">' +
+    '<div class="end-eyebrow">Simulation Complete — 72 Hours Elapsed</div>' +
+    '<div class="end-title">Crisis Assessment: Meridian Retail PLC</div>' +
+    '<div class="end-verdict">' + verdict + '</div>' +
+    '<div class="end-stats">' +
+    '<div class="end-stat"><div class="end-stat-label">Brand Reputation</div><div class="end-stat-val">' + Math.max(0,m.brand) + '%</div></div>' +
+    '<div class="end-stat"><div class="end-stat-label">Market Share</div><div class="end-stat-val">' + Math.max(0,m.market) + '%</div></div>' +
+    '<div class="end-stat"><div class="end-stat-label">Shareholder Conf.</div><div class="end-stat-val">' + Math.max(0,m.shareholder) + '%</div></div>' +
+    '<div class="end-stat"><div class="end-stat-label">Regulatory Standing</div><div class="end-stat-val">' + Math.max(0,m.regulatory) + '%</div></div>' +
+    '<div class="end-stat"><div class="end-stat-label">Share Price Change</div><div class="end-stat-val" style="color:' + (parseFloat(priceChange) >= 0 ? 'var(--green-mid)' : 'var(--red)') + '">' + priceChange + '%</div></div>' +
+    '<div class="end-stat"><div class="end-stat-label">Overall Score</div><div class="end-stat-val">' + overall + '%</div></div>' +
+    '</div>' +
+    '<div class="debrief">' +
+    '<div class="debrief-label">Theory Connection</div>' +
+    '<div class="debrief-title">What this links to in A-Level Business</div>' +
+    '<div class="debrief-concepts">' +
+    '<div class="concept"><div class="concept-name">Contingency Planning</div><div class="concept-body">A contingency plan is a pre-prepared response to a significant risk event. This simulation shows that a plan which is not tested, maintained, and complete is worse than no plan — it creates false confidence. The ISO 22301 standard for business continuity requires plans to be reviewed and exercised regularly. Meridian\'s gaps were discovered under pressure, when they could least afford them. <span class="concept-tag">AQA 3.5 / Edexcel Theme 3</span></div></div>' +
+    '<div class="concept"><div class="concept-name">Stakeholder Management</div><div class="concept-body">The simulation required simultaneous management of five distinct stakeholder groups: customers, shareholders, regulators, media, and employees. Each had different interests and different communication needs. Decisions that satisfied one group (e.g. delaying disclosure to avoid shareholder panic) frequently damaged the relationship with another (the ICO). Effective crisis management requires mapping stakeholder interests before the crisis occurs. <span class="concept-tag">AQA 3.1 / Edexcel Theme 1</span></div></div>' +
+    '<div class="concept"><div class="concept-name">Brand Equity and Reputation</div><div class="concept-body">Brand equity is the commercial value derived from consumer perception of a brand. The simulation demonstrates that brand equity can be destroyed rapidly but rebuilt only slowly. Transparent and decisive communication in the first 12 hours was the single most significant predictor of brand outcome — more than the attack itself. Johnson and Johnson\'s 1982 Tylenol recall remains the benchmark: they lost £1.8bn in market value but recovered it within a year through radical transparency. <span class="concept-tag">AQA 3.4 / Edexcel Theme 2</span></div></div>' +
+    '<div class="concept"><div class="concept-name">Corporate Governance</div><div class="concept-body">The UK Corporate Governance Code requires boards to oversee risk management systems and ensure they are fit for purpose. An outdated contingency plan with incomplete sections raises questions about whether the board fulfilled its oversight role. The FCA and ICO both assessed governance quality as well as the breach itself. Good governance before the crisis — regular testing, board-level technology risk ownership — would have reduced both the impact and the regulatory response. <span class="concept-tag">AQA 3.6 / Edexcel Theme 4</span></div></div>' +
+    '<div class="concept"><div class="concept-name">GDPR and Legal Compliance</div><div class="concept-body">GDPR (UK GDPR post-Brexit) requires notification of personal data breaches to the ICO within 72 hours and to affected individuals without undue delay where there is high risk. Non-compliance carries fines up to £17.5m or 4% of global turnover. The simulation showed that regulatory compliance is not just a legal obligation — it is a reputational signal. Early, proactive notification consistently produced better regulatory and commercial outcomes than delayed or partial disclosure. <span class="concept-tag">AQA 3.6 / Edexcel Theme 4</span></div></div>' +
+    '</div>' +
+    '</div>' +
+    '<button class="play-again-btn" onclick="resetGame()">Run simulation again</button>' +
+    '</div>';
+}
+
+function resetGame() {
+  if(gameState.tickerInterval) clearInterval(gameState.tickerInterval);
+  gameState = {
+    phase: -1,
+    started: false,
+    metrics: { brand: 82, market: 74, shareholder: 78, regulatory: 90 },
+    sharePrice: 18.42,
+    sharePriceHistory: [18.42],
+    tickerInterval: null
+  };
+  document.getElementById('welcome').style.display = 'block';
+  document.getElementById('game-content').style.display = 'none';
+  document.getElementById('progress-dots').style.display = 'none';
+  document.getElementById('phase-clock').textContent = 'Simulation not started';
+  document.getElementById('count-hours').textContent = '00';
+  document.getElementById('count-mins').textContent = '00';
+  document.getElementById('ticker-text').textContent = 'Meridian Retail PLC — monitoring situation. No further details available.';
+  document.getElementById('news-feed').innerHTML =
+    '<div class="news-item"><div class="news-time">06:14 — Hour 0</div><div class="news-headline">Internal IT alert: anomalous activity detected on payment servers. Incident response team notified.</div></div>';
+  updateMetrics();
+  updateSharePrice(0);
+  drawChart();
+}
+
+// ── PASSWORD GATE ──
+(function(){
+  var stored = localStorage.getItem('biz-crss');
+  if(stored === '1'){
+    document.getElementById('pw-gate').style.display = 'none';
+  }
+  var inp = document.getElementById('gate-input');
+  if(inp){
+    inp.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') checkGate();
+    });
+  }
+})();
+
+function checkGate(){
+  var val = document.getElementById('gate-input').value.trim();
+  var msg = document.getElementById('gate-msg');
+  var valid = [
+    'CRSS-Biz#2Lm2026',
+    'BizAQA-SM4RT!2026',
+    'BizEDX-AL9K!2026',
+    'BizOCR-AL7M!2026',
+    'BizOCR-GC4X!2026',
+    'GSALEconomics'
+  ];
+  var ok = false;
+  for(var i = 0; i < valid.length; i++){ if(val === valid[i]){ ok = true; break; } }
+  if(ok){
+    localStorage.setItem('biz-crss', '1');
+    document.getElementById('pw-gate').style.display = 'none';
+  } else {
+    msg.textContent = 'Incorrect access code.';
+    var inp = document.getElementById('gate-input');
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    inp.value = '';
+  }
+}
+
+// ── INIT ──
+gameState.tickerInterval = setInterval(rotateTicker, 4000);
+updateMetrics();
+drawChart();
+</script>
+</body>
+</html>

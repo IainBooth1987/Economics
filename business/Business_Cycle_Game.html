@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Cycle Game | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2236;
+            --border: #1e2d45;
+            --blue: #3b82f6;
+            --blue-dim: #1d4ed8;
+            --amber: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --header-h: 56px;
+            /* Phase colours */
+            --boom:     #f59e0b;
+            --recession:#ef4444;
+            --slump:    #8b5cf6;
+            --recovery: #10b981;
+        }
+        body.light {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface2: #e8edf5;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --text-muted: #64748b;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.3s,color 0.3s; }
+
+        /* ── PASSWORD ── */
+        #pwOverlay {
+            position:fixed; inset:0; background:var(--bg);
+            display:flex; align-items:center; justify-content:center;
+            z-index:9999;
+        }
+        .pw-box {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:16px; padding:40px 48px; max-width:420px; width:90%;
+            text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+        }
+        .pw-logo { font-family:'Fraunces',serif; font-size:1.1em; color:var(--blue); letter-spacing:2px; margin-bottom:8px; }
+        .pw-box h2 { font-family:'Fraunces',serif; font-size:1.6em; margin-bottom:6px; }
+        .pw-box p { color:var(--text-muted); font-size:0.9em; margin-bottom:24px; }
+        #pwInput {
+            width:100%; padding:12px 16px; border-radius:8px;
+            border:2px solid var(--border); background:var(--bg);
+            color:var(--text); font-size:1em; font-family:'DM Sans',sans-serif;
+            text-align:center; letter-spacing:2px; margin-bottom:12px;
+        }
+        #pwInput:focus { outline:none; border-color:var(--blue); }
+        #pwSubmit {
+            width:100%; padding:12px; border-radius:8px; border:none;
+            background:var(--blue); color:white; font-weight:700;
+            font-size:1em; cursor:pointer; font-family:'DM Sans',sans-serif;
+        }
+        #pwSubmit:hover { background:var(--blue-dim); }
+        #pwError { color:var(--red); font-size:0.85em; margin-top:10px; min-height:20px; }
+        .pw-shop { margin-top:16px; font-size:0.82em; color:var(--text-muted); }
+        .pw-shop a { color:var(--blue); text-decoration:none; }
+        @keyframes pwShake {
+            0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)}
+        }
+        .shake { animation:pwShake 0.4s ease; }
+
+        /* ── HEADER ── */
+        .site-header {
+            position:sticky; top:0; z-index:100;
+            background:var(--surface); border-bottom:1px solid var(--border);
+            height:var(--header-h); display:flex; align-items:center;
+            padding:0 24px; gap:16px;
+        }
+        .site-header .logo { font-family:'Fraunces',serif; font-size:1.1em; color:var(--blue); letter-spacing:2px; text-decoration:none; white-space:nowrap; }
+        .site-header .page-tag { font-size:0.78em; color:var(--text-muted); background:var(--surface2); padding:3px 10px; border-radius:20px; white-space:nowrap; }
+        .site-header .spacer { flex:1; }
+        .theme-toggle {
+            background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+            padding:6px 12px; color:var(--text); font-size:0.85em; cursor:pointer;
+            font-family:'DM Sans',sans-serif;
+        }
+        .back-link { font-size:0.82em; color:var(--text-muted); text-decoration:none; white-space:nowrap; }
+        .back-link:hover { color:var(--blue); }
+
+        /* ── PAGE ── */
+        .page-wrap { max-width:1300px; margin:0 auto; padding:24px 20px 60px; }
+
+        .game-hero { text-align:center; padding:20px 0 16px; }
+        .game-hero h1 { font-family:'Fraunces',serif; font-size:2em; font-weight:900; margin-bottom:6px; }
+        .game-hero p { color:var(--text-muted); font-size:0.9em; max-width:620px; margin:0 auto 10px; }
+
+        /* ── LEARNING OBJECTIVE ── */
+        .lo-box {
+            background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.25);
+            border-radius:12px; padding:12px 20px; max-width:860px;
+            margin:0 auto 22px; display:flex; gap:12px; align-items:flex-start;
+        }
+        .lo-icon { font-size:1.2em; flex-shrink:0; margin-top:2px; }
+        .lo-label { font-size:0.7em; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--blue); margin-bottom:3px; }
+        .lo-text { font-size:0.86em; color:var(--text); line-height:1.5; }
+        .lo-text strong { color:var(--blue); }
+
+        /* ── CYCLE DIAGRAM ── */
+        .diagram-wrap {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:14px; padding:20px; margin-bottom:20px;
+        }
+        .diagram-wrap svg { width:100%; height:auto; display:block; }
+
+        /* Phase info panel */
+        .phase-info {
+            display:none; margin-top:14px;
+            border-radius:10px; padding:14px 18px;
+            border-left:4px solid var(--blue);
+            background:var(--surface2);
+            animation:slideDown 0.25s ease;
+        }
+        .phase-info.active { display:block; }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        .phase-info h3 { font-family:'Fraunces',serif; font-size:1em; margin-bottom:8px; }
+        .phase-info p { font-size:0.85em; color:var(--text-muted); margin-bottom:8px; line-height:1.5; }
+        .phase-info ul { list-style:none; padding:0; }
+        .phase-info li { font-size:0.83em; color:var(--text); padding:3px 0 3px 16px; position:relative; line-height:1.4; }
+        .phase-info li:before { content:"→"; position:absolute; left:0; color:var(--blue); }
+
+        /* ── ROUND SELECTOR ── */
+        .round-bar {
+            display:flex; align-items:center; justify-content:center;
+            gap:10px; margin-bottom:18px; flex-wrap:wrap;
+        }
+        .round-label { font-size:0.82em; color:var(--text-muted); font-weight:600; }
+        .round-btn {
+            padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+            background:var(--surface2); color:var(--text); font-size:0.82em;
+            font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif;
+            transition:all 0.2s;
+        }
+        .round-btn:hover, .round-btn.active { background:var(--blue); border-color:var(--blue); color:white; }
+        .score-badge {
+            margin-left:10px; font-size:0.82em; font-weight:700;
+            color:var(--text-muted); background:var(--surface2);
+            border:1px solid var(--border); border-radius:20px; padding:5px 14px;
+        }
+
+        /* ── FACTORS BANK ── */
+        .factors-panel {
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:16px; margin-bottom:18px;
+        }
+        .factors-panel-title { font-family:'Fraunces',serif; font-size:0.95em; font-weight:700; color:var(--text); margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+        .factors-grid {
+            display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
+            gap:8px; min-height:60px;
+        }
+        .factor {
+            background:var(--surface2); border:2px solid var(--border);
+            border-radius:8px; padding:10px 14px; cursor:grab;
+            font-size:0.84em; font-weight:500; color:var(--text);
+            transition:all 0.2s; user-select:none; line-height:1.4;
+        }
+        .factor:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 4px 12px rgba(59,130,246,0.2); }
+        .factor.dragging { opacity:0.4; cursor:grabbing; }
+        .factor.placed { display:none; }
+
+        /* ── FOUR DROP ZONES ── */
+        .zones-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+            margin-bottom:18px;
+        }
+        .drop-zone {
+            border-radius:12px; padding:16px;
+            border:2px dashed var(--border);
+            background:var(--surface); min-height:180px;
+            transition:all 0.2s;
+        }
+        .drop-zone.drag-over { transform:scale(1.01); border-style:solid; box-shadow:0 6px 20px rgba(0,0,0,0.2); }
+        .drop-zone[data-phase="boom"]     { border-color:rgba(245,158,11,0.4); }
+        .drop-zone[data-phase="recession"]{ border-color:rgba(239,68,68,0.4); }
+        .drop-zone[data-phase="slump"]    { border-color:rgba(139,92,246,0.4); }
+        .drop-zone[data-phase="recovery"] { border-color:rgba(16,185,129,0.4); }
+        .drop-zone[data-phase="boom"].drag-over     { border-color:var(--boom); background:rgba(245,158,11,0.06); }
+        .drop-zone[data-phase="recession"].drag-over{ border-color:var(--recession); background:rgba(239,68,68,0.06); }
+        .drop-zone[data-phase="slump"].drag-over    { border-color:var(--slump); background:rgba(139,92,246,0.06); }
+        .drop-zone[data-phase="recovery"].drag-over { border-color:var(--recovery); background:rgba(16,185,129,0.06); }
+
+        .zone-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+        .zone-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .zone-dot.boom     { background:var(--boom); }
+        .zone-dot.recession{ background:var(--recession); }
+        .zone-dot.slump    { background:var(--slump); }
+        .zone-dot.recovery { background:var(--recovery); }
+        .zone-title { font-family:'Fraunces',serif; font-size:0.95em; font-weight:700; }
+        .zone-title.boom     { color:var(--boom); }
+        .zone-title.recession{ color:var(--recession); }
+        .zone-title.slump    { color:var(--slump); }
+        .zone-title.recovery { color:var(--recovery); }
+        .zone-subtitle { font-size:0.72em; color:var(--text-muted); margin-top:1px; }
+
+        .dropped-items { display:flex; flex-direction:column; gap:6px; }
+        .dropped-item {
+            background:var(--surface2); border:1px solid var(--border);
+            border-radius:7px; padding:8px 10px;
+            display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+            font-size:0.82em; animation:dropIn 0.25s ease;
+        }
+        @keyframes dropIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+        .dropped-item.correct   { border-color:var(--green); background:rgba(16,185,129,0.08); }
+        .dropped-item.adjacent  { border-color:var(--amber); background:rgba(245,158,11,0.08); }
+        .dropped-item.incorrect { border-color:var(--red); background:rgba(239,68,68,0.08); }
+
+        .item-text { flex:1; line-height:1.4; }
+        .item-feedback { font-size:0.78em; margin-top:4px; line-height:1.4; font-style:italic; }
+        .item-feedback.correct-fb  { color:var(--green); }
+        .item-feedback.adjacent-fb { color:var(--amber); }
+        .item-feedback.wrong-fb    { color:var(--red); }
+
+        .remove-btn {
+            background:none; border:none; cursor:pointer;
+            color:var(--text-muted); font-size:1em; padding:0 2px;
+            line-height:1; flex-shrink:0; transition:color 0.2s;
+        }
+        .remove-btn:hover { color:var(--red); }
+
+        /* ── CONTROLS ── */
+        .ctrl-row { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+        .ctrl-btn {
+            padding:9px 22px; border:none; border-radius:8px;
+            font-weight:700; font-size:0.9em; cursor:pointer;
+            font-family:'DM Sans',sans-serif; transition:all 0.2s;
+        }
+        .btn-check  { background:var(--blue); color:white; }
+        .btn-check:hover  { background:var(--blue-dim); transform:translateY(-1px); }
+        .btn-reset  { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+        .btn-reset:hover  { border-color:var(--red); color:var(--red); }
+        .btn-new    { background:var(--green); color:white; }
+        .btn-new:hover    { filter:brightness(1.1); transform:translateY(-1px); }
+
+        /* ── SCORE / FEEDBACK ── */
+        .result-bar {
+            display:none; background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; padding:16px 24px; margin-bottom:16px;
+            text-align:center;
+        }
+        .result-bar.active { display:block; }
+        .result-score { font-family:'Fraunces',serif; font-size:1.8em; font-weight:900; margin-bottom:4px; }
+        .result-score.perfect { color:var(--green); }
+        .result-score.good    { color:var(--blue); }
+        .result-score.partial { color:var(--amber); }
+        .result-score.poor    { color:var(--red); }
+        .result-msg { font-size:0.88em; color:var(--text-muted); }
+
+        /* ── PHASE LEGEND ── */
+        .legend {
+            display:flex; gap:16px; flex-wrap:wrap; justify-content:center;
+            margin-bottom:18px;
+        }
+        .legend-item { display:flex; align-items:center; gap:6px; font-size:0.78em; color:var(--text-muted); }
+        .legend-dot { width:8px; height:8px; border-radius:50%; }
+
+        @media (max-width:700px) {
+            .zones-grid { grid-template-columns:1fr; }
+            .factors-grid { grid-template-columns:1fr 1fr; }
+            .game-hero h1 { font-size:1.5em; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PASSWORD -->
+<div id="pwOverlay">
+    <div class="pw-box" id="pwBox">
+        <div class="pw-logo">BIZ-OMICS</div>
+        <h2>Business Cycle Game</h2>
+        <p>Enter your access password to continue.</p>
+        <input type="password" id="pwInput" placeholder="Enter password" autocomplete="off">
+        <button id="pwSubmit" onclick="checkPassword()">Unlock</button>
+        <div id="pwError"></div>
+        <div class="pw-shop">Don't have a password? <a href="../business/index.html">Visit the shop</a></div>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header class="site-header">
+    <a href="../business/index.html" class="logo">BIZ-OMICS</a>
+    <span class="page-tag">Business Simulation</span>
+    <span class="spacer"></span>
+    <a href="../business/index.html" class="back-link">← Back to Business Hub</a>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Light Mode</button>
+</header>
+
+<div id="mainContent" style="display:none;">
+<div class="page-wrap">
+
+    <div class="game-hero">
+        <h1>Business Cycle Game</h1>
+        <p>Drag each economic indicator to the correct phase of the business cycle. Some indicators span more than one phase — use your judgement!</p>
+    </div>
+
+    <div class="lo-box">
+        <div class="lo-icon">🎯</div>
+        <div>
+            <div class="lo-label">Learning Objectives</div>
+            <div class="lo-text">Students should be able to identify the <strong>four phases of the business cycle</strong> (Boom, Recession, Slump, Recovery); explain how <strong>output gaps, employment, confidence and spending</strong> vary across each phase; and analyse how businesses and policymakers respond differently at each stage.</div>
+        </div>
+    </div>
+
+    <!-- CYCLE DIAGRAM -->
+    <div class="diagram-wrap">
+        <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg">
+            <!-- Grid -->
+            <line x1="60" y1="220" x2="790" y2="220" stroke="#1e2d45" stroke-width="1.5"/>
+            <line x1="60" y1="30"  x2="60"  y2="220" stroke="#1e2d45" stroke-width="1.5"/>
+            <!-- Axis labels -->
+            <text x="425" y="248" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="DM Sans, sans-serif">Time</text>
+            <text x="18" y="130" text-anchor="middle" font-size="13" fill="#94a3b8" font-family="DM Sans, sans-serif" transform="rotate(-90 18 130)">Real GDP</text>
+            <!-- Trend line -->
+            <line x1="60" y1="175" x2="790" y2="100" stroke="#1e2d45" stroke-width="2" stroke-dasharray="6,4"/>
+            <text x="796" y="102" font-size="11" fill="#64748b" font-family="DM Sans, sans-serif">Trend</text>
+            <!-- Cycle wave: Boom → Recession → Slump → Recovery -->
+            <path d="M 60 175 C 130 175 160 55 220 55 C 280 55 300 175 360 175 C 420 175 440 225 500 225 C 560 225 580 175 640 155 C 700 135 740 95 790 90"
+                  fill="none" stroke="#3b82f6" stroke-width="3.5" stroke-linejoin="round"/>
+            <!-- Shaded phase regions -->
+            <rect x="60"  y="30" width="210" height="192" fill="#f59e0b" opacity="0.06" rx="0"/>
+            <rect x="270" y="30" width="180" height="192" fill="#ef4444" opacity="0.06" rx="0"/>
+            <rect x="450" y="30" width="130" height="192" fill="#8b5cf6" opacity="0.06" rx="0"/>
+            <rect x="580" y="30" width="210" height="192" fill="#10b981" opacity="0.06" rx="0"/>
+            <!-- Phase labels -->
+            <text x="165" y="50" text-anchor="middle" font-size="14" fill="#f59e0b" font-weight="bold" font-family="Fraunces, serif">BOOM</text>
+            <text x="360" y="50" text-anchor="middle" font-size="14" fill="#ef4444" font-weight="bold" font-family="Fraunces, serif">RECESSION</text>
+            <text x="515" y="50" text-anchor="middle" font-size="14" fill="#8b5cf6" font-weight="bold" font-family="Fraunces, serif">SLUMP</text>
+            <text x="685" y="50" text-anchor="middle" font-size="14" fill="#10b981" font-weight="bold" font-family="Fraunces, serif">RECOVERY</text>
+            <!-- Sub-labels -->
+            <text x="220" y="72" text-anchor="middle" font-size="11" fill="#f59e0b" font-family="DM Sans, sans-serif">Peak</text>
+            <text x="500" y="242" text-anchor="middle" font-size="11" fill="#8b5cf6" font-family="DM Sans, sans-serif">Trough</text>
+            <!-- Hotspot circles -->
+            <g class="hotspot" data-phase="boom"     style="cursor:pointer">
+                <circle cx="165" cy="90"  r="14" fill="#f59e0b" opacity="0.85"/>
+                <text x="165" cy="90"  y="95"  text-anchor="middle" font-size="16" fill="white" font-weight="bold" font-family="DM Sans, sans-serif">i</text>
+            </g>
+            <g class="hotspot" data-phase="recession" style="cursor:pointer">
+                <circle cx="360" cy="160" r="14" fill="#ef4444" opacity="0.85"/>
+                <text x="360" y="165" text-anchor="middle" font-size="16" fill="white" font-weight="bold" font-family="DM Sans, sans-serif">i</text>
+            </g>
+            <g class="hotspot" data-phase="slump"    style="cursor:pointer">
+                <circle cx="515" cy="200" r="14" fill="#8b5cf6" opacity="0.85"/>
+                <text x="515" y="205" text-anchor="middle" font-size="16" fill="white" font-weight="bold" font-family="DM Sans, sans-serif">i</text>
+            </g>
+            <g class="hotspot" data-phase="recovery" style="cursor:pointer">
+                <circle cx="685" cy="120" r="14" fill="#10b981" opacity="0.85"/>
+                <text x="685" y="125" text-anchor="middle" font-size="16" fill="white" font-weight="bold" font-family="DM Sans, sans-serif">i</text>
+            </g>
+        </svg>
+
+        <div id="phaseInfo" class="phase-info">
+            <h3 id="piTitle"></h3>
+            <p id="piDesc"></p>
+            <ul id="piList"></ul>
+        </div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--boom)"></div>Boom — above-trend growth</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--recession)"></div>Recession — GDP falling</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--slump)"></div>Slump — GDP at trough</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--recovery)"></div>Recovery — GDP rising again</div>
+        <div class="legend-item" style="margin-left:8px;"><span style="background:rgba(245,158,11,0.2);color:var(--amber);font-size:0.85em;padding:2px 7px;border-radius:4px;font-weight:700;">~</span> Adjacent phase also accepted</div>
+    </div>
+
+    <!-- ROUND BAR -->
+    <div class="round-bar">
+        <span class="round-label">Round:</span>
+        <button class="round-btn active" id="rnd1" onclick="startRound(1)">1</button>
+        <button class="round-btn" id="rnd2" onclick="startRound(2)">2</button>
+        <button class="round-btn" id="rnd3" onclick="startRound(3)">3</button>
+        <span class="score-badge" id="totalScoreBadge">Total: 0 pts</span>
+    </div>
+
+    <!-- FACTORS BANK -->
+    <div class="factors-panel">
+        <div class="factors-panel-title">Economic Indicators — Drag to the correct phase below</div>
+        <div class="factors-grid" id="factorsGrid"></div>
+    </div>
+
+    <!-- FOUR DROP ZONES -->
+    <div class="zones-grid">
+        <div class="drop-zone" id="zone-boom" data-phase="boom">
+            <div class="zone-header">
+                <div class="zone-dot boom"></div>
+                <div>
+                    <div class="zone-title boom">Boom</div>
+                    <div class="zone-subtitle">Economy growing above trend — positive output gap</div>
+                </div>
+            </div>
+            <div class="dropped-items" id="items-boom"></div>
+        </div>
+
+        <div class="drop-zone" id="zone-recession" data-phase="recession">
+            <div class="zone-header">
+                <div class="zone-dot recession"></div>
+                <div>
+                    <div class="zone-title recession">Recession</div>
+                    <div class="zone-subtitle">GDP falling for two or more quarters</div>
+                </div>
+            </div>
+            <div class="dropped-items" id="items-recession"></div>
+        </div>
+
+        <div class="drop-zone" id="zone-slump" data-phase="slump">
+            <div class="zone-header">
+                <div class="zone-dot slump"></div>
+                <div>
+                    <div class="zone-title slump">Slump</div>
+                    <div class="zone-subtitle">Economy at trough — maximum negative output gap</div>
+                </div>
+            </div>
+            <div class="dropped-items" id="items-slump"></div>
+        </div>
+
+        <div class="drop-zone" id="zone-recovery" data-phase="recovery">
+            <div class="zone-header">
+                <div class="zone-dot recovery"></div>
+                <div>
+                    <div class="zone-title recovery">Recovery</div>
+                    <div class="zone-subtitle">GDP growing again — moving back toward trend</div>
+                </div>
+            </div>
+            <div class="dropped-items" id="items-recovery"></div>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="ctrl-row">
+        <button class="ctrl-btn btn-check" onclick="checkAnswers()">Check Answers</button>
+        <button class="ctrl-btn btn-reset" onclick="resetRound()">Reset Round</button>
+        <button class="ctrl-btn btn-new" onclick="nextRound()">Next Round</button>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-bar" id="resultBar">
+        <div class="result-score" id="resultScore"></div>
+        <div class="result-msg" id="resultMsg"></div>
+    </div>
+
+</div>
+</div>
+
+<script>
+    // ===== PASSWORD =====
+    var VALID_PASSWORDS = [
+        'BIZ-BCG-5K2X2026',
+        'BizAQA-SM4RT!2026',
+        'BizEDX-AL9K!2026',
+        'BizOCR-AL7M!2026',
+        'BizOCR-GC4X!2026',
+        'GSALEconomics'
+    ];
+    var PW_KEY = 'biz_bcg_unlocked';
+
+    function checkPassword() {
+        var val = document.getElementById('pwInput').value.trim();
+        var ok = false;
+        for (var i = 0; i < VALID_PASSWORDS.length; i++) {
+            if (val === VALID_PASSWORDS[i]) { ok = true; break; }
+        }
+        if (ok) {
+            try { localStorage.setItem(PW_KEY, '1'); } catch(e) {}
+            document.getElementById('pwOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            initGame();
+        } else {
+            var box = document.getElementById('pwBox');
+            box.classList.remove('shake');
+            void box.offsetWidth;
+            box.classList.add('shake');
+            document.getElementById('pwError').textContent = 'Incorrect password. Please try again.';
+        }
+    }
+    document.getElementById('pwInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkPassword();
+    });
+    (function() {
+        try {
+            if (localStorage.getItem(PW_KEY) === '1') {
+                document.getElementById('pwOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                window.addEventListener('load', initGame);
+            }
+        } catch(e) {}
+    })();
+
+    // ===== THEME =====
+    (function() {
+        try {
+            if (localStorage.getItem('biz-omics-theme') === 'light') {
+                document.body.classList.add('light');
+                document.getElementById('themeBtn').textContent = 'Dark Mode';
+            }
+        } catch(e) {}
+    })();
+    function toggleTheme() {
+        var isLight = document.body.classList.toggle('light');
+        document.getElementById('themeBtn').textContent = isLight ? 'Dark Mode' : 'Light Mode';
+        try { localStorage.setItem('biz-omics-theme', isLight ? 'light' : 'dark'); } catch(e) {}
+    }
+
+    // ===== PHASE INFO =====
+    var phaseData = {
+        boom: {
+            title: 'Boom — Above-Trend Growth',
+            col: '#f59e0b',
+            desc: 'The economy is growing above its long-run trend rate. A positive output gap exists — actual GDP exceeds potential GDP. Inflationary pressures build and the central bank may raise interest rates.',
+            chars: [
+                'Rising consumer and business confidence',
+                'Falling unemployment — labour markets tighten',
+                'Strong demand for normal and luxury goods',
+                'Businesses expand capacity and invest in capital',
+                'Wage pressures increase as firms compete for workers',
+                'Inflation rises — positive output gap widens',
+                'Central bank likely to raise interest rates'
+            ]
+        },
+        recession: {
+            title: 'Recession — GDP Falling',
+            col: '#ef4444',
+            desc: 'GDP has fallen for at least two consecutive quarters. A negative output gap opens up. Consumer and business confidence fall sharply. The government and central bank typically intervene.',
+            chars: [
+                'Falling consumer confidence and spending',
+                'Rising cyclical unemployment',
+                'Business investment postponed or cancelled',
+                'Demand switches from normal goods to inferior goods',
+                'Corporate profits fall — some firms go bankrupt',
+                'Spare capacity appears in the economy',
+                'Central bank may cut interest rates'
+            ]
+        },
+        slump: {
+            title: 'Slump (Trough) — GDP at Lowest Point',
+            col: '#8b5cf6',
+            desc: 'The economy reaches its lowest point. The negative output gap is at its maximum. Unemployment peaks and deflation may occur. Government fiscal stimulus is common.',
+            chars: [
+                'Unemployment at its highest — peak cyclical unemployment',
+                'Very low or zero business investment',
+                'Possible deflation as excess supply drives prices down',
+                'Government may introduce fiscal stimulus packages',
+                'Interest rates typically at historic lows',
+                'Consumer confidence at its weakest',
+                'Economy poised to turn — early recovery signals may appear'
+            ]
+        },
+        recovery: {
+            title: 'Recovery — GDP Rising Again',
+            col: '#10b981',
+            desc: 'GDP begins to grow again after the trough. Confidence gradually returns. Unemployment starts to fall. The economy moves back toward and eventually above its trend rate.',
+            chars: [
+                'GDP growth turns positive — output gap narrows',
+                'Unemployment begins to fall gradually',
+                'Consumer and business confidence improving',
+                'Demand shifts back from inferior to normal goods',
+                'Business investment cautiously resumes',
+                'Capacity utilisation increases',
+                'Interest rates may begin to rise as growth returns'
+            ]
+        }
+    };
+
+    // ===== FACTORS DATASET =====
+    // Each factor: text, primary phase, adjacent phases (also accepted), explanation
+    var allFactors = [
+        // ── BOOM ──
+        {
+            text: 'Consumers switch from Aldi to Waitrose as incomes rise',
+            primary: 'boom', adjacent: ['recovery'],
+            explain: 'Rising real incomes during a boom shift demand from inferior/value goods to premium brands — a classic sign of a positive output gap.'
+        },
+        {
+            text: 'Labour shortages emerge as firms compete for workers',
+            primary: 'boom', adjacent: [],
+            explain: 'Tight labour markets are a hallmark of a boom — unemployment is low and firms bid up wages, adding to inflationary pressure.'
+        },
+        {
+            text: 'Central bank raises interest rates to control inflation',
+            primary: 'boom', adjacent: [],
+            explain: 'Rate rises are the monetary policy response to a positive output gap — the central bank acts to cool demand and prevent overheating.'
+        },
+        {
+            text: 'Demand for luxury goods and holidays surges',
+            primary: 'boom', adjacent: ['recovery'],
+            explain: 'Normal and luxury goods see the strongest demand when household incomes are high and job security is strong — characteristic of a boom.'
+        },
+        {
+            text: 'Firms run at near-maximum capacity utilisation',
+            primary: 'boom', adjacent: [],
+            explain: 'A positive output gap means actual GDP exceeds potential GDP — firms are producing at or beyond full capacity.'
+        },
+        {
+            text: 'Wage growth accelerates as workers gain bargaining power',
+            primary: 'boom', adjacent: [],
+            explain: 'Low unemployment in a boom shifts bargaining power to workers, pushing up wages and adding cost-push inflationary pressure.'
+        },
+        {
+            text: 'Business investment in new factories and technology peaks',
+            primary: 'boom', adjacent: ['recovery'],
+            explain: 'When firms expect continued strong sales and profits, investment in capital expenditure accelerates — a key driver of boom-phase growth.'
+        },
+        {
+            text: 'Consumer confidence index reaches a multi-year high',
+            primary: 'boom', adjacent: ['recovery'],
+            explain: 'High consumer confidence drives strong household spending — typically at its highest during the boom phase of the cycle.'
+        },
+
+        // ── RECESSION ──
+        {
+            text: 'GDP falls for two consecutive quarters',
+            primary: 'recession', adjacent: [],
+            explain: 'The technical definition of a recession — two successive quarters of negative GDP growth. Output is contracting and a negative output gap opens.'
+        },
+        {
+            text: 'Car manufacturer postpones opening a new factory',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'Falling sales forecasts lead firms to cancel or delay investment plans — one of the first signs of a recession as confidence drops.'
+        },
+        {
+            text: 'Shoppers switch from branded groceries to own-brand products',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'As real incomes fall, consumers switch to inferior/budget substitutes — a textbook example of inferior good demand rising in a downturn.'
+        },
+        {
+            text: 'Corporate bankruptcies rise sharply',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'Falling revenues and tightening credit conditions push vulnerable firms into insolvency during a recession.'
+        },
+        {
+            text: 'Business confidence index falls to a three-year low',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'Deteriorating business confidence is both a symptom and a cause of recession — firms cut investment and hiring, deepening the downturn.'
+        },
+        {
+            text: 'Household savings ratio rises as consumers become cautious',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'Fear of job losses leads households to save more and spend less — reducing aggregate demand and amplifying the recession.'
+        },
+        {
+            text: 'Cyclical unemployment rises as firms cut headcount',
+            primary: 'recession', adjacent: ['slump'],
+            explain: 'Cyclical (demand-deficient) unemployment is caused directly by the fall in aggregate demand during a recession.'
+        },
+        {
+            text: 'Inventory levels build up as unsold stock accumulates',
+            primary: 'recession', adjacent: [],
+            explain: 'Falling demand leaves firms with excess unsold stock. Rising inventories are a leading indicator of an emerging recession.'
+        },
+
+        // ── SLUMP ──
+        {
+            text: 'Unemployment reaches its highest level in a decade',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'Unemployment peaks at the trough of the cycle — the maximum negative output gap means the most workers are surplus to firms\' needs.'
+        },
+        {
+            text: 'Government announces a £50bn fiscal stimulus package',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'Fiscal stimulus — increased government spending or tax cuts — is typically deployed at the trough to kickstart recovery.'
+        },
+        {
+            text: 'Interest rates are cut to near zero (quantitative easing)',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'Monetary policy reaches its most expansionary at the trough — interest rates hit their floor and unconventional tools like QE may be used.'
+        },
+        {
+            text: 'Deflation occurs as excess supply drives prices down',
+            primary: 'slump', adjacent: [],
+            explain: 'At the trough, the negative output gap is at its maximum. Excess supply and weak demand can push the general price level down — deflation.'
+        },
+        {
+            text: 'Average costs rise as firms lose economies of scale',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'Falling output means firms can no longer spread fixed costs across large volumes — average costs rise even though sales are weak.'
+        },
+        {
+            text: 'Raw material prices fall due to weak global demand',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'Global commodity prices fall when worldwide demand collapses at the trough — lower oil, steel and food costs reflect deep economic weakness.'
+        },
+        {
+            text: 'Workers have very little bargaining power over wages',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'High unemployment at the trough means workers compete for scarce jobs — wage growth stalls or falls in real terms.'
+        },
+        {
+            text: 'Capacity utilisation falls to its lowest level',
+            primary: 'slump', adjacent: ['recession'],
+            explain: 'At the trough, the gap between actual and potential output is widest — factories and workers sit idle as aggregate demand collapses.'
+        },
+
+        // ── RECOVERY ──
+        {
+            text: 'GDP growth turns positive for the first time in 18 months',
+            primary: 'recovery', adjacent: [],
+            explain: 'The first sustained positive GDP growth after a trough signals the start of recovery — the output gap begins to narrow.'
+        },
+        {
+            text: 'Demand for inferior goods begins to fall as incomes improve',
+            primary: 'recovery', adjacent: [],
+            explain: 'As real incomes recover, consumers switch back from inferior/budget goods to normal goods — a reliable signal that recovery is underway.'
+        },
+        {
+            text: 'New business formations start to rise',
+            primary: 'recovery', adjacent: [],
+            explain: 'Improving confidence and easier credit conditions encourage entrepreneurship — rising new business starts are an early recovery indicator.'
+        },
+        {
+            text: 'Consumer confidence gradually improves from a low base',
+            primary: 'recovery', adjacent: [],
+            explain: 'Confidence recovers slowly as households see unemployment stabilise and income prospects improve — spending begins to rise tentatively.'
+        },
+        {
+            text: 'Banks begin lending again as credit conditions ease',
+            primary: 'recovery', adjacent: ['slump'],
+            explain: 'Credit easing and lower interest rates stimulate borrowing by households and firms — a key mechanism through which monetary policy feeds into recovery.'
+        },
+        {
+            text: 'Unemployment falls slowly as firms cautiously re-hire',
+            primary: 'recovery', adjacent: [],
+            explain: 'Employment is a lagging indicator — firms wait until they are confident the recovery is sustained before taking on new workers.'
+        },
+        {
+            text: 'Capacity utilisation begins to increase from its trough',
+            primary: 'recovery', adjacent: [],
+            explain: 'As demand picks up, firms bring idle capacity back into use — rising utilisation rates signal the economy is moving back toward its potential.'
+        },
+        {
+            text: 'Business investment cautiously resumes in response to rising sales',
+            primary: 'recovery', adjacent: [],
+            explain: 'Investment responds to improving profit expectations and rising demand — firms begin replacing ageing capital and cautiously expanding.'
+        }
+    ];
+
+    // Split into three rounds of ~10-11 factors each
+    var roundSets = [];
+
+    function buildRounds() {
+        var shuffled = shuffle(allFactors.slice());
+        var third = Math.ceil(shuffled.length / 3);
+        roundSets = [
+            shuffled.slice(0, third),
+            shuffled.slice(third, third * 2),
+            shuffled.slice(third * 2)
+        ];
+    }
+
+    function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+
+    // ===== GAME STATE =====
+    var currentRound = 1;
+    var totalScore = 0;
+    var roundScores = [null, null, null];
+    var gameState = {}; // factorId -> { phase, factorObj }
+    var checked = false;
+    var draggingId = null;
+
+    function initGame() {
+        buildRounds();
+        currentRound = 1;
+        totalScore = 0;
+        roundScores = [null, null, null];
+        checked = false;
+        renderRound(currentRound);
+        setupHotspots();
+        setupDropZones();
+    }
+
+    function renderRound(rnd) {
+        checked = false;
+        gameState = {};
+        document.getElementById('resultBar').className = 'result-bar';
+        ['boom','recession','slump','recovery'].forEach(function(p) {
+            document.getElementById('items-' + p).innerHTML = '';
+        });
+
+        var factors = roundSets[rnd - 1];
+        var grid = document.getElementById('factorsGrid');
+        grid.innerHTML = '';
+        for (var i = 0; i < factors.length; i++) {
+            (function(factor, idx) {
+                var id = 'f-' + rnd + '-' + idx;
+                var div = document.createElement('div');
+                div.className = 'factor';
+                div.id = id;
+                div.textContent = factor.text;
+                div.draggable = true;
+                div.setAttribute('data-id', id);
+                div.addEventListener('dragstart', function(e) {
+                    draggingId = id;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', id);
+                    setTimeout(function() { div.classList.add('dragging'); }, 0);
+                });
+                div.addEventListener('dragend', function() {
+                    div.classList.remove('dragging');
+                    draggingId = null;
+                });
+                grid.appendChild(div);
+            })(factors[i], i);
+        }
+
+        // Update round buttons
+        for (var r = 1; r <= 3; r++) {
+            var btn = document.getElementById('rnd' + r);
+            btn.className = r === rnd ? 'round-btn active' : 'round-btn';
+        }
+        updateScoreBadge();
+    }
+
+    function setupDropZones() {
+        var zones = document.querySelectorAll('.drop-zone');
+        for (var i = 0; i < zones.length; i++) {
+            (function(zone) {
+                zone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+                zone.addEventListener('dragleave', function(e) {
+                    if (!zone.contains(e.relatedTarget)) {
+                        zone.classList.remove('drag-over');
+                    }
+                });
+                zone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    var id = e.dataTransfer.getData('text/plain');
+                    if (!id) return;
+                    var phase = zone.getAttribute('data-phase');
+                    handleDrop(id, phase);
+                });
+            })(zones[i]);
+        }
+    }
+
+    function handleDrop(id, phase) {
+        if (checked) return; // locked after check
+        var factorEl = document.getElementById(id);
+        if (!factorEl) return;
+
+        // Find factor object
+        var factorObj = null;
+        var rndFactors = roundSets[currentRound - 1];
+        var parts = id.split('-');
+        var idx = parseInt(parts[2]);
+        factorObj = rndFactors[idx];
+        if (!factorObj) return;
+
+        // Remove from previous zone if re-dropped
+        if (gameState[id]) {
+            var oldPhase = gameState[id].phase;
+            var oldContainer = document.getElementById('items-' + oldPhase);
+            var existing = oldContainer.querySelector('[data-factor-id="' + id + '"]');
+            if (existing) existing.remove();
+        }
+
+        gameState[id] = { phase: phase, factorObj: factorObj };
+        factorEl.classList.add('placed');
+
+        var container = document.getElementById('items-' + phase);
+        var item = document.createElement('div');
+        item.className = 'dropped-item';
+        item.setAttribute('data-factor-id', id);
+
+        var textSpan = document.createElement('span');
+        textSpan.className = 'item-text';
+        textSpan.textContent = factorObj.text;
+
+        var removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.setAttribute('data-fid', id);
+        removeBtn.onclick = function() { removeItem(id, phase); };
+
+        item.appendChild(textSpan);
+        item.appendChild(removeBtn);
+        container.appendChild(item);
+    }
+
+    function removeItem(id, phase) {
+        if (checked) return;
+        delete gameState[id];
+        var factorEl = document.getElementById(id);
+        if (factorEl) factorEl.classList.remove('placed');
+        var container = document.getElementById('items-' + phase);
+        var item = container.querySelector('[data-factor-id="' + id + '"]');
+        if (item) item.remove();
+    }
+
+    function checkAnswers() {
+        if (checked) return;
+        var keys = Object.keys(gameState);
+        if (keys.length === 0) {
+            showResult('Place some factors first!', 'partial', null);
+            return;
+        }
+        checked = true;
+        var correct = 0;
+        var adjacent = 0;
+        var wrong = 0;
+
+        for (var i = 0; i < keys.length; i++) {
+            var id = keys[i];
+            var state = gameState[id];
+            var phase = state.phase;
+            var factor = state.factorObj;
+            var container = document.getElementById('items-' + phase);
+            var item = container.querySelector('[data-factor-id="' + id + '"]');
+            if (!item) continue;
+
+            // Remove remove button
+            var rb = item.querySelector('.remove-btn');
+            if (rb) rb.remove();
+
+            var fb = document.createElement('div');
+            fb.className = 'item-feedback';
+
+            if (phase === factor.primary) {
+                item.classList.add('correct');
+                fb.className = 'item-feedback correct-fb';
+                fb.textContent = 'Correct. ' + factor.explain;
+                correct++;
+            } else {
+                var isAdj = false;
+                for (var j = 0; j < factor.adjacent.length; j++) {
+                    if (factor.adjacent[j] === phase) { isAdj = true; break; }
+                }
+                if (isAdj) {
+                    item.classList.add('adjacent');
+                    fb.className = 'item-feedback adjacent-fb';
+                    fb.textContent = 'Partially correct — this indicator also fits here, but the primary phase is ' + factor.primary.charAt(0).toUpperCase() + factor.primary.slice(1) + '. ' + factor.explain;
+                    adjacent++;
+                } else {
+                    item.classList.add('incorrect');
+                    fb.className = 'item-feedback wrong-fb';
+                    fb.textContent = 'Incorrect. This belongs in ' + factor.primary.charAt(0).toUpperCase() + factor.primary.slice(1) + '. ' + factor.explain;
+                    wrong++;
+                }
+            }
+            item.appendChild(fb);
+        }
+
+        var total = keys.length;
+        var pts = correct * 2 + adjacent * 1;
+        var maxPts = total * 2;
+        var pct = maxPts > 0 ? Math.round((pts / maxPts) * 100) : 0;
+        roundScores[currentRound - 1] = pts;
+        totalScore = 0;
+        for (var k = 0; k < roundScores.length; k++) {
+            if (roundScores[k] !== null) totalScore += roundScores[k];
+        }
+        updateScoreBadge();
+
+        var scoreText = correct + ' correct, ' + adjacent + ' adjacent, ' + wrong + ' wrong — ' + pts + '/' + maxPts + ' pts (' + pct + '%)';
+        var cls = pct >= 85 ? 'perfect' : (pct >= 60 ? 'good' : (pct >= 35 ? 'partial' : 'poor'));
+        var msgs = {
+            perfect: 'Excellent work — strong understanding of all four phases.',
+            good: 'Good effort. Review the adjacent answers for nuance.',
+            partial: 'Some understanding shown. Check the explanations below.',
+            poor: 'Keep going — read the explanations and try the next round.'
+        };
+        showResult(scoreText, cls, msgs[cls]);
+    }
+
+    function showResult(score, cls, msg) {
+        var bar = document.getElementById('resultBar');
+        var sc = document.getElementById('resultScore');
+        var ms = document.getElementById('resultMsg');
+        bar.className = 'result-bar active';
+        sc.textContent = score;
+        sc.className = 'result-score ' + cls;
+        ms.textContent = msg || '';
+    }
+
+    function resetRound() {
+        checked = false;
+        gameState = {};
+        roundScores[currentRound - 1] = null;
+        updateScoreBadge();
+        document.getElementById('resultBar').className = 'result-bar';
+        ['boom','recession','slump','recovery'].forEach(function(p) {
+            document.getElementById('items-' + p).innerHTML = '';
+        });
+        var grid = document.getElementById('factorsGrid');
+        var factors = grid.querySelectorAll('.factor');
+        for (var i = 0; i < factors.length; i++) {
+            factors[i].classList.remove('placed');
+        }
+    }
+
+    function nextRound() {
+        if (currentRound < 3) {
+            currentRound++;
+            renderRound(currentRound);
+        } else {
+            // All rounds done — show total
+            var maxTotal = 0;
+            for (var i = 0; i < allFactors.length; i++) maxTotal += 2;
+            var msg = 'All rounds complete! Total: ' + totalScore + ' pts. ';
+            var pct = Math.round((totalScore / (allFactors.length * 2)) * 100);
+            if (pct >= 80) msg += 'Outstanding understanding of the business cycle.';
+            else if (pct >= 60) msg += 'Good work — revisit the phases you found tricky.';
+            else msg += 'Review the four phases and try again.';
+            showResult(msg, pct >= 80 ? 'perfect' : (pct >= 60 ? 'good' : 'partial'), '');
+        }
+    }
+
+    function startRound(rnd) {
+        currentRound = rnd;
+        renderRound(rnd);
+    }
+
+    function updateScoreBadge() {
+        var pts = 0;
+        for (var i = 0; i < roundScores.length; i++) {
+            if (roundScores[i] !== null) pts += roundScores[i];
+        }
+        document.getElementById('totalScoreBadge').textContent = 'Total: ' + pts + ' pts';
+    }
+
+    // ===== HOTSPOTS =====
+    function setupHotspots() {
+        var hotspots = document.querySelectorAll('.hotspot');
+        var panel = document.getElementById('phaseInfo');
+        for (var i = 0; i < hotspots.length; i++) {
+            (function(hs) {
+                hs.addEventListener('click', function() {
+                    var phase = hs.getAttribute('data-phase');
+                    var data = phaseData[phase];
+                    document.getElementById('piTitle').textContent = data.title;
+                    document.getElementById('piTitle').style.color = data.col;
+                    document.getElementById('piDesc').textContent = data.desc;
+                    var list = document.getElementById('piList');
+                    list.innerHTML = '';
+                    for (var j = 0; j < data.chars.length; j++) {
+                        var li = document.createElement('li');
+                        li.textContent = data.chars[j];
+                        list.appendChild(li);
+                    }
+                    panel.style.borderLeftColor = data.col;
+                    panel.className = 'phase-info active';
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+            })(hotspots[i]);
+        }
+    }
+
+    // ===== ON LOAD =====
+    window.addEventListener('load', function() {
+        try {
+            if (localStorage.getItem('biz-omics-theme') === 'light') {
+                document.body.classList.add('light');
+                document.getElementById('themeBtn').textContent = 'Dark Mode';
+            }
+        } catch(e) {}
+        try {
+            if (localStorage.getItem(PW_KEY) === '1') {
+                initGame();
+            }
+        } catch(e) {}
+    });
+</script>
+</body>
+</html>
