@@ -1,0 +1,2420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Challenge | BIZ-OMICS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2236;
+            --border: #1e2d45;
+            --blue: #3b82f6;
+            --blue-dim: #1d4ed8;
+            --amber: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --header-h: 56px;
+        }
+        body.light {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface2: #e8edf5;
+            --border: #cbd5e1;
+            --text: #0f172a;
+            --text-muted: #64748b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+        /* PASSWORD OVERLAY */
+        #pwOverlay {
+            position: fixed; inset: 0; background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; flex-direction: column; gap: 20px;
+        }
+        #pwOverlay .pw-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 40px 48px; max-width: 420px; width: 90%;
+            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        #pwOverlay .pw-logo { font-family: 'Fraunces', serif; font-size: 1.1em; color: var(--blue); letter-spacing: 2px; margin-bottom: 8px; }
+        #pwOverlay h2 { font-family: 'Fraunces', serif; font-size: 1.6em; margin-bottom: 6px; }
+        #pwOverlay p { color: var(--text-muted); font-size: 0.9em; margin-bottom: 24px; }
+        #pwInput {
+            width: 100%; padding: 12px 16px; border-radius: 8px;
+            border: 2px solid var(--border); background: var(--bg);
+            color: var(--text); font-size: 1em; font-family: 'DM Sans', sans-serif;
+            text-align: center; letter-spacing: 2px; margin-bottom: 12px;
+        }
+        #pwInput:focus { outline: none; border-color: var(--blue); }
+        #pwSubmit {
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: var(--blue); color: white; font-weight: 700;
+            font-size: 1em; cursor: pointer; transition: background 0.2s;
+        }
+        #pwSubmit:hover { background: var(--blue-dim); }
+        #pwError { color: var(--red); font-size: 0.85em; margin-top: 10px; min-height: 20px; }
+        #pwOverlay .pw-shop { margin-top: 16px; font-size: 0.82em; color: var(--text-muted); }
+        #pwOverlay .pw-shop a { color: var(--blue); text-decoration: none; }
+        @keyframes pwShake {
+            0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)}
+        }
+        .shake { animation: pwShake 0.4s ease; }
+
+        /* STICKY HEADER */
+        .site-header {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            height: var(--header-h); display: flex; align-items: center;
+            padding: 0 24px; gap: 16px;
+        }
+        .site-header .logo { font-family: 'Fraunces', serif; font-size: 1.1em; color: var(--blue); letter-spacing: 2px; text-decoration: none; white-space: nowrap; }
+        .site-header .page-tag { font-size: 0.78em; color: var(--text-muted); background: var(--surface2); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+        .site-header .spacer { flex: 1; }
+        .theme-toggle {
+            background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+            padding: 6px 12px; color: var(--text); font-size: 0.85em; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; white-space: nowrap;
+        }
+        .back-link { font-size: 0.82em; color: var(--text-muted); text-decoration: none; white-space: nowrap; }
+        .back-link:hover { color: var(--blue); }
+
+        /* MAIN LAYOUT */
+        .page-wrap { max-width: 1440px; margin: 0 auto; padding: 20px 20px 40px; }
+
+        .game-hero { text-align: center; padding: 24px 0 20px; }
+        .game-hero h1 { font-family: 'Fraunces', serif; font-size: 2.2em; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+        .game-hero .sub { color: var(--text-muted); font-size: 0.9em; max-width: 600px; margin: 0 auto 16px; }
+        .disclaimer { font-size: 0.78em; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; max-width: 700px; margin: 0 auto 16px; }
+
+        /* CONTROLS */
+        .game-controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+        .ctrl-btn {
+            padding: 9px 20px; border: none; border-radius: 8px;
+            font-weight: 700; font-size: 0.9em; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-start { background: var(--green); color: white; }
+        .btn-start:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-pause { background: var(--amber); color: #1a1a1a; }
+        .btn-pause:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-resume { background: var(--green); color: white; }
+        .btn-resume:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-reset { background: var(--red); color: white; }
+        .btn-reset:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-info { background: var(--blue); color: white; }
+        .btn-info:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-teacher { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-teacher:hover { border-color: var(--amber); color: var(--amber); }
+        .btn-debrief { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-debrief:hover { border-color: var(--blue); color: var(--blue); }
+
+        .game-status {
+            text-align: center; display: inline-block; padding: 5px 20px;
+            border-radius: 20px; font-size: 0.82em; font-weight: 600;
+            margin: 0 auto 16px; border: 1px solid var(--border);
+            background: var(--surface2); color: var(--text-muted);
+        }
+        .status-wrap { text-align: center; }
+        .status-running { background: rgba(16,185,129,0.15); border-color: var(--green); color: var(--green); }
+        .status-paused { background: rgba(245,158,11,0.15); border-color: var(--amber); color: var(--amber); }
+
+        /* PORTFOLIO SUMMARY BAR */
+        .summary-bar {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 10px; margin-bottom: 20px;
+        }
+        .summary-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 16px; text-align: center;
+        }
+        .summary-card .s-label { font-size: 0.72em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .summary-card .s-val { font-family: 'Fraunces', serif; font-size: 1.4em; font-weight: 700; color: var(--text); }
+        .s-val.gain { color: var(--green); }
+        .s-val.loss { color: var(--red); }
+
+        /* MAIN GRID */
+        .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+        .left-col { display: flex; flex-direction: column; gap: 16px; }
+        .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+        .panel {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 18px;
+        }
+        .panel-title { font-family: 'Fraunces', serif; font-size: 1.05em; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 14px; }
+
+        /* NEWS TICKER */
+        .ticker-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; overflow: hidden; margin-bottom: 12px; }
+        .ticker-inner { white-space: nowrap; animation: tickerScroll 30s linear infinite; font-size: 0.82em; font-weight: 600; color: var(--blue); }
+        @keyframes tickerScroll { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+        .breaking-area { margin-bottom: 10px; }
+        .news-stream { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .news-item {
+            padding: 10px 12px; border-radius: 8px;
+            background: var(--surface2); border-left: 3px solid var(--border);
+            font-size: 0.85em;
+        }
+        .news-item.pos { border-left-color: var(--green); }
+        .news-item.neg { border-left-color: var(--red); }
+        .news-item.shock-crash { background: rgba(239,68,68,0.1); border-left-color: var(--red); }
+        .news-item.shock-boom { background: rgba(16,185,129,0.1); border-left-color: var(--green); }
+        .news-hl { font-weight: 700; margin-bottom: 2px; }
+        .news-det { color: var(--text-muted); font-size: 0.88em; margin-bottom: 4px; }
+        .news-impact { font-size: 0.78em; font-weight: 700; display: inline-block; padding: 2px 7px; border-radius: 4px; }
+        .impact-pos { background: rgba(16,185,129,0.15); color: var(--green); }
+        .impact-neg { background: rgba(239,68,68,0.15); color: var(--red); }
+        .news-ts { float: right; font-size: 0.75em; color: var(--text-muted); }
+
+        /* STOCK LIST */
+        .stock-list { display: flex; flex-direction: column; gap: 6px; max-height: 380px; overflow-y: auto; margin-bottom: 14px; }
+        .stock-row {
+            display: grid; grid-template-columns: 1fr auto auto auto auto;
+            align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            transition: border-color 0.2s;
+        }
+        .stock-row:hover { border-color: var(--blue); }
+        .stock-sym { font-weight: 700; font-size: 0.9em; }
+        .stock-co { font-size: 0.75em; color: var(--text-muted); margin-top: 1px; }
+        .stock-sector { font-size: 0.68em; color: var(--text-muted); background: var(--bg); padding: 1px 6px; border-radius: 4px; margin-top: 2px; display: inline-block; }
+        .stock-price { font-weight: 700; font-size: 0.95em; min-width: 68px; text-align: right; }
+        .stock-chg { font-size: 0.78em; font-weight: 700; padding: 3px 8px; border-radius: 5px; min-width: 72px; text-align: center; }
+        .chg-pos { background: rgba(16,185,129,0.15); color: var(--green); }
+        .chg-neg { background: rgba(239,68,68,0.15); color: var(--red); }
+        .chg-neu { background: var(--bg); color: var(--text-muted); }
+
+        /* SPARKLINE */
+        .sparkline { width: 60px; height: 28px; }
+
+        .trade-actions { display: flex; gap: 5px; }
+        .tbtn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; font-size: 0.78em; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+        .tbtn-buy { background: var(--green); color: white; }
+        .tbtn-buy:hover { filter: brightness(1.1); }
+        .tbtn-sell { background: var(--red); color: white; }
+        .tbtn-sell:hover { filter: brightness(1.1); }
+
+        /* ORDER FORM */
+        .order-form { background: var(--surface2); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
+        .order-form h3 { font-size: 0.9em; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .fgroup label { display: block; font-size: 0.78em; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .fgroup select, .fgroup input {
+            width: 100%; padding: 8px 10px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--bg);
+            color: var(--text); font-size: 0.88em; font-family: 'DM Sans', sans-serif;
+        }
+        .fgroup select:focus, .fgroup input:focus { outline: none; border-color: var(--blue); }
+        .order-cost { font-size: 0.82em; color: var(--text-muted); margin-bottom: 10px; min-height: 18px; }
+        .exec-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--blue); color: white; font-weight: 700; font-size: 0.95em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
+        .exec-btn:hover { background: var(--blue-dim); }
+        .msg-area { margin-bottom: 10px; min-height: 36px; }
+        .msg { padding: 8px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 600; }
+        .msg.success { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+        .msg.error { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+        /* PORTFOLIO PANEL */
+        .holdings-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+        .holding-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; border-radius: 7px;
+            background: var(--surface2); border: 1px solid var(--border);
+            font-size: 0.85em;
+        }
+        .h-sym { font-weight: 700; }
+        .h-detail { font-size: 0.8em; color: var(--text-muted); }
+        .h-val { font-weight: 700; }
+        .h-pl { font-size: 0.75em; font-weight: 600; }
+
+        /* TRANSACTION HISTORY */
+        .tx-list { display: flex; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto; }
+        .tx-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.82em; }
+        .tx-row:last-child { border-bottom: none; }
+        .tx-type { font-weight: 700; padding: 2px 7px; border-radius: 4px; font-size: 0.8em; }
+        .tx-buy { background: rgba(16,185,129,0.15); color: var(--green); }
+        .tx-sell { background: rgba(239,68,68,0.15); color: var(--red); }
+        .tx-ts { font-size: 0.75em; color: var(--text-muted); }
+
+        /* EMPTY STATES */
+        .empty { text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.85em; }
+
+        /* MODAL BASE */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; width: 90%; max-width: 720px;
+            max-height: 88vh; overflow-y: auto;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        .modal-head {
+            background: var(--surface2); border-bottom: 1px solid var(--border);
+            padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;
+            border-radius: 16px 16px 0 0; position: sticky; top: 0;
+        }
+        .modal-head h2 { font-family: 'Fraunces', serif; font-size: 1.3em; }
+        .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4em; cursor: pointer; line-height: 1; }
+        .modal-body { padding: 24px; }
+        .modal-section { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .modal-section:last-child { border-bottom: none; margin-bottom: 0; }
+        .modal-section h3 { font-family: 'Fraunces', serif; color: var(--blue); margin-bottom: 12px; font-size: 1.05em; }
+        .modal-section ul { list-style: none; padding: 0; }
+        .modal-section li { padding: 5px 0 5px 18px; position: relative; color: var(--text); font-size: 0.9em; }
+        .modal-section li:before { content: "→"; position: absolute; left: 0; color: var(--blue); }
+
+        /* TEACHER PANEL */
+        .teacher-panel {
+            background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 12px; padding: 16px; margin-bottom: 16px;
+        }
+        .teacher-panel h3 { font-family: 'Fraunces', serif; color: var(--amber); margin-bottom: 12px; font-size: 1em; }
+        .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .teacher-trigger {
+            padding: 8px 12px; border-radius: 7px; border: 1px solid var(--border);
+            background: var(--surface2); color: var(--text); font-size: 0.8em;
+            font-weight: 600; cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+        .teacher-trigger:hover { border-color: var(--amber); color: var(--amber); }
+        .teacher-trigger.crash:hover { border-color: var(--red); color: var(--red); }
+        .teacher-trigger.boom:hover { border-color: var(--green); color: var(--green); }
+        .tt-icon { margin-right: 5px; }
+
+        /* DEBRIEF PANEL */
+        .debrief-panel { display: none; }
+        .debrief-panel.visible { display: block; }
+        .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+        .db-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+        .db-card .db-label { font-size: 0.75em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .db-card .db-val { font-family: 'Fraunces', serif; font-size: 1.3em; font-weight: 700; }
+        .db-questions h3 { font-family: 'Fraunces', serif; color: var(--blue); margin-bottom: 12px; font-size: 1em; }
+        .db-q { background: var(--surface2); border-left: 3px solid var(--blue); padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 8px; font-size: 0.87em; }
+        .db-q .q-tag { font-size: 0.72em; color: var(--blue); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+
+        /* NEWS LOG TABLE */
+        .nl-table { width: 100%; border-collapse: collapse; font-size: 0.82em; margin-bottom: 6px; }
+        .nl-table th { text-align: left; padding: 6px 8px; background: var(--bg); color: var(--text-muted); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+        .nl-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        .nl-table tr:last-child td { border-bottom: none; }
+        .nl-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 0.78em; }
+        .nl-pos { background: rgba(16,185,129,0.15); color: var(--green); }
+        .nl-neg { background: rgba(239,68,68,0.15); color: var(--red); }
+        .nl-major { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .nl-blank { min-width: 80px; border-bottom: 1px dotted var(--border); display: inline-block; }
+
+        /* SECTOR BREAKDOWN */
+        .sector-bar { margin-bottom: 8px; }
+        .sector-bar .sb-label { display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 3px; }
+        .sb-track { background: var(--bg); border-radius: 4px; height: 8px; overflow: hidden; }
+        .sb-fill { height: 100%; background: var(--blue); border-radius: 4px; transition: width 0.6s; }
+
+        /* FLASH ANIMATIONS */
+        @keyframes flashGreen { 0%{background:rgba(16,185,129,0.3)} 100%{background:transparent} }
+        @keyframes flashRed { 0%{background:rgba(239,68,68,0.3)} 100%{background:transparent} }
+        .flash-green { animation: flashGreen 0.8s ease-out; }
+        .flash-red { animation: flashRed 0.8s ease-out; }
+
+        /* LEARNING OBJECTIVE BOX */
+        .lo-box {
+            background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 12px; padding: 14px 20px; max-width: 900px;
+            margin: 0 auto 18px; display: flex; gap: 14px; align-items: flex-start;
+        }
+        .lo-icon { font-size: 1.3em; flex-shrink: 0; margin-top: 1px; }
+        .lo-body {}
+        .lo-label { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--blue); margin-bottom: 4px; }
+        .lo-text { font-size: 0.88em; color: var(--text); line-height: 1.5; }
+        .lo-text strong { color: var(--blue); }
+
+        /* TIMER BAR */
+        .timer-bar-wrap {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 16px; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .timer-label { font-size: 0.8em; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+        .timer-display { font-family: 'Fraunces', serif; font-size: 1.6em; font-weight: 900; min-width: 64px; color: var(--text); }
+        .timer-display.urgent { color: var(--red); }
+        .timer-track { flex: 1; background: var(--bg); border-radius: 6px; height: 10px; overflow: hidden; }
+        .timer-fill { height: 100%; background: var(--blue); border-radius: 6px; transition: width 1s linear; }
+        .timer-fill.urgent { background: var(--red); }
+
+        /* ROLE CARD WIDGET */
+        .role-card-widget {
+            background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+        }
+        .role-card-widget .rc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .role-card-widget .rc-title { font-family: 'Fraunces', serif; font-size: 1em; font-weight: 700; color: var(--blue); }
+        .role-card-widget .rc-type { font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
+        .role-card-widget .rc-obj { font-size: 0.85em; color: var(--text); margin-bottom: 6px; }
+        .role-card-widget .rc-hint { font-size: 0.78em; color: var(--text-muted); font-style: italic; }
+        .role-card-widget .rc-status { font-size: 0.8em; font-weight: 700; margin-top: 8px; }
+        .rc-achieved { color: var(--green); }
+        .rc-pending { color: var(--amber); }
+        .rc-failed { color: var(--red); }
+
+        /* SENTIMENT INDICATOR */
+        .sent-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+        .sent-pos { background: var(--green); }
+        .sent-neu { background: var(--text-muted); }
+        .sent-neg { background: var(--red); }
+
+        /* ENHANCED HOLDING ROW */
+        .h-buyat { font-size: 0.75em; color: var(--text-muted); }
+
+        /* SETUP MODAL */
+        .setup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 800;
+        }
+        .setup-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 36px 40px; max-width: 480px; width: 92%;
+            text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+        }
+        .setup-box h2 { font-family: 'Fraunces', serif; font-size: 1.5em; margin-bottom: 8px; }
+        .setup-box p { color: var(--text-muted); font-size: 0.88em; margin-bottom: 24px; }
+        .setup-options { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .setup-opt {
+            padding: 12px 20px; border-radius: 10px; border: 2px solid var(--border);
+            background: var(--surface2); color: var(--text); font-size: 1em; font-weight: 700;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+            min-width: 90px;
+        }
+        .setup-opt:hover, .setup-opt.selected { border-color: var(--blue); background: rgba(59,130,246,0.1); color: var(--blue); }
+        .setup-name-row { margin: 16px 0 20px; }
+        .setup-name-row label { display: block; font-size: 0.82em; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .setup-name-row input {
+            width: 100%; padding: 10px 14px; border-radius: 8px;
+            border: 2px solid var(--border); background: var(--bg);
+            color: var(--text); font-size: 1em; font-family: 'DM Sans', sans-serif; text-align: center;
+        }
+        .setup-name-row input:focus { outline: none; border-color: var(--blue); }
+        .setup-go {
+            width: 100%; padding: 13px; border-radius: 10px; border: none;
+            background: var(--blue); color: white; font-weight: 700; font-size: 1.05em;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+        }
+        .setup-go:hover { background: var(--blue-dim); }
+
+        /* END SCREEN */
+        .end-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 700;
+        }
+        .end-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 40px 44px; max-width: 560px; width: 92%;
+            text-align: center; box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+        }
+        .end-grade { font-family: 'Fraunces', serif; font-size: 3em; font-weight: 900; margin-bottom: 4px; }
+        .end-grade-label { font-size: 0.82em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+        .end-name { font-family: 'Fraunces', serif; font-size: 1.3em; margin-bottom: 20px; color: var(--text-muted); }
+        .end-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .end-stat { background: var(--surface2); border-radius: 10px; padding: 14px; }
+        .end-stat .es-label { font-size: 0.72em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .end-stat .es-val { font-family: 'Fraunces', serif; font-size: 1.3em; font-weight: 700; }
+        .end-role { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 14px; margin-bottom: 20px; font-size: 0.88em; }
+        .end-role .er-title { font-weight: 700; color: var(--blue); margin-bottom: 4px; font-size: 1em; }
+        .end-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .end-btn {
+            padding: 11px 22px; border-radius: 9px; border: none; font-weight: 700;
+            font-size: 0.9em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .end-btn-primary { background: var(--blue); color: white; }
+        .end-btn-primary:hover { background: var(--blue-dim); }
+        .end-btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .end-btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+
+        @keyframes endReveal { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+        .end-box { animation: endReveal 0.4s ease-out; }
+
+        @media (max-width: 1100px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .summary-bar { grid-template-columns: repeat(2, 1fr); }
+            .form-row { grid-template-columns: 1fr; }
+            .game-hero h1 { font-size: 1.6em; }
+        }
+        /* ===== WEEK BADGE ===== */
+        .week-badge { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: var(--amber); font-family: 'Fraunces', serif; font-size: 0.95em; font-weight: 700; padding: 4px 14px; border-radius: 20px; flex-shrink: 0; }
+
+        /* ===== BETWEEN-WEEK SCREEN ===== */
+        .week-end-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 750; padding: 16px; }
+        .week-end-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+        .week-end-icon { font-size: 2.8em; margin-bottom: 6px; }
+        .week-end-title { font-family: 'Fraunces', serif; font-size: 1.8em; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+        .week-end-sub { font-size: 0.88em; color: var(--text-muted); font-weight: 600; margin-bottom: 20px; }
+        .week-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .week-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+        .week-stat .ws-label { font-size: 0.7em; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600; }
+        .week-stat .ws-val { font-family: 'Fraunces', serif; font-size: 1.3em; font-weight: 700; }
+        .week-progress { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+        .week-pip { width: 32px; height: 6px; border-radius: 6px; background: var(--border); }
+        .week-pip.done { background: var(--green); }
+        .week-pip.active { background: var(--amber); }
+        .week-next-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; background: var(--blue); color: white; font-weight: 700; font-size: 1em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
+        .week-next-btn:hover { background: var(--blue-dim); }
+
+        /* ===== END NOW BUTTON ===== */
+        .btn-endnow { background: var(--red); color: white; }
+        .btn-endnow:hover { opacity: 0.85; }
+
+        /* ===== MY RESULTS MODAL ===== */
+        .results-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 600; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .results-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 700px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+        .results-head { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .results-head h2 { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
+        .results-head-btns { display: flex; gap: 8px; align-items: center; }
+        .results-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
+        .results-footer { background: var(--surface2); border-top: 1px solid var(--border); padding: 12px 24px; flex-shrink: 0; font-size: 0.82em; color: var(--text-muted); font-weight: 600; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table th { padding: 9px 12px; text-align: left; font-size: 0.76em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .results-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.88em; vertical-align: middle; }
+        .results-table tr:last-child td { border-bottom: none; }
+        .results-table tbody tr:hover td { background: var(--surface2); }
+        .res-rank { font-family: 'Fraunces', serif; font-size: 1.2em; text-align: center; width: 44px; }
+        .res-name { font-weight: 700; }
+        .res-pl { font-family: 'Fraunces', serif; font-size: 1.1em; font-weight: 700; }
+        .res-pl.gain { color: var(--green); }
+        .res-pl.loss { color: var(--red); }
+        .res-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+        .res-bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .res-bar-fill { height: 100%; border-radius: 8px; }
+        .res-bar-fill.gain { background: var(--green); }
+        .res-bar-fill.loss { background: var(--red); }
+        .res-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); font-weight: 600; font-size: 0.9em; }
+
+        /* ===== CLASS BOARD ===== */
+        .classboard-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 900; display: flex; flex-direction: column; overflow: hidden; }
+        .cb-head { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+        .cb-logo { font-family: 'Fraunces', serif; color: var(--amber); font-size: 1.2em; font-weight: 900; letter-spacing: 1px; }
+        .cb-title { font-family: 'Fraunces', serif; color: var(--text); font-size: 1.4em; font-weight: 900; flex: 1; text-align: center; }
+        .cb-close { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 18px; border-radius: 8px; font-weight: 700; font-size: 0.85em; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .cb-body { flex: 1; overflow-y: auto; padding: 20px 28px; }
+        .cb-row { display: grid; grid-template-columns: 56px 1fr 180px 160px 80px; align-items: center; gap: 16px; padding: 14px 20px; margin-bottom: 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); animation: cbFade 0.4s ease both; }
+        @keyframes cbFade { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .cb-row.top1 { border-color: var(--amber); background: rgba(245,158,11,0.08); }
+        .cb-row.top2 { border-color: var(--text-muted); }
+        .cb-row.top3 { border-color: rgba(205,127,50,0.6); }
+        .cb-rank-cell { font-family: 'Fraunces', serif; font-size: 1.6em; font-weight: 900; text-align: center; }
+        .cb-rank-cell.gold { color: var(--amber); }
+        .cb-rank-cell.silver { color: var(--text-muted); }
+        .cb-rank-cell.bronze { color: #cd7f32; }
+        .cb-rank-cell.other { font-size: 1em; color: var(--text-muted); }
+        .cb-name-cell { font-weight: 700; font-size: 1em; }
+        .cb-role-sub { font-size: 0.76em; color: var(--text-muted); margin-top: 2px; }
+        .cb-pl-block { text-align: center; }
+        .cb-pl-val { font-family: 'Fraunces', serif; font-size: 1.6em; font-weight: 900; }
+        .cb-pl-val.gain { color: var(--green); }
+        .cb-pl-val.loss { color: var(--red); }
+        .cb-pl-label { font-size: 0.68em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .cb-port-block { text-align: center; }
+        .cb-port-val { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
+        .cb-port-label { font-size: 0.68em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        .cb-role-block { font-size: 0.82em; color: var(--text-muted); text-align: center; }
+        .cb-footer { border-top: 1px solid var(--border); padding: 10px 28px; text-align: center; flex-shrink: 0; }
+        .cb-footer p { font-size: 0.76em; color: var(--text-muted); font-weight: 600; }
+
+        /* ===== NEWSPAPER ===== */
+        .np-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 800; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .np-paper { background: #fdf6e3; border-radius: 4px; width: 100%; max-width: 660px; max-height: 92vh; overflow-y: auto; box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 3px #c8a96e, inset 0 0 0 6px #fdf6e3, inset 0 0 0 8px #c8a96e; animation: npSlide 0.4s cubic-bezier(0.34,1.4,0.64,1); }
+        @keyframes npSlide { from{transform:scale(0.88) translateY(-20px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+        .np-masthead { border-bottom: 4px double #1a1a1a; padding: 12px 20px 10px; text-align: center; }
+        .np-brand { font-family: Georgia,'Times New Roman',serif; font-size: 2em; font-weight: 900; color: #1a1a1a; letter-spacing: 2px; line-height: 1; }
+        .np-brand span { color: #c8a96e; }
+        .np-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.72em; font-family: Georgia,serif; color: #555; border-top: 1px solid #aaa; border-bottom: 1px solid #aaa; padding: 3px 0; }
+        .np-body { padding: 16px 20px; }
+        .np-kicker { font-size: 0.72em; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #c8a96e; margin-bottom: 4px; font-family: Georgia,serif; }
+        .np-paper.crash .np-kicker { color: #dc2626; }
+        .np-paper.boom .np-kicker { color: #15803d; }
+        .np-headline { font-family: Georgia,'Times New Roman',serif; font-size: 1.7em; font-weight: 900; color: #1a1a1a; line-height: 1.2; margin-bottom: 10px; border-bottom: 2px solid #1a1a1a; padding-bottom: 10px; }
+        .np-paper.crash .np-headline { color: #dc2626; }
+        .np-paper.boom .np-headline { color: #15803d; }
+        .np-article { font-family: Georgia,'Times New Roman',serif; font-size: 0.92em; line-height: 1.7; color: #2a2a2a; column-count: 2; column-gap: 20px; margin-bottom: 14px; }
+        .np-paper.crash .np-article, .np-paper.boom .np-article { column-count: 1; }
+        .np-lesson { background: #fff; border-left: 4px solid #c8a96e; padding: 10px 14px; margin: 0 0 14px; font-family: Georgia,serif; font-size: 0.85em; color: #1a2744; font-style: italic; line-height: 1.5; }
+        .np-paper.crash .np-lesson { border-color: #ef4444; }
+        .np-paper.boom .np-lesson { border-color: #22c55e; }
+        .np-lesson strong { font-style: normal; font-weight: 800; color: #c8a96e; }
+        .np-paper.crash .np-lesson strong { color: #ef4444; }
+        .np-paper.boom .np-lesson strong { color: #15803d; }
+        .np-paper.crash .np-masthead { background: #1a0000; border-color: #dc2626; }
+        .np-paper.crash .np-brand { color: #fca5a5; }
+        .np-paper.crash .np-brand span { color: #ef4444; }
+        .np-paper.crash .np-meta { color: #fca5a5; border-color: #dc2626; }
+        .np-paper.boom .np-masthead { background: #001a08; border-color: #15803d; }
+        .np-paper.boom .np-brand { color: #bbf7d0; }
+        .np-paper.boom .np-brand span { color: #22c55e; }
+        .np-paper.boom .np-meta { color: #bbf7d0; border-color: #15803d; }
+        .np-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .np-actions p { width: 100%; font-family: Georgia,serif; font-size: 0.82em; color: #555; margin-bottom: 6px; font-style: italic; }
+        .np-dismiss { background: #1a2744; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 0.9em; cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all 0.2s; display: flex; align-items: center; gap: 6px; margin-left: auto; }
+        .np-dismiss:hover { background: #2a3f6f; }
+        .np-countdown { font-family: 'Fraunces',serif; font-size: 1.1em; min-width: 24px; text-align: center; color: var(--amber); }
+
+        /* ===== RUMOUR NEWS ITEM ===== */
+        .news-item.rumour { border-left-color: #8b5cf6; background: rgba(139,92,246,0.06); }
+
+    </style>
+</head>
+<body>
+
+<!-- PASSWORD OVERLAY -->
+<div id="pwOverlay">
+    <div class="pw-box">
+        <div class="pw-logo">BIZ-OMICS</div>
+        <h2>Stock Market Challenge</h2>
+        <p>Enter your access password to continue.</p>
+        <input type="password" id="pwInput" placeholder="Enter password" autocomplete="off">
+        <button id="pwSubmit" onclick="checkPassword()">Unlock</button>
+        <div id="pwError"></div>
+        <div class="pw-shop">Don't have a password? <a href="../business/index.html">Visit the shop</a></div>
+    </div>
+</div>
+
+<!-- STICKY HEADER -->
+<header class="site-header">
+    <a href="../business/index.html" class="logo">BIZ-OMICS</a>
+    <span class="page-tag">Business Simulation</span>
+    <span class="spacer"></span>
+    <a href="../business/index.html" class="back-link">← Back to Business Hub</a>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">Light Mode</button>
+</header>
+
+<!-- SETUP MODAL -->
+<div class="setup-overlay" id="setupOverlay" style="display:none;">
+    <div class="setup-box">
+        <h2>Game Setup</h2>
+        <p>Choose a round length, then enter your name so your result can be shared with the class.</p>
+        <div class="setup-name-row">
+            <label>Your name</label>
+            <input type="text" id="setupName" placeholder="e.g. Alex Smith" maxlength="30">
+        </div>
+        <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:10px;font-weight:600;">Round length</div>
+        <div class="setup-options">
+            <button class="setup-opt selected" id="opt5" onclick="selectDuration(5)">5 min</button>
+            <button class="setup-opt" id="opt10" onclick="selectDuration(10)">10 min</button>
+            <button class="setup-opt" id="opt15" onclick="selectDuration(15)">15 min</button>
+        </div>
+        <div style="font-size:0.82em;color:var(--text-muted);margin:14px 0 10px;font-weight:600;">Number of weeks (rounds)</div>
+        <div class="setup-options">
+            <button class="setup-opt" id="wk1" onclick="selectWeeks(1)">1 week</button>
+            <button class="setup-opt selected" id="wk2" onclick="selectWeeks(2)">2 weeks</button>
+            <button class="setup-opt" id="wk3" onclick="selectWeeks(3)">3 weeks</button>
+            <button class="setup-opt" id="wk4" onclick="selectWeeks(4)">4 weeks</button>
+        </div>
+        <div style="font-size:0.75em;color:var(--text-muted);margin:10px 0 20px;">A role card will be assigned randomly — try to achieve your objective!</div>
+        <button class="setup-go" onclick="confirmSetup()">Start Trading</button>
+    </div>
+</div>
+
+<!-- END SCREEN -->
+<div class="end-overlay" id="endOverlay" style="display:none;">
+    <div class="end-box">
+        <div class="end-grade" id="endGrade"></div>
+        <div class="end-grade-label" id="endGradeLabel"></div>
+        <div class="end-name" id="endName"></div>
+        <div class="end-stats" id="endStats"></div>
+        <div class="end-role" id="endRole"></div>
+        <div class="end-btns">
+            <button class="end-btn end-btn-primary" onclick="submitAndShowResults()">📊 See My Results</button>
+            <button class="end-btn end-btn-secondary" onclick="openDebrief()">View Full Debrief</button>
+            <button class="end-btn end-btn-secondary" onclick="playAgain()">Play Again</button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT (hidden until unlocked) -->
+<div id="mainContent" style="display:none;">
+<div class="page-wrap">
+
+    <div class="game-hero">
+        <h1>Stock Market Challenge</h1>
+        <p class="sub">Trade with £10,000 in virtual money. React to breaking news, market shocks and economic events.</p>
+        <div class="disclaimer">Educational resource: all companies, prices and events are entirely fictional and created for teaching purposes only.</div>
+
+        <div class="lo-box">
+            <div class="lo-icon">🎯</div>
+            <div class="lo-body">
+                <div class="lo-label">Learning Objectives</div>
+                <div class="lo-text">By the end of this activity, students should be able to explain <strong>risk and diversification</strong> in investment decisions; describe how <strong>shareholder value</strong> is created and destroyed; analyse how <strong>external shocks</strong> (economic, political, technological) affect business performance; and identify <strong>stakeholder conflicts</strong> arising from real-world business events.</div>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button class="ctrl-btn btn-start" id="startBtn" onclick="launchSetup()">Start Market</button>
+            <button class="ctrl-btn btn-pause" id="pauseBtn" onclick="pauseGame()" disabled>Pause Market</button>
+            <button class="ctrl-btn btn-resume" id="resumeBtn" onclick="resumeGame()" style="display:none;">Resume Market</button>
+            <button class="ctrl-btn btn-reset" onclick="resetGame()">Reset Game</button>
+            <button class="ctrl-btn btn-info" onclick="openModal('instructModal')">How to Play</button>
+            <button class="ctrl-btn btn-teacher" onclick="toggleTeacher()">Teacher Controls</button>
+            <button class="ctrl-btn btn-debrief" onclick="openDebrief()">Debrief</button>
+            <button class="ctrl-btn" style="background:var(--blue);color:white;" onclick="openResults()">📊 My Results</button>
+            <button class="ctrl-btn btn-endnow" id="endNowBtn" onclick="endNow()" style="display:none;">⏹ End Now</button>
+        </div>
+        <div class="status-wrap"><span class="game-status" id="gameStatus">Market Stopped — Press Start to Begin</span></div>
+    </div>
+
+    <!-- TIMER BAR (hidden until game starts) -->
+    <div class="timer-bar-wrap" id="timerBarWrap" style="display:none;">
+        <span class="week-badge" id="weekBadge">Week 1 of 2</span>
+        <span class="timer-label">Time Remaining</span>
+        <span class="timer-display" id="timerDisplay">10:00</span>
+        <div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+    </div>
+
+    <!-- ROLE CARD WIDGET (hidden until game starts) -->
+    <div class="role-card-widget" id="roleCardWidget" style="display:none;">
+        <div class="rc-top">
+            <div class="rc-title" id="rcTitle"></div>
+            <div class="rc-type" id="rcType"></div>
+        </div>
+        <div class="rc-obj" id="rcObj"></div>
+        <div class="rc-hint" id="rcHint"></div>
+        <div class="rc-status" id="rcStatus"></div>
+    </div>
+
+    <!-- TEACHER PANEL (hidden by default) -->
+    <div class="teacher-panel" id="teacherPanel" style="display:none;">
+        <h3>Teacher Controls — Trigger Market Events</h3>
+        <div class="teacher-grid" id="teacherGrid"></div>
+    </div>
+
+    <!-- SUMMARY BAR -->
+    <div class="summary-bar">
+        <div class="summary-card">
+            <div class="s-label">Portfolio Value</div>
+            <div class="s-val" id="totalValue">£10,000</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Available Cash</div>
+            <div class="s-val" id="availableCash">£10,000</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Profit / Loss</div>
+            <div class="s-val" id="totalPL">£0.00</div>
+        </div>
+        <div class="summary-card" style="border-color: rgba(59,130,246,0.4);">
+            <div class="s-label">Diversification</div>
+            <div class="s-val" id="diversScore">0%</div>
+        </div>
+        <div class="summary-card">
+            <div class="s-label">Total Trades</div>
+            <div class="s-val" id="tradeCount">0</div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+        <!-- LEFT: News + Stock List + Order Form -->
+        <div class="left-col">
+            <div class="panel">
+                <div class="panel-title">Market News</div>
+                <div class="ticker-wrap"><div class="ticker-inner" id="tickerText">MARKETS LIVE • BIZ-OMICS Stock Market Challenge • Watch for breaking news events • Diversify to reduce risk</div></div>
+                <div class="breaking-area" id="breakingArea"></div>
+                <div class="news-stream" id="newsStream">
+                    <div class="news-item"><div class="news-hl">Welcome to the Stock Market Challenge</div><div class="news-det">Start the market to begin. Watch for news events and react fast to maximise returns.</div></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Live Market Prices</div>
+                <div class="msg-area" id="msgArea"></div>
+                <div class="stock-list" id="stockList"></div>
+                <div class="order-form">
+                    <h3>Place Order</h3>
+                    <div class="form-row">
+                        <div class="fgroup">
+                            <label>Stock</label>
+                            <select id="tradeSymbol" onchange="updateOrderCost()">
+                                <option value="">Select stock</option>
+                            </select>
+                        </div>
+                        <div class="fgroup">
+                            <label>Order Type</label>
+                            <select id="tradeType" onchange="updateOrderCost()">
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fgroup" style="margin-bottom:10px;">
+                        <label>Number of Shares</label>
+                        <input type="number" id="tradeShares" min="1" placeholder="e.g. 10" oninput="updateOrderCost()">
+                    </div>
+                    <div class="order-cost" id="orderCost"></div>
+                    <button class="exec-btn" onclick="executeTrade()">Execute Trade</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Portfolio + Transactions -->
+        <div class="right-col">
+            <div class="panel">
+                <div class="panel-title">Your Portfolio</div>
+                <div class="holdings-list" id="holdingsList">
+                    <div class="empty">No holdings yet. Start trading!</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Recent Transactions</div>
+                <div class="tx-list" id="txList">
+                    <div class="empty">No transactions yet.</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Sector Breakdown</div>
+                <div id="sectorBreakdown"><div class="empty" style="font-size:0.8em;">Buy shares to see your sector exposure.</div></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- NEWSPAPER POP-UP -->
+<div class="np-overlay" id="npOverlay" style="display:none;">
+  <div class="np-paper" id="npPaper">
+    <div class="np-masthead">
+      <div class="np-brand">THE MARKET<span>TIMES</span></div>
+      <div class="np-meta">
+        <span id="npEdition">MONDAY EDITION</span>
+        <span id="npDate"></span>
+        <span id="npEdition2">START OF TRADING WEEK</span>
+      </div>
+    </div>
+    <div class="np-body">
+      <div class="np-kicker" id="npKicker"></div>
+      <div class="np-headline" id="npHeadline"></div>
+      <div class="np-article" id="npArticle"></div>
+      <div class="np-lesson" id="npLesson"></div>
+      <div class="np-actions">
+        <p>💭 Read the story carefully — then decide how to adjust your portfolio.</p>
+        <button class="np-dismiss" onclick="dismissNewspaper()">Back to Trading &nbsp;<span class="np-countdown" id="npCountdown">20</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BETWEEN-WEEK SCREEN -->
+<div class="week-end-overlay" id="weekEndOverlay" style="display:none;">
+  <div class="week-end-box">
+    <div class="week-end-icon" id="weIcon">📅</div>
+    <div class="week-end-title" id="weTitle">Week 1 Complete</div>
+    <div class="week-end-sub" id="weSub"></div>
+    <div class="week-stats" id="weStats"></div>
+    <div class="week-progress" id="weProgress"></div>
+    <button class="week-next-btn" id="weNextBtn" onclick="startNextWeek()">▶ Start Week 2</button>
+  </div>
+</div>
+
+<!-- MY RESULTS MODAL -->
+<div class="results-overlay" id="resultsOverlay" style="display:none;" onclick="if(event.target===this)closeResults()">
+  <div class="results-box">
+    <div class="results-head">
+      <h2>📊 My Results</h2>
+      <div class="results-head-btns">
+        <button class="ctrl-btn btn-info" style="padding:6px 14px;font-size:0.82em;" onclick="openClassBoard()">📺 Class Board</button>
+        <button class="ctrl-btn" style="padding:6px 14px;font-size:0.82em;background:var(--green);color:white;" onclick="showAddScoreForm()">➕ Add Score</button>
+        <button class="ctrl-btn btn-reset" style="padding:6px 14px;font-size:0.82em;" onclick="clearResults()">🗑 Clear</button>
+        <button class="modal-close" onclick="closeResults()">&times;</button>
+      </div>
+    </div>
+    <div class="results-body" id="resultsBody">
+      <div class="res-empty">No results yet. Finish a game and press <strong>See My Results</strong> to appear here.</div>
+    </div>
+    <div class="results-footer">📢 <strong>Tell your teacher your final Profit / Loss</strong> — they will add your score to the class board &nbsp;•&nbsp; Results reset when the page closes</div>
+  </div>
+</div>
+
+<!-- CLASS BOARD -->
+<div class="classboard-overlay" id="classBoardOverlay" style="display:none;">
+  <div class="cb-head">
+    <span class="cb-logo">BIZ-OMICS</span>
+    <span class="cb-title">Stock Market Challenge — Class Results</span>
+    <button class="cb-close" onclick="document.getElementById('classBoardOverlay').style.display='none'">✕ Close</button>
+  </div>
+  <div class="cb-body" id="cbBody"></div>
+  <div class="cb-footer"><p>Ranked by cumulative Profit / Loss &nbsp;•&nbsp; BIZ-OMICS A-Level Business</p></div>
+</div>
+
+</div><!-- /mainContent -->
+
+<!-- HOW TO PLAY MODAL -->
+<div class="modal-overlay" id="instructModal" style="display:none;" onclick="closeModalOutside(event,'instructModal')">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2>How to Play</h2>
+            <button class="modal-close" onclick="closeModal('instructModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-section">
+                <h3>Objective</h3>
+                <p style="font-size:0.9em;color:var(--text);">Start with £10,000 in virtual money and grow your portfolio by trading stocks. React to news events, manage risk through diversification, and try to maximise your final portfolio value.</p>
+            </div>
+            <div class="modal-section">
+                <h3>Controls</h3>
+                <ul>
+                    <li><strong>Start Market</strong> — opens setup to choose round length and enter your name, then begins trading</li>
+                    <li><strong>Pause Market</strong> — freezes prices so you can analyse and trade calmly</li>
+                    <li><strong>Reset Game</strong> — returns to £10,000 starting position</li>
+                    <li><strong>You can always trade</strong> — whether the market is running or paused</li>
+                    <li><strong>Role Card</strong> — you will be assigned a secret investor role with a bonus objective. Try to achieve it!</li>
+                    <li><strong>Timer</strong> — when the round ends, trading locks and your result screen appears</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3>Market Events</h3>
+                <ul>
+                    <li><strong>Market Crash</strong> — a macro shock drives all prices down sharply</li>
+                    <li><strong>Market Boom</strong> — positive macro news lifts the whole market</li>
+                    <li><strong>Company News</strong> — positive or negative events affect individual stocks</li>
+                    <li><strong>PESTLE events</strong> — political, economic and technological changes drive volatility</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3>Key Business Concepts</h3>
+                <ul>
+                    <li><strong>Shareholder value</strong> — rising share prices benefit shareholders; falling prices cause pressure on management</li>
+                    <li><strong>Diversification</strong> — spreading investment across sectors reduces risk. Watch your Diversification Score!</li>
+                    <li><strong>Stakeholder conflict</strong> — news events often pit short-term shareholder returns against other stakeholders</li>
+                    <li><strong>External environment</strong> — economic shocks (interest rates, GDP, regulation) affect the whole market</li>
+                </ul>
+            </div>
+            <div class="modal-section">
+                <h3>Trading Tips</h3>
+                <ul>
+                    <li>Use the sparkline charts on each stock to spot price trends</li>
+                    <li>Pause after a major event to review and rebalance your portfolio</li>
+                    <li>Don't over-concentrate in one sector — spread your risk</li>
+                    <li>Watch for news items with large % impacts — these create the biggest opportunities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DEBRIEF MODAL -->
+<div class="modal-overlay" id="debriefModal" style="display:none;" onclick="closeModalOutside(event,'debriefModal')">
+    <div class="modal-box" style="max-width:800px;">
+        <div class="modal-head">
+            <h2>Session Debrief</h2>
+            <button class="modal-close" onclick="closeModal('debriefModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="debriefBody"></div>
+    </div>
+</div>
+
+<script>
+    // ===== SETUP STATE =====
+    var chosenDuration = 5;
+    var selectedWeeks = 2;
+    var playerName = '';
+    var timerTotal = 0;
+    var timerRemaining = 0;
+    var timerInterval = null;
+
+    // ===== MULTI-WEEK STATE =====
+    var TOTAL_WEEKS = 2;
+    var currentWeek = 1;
+    var weekStartValue = 10000;
+    var weeklyResults = [];
+    var mondayPaperShown = false;
+    var fridayPaperShown = false;
+    var mondayEditionQueue = [];
+
+    function selectWeeks(w) {
+        selectedWeeks = w;
+        ['1','2','3','4'].forEach(function(x){ var el=document.getElementById('wk'+x); if(el) el.className = (parseInt(x)===w?'setup-opt selected':'setup-opt'); });
+    }
+
+    function launchSetup() {
+        if (gameRunning) return;
+        document.getElementById('setupOverlay').style.display = 'flex';
+        document.getElementById('setupName').focus();
+    }
+
+    function selectDuration(mins) {
+        chosenDuration = mins;
+        var opts = [5, 10, 15];
+        for (var i = 0; i < opts.length; i++) {
+            var el = document.getElementById('opt' + opts[i]);
+            if (el) {
+                el.className = opts[i] === mins ? 'setup-opt selected' : 'setup-opt';
+            }
+        }
+    }
+
+    function confirmSetup() {
+        var name = document.getElementById('setupName').value.trim();
+        playerName = name || 'Trader';
+        document.getElementById('setupOverlay').style.display = 'none';
+        TOTAL_WEEKS = selectedWeeks;
+        currentWeek = 1;
+        weekStartValue = 10000;
+        weeklyResults = [];
+        shuffleMondayEditions();
+        timerTotal = chosenDuration * 60;
+        timerRemaining = timerTotal;
+        assignRoleCard();
+        startGame();
+    }
+
+    // ===== PASSWORD =====
+    var VALID_PASSWORDS = [
+        'BIZ-SMC-8K4X2026',   // individual
+        'BizAQA-SM4RT!2026',   // AQA A-Level bundle
+        'BizEDX-AL9K!2026',    // Edexcel A-Level bundle
+        'BizOCR-AL7M!2026',    // OCR A-Level bundle
+        'BizOCR-GC4X!2026',    // OCR GCSE bundle
+        'GSALEconomics'         // school
+    ];
+
+    function checkPassword() {
+        var val = document.getElementById('pwInput').value.trim();
+        var ok = false;
+        for (var i = 0; i < VALID_PASSWORDS.length; i++) {
+            if (val === VALID_PASSWORDS[i]) { ok = true; break; }
+        }
+        if (ok) {
+            try { localStorage.setItem('biz-smc-unlocked', '1'); } catch(e) {}
+            document.getElementById('pwOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            initGame();
+        } else {
+            var box = document.getElementById('pwOverlay').querySelector('.pw-box');
+            box.classList.remove('shake');
+            void box.offsetWidth;
+            box.classList.add('shake');
+            document.getElementById('pwError').textContent = 'Incorrect password. Please try again.';
+        }
+    }
+
+    document.getElementById('pwInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkPassword();
+    });
+
+    // Check stored unlock
+    (function() {
+        try {
+            if (localStorage.getItem('biz-smc-unlocked') === '1') {
+                document.getElementById('pwOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                window.addEventListener('load', initGame);
+            }
+        } catch(e) {}
+    })();
+
+    // ===== THEME =====
+    (function() {
+        try {
+            var t = localStorage.getItem('biz-omics-theme');
+            if (t === 'light') { document.body.classList.add('light'); document.getElementById('themeBtn').textContent = 'Dark Mode'; }
+        } catch(e) {}
+    })();
+
+    function toggleTheme() {
+        var isLight = document.body.classList.toggle('light');
+        document.getElementById('themeBtn').textContent = isLight ? 'Dark Mode' : 'Light Mode';
+        try { localStorage.setItem('biz-omics-theme', isLight ? 'light' : 'dark'); } catch(e) {}
+    }
+
+    // ===== MODAL HELPERS =====
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function closeModalOutside(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal('instructModal');
+            closeModal('debriefModal');
+        }
+    });
+
+    // ===== TEACHER PANEL =====
+    var teacherVisible = false;
+    function toggleTeacher() {
+        teacherVisible = !teacherVisible;
+        document.getElementById('teacherPanel').style.display = teacherVisible ? 'block' : 'none';
+    }
+
+    // ===== STOCK DATA =====
+    // Sectors: Tech, Retail, Finance, Energy, Pharma, Manufacturing, Media, Transport
+    var stocks = {
+        'TCORE': { company: 'TechCore Inc.',         price: 150.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
+        'SRCH':  { company: 'SearchNet Ltd.',         price: 280.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
+        'GLSHP': { company: 'GlobalShop Group',       price: 320.00, change: 0, sector: 'Retail',        history: [], sentiment: 0, lastNewsTime: 0 },
+        'MRKT':  { company: 'MarketFirst PLC',        price: 85.00,  change: 0, sector: 'Retail',        history: [], sentiment: 0, lastNewsTime: 0 },
+        'FNXB':  { company: 'FinexBank Corp.',        price: 220.00, change: 0, sector: 'Finance',       history: [], sentiment: 0, lastNewsTime: 0 },
+        'CRDT':  { company: 'CreditOne Group',        price: 130.00, change: 0, sector: 'Finance',       history: [], sentiment: 0, lastNewsTime: 0 },
+        'ELMO':  { company: 'ElectroMotors PLC',      price: 800.00, change: 0, sector: 'Manufacturing', history: [], sentiment: 0, lastNewsTime: 0 },
+        'CHIP':  { company: 'ChipMaster Industries',  price: 600.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
+        'PHARX': { company: 'PharmaX Sciences',       price: 190.00, change: 0, sector: 'Pharma',        history: [], sentiment: 0, lastNewsTime: 0 },
+        'SOLR':  { company: 'SolarGrid Energy',       price: 110.00, change: 0, sector: 'Energy',        history: [], sentiment: 0, lastNewsTime: 0 },
+        'VIEW':  { company: 'StreamView Media',       price: 500.00, change: 0, sector: 'Media',         history: [], sentiment: 0, lastNewsTime: 0 },
+        'LOGX':  { company: 'LogiXpress Intl.',       price: 95.00,  change: 0, sector: 'Transport',     history: [], sentiment: 0, lastNewsTime: 0 }
+    };
+
+    // ===== GAME STATE =====
+    var gameState = {
+        cash: 10000,
+        holdings: {},
+        costBasis: {},
+        transactions: [],
+        totalTrades: 0,
+        plHistory: []
+    };
+
+    var gameRunning = false;
+    var gamePaused = false;
+    var priceInterval = null;
+    var newsInterval = null;
+    var shockInterval = null;
+    var gameTime = 0;
+    var usedNews = [];
+    var usedMajor = [];
+
+    // ===== MAJOR EVENTS =====
+    var majorEvents = [
+        { type: 'crash', headline: 'MARKET CRASH: Emergency Interest Rate Rise Announced', details: 'The Bank of England announces an emergency 1.5% rate rise to combat inflation, triggering a broad sell-off.', impact: 'All stocks down 8-14%', fx: -0.11, pestle: 'Economic — monetary policy shock' },
+        { type: 'crash', headline: 'FLASH CRASH: Trading Algorithm Malfunction', details: 'A rogue trading algorithm causes a cascade of automated sell orders, destabilising the market.', impact: 'Market down 7-12%', fx: -0.09, pestle: 'Technological — systemic risk' },
+        { type: 'crash', headline: 'POLITICAL SHOCK: Trade Tariffs on Imports Announced', details: 'New government tariffs on imported goods raise costs for businesses, hitting investor confidence.', impact: 'Broad sell-off 8-13%', fx: -0.10, pestle: 'Political — trade policy' },
+        { type: 'crash', headline: 'ECONOMIC DATA: Recession Confirmed by ONS', details: 'The ONS confirms two consecutive quarters of negative GDP growth, triggering widespread risk aversion.', impact: 'Stocks down 10-15%', fx: -0.12, pestle: 'Economic — GDP contraction' },
+        { type: 'boom', headline: 'MARKET SURGE: Interest Rates Cut to Historic Low', details: 'The Bank of England cuts rates to stimulate growth, boosting business investment and share prices.', impact: 'Broad market rally 9-14%', fx: 0.11, pestle: 'Economic — monetary policy stimulus' },
+        { type: 'boom', headline: 'ECONOMIC DATA: Record GDP Growth Reported', details: 'GDP grows at the fastest rate in a decade, fuelling investor optimism across all sectors.', impact: 'All stocks up 8-13%', fx: 0.10, pestle: 'Economic — strong growth' },
+        { type: 'boom', headline: 'GREEN ENERGY REVOLUTION: £500bn Investment Package', details: 'Government announces a massive green infrastructure investment programme, lifting markets broadly.', impact: 'Energy and tech up 10-15%', fx: 0.12, pestle: 'Political/Environmental — green policy' }
+    ];
+
+    // ===== COMPANY NEWS =====
+    var newsEvents = [
+        // TechCore
+        { sym: 'TCORE', type: 'pos', hl: 'TechCore Reports Record Sales Quarter', det: 'Strong consumer demand drives TechCore to beat analyst forecasts by 18%.', imp: 'Stock may rise 4-7%', fx: 0.055, concept: 'Shareholder returns — dividend expectations rise.' },
+        { sym: 'TCORE', type: 'neg', hl: 'TechCore Hit by Supply Chain Disruption', det: 'Component shortages at key suppliers delay product launches by two quarters.', imp: 'Stock may fall 3-6%', fx: -0.045, concept: 'Operations — supply chain vulnerability.' },
+        { sym: 'TCORE', type: 'pos', hl: 'TechCore Launches Breakthrough AR Platform', det: 'New augmented reality hardware creates an entirely new product category.', imp: 'Stock may surge 8-14%', fx: 0.11, concept: 'Innovation — new product development.' },
+        { sym: 'TCORE', type: 'neg', hl: 'TechCore Faces Antitrust Investigation', det: 'Regulators launch a formal investigation into TechCore\'s market dominance.', imp: 'Stock may fall 6-10%', fx: -0.08, concept: 'Legal/Political — competition policy.' },
+        // SearchNet
+        { sym: 'SRCH',  type: 'pos', hl: 'SearchNet AI Revenue Doubles Year-on-Year', det: 'AI-powered advertising products generate extraordinary returns for SearchNet.', imp: 'Stock may rise 7-12%', fx: 0.09, concept: 'Growth strategy — diversification into AI.' },
+        { sym: 'SRCH',  type: 'neg', hl: 'SearchNet Fined £40bn for GDPR Violations', det: 'Regulators impose record data protection fines, raising serious governance concerns.', imp: 'Stock may fall 7-12%', fx: -0.09, concept: 'Legal/Ethical — stakeholder conflict (users vs shareholders).' },
+        // GlobalShop
+        { sym: 'GLSHP', type: 'pos', hl: 'GlobalShop Drone Delivery Launches Nationwide', det: 'Same-day drone delivery goes live in 50 UK cities, cutting logistics costs significantly.', imp: 'Stock may rise 8-14%', fx: 0.11, concept: 'Innovation — operational efficiency.' },
+        { sym: 'GLSHP', type: 'neg', hl: 'GlobalShop Workers Strike Over Pay', det: 'Coordinated strike action at distribution centres threatens to halt operations.', imp: 'Stock may fall 7-12%', fx: -0.09, concept: 'HR — stakeholder conflict (employees vs shareholders).' },
+        { sym: 'GLSHP', type: 'neg', hl: 'GlobalShop CEO Resigns Amid Accounting Scandal', det: 'Shock departure of CEO follows allegations of financial misreporting.', imp: 'Stock may plunge 10-18%', fx: -0.14, concept: 'Governance — leadership crisis.' },
+        // MarketFirst
+        { sym: 'MRKT',  type: 'pos', hl: 'MarketFirst Expands Into European Markets', det: 'Acquisition of two European retailers doubles MarketFirst\'s addressable market.', imp: 'Stock may rise 10-16%', fx: 0.13, concept: 'Ansoff — market development strategy.' },
+        { sym: 'MRKT',  type: 'neg', hl: 'MarketFirst Profits Hit by Rising Costs', det: 'Energy and wage inflation squeeze margins, with profits down 30% year-on-year.', imp: 'Stock may fall 7-12%', fx: -0.09, concept: 'Finance — profit margin pressure.' },
+        // FinexBank
+        { sym: 'FNXB',  type: 'pos', hl: 'FinexBank Raises Dividend to Record Level', det: 'Strong lending growth enables FinexBank to reward shareholders with a bumper payout.', imp: 'Stock may rise 5-10%', fx: 0.075, concept: 'Shareholder returns — dividend policy.' },
+        { sym: 'FNXB',  type: 'neg', hl: 'FinexBank Faces £2bn Mis-selling Claim', det: 'A class action lawsuit exposes widespread mis-selling of financial products to customers.', imp: 'Stock may fall 8-14%', fx: -0.11, concept: 'Legal/Ethical — consumer stakeholders.' },
+        // CreditOne
+        { sym: 'CRDT',  type: 'pos', hl: 'CreditOne Profits Surge on High Interest Rates', det: 'Rising base rates boost net interest margins, delivering exceptional returns.', imp: 'Stock may rise 7-12%', fx: 0.09, concept: 'Economic — interest rate beneficiary.' },
+        { sym: 'CRDT',  type: 'neg', hl: 'CreditOne Reports Rising Bad Debt Levels', det: 'Consumer defaults reach a ten-year high, raising concerns over credit quality.', imp: 'Stock may fall 6-10%', fx: -0.08, concept: 'Finance — credit risk management.' },
+        // ElectroMotors
+        { sym: 'ELMO',  type: 'pos', hl: 'ElectroMotors Wins £5bn Government EV Contract', det: 'Government selects ElectroMotors as sole supplier for the national EV fleet programme.', imp: 'Stock may surge 12-18%', fx: 0.15, concept: 'Political — government contract as growth driver.' },
+        { sym: 'ELMO',  type: 'neg', hl: 'ElectroMotors Issues Recall on Battery Defect', det: 'A critical battery fault forces a mass recall, damaging brand reputation severely.', imp: 'Stock may fall 10-17%', fx: -0.13, concept: 'Operations — quality failure and reputational damage.' },
+        { sym: 'ELMO',  type: 'pos', hl: 'ElectroMotors Robot Division Enters Mass Production', det: 'Industrial robots begin shipping at scale, creating a major new revenue stream.', imp: 'Stock may rise 10-16%', fx: 0.13, concept: 'Diversification — new product line.' },
+        // ChipMaster
+        { sym: 'CHIP',  type: 'pos', hl: 'ChipMaster AI Chip Demand Drives Record Revenue', det: 'Insatiable demand for AI processors generates extraordinary profits for ChipMaster.', imp: 'Stock may rocket 14-18%', fx: 0.16, concept: 'Market power — shortage pricing.' },
+        { sym: 'CHIP',  type: 'neg', hl: 'ChipMaster Faces Export Restrictions to Key Markets', det: 'Government export controls ban ChipMaster from selling advanced chips internationally.', imp: 'Stock may crash 12-18%', fx: -0.15, concept: 'Political — trade restrictions.' },
+        // PharmaX
+        { sym: 'PHARX', type: 'pos', hl: 'PharmaX Drug Approved for Widespread Use', det: 'Regulatory approval for a blockbuster treatment opens a multi-billion pound market.', imp: 'Stock may surge 14-18%', fx: 0.16, concept: 'Legal — regulatory approval as value driver.' },
+        { sym: 'PHARX', type: 'neg', hl: 'PharmaX Drug Trial Results Disappointing', det: 'Phase 3 trial failure ends hopes for PharmaX\'s flagship medicine, wiping out R&D investment.', imp: 'Stock may plunge 14-18%', fx: -0.16, concept: 'R&D risk — high-stakes investment.' },
+        { sym: 'PHARX', type: 'neg', hl: 'PharmaX Under Investigation for Price Gouging', det: 'Regulators investigate PharmaX for charging excessive prices for life-saving drugs.', imp: 'Stock may fall 8-13%', fx: -0.10, concept: 'Ethical — stakeholder conflict (patients vs shareholders).' },
+        // SolarGrid
+        { sym: 'SOLR',  type: 'pos', hl: 'SolarGrid Wins National Grid Contract', det: 'SolarGrid selected to supply 20% of UK electricity by 2030 under a government deal.', imp: 'Stock may surge 12-18%', fx: 0.15, concept: 'Environmental — green energy policy.' },
+        { sym: 'SOLR',  type: 'neg', hl: 'SolarGrid Profits Hit by Cold Winter Weather', det: 'Unusually low solar irradiance reduces output and revenues significantly.', imp: 'Stock may fall 6-10%', fx: -0.08, concept: 'Environmental — seasonal revenue risk.' },
+        // StreamView
+        { sym: 'VIEW',  type: 'pos', hl: 'StreamView Acquires Rival MegaMedia', det: 'Shock merger creates the UK\'s largest streaming platform with 40m subscribers.', imp: 'Stock may surge 14-18%', fx: 0.16, concept: 'Inorganic growth — merger and acquisition.' },
+        { sym: 'VIEW',  type: 'neg', hl: 'StreamView Loses 8 Million Subscribers', det: 'Price rises and new competition trigger a mass exodus of StreamView users.', imp: 'Stock may fall 10-16%', fx: -0.13, concept: 'Competition — threat from new entrants.' },
+        // LogiXpress
+        { sym: 'LOGX',  type: 'pos', hl: 'LogiXpress Wins £1bn Last-Mile Delivery Contract', det: 'Major e-commerce partnership transforms LogiXpress into a FTSE-listed logistics giant.', imp: 'Stock may rise 12-18%', fx: 0.15, concept: 'B2B growth — strategic partnership.' },
+        { sym: 'LOGX',  type: 'neg', hl: 'LogiXpress Hit by Fuel Cost Surge', det: 'A 40% rise in fuel prices decimates LogiXpress profit margins.', imp: 'Stock may fall 8-13%', fx: -0.10, concept: 'Costs — external cost pressure.' }
+    ];
+
+    // ===== BUILD TEACHER CONTROLS =====
+    function buildTeacherControls() {
+        var grid = document.getElementById('teacherGrid');
+        grid.innerHTML = '';
+
+        // Major event triggers
+        for (var i = 0; i < majorEvents.length; i++) {
+            var ev = majorEvents[i];
+            var cls = ev.type === 'crash' ? 'crash' : 'boom';
+            var icon = ev.type === 'crash' ? '📉' : '📈';
+            var btn = document.createElement('button');
+            btn.className = 'teacher-trigger ' + cls;
+            btn.innerHTML = '<span class="tt-icon">' + icon + '</span>' + ev.headline.split(':')[0];
+            btn.setAttribute('data-idx', i);
+            btn.setAttribute('data-major', '1');
+            btn.onclick = teacherTrigger;
+            grid.appendChild(btn);
+        }
+
+        // Divider label
+        var lbl = document.createElement('div');
+        lbl.style = 'grid-column:1/-1;font-size:0.75em;color:var(--text-muted);padding:4px 0 2px;border-top:1px solid var(--border);margin-top:4px;';
+        lbl.textContent = 'Company News';
+        grid.appendChild(lbl);
+
+        // Sample of company news triggers (2 per stock)
+        var shown = {};
+        for (var j = 0; j < newsEvents.length; j++) {
+            var ne = newsEvents[j];
+            if (!shown[ne.sym]) { shown[ne.sym] = 0; }
+            if (shown[ne.sym] >= 1) continue;
+            shown[ne.sym]++;
+            var btn2 = document.createElement('button');
+            btn2.className = 'teacher-trigger ' + (ne.type === 'pos' ? 'boom' : 'crash');
+            btn2.innerHTML = (ne.type === 'pos' ? '▲ ' : '▼ ') + ne.sym + ': ' + ne.hl.split(' ').slice(0,4).join(' ') + '...';
+            btn2.setAttribute('data-idx', j);
+            btn2.setAttribute('data-major', '0');
+            btn2.onclick = teacherTrigger;
+            grid.appendChild(btn2);
+        }
+    }
+
+    function teacherTrigger() {
+        var idx = parseInt(this.getAttribute('data-idx'));
+        var isMajor = this.getAttribute('data-major') === '1';
+        if (isMajor) {
+            applyMajorEvent(majorEvents[idx]);
+        } else {
+            applyNewsEvent(newsEvents[idx]);
+        }
+    }
+
+    // ===== TIMER =====
+    function updateTimerDisplay() {
+        var mins = Math.floor(timerRemaining / 60);
+        var secs = timerRemaining % 60;
+        var str = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+        var el = document.getElementById('timerDisplay');
+        el.textContent = str;
+        var urgent = timerRemaining <= 60;
+        el.className = urgent ? 'timer-display urgent' : 'timer-display';
+        var pct = timerTotal > 0 ? (timerRemaining / timerTotal) * 100 : 100;
+        var fill = document.getElementById('timerFill');
+        fill.style.width = pct + '%';
+        fill.className = urgent ? 'timer-fill urgent' : 'timer-fill';
+        updateRoleCardStatus();
+    }
+
+    // ===== ROLE CARDS =====
+    var roleCards = [
+        {
+            title: 'Growth Investor',
+            type: 'Equity',
+            obj: 'Achieve a portfolio return of +20% or more by the end of the round.',
+            hint: 'Focus on high-growth stocks in Technology and Manufacturing. Accept higher risk for higher reward.',
+            check: function() { return calcPortfolioValue() >= 12000; },
+            concept: 'High-risk, high-reward — mirrors growth investment strategy in business finance.'
+        },
+        {
+            title: 'Income Investor',
+            type: 'Dividend',
+            obj: 'Hold shares in at least 4 different companies at the end of the round.',
+            hint: 'Spread your portfolio widely. Don\'t put everything into one or two stocks.',
+            check: function() { return Object.keys(gameState.holdings).length >= 4; },
+            concept: 'Income investors prioritise diversification and stable returns over capital growth.'
+        },
+        {
+            title: 'Ethical Investor',
+            type: 'ESG',
+            obj: 'Do not hold shares in companies that received negative ethical news during the game.',
+            hint: 'Watch the news feed carefully. Sell any stock hit by an ethical scandal immediately.',
+            check: function() {
+                for (var sym in gameState.holdings) {
+                    if (gameState.ethicsViolators && gameState.ethicsViolators[sym]) return false;
+                }
+                return true;
+            },
+            concept: 'ESG (Environmental, Social, Governance) investing — a growing force in real-world financial markets.'
+        },
+        {
+            title: 'Index Tracker',
+            type: 'Passive',
+            obj: 'Hold shares in at least 6 different companies and keep your diversification score above 60%.',
+            hint: 'Spread across sectors — Technology, Finance, Retail, Energy, Pharma, Transport.',
+            check: function() { return Object.keys(gameState.holdings).length >= 6 && calcDiversification() >= 60; },
+            concept: 'Passive index funds track a broad market — lower risk, moderate returns.'
+        },
+        {
+            title: 'Contrarian Investor',
+            type: 'Value',
+            obj: 'Buy at least one stock within 30 seconds of it receiving negative news, and hold it to the end.',
+            hint: 'Watch for falling stocks. Value investors buy when others are panic-selling.',
+            check: function() { return gameState.contrarianBuy === true; },
+            concept: 'Contrarian strategy: buying undervalued assets when market sentiment is negative.'
+        },
+        {
+            title: 'Sector Specialist',
+            type: 'Focused',
+            obj: 'At least 60% of your portfolio (by value) must be in Technology stocks at the end.',
+            hint: 'TechCore, SearchNet and ChipMaster are all Technology sector stocks.',
+            check: function() {
+                var techVal = 0;
+                var portVal = calcPortfolioValue() - gameState.cash;
+                if (portVal <= 0) return false;
+                for (var sym in gameState.holdings) {
+                    if (stocks[sym].sector === 'Technology') {
+                        techVal += gameState.holdings[sym] * stocks[sym].price;
+                    }
+                }
+                return portVal > 0 && (techVal / portVal) >= 0.60;
+            },
+            concept: 'Sector funds concentrate on one industry — higher upside but less diversification.'
+        },
+        {
+            title: 'Capital Preserver',
+            type: 'Defensive',
+            obj: 'End the round with a portfolio value no lower than £9,500 — protect your capital above all else.',
+            hint: 'Don\'t overexpose yourself. Spread risk and avoid stocks in negative sentiment.',
+            check: function() { return calcPortfolioValue() >= 9500; },
+            concept: 'Capital preservation: prioritising safety of investment over returns — typical of pension funds.'
+        },
+        {
+            title: 'Momentum Trader',
+            type: 'Active',
+            obj: 'Complete at least 10 trades during the round.',
+            hint: 'Buy and sell actively. React fast to every news event — don\'t sit on positions too long.',
+            check: function() { return gameState.totalTrades >= 10; },
+            concept: 'Active trading: frequent buying and selling to exploit short-term price movements.'
+        }
+    ];
+
+    var activeRole = null;
+
+    function assignRoleCard() {
+        var idx = Math.floor(Math.random() * roleCards.length);
+        activeRole = roleCards[idx];
+        gameState.ethicsViolators = {};
+        gameState.contrarianBuy = false;
+        gameState.lastNegNewsTime = null;
+        gameState.lastNegNewsSym = null;
+        gameState.sessionNewsLog = [];
+
+        document.getElementById('rcTitle').textContent = activeRole.title;
+        document.getElementById('rcType').textContent = activeRole.type;
+        document.getElementById('rcObj').textContent = 'Objective: ' + activeRole.obj;
+        document.getElementById('rcHint').textContent = activeRole.hint;
+        updateRoleCardStatus();
+    }
+
+    function updateRoleCardStatus() {
+        if (!activeRole) return;
+        var el = document.getElementById('rcStatus');
+        var achieved = activeRole.check();
+        if (timerRemaining <= 0) {
+            el.textContent = achieved ? 'OBJECTIVE ACHIEVED' : 'OBJECTIVE NOT MET';
+            el.className = 'rc-status ' + (achieved ? 'rc-achieved' : 'rc-failed');
+        } else {
+            el.textContent = achieved ? 'On track to achieve objective' : 'Objective not yet met — keep going!';
+            el.className = 'rc-status ' + (achieved ? 'rc-achieved' : 'rc-pending');
+        }
+    }
+
+    // ===== SENTIMENT =====
+    function getSentimentDot(sym) {
+        var s = stocks[sym].sentiment;
+        if (s >= 1) return '<span class="sent-dot sent-pos"></span>';
+        if (s <= -1) return '<span class="sent-dot sent-neg"></span>';
+        return '<span class="sent-dot sent-neu"></span>';
+    }
+
+    function updateSentiment(sym, direction) {
+        stocks[sym].sentiment = Math.max(-3, Math.min(3, stocks[sym].sentiment + direction));
+    }
+
+    // Sentiment-weighted news selection: negative sentiment = more likely to get neg news
+    function pickSentimentWeightedNews() {
+        var now = Date.now();
+        var cooldown = 15000;
+        var available = [];
+        for (var i = 0; i < newsEvents.length; i++) {
+            var ne = newsEvents[i];
+            var s = stocks[ne.sym];
+            if ((now - s.lastNewsTime) < cooldown) continue;
+            var weight = 1;
+            if (s.sentiment <= -2 && ne.type === 'neg') weight = 4;
+            else if (s.sentiment <= -1 && ne.type === 'neg') weight = 2;
+            else if (s.sentiment >= 2 && ne.type === 'pos') weight = 3;
+            else if (s.sentiment >= 1 && ne.type === 'pos') weight = 2;
+            for (var w = 0; w < weight; w++) available.push(i);
+        }
+        if (available.length === 0) {
+            for (var j = 0; j < newsEvents.length; j++) available.push(j);
+        }
+        return available[Math.floor(Math.random() * available.length)];
+    }
+
+    // ===== END GAME =====
+    function endGame() {
+        gameRunning = false;
+        gamePaused = false;
+        clearInterval(priceInterval);
+        clearInterval(newsInterval);
+        clearInterval(shockInterval);
+        clearInterval(timerInterval);
+        timerRemaining = 0;
+        updateTimerDisplay();
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('resumeBtn').style.display = 'none';
+        setStatus('Market Closed — Round Complete', '');
+
+        var portVal = calcPortfolioValue();
+        var pl = portVal - 10000;
+        var plPct = ((pl / 10000) * 100).toFixed(1);
+        var diversification = calcDiversification();
+        var roleAchieved = activeRole ? activeRole.check() : false;
+
+        // Grade
+        var grade, gradeLabel, gradeCol;
+        if (pl >= 3000) { grade = 'A+'; gradeLabel = 'Fund Manager'; gradeCol = 'var(--green)'; }
+        else if (pl >= 1500) { grade = 'A'; gradeLabel = 'Senior Analyst'; gradeCol = 'var(--green)'; }
+        else if (pl >= 500) { grade = 'B'; gradeLabel = 'Junior Analyst'; gradeCol = 'var(--blue)'; }
+        else if (pl >= 0) { grade = 'C'; gradeLabel = 'Trainee Trader'; gradeCol = 'var(--blue)'; }
+        else if (pl >= -1000) { grade = 'D'; gradeLabel = 'Under Review'; gradeCol = 'var(--amber)'; }
+        else { grade = 'F'; gradeLabel = 'Margin Called'; gradeCol = 'var(--red)'; }
+
+        var plSign = pl >= 0 ? '+' : '';
+        var plCls = pl >= 0 ? 'var(--green)' : 'var(--red)';
+
+        document.getElementById('endGrade').textContent = grade;
+        document.getElementById('endGrade').style.color = gradeCol;
+        document.getElementById('endGradeLabel').textContent = gradeLabel;
+        document.getElementById('endName').textContent = playerName;
+
+        document.getElementById('endStats').innerHTML =
+            '<div class="end-stat"><div class="es-label">Final Value</div><div class="es-val">£' + portVal.toFixed(2) + '</div></div>' +
+            '<div class="end-stat"><div class="es-label">Profit / Loss</div><div class="es-val" style="color:' + plCls + '">' + plSign + '£' + Math.abs(pl).toFixed(2) + ' (' + plSign + plPct + '%)</div></div>' +
+            '<div class="end-stat"><div class="es-label">Diversification</div><div class="es-val">' + diversification + '%</div></div>' +
+            '<div class="end-stat"><div class="es-label">Total Trades</div><div class="es-val">' + gameState.totalTrades + '</div></div>';
+
+        if (activeRole) {
+            document.getElementById('endRole').innerHTML =
+                '<div class="er-title">' + activeRole.title + ' — ' + activeRole.type + '</div>' +
+                '<div style="font-size:0.85em;color:var(--text);margin:4px 0">' + activeRole.obj + '</div>' +
+                '<div style="font-weight:700;color:' + (roleAchieved ? 'var(--green)' : 'var(--red)') + ';margin-top:6px;">' +
+                (roleAchieved ? 'Role objective achieved!' : 'Role objective not met') + '</div>' +
+                '<div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">' + activeRole.concept + '</div>';
+        }
+
+        document.getElementById('endOverlay').style.display = 'flex';
+    }
+
+    function playAgain() {
+        document.getElementById('endOverlay').style.display = 'none';
+        resetGame();
+        setTimeout(function() {
+            document.getElementById('setupOverlay').style.display = 'flex';
+        }, 200);
+    }
+
+    // ===== INIT =====
+    function initGame() {
+        resetStockHistory();
+        renderStockList();
+        populateTradeSelect();
+        renderPortfolio();
+        renderTransactions();
+        updateSummaryBar();
+        buildTeacherControls();
+        renderSectorBreakdown();
+    }
+
+    function resetStockHistory() {
+        for (var sym in stocks) {
+            stocks[sym].history = [stocks[sym].price];
+            stocks[sym].sentiment = 0;
+            stocks[sym].lastNewsTime = 0;
+        }
+    }
+
+    // ===== GAME CONTROLS =====
+    function startGame() {
+        if (gameRunning) return;
+        gameRunning = true;
+        gamePaused = false;
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('pauseBtn').style.display = '';
+        document.getElementById('resumeBtn').style.display = 'none';
+        document.getElementById('endNowBtn').style.display = '';
+        document.getElementById('weekBadge').textContent = 'Week ' + currentWeek + ' of ' + TOTAL_WEEKS;
+        setStatus('Market Running — ' + chosenDuration + ' min round', 'status-running');
+
+        document.getElementById('timerBarWrap').style.display = 'flex';
+        document.getElementById('roleCardWidget').style.display = 'block';
+        updateTimerDisplay();
+
+        priceInterval = setInterval(updatePrices, 5000);
+        newsInterval = setInterval(triggerNews, 9000);
+        shockInterval = setInterval(triggerMajor, 28000);
+
+        timerInterval = setInterval(function() {
+            timerRemaining--;
+            updateTimerDisplay();
+            if (!fridayPaperShown && timerRemaining <= Math.floor(timerTotal * 0.10) && timerRemaining > 0) {
+                fridayPaperShown = true;
+                showFridayPaper();
+            }
+            if (timerRemaining <= 0) { endWeek(); }
+        }, 1000);
+
+        mondayPaperShown = false; fridayPaperShown = false;
+        setTimeout(function(){ if(gameRunning) showMondayPaper(); }, 2000);
+
+        showMsg('Week ' + currentWeek + ' open — ' + playerName + '. Check your role card objective!', 'success');
+    }
+
+    function pauseGame() {
+        if (!gameRunning) return;
+        gameRunning = false;
+        gamePaused = true;
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('resumeBtn').style.display = '';
+        document.getElementById('startBtn').style.display = 'none';
+        setStatus('Market Paused — Analyse and Trade', 'status-paused');
+        clearInterval(priceInterval);
+        clearInterval(newsInterval);
+        clearInterval(shockInterval);
+        clearInterval(timerInterval);
+        showMsg('Market paused. Good time to review your portfolio.', 'success');
+    }
+
+    function resumeGame() {
+        if (gameRunning || !gamePaused) return;
+        gameRunning = true;
+        gamePaused = false;
+        document.getElementById('resumeBtn').style.display = 'none';
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('pauseBtn').style.display = '';
+        setStatus('Market Running — ' + chosenDuration + ' min round', 'status-running');
+
+        priceInterval = setInterval(updatePrices, 5000);
+        newsInterval = setInterval(triggerNews, 9000);
+        shockInterval = setInterval(triggerMajor, 28000);
+
+        timerInterval = setInterval(function() {
+            timerRemaining--;
+            updateTimerDisplay();
+            if (timerRemaining <= 0) {
+                endGame();
+            }
+        }, 1000);
+
+        showMsg('Market resumed. ' + Math.ceil(timerRemaining / 60) + ' min remaining.', 'success');
+    }
+
+    function resetGame() {
+        gameRunning = false;
+        gamePaused = false;
+        clearInterval(priceInterval);
+        clearInterval(newsInterval);
+        clearInterval(shockInterval);
+        clearInterval(timerInterval);
+        timerRemaining = 0;
+        document.getElementById('startBtn').style.display = '';
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('pauseBtn').style.display = '';
+        document.getElementById('pauseBtn').disabled = true;
+        document.getElementById('resumeBtn').style.display = 'none';
+        document.getElementById('endNowBtn').style.display = 'none';
+        document.getElementById('timerBarWrap').style.display = 'none';
+        document.getElementById('roleCardWidget').style.display = 'none';
+        document.getElementById('endOverlay').style.display = 'none';
+        document.getElementById('weekEndOverlay').style.display = 'none';
+        currentWeek = 1; weekStartValue = 10000; weeklyResults = [];
+        mondayPaperShown = false; fridayPaperShown = false;
+        setStatus('Market Stopped — Press Start to Begin', '');
+
+        gameState = { cash: 10000, holdings: {}, costBasis: {}, transactions: [], totalTrades: 0, plHistory: [], ethicsViolators: {}, contrarianBuy: false, lastNegNewsTime: null, lastNegNewsSym: null, sessionNewsLog: [] };
+        usedNews = []; usedMajor = [];
+
+        for (var sym in stocks) {
+            var s = stocks[sym];
+            switch(sym) {
+                case 'TCORE': s.price = 150.00; break;
+                case 'SRCH':  s.price = 280.00; break;
+                case 'GLSHP': s.price = 320.00; break;
+                case 'MRKT':  s.price = 85.00;  break;
+                case 'FNXB':  s.price = 220.00; break;
+                case 'CRDT':  s.price = 130.00; break;
+                case 'ELMO':  s.price = 800.00; break;
+                case 'CHIP':  s.price = 600.00; break;
+                case 'PHARX': s.price = 190.00; break;
+                case 'SOLR':  s.price = 110.00; break;
+                case 'VIEW':  s.price = 500.00; break;
+                case 'LOGX':  s.price = 95.00;  break;
+            }
+            s.change = 0;
+            s.history = [s.price];
+            s.sentiment = 0;
+            s.lastNewsTime = 0;
+        }
+
+        document.getElementById('breakingArea').innerHTML = '';
+        document.getElementById('newsStream').innerHTML = '<div class="news-item"><div class="news-hl">Game Reset</div><div class="news-det">Start the market to begin trading.</div></div>';
+        renderStockList();
+        renderPortfolio();
+        renderTransactions();
+        updateSummaryBar();
+        renderSectorBreakdown();
+    }
+
+    function setStatus(text, cls) {
+        var el = document.getElementById('gameStatus');
+        el.textContent = text;
+        el.className = 'game-status ' + cls;
+    }
+
+    // ===== PRICE UPDATES =====
+    function updatePrices() {
+        for (var sym in stocks) {
+            var s = stocks[sym];
+            var volatility = 0.025;
+            var rand = (Math.random() - 0.5) * 2 * volatility;
+            var newPrice = s.price * (1 + rand);
+            if (newPrice < 1) newPrice = 1;
+            s.change = ((newPrice - s.price) / s.price) * 100;
+            s.price = Math.round(newPrice * 100) / 100;
+            s.history.push(s.price);
+            if (s.history.length > 20) s.history.shift();
+        }
+        renderStockList();
+        updateSummaryBar();
+        renderPortfolio();
+        renderSectorBreakdown();
+        updateOrderCost();
+    }
+
+    // ===== NEWS =====
+    function triggerNews() {
+        var idx = pickSentimentWeightedNews();
+        stocks[newsEvents[idx].sym].lastNewsTime = Date.now();
+        applyNewsEvent(newsEvents[idx]);
+    }
+
+    function applyNewsEvent(ne) {
+        var s = stocks[ne.sym];
+        var actualFx = ne.fx * (0.8 + Math.random() * 0.4);
+        var newPrice = s.price * (1 + actualFx);
+        if (newPrice < 1) newPrice = 1;
+        s.change = ((newPrice - s.price) / s.price) * 100;
+        s.price = Math.round(newPrice * 100) / 100;
+        s.history.push(s.price);
+        if (s.history.length > 20) s.history.shift();
+
+        // Update sentiment
+        updateSentiment(ne.sym, ne.type === 'pos' ? 1 : -1);
+
+        // Track ethics violations for Ethical Investor role
+        if (ne.concept && (ne.concept.indexOf('Ethical') !== -1 || ne.concept.indexOf('mis-selling') !== -1 || ne.concept.indexOf('Price Gouging') !== -1 || ne.concept.indexOf('price gouging') !== -1)) {
+            if (gameState.ethicsViolators) gameState.ethicsViolators[ne.sym] = true;
+        }
+
+        // Track contrarian opportunity for Contrarian Investor role
+        if (ne.type === 'neg') {
+            gameState.lastNegNewsTime = Date.now();
+            gameState.lastNegNewsSym = ne.sym;
+        }
+
+        // Log event for debrief
+        if (gameState.sessionNewsLog) {
+            gameState.sessionNewsLog.push({ hl: ne.hl, type: ne.type, sym: ne.sym, concept: ne.concept || '', major: false });
+        }
+
+        addNewsItem(ne.hl, ne.det + (ne.concept ? ' <em style="font-size:0.85em;color:var(--text-muted);">' + ne.concept + '</em>' : ''), ne.imp, ne.type, false);
+        renderStockList();
+        updateSummaryBar();
+        renderPortfolio();
+        renderSectorBreakdown();
+        updateOrderCost();
+    }
+
+    function triggerMajor() {
+        var available = [];
+        for (var i = 0; i < majorEvents.length; i++) {
+            if (usedMajor.indexOf(i) === -1) available.push(i);
+        }
+        if (available.length === 0) { usedMajor = []; available = majorEvents.map(function(x,i){return i;}); }
+        var idx = available[Math.floor(Math.random() * available.length)];
+        usedMajor.push(idx);
+        applyMajorEvent(majorEvents[idx]);
+    }
+
+    function applyMajorEvent(ev) {
+        for (var sym in stocks) {
+            var s = stocks[sym];
+            var actualFx = ev.fx * (0.7 + Math.random() * 0.6);
+            var newPrice = s.price * (1 + actualFx);
+            if (newPrice < 1) newPrice = 1;
+            s.change = ((newPrice - s.price) / s.price) * 100;
+            s.price = Math.round(newPrice * 100) / 100;
+            s.history.push(s.price);
+            if (s.history.length > 20) s.history.shift();
+        }
+
+        var type = ev.type === 'crash' ? 'neg' : 'pos';
+        var pestle = ev.pestle ? ' <em style="font-size:0.85em;color:var(--text-muted);">' + ev.pestle + '</em>' : '';
+
+        // Log major event for debrief
+        if (gameState.sessionNewsLog) {
+            gameState.sessionNewsLog.push({ hl: ev.headline, type: type, sym: 'ALL', concept: ev.pestle || '', major: true });
+        }
+
+        addNewsItem(ev.headline, ev.details + pestle, ev.impact, type, true);
+        showBreaking(ev.headline, ev.type);
+        renderStockList();
+        updateSummaryBar();
+        renderPortfolio();
+        renderSectorBreakdown();
+        updateOrderCost();
+    }
+
+    function addNewsItem(hl, det, imp, type, isMajor) {
+        var stream = document.getElementById('newsStream');
+        var div = document.createElement('div');
+        div.className = 'news-item' + (isMajor ? (type === 'neg' ? ' shock-crash' : ' shock-boom') : (type === 'pos' ? ' pos' : ' neg'));
+        var impCls = type === 'pos' ? 'impact-pos' : 'impact-neg';
+        var ts = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+        div.innerHTML = '<span class="news-ts">' + ts + '</span><div class="news-hl">' + hl + '</div><div class="news-det">' + det + '</div><span class="news-impact ' + impCls + '">' + imp + '</span>';
+        stream.insertBefore(div, stream.firstChild);
+        if (stream.children.length > 15) stream.removeChild(stream.lastChild);
+    }
+
+    function showBreaking(hl, type) {
+        var area = document.getElementById('breakingArea');
+        var div = document.createElement('div');
+        div.className = 'news-item ' + (type === 'crash' ? 'shock-crash' : 'shock-boom');
+        div.style.marginBottom = '8px';
+        div.innerHTML = '<strong>' + (type === 'crash' ? 'MARKET CRASH: ' : 'MARKET BOOM: ') + '</strong>' + hl;
+        area.innerHTML = '';
+        area.appendChild(div);
+        setTimeout(function() { if (area.contains(div)) area.removeChild(div); }, 8000);
+    }
+
+    // ===== RENDER STOCK LIST =====
+    function renderStockList() {
+        var list = document.getElementById('stockList');
+        list.innerHTML = '';
+        for (var sym in stocks) {
+            var s = stocks[sym];
+            var chgCls = s.change > 0.05 ? 'chg-pos' : (s.change < -0.05 ? 'chg-neg' : 'chg-neu');
+            var chgSign = s.change > 0 ? '+' : '';
+            var row = document.createElement('div');
+            row.className = 'stock-row';
+            row.id = 'row-' + sym;
+            var sparkSvg = buildSparkline(s.history);
+            row.innerHTML = '<div><div class="stock-sym">' + getSentimentDot(sym) + sym + '</div><div class="stock-co">' + s.company + '</div><div class="stock-sector">' + s.sector + '</div></div>' +
+                '<svg class="sparkline" viewBox="0 0 60 28">' + sparkSvg + '</svg>' +
+                '<div class="stock-price">£' + s.price.toFixed(2) + '</div>' +
+                '<div class="stock-chg ' + chgCls + '">' + chgSign + s.change.toFixed(2) + '%</div>' +
+                '<div class="trade-actions">' +
+                '<button class="tbtn tbtn-buy" onclick="quickTrade(\'' + sym + '\',\'buy\')">Buy</button>' +
+                '<button class="tbtn tbtn-sell" onclick="quickTrade(\'' + sym + '\',\'sell\')">Sell</button>' +
+                '</div>';
+            list.appendChild(row);
+        }
+    }
+
+    function buildSparkline(history) {
+        if (!history || history.length < 2) return '';
+        var w = 60, h = 28, pad = 2;
+        var mn = history[0], mx = history[0];
+        for (var i = 1; i < history.length; i++) {
+            if (history[i] < mn) mn = history[i];
+            if (history[i] > mx) mx = history[i];
+        }
+        if (mx === mn) mx = mn + 1;
+        var pts = [];
+        for (var j = 0; j < history.length; j++) {
+            var x = pad + (j / (history.length - 1)) * (w - pad * 2);
+            var y = h - pad - ((history[j] - mn) / (mx - mn)) * (h - pad * 2);
+            pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+        }
+        var last = history[history.length - 1];
+        var first = history[0];
+        var col = last >= first ? '#10b981' : '#ef4444';
+        return '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + col + '" stroke-width="1.5" stroke-linejoin="round"/>';
+    }
+
+    function populateTradeSelect() {
+        var sel = document.getElementById('tradeSymbol');
+        sel.innerHTML = '<option value="">Select stock</option>';
+        for (var sym in stocks) {
+            var opt = document.createElement('option');
+            opt.value = sym;
+            opt.textContent = sym + ' — ' + stocks[sym].company;
+            sel.appendChild(opt);
+        }
+    }
+
+    function quickTrade(sym, type) {
+        document.getElementById('tradeSymbol').value = sym;
+        document.getElementById('tradeType').value = type;
+        document.getElementById('tradeShares').focus();
+        updateOrderCost();
+    }
+
+    function updateOrderCost() {
+        var sym = document.getElementById('tradeSymbol').value;
+        var shares = parseInt(document.getElementById('tradeShares').value);
+        var el = document.getElementById('orderCost');
+        if (!sym || !shares || shares < 1) { el.textContent = ''; return; }
+        var total = stocks[sym].price * shares;
+        var type = document.getElementById('tradeType').value;
+        el.textContent = type === 'buy' ? 'Cost: £' + total.toFixed(2) + ' (Cash: £' + gameState.cash.toFixed(2) + ')' : 'Proceeds: £' + total.toFixed(2);
+    }
+
+    // ===== TRADING =====
+    function executeTrade() {
+        var sym = document.getElementById('tradeSymbol').value;
+        var type = document.getElementById('tradeType').value;
+        var shares = parseInt(document.getElementById('tradeShares').value);
+
+        if (!sym || !shares || shares < 1) { showMsg('Please select a stock and enter a valid number of shares.', 'error'); return; }
+
+        var s = stocks[sym];
+        var total = s.price * shares;
+
+        if (type === 'buy') {
+            if (gameState.cash < total) { showMsg('Insufficient cash for this purchase.', 'error'); return; }
+            gameState.cash -= total;
+            gameState.holdings[sym] = (gameState.holdings[sym] || 0) + shares;
+            // track cost basis
+            if (!gameState.costBasis[sym]) gameState.costBasis[sym] = { totalCost: 0, totalShares: 0 };
+            gameState.costBasis[sym].totalCost += total;
+            gameState.costBasis[sym].totalShares += shares;
+            // Contrarian investor: bought within 30s of negative news on same stock
+            if (gameState.lastNegNewsSym === sym && gameState.lastNegNewsTime && (Date.now() - gameState.lastNegNewsTime) <= 30000) {
+                gameState.contrarianBuy = true;
+            }
+            showMsg('Bought ' + shares + ' shares of ' + sym + ' for £' + total.toFixed(2), 'success');
+        } else {
+            if (!gameState.holdings[sym] || gameState.holdings[sym] < shares) { showMsg('Not enough shares to sell.', 'error'); return; }
+            gameState.cash += total;
+            gameState.holdings[sym] -= shares;
+            if (gameState.holdings[sym] === 0) {
+                delete gameState.holdings[sym];
+                delete gameState.costBasis[sym];
+            } else {
+                var ratio = shares / (gameState.holdings[sym] + shares);
+                gameState.costBasis[sym].totalCost -= gameState.costBasis[sym].totalCost * ratio;
+                gameState.costBasis[sym].totalShares -= shares;
+            }
+            showMsg('Sold ' + shares + ' shares of ' + sym + ' for £' + total.toFixed(2), 'success');
+        }
+
+        gameState.transactions.unshift({ sym: sym, type: type, shares: shares, price: s.price, total: total, ts: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) });
+        gameState.totalTrades++;
+
+        document.getElementById('tradeSymbol').value = '';
+        document.getElementById('tradeShares').value = '';
+        document.getElementById('orderCost').textContent = '';
+
+        renderPortfolio();
+        renderTransactions();
+        updateSummaryBar();
+        renderSectorBreakdown();
+    }
+
+    function showMsg(text, type) {
+        var area = document.getElementById('msgArea');
+        area.innerHTML = '<div class="msg ' + type + '">' + text + '</div>';
+        setTimeout(function() { area.innerHTML = ''; }, 5000);
+    }
+
+    // ===== RENDER PORTFOLIO =====
+    function renderPortfolio() {
+        var list = document.getElementById('holdingsList');
+        var syms = Object.keys(gameState.holdings);
+        if (syms.length === 0) { list.innerHTML = '<div class="empty">No holdings yet. Start trading!</div>'; return; }
+        list.innerHTML = '';
+        for (var i = 0; i < syms.length; i++) {
+            var sym = syms[i];
+            var qty = gameState.holdings[sym];
+            var price = stocks[sym].price;
+            var val = qty * price;
+            var avgBuy = gameState.costBasis[sym] ? (gameState.costBasis[sym].totalCost / gameState.costBasis[sym].totalShares) : price;
+            var plAbs = (price - avgBuy) * qty;
+            var plPct = ((price - avgBuy) / avgBuy) * 100;
+            var plCls = plPct >= 0 ? 'gain' : 'loss';
+            var plSign = plPct >= 0 ? '+' : '';
+            var plAbsSign = plAbs >= 0 ? '+' : '';
+            var row = document.createElement('div');
+            row.className = 'holding-row';
+            row.style.flexDirection = 'column';
+            row.innerHTML =
+                '<div style="display:flex;justify-content:space-between;align-items:center;width:100%;">' +
+                    '<div><div class="h-sym">' + sym + ' <span style="font-weight:400;font-size:0.82em;color:var(--text-muted);">x' + qty + '</span></div>' +
+                    '<div class="h-buyat">Avg buy £' + avgBuy.toFixed(2) + ' &rarr; now £' + price.toFixed(2) + '</div></div>' +
+                    '<div style="text-align:right"><div class="h-val">£' + val.toFixed(2) + '</div>' +
+                    '<div class="h-pl ' + plCls + '">' + plAbsSign + '£' + Math.abs(plAbs).toFixed(2) + ' (' + plSign + plPct.toFixed(1) + '%)</div></div>' +
+                '</div>';
+            list.appendChild(row);
+        }
+    }
+
+    // ===== RENDER TRANSACTIONS =====
+    function renderTransactions() {
+        var list = document.getElementById('txList');
+        if (gameState.transactions.length === 0) { list.innerHTML = '<div class="empty">No transactions yet.</div>'; return; }
+        list.innerHTML = '';
+        var shown = gameState.transactions.slice(0, 12);
+        for (var i = 0; i < shown.length; i++) {
+            var tx = shown[i];
+            var row = document.createElement('div');
+            row.className = 'tx-row';
+            row.innerHTML = '<div><span class="tx-type tx-' + tx.type + '">' + tx.type.toUpperCase() + '</span> <strong>' + tx.sym + '</strong> &times;' + tx.shares + '</div>' +
+                '<div style="text-align:right"><div>£' + tx.total.toFixed(2) + '</div><div class="tx-ts">' + tx.ts + '</div></div>';
+            list.appendChild(row);
+        }
+    }
+
+    // ===== SUMMARY BAR =====
+    function calcPortfolioValue() {
+        var val = gameState.cash;
+        for (var sym in gameState.holdings) {
+            val += gameState.holdings[sym] * stocks[sym].price;
+        }
+        return val;
+    }
+
+    function calcDiversification() {
+        var cnt = Object.keys(gameState.holdings).length;
+        if (cnt === 0) return 0;
+        var total = Object.keys(stocks).length;
+        var coverScore = (cnt / total) * 60;
+        var balScore = 0;
+        if (cnt > 1) {
+            var portVal = calcPortfolioValue();
+            var vals = [];
+            for (var sym in gameState.holdings) {
+                vals.push((gameState.holdings[sym] * stocks[sym].price) / portVal);
+            }
+            var mean = 0;
+            for (var i = 0; i < vals.length; i++) mean += vals[i];
+            mean /= vals.length;
+            var variance = 0;
+            for (var j = 0; j < vals.length; j++) variance += Math.pow(vals[j] - mean, 2);
+            variance /= vals.length;
+            balScore = Math.max(0, 40 * (1 - Math.sqrt(variance) * 2));
+        }
+        return Math.min(100, Math.round(coverScore + balScore));
+    }
+
+    function updateSummaryBar() {
+        var portVal = calcPortfolioValue();
+        var pl = portVal - 10000;
+        var plPct = ((pl / 10000) * 100).toFixed(2);
+        var plSign = pl >= 0 ? '+' : '';
+        var plCls = pl >= 0 ? 'gain' : 'loss';
+
+        document.getElementById('totalValue').textContent = '£' + portVal.toFixed(2);
+        document.getElementById('availableCash').textContent = '£' + gameState.cash.toFixed(2);
+        var plEl = document.getElementById('totalPL');
+        plEl.textContent = plSign + '£' + pl.toFixed(2) + ' (' + plSign + plPct + '%)';
+        plEl.className = 's-val ' + plCls;
+        document.getElementById('diversScore').textContent = calcDiversification() + '%';
+        document.getElementById('tradeCount').textContent = gameState.totalTrades;
+    }
+
+    // ===== SECTOR BREAKDOWN =====
+    function renderSectorBreakdown() {
+        var el = document.getElementById('sectorBreakdown');
+        var sectors = {};
+        var portVal = calcPortfolioValue() - gameState.cash;
+        if (portVal <= 0) { el.innerHTML = '<div class="empty" style="font-size:0.8em;">Buy shares to see your sector exposure.</div>'; return; }
+
+        for (var sym in gameState.holdings) {
+            var sec = stocks[sym].sector;
+            var val = gameState.holdings[sym] * stocks[sym].price;
+            if (!sectors[sec]) sectors[sec] = 0;
+            sectors[sec] += val;
+        }
+
+        var keys = Object.keys(sectors);
+        keys.sort(function(a, b) { return sectors[b] - sectors[a]; });
+
+        el.innerHTML = '';
+        for (var i = 0; i < keys.length; i++) {
+            var sec = keys[i];
+            var pct = Math.round((sectors[sec] / portVal) * 100);
+            var div = document.createElement('div');
+            div.className = 'sector-bar';
+            div.innerHTML = '<div class="sb-label"><span>' + sec + '</span><span>' + pct + '%</span></div><div class="sb-track"><div class="sb-fill" style="width:' + pct + '%"></div></div>';
+            el.appendChild(div);
+        }
+    }
+
+    // ===== DEBRIEF =====
+    function openDebrief() {
+        var body = document.getElementById('debriefBody');
+        var portVal = calcPortfolioValue();
+        var pl = portVal - 10000;
+        var plSign = pl >= 0 ? '+' : '';
+        var plCls = pl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+        var diversification = calcDiversification();
+        var holdCount = Object.keys(gameState.holdings).length;
+
+        var best = null, worst = null;
+        for (var sym in gameState.holdings) {
+            if (!gameState.costBasis[sym]) continue;
+            var basis = gameState.costBasis[sym].totalCost / gameState.costBasis[sym].totalShares;
+            var curr = stocks[sym].price;
+            var chg = ((curr - basis) / basis) * 100;
+            if (best === null || chg > best.chg) best = { sym: sym, chg: chg };
+            if (worst === null || chg < worst.chg) worst = { sym: sym, chg: chg };
+        }
+
+        var sectorSet = {};
+        for (var s in gameState.holdings) { sectorSet[stocks[s].sector] = 1; }
+        var sectorCount = Object.keys(sectorSet).length;
+
+        // Build session news log table
+        var log = gameState.sessionNewsLog || [];
+        var newsTableRows = '';
+        for (var n = 0; n < log.length; n++) {
+            var ev = log[n];
+            var tagCls = ev.major ? 'nl-major' : (ev.type === 'pos' ? 'nl-pos' : 'nl-neg');
+            var tagTxt = ev.major ? 'MARKET' : (ev.type === 'pos' ? 'POSITIVE' : 'NEGATIVE');
+            newsTableRows +=
+                '<tr>' +
+                '<td><span class="nl-tag ' + tagCls + '">' + tagTxt + '</span></td>' +
+                '<td>' + ev.hl + '</td>' +
+                '<td style="color:var(--text-muted);font-size:0.85em;">' + (ev.concept || '') + '</td>' +
+                '<td><span class="nl-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>' +
+                '<td><span class="nl-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>' +
+                '</tr>';
+        }
+
+        var newsSection = log.length > 0
+            ? '<div class="modal-section"><h3>Events You Experienced — Classify Them</h3>' +
+              '<p style="font-size:0.82em;color:var(--text-muted);margin-bottom:12px;">For each event below, fill in the PESTLE category and which stakeholders were affected. Use this as a class discussion.</p>' +
+              '<div style="overflow-x:auto;"><table class="nl-table">' +
+              '<thead><tr><th>Type</th><th>Event</th><th>Business Concept</th><th>PESTLE Category</th><th>Stakeholders Affected</th></tr></thead>' +
+              '<tbody>' + newsTableRows + '</tbody></table></div></div>'
+            : '';
+
+        body.innerHTML =
+            '<div class="db-grid">' +
+            '<div class="db-card"><div class="db-label">Final Portfolio Value</div><div class="db-val">£' + portVal.toFixed(2) + '</div></div>' +
+            '<div class="db-card"><div class="db-label">Total Profit / Loss</div><div class="db-val" style="' + plCls + '">' + plSign + '£' + pl.toFixed(2) + '</div></div>' +
+            '<div class="db-card"><div class="db-label">Diversification Score</div><div class="db-val">' + diversification + '%</div></div>' +
+            '<div class="db-card"><div class="db-label">Total Trades Made</div><div class="db-val">' + gameState.totalTrades + '</div></div>' +
+            '<div class="db-card"><div class="db-label">Stocks Held</div><div class="db-val">' + holdCount + ' stocks</div></div>' +
+            '<div class="db-card"><div class="db-label">Sectors Covered</div><div class="db-val">' + sectorCount + ' sectors</div></div>' +
+            (best ? '<div class="db-card"><div class="db-label">Best Holding</div><div class="db-val" style="color:var(--green)">' + best.sym + ' (+' + best.chg.toFixed(1) + '%)</div></div>' : '<div class="db-card"></div>') +
+            (worst ? '<div class="db-card"><div class="db-label">Worst Holding</div><div class="db-val" style="color:var(--red)">' + worst.sym + ' (' + worst.chg.toFixed(1) + '%)</div></div>' : '<div class="db-card"></div>') +
+            '</div>' +
+
+            newsSection +
+
+            '<div class="db-questions"><h3>Discussion Questions</h3>' +
+            '<div class="db-q"><div class="q-tag">Shareholder Returns</div>How does your final P&amp;L reflect the short-term nature of shareholder objectives? Why might real-world shareholders demand consistent growth?</div>' +
+            '<div class="db-q"><div class="q-tag">Risk Management</div>Did diversification protect you during market shocks? What is the difference between systematic (market-wide) and unsystematic (company-specific) risk?</div>' +
+            '<div class="db-q"><div class="q-tag">Stakeholder Conflict</div>Look at the events table above. Which events created conflict between different stakeholder groups? Who won and who lost?</div>' +
+            '<div class="db-q"><div class="q-tag">PESTLE Analysis</div>Using your completed events table, which PESTLE category appeared most? What does that tell us about the biggest threats to businesses today?</div>' +
+            '<div class="db-q"><div class="q-tag">Business Objectives</div>If you were a CEO of one of the companies in this simulation, how might the events have conflicted with your long-term objectives?</div>' +
+            '<div class="db-q"><div class="q-tag">Ethics</div>Did any ethical events affect your decisions (e.g. mis-selling, price gouging)? Should shareholders accept lower returns for more ethical behaviour?</div>' +
+            '</div>';
+
+        openModal('debriefModal');
+    }
+
+    // ===== RUMOURS =====
+    var rumours = [
+        { sym:'TCORE', type:'pos', hl:'🔊 RUMOUR: Sources suggest TechCore may announce a major product launch ahead of schedule.', fx:0.025 },
+        { sym:'SRCH',  type:'neg', hl:'🔊 RUMOUR: SearchNet reportedly facing undisclosed regulatory pressure in Brussels — unconfirmed.', fx:-0.025 },
+        { sym:'GLSHP', type:'pos', hl:'🔊 RUMOUR: GlobalShop tipped to unveil a strategic acquisition — market speculation building.', fx:0.02 },
+        { sym:'FNXB',  type:'neg', hl:'🔊 RUMOUR: FinexBank insider suggests Q3 results may disappoint — not yet confirmed.', fx:-0.025 },
+        { sym:'CHIP',  type:'pos', hl:'🔊 RUMOUR: ChipMaster rumoured to be in exclusive supply talks with a major AI firm.', fx:0.03 },
+        { sym:'PHARX', type:'neg', hl:'🔊 RUMOUR: PharmaX clinical trial timeline said to have slipped — unverified reports.', fx:-0.025 },
+        { sym:'ELMO',  type:'pos', hl:'🔊 RUMOUR: ElectroMotors reportedly shortlisted for a second government EV contract.', fx:0.025 },
+        { sym:'SOLR',  type:'pos', hl:'🔊 RUMOUR: SolarGrid in advanced talks over a major European grid partnership — unconfirmed.', fx:0.02 },
+        { sym:'VIEW',  type:'neg', hl:'🔊 RUMOUR: StreamView subscriber churn figures for Q3 said to be worse than expected.', fx:-0.025 },
+        { sym:'LOGX',  type:'neg', hl:'🔊 RUMOUR: LogiXpress facing margin pressure from a new competitor — market sources cautious.', fx:-0.02 }
+    ];
+    var usedRumours = [];
+
+    var _origTriggerNews = triggerNews;
+    triggerNews = function() {
+        if (Math.random() < 0.28) {
+            var avR = rumours.filter(function(r,i){ return usedRumours.indexOf(i) < 0; });
+            if (!avR.length){ usedRumours=[]; avR=rumours.slice(); }
+            var rv = avR[Math.floor(Math.random()*avR.length)];
+            usedRumours.push(rumours.indexOf(rv));
+            applyRumour(rv);
+        } else {
+            _origTriggerNews();
+        }
+    };
+
+    function applyRumour(rv) {
+        var s = stocks[rv.sym];
+        var v = 0.7 + Math.random() * 0.6;
+        s.sentiment = Math.max(-3, Math.min(3, s.sentiment + (rv.type==='pos'?0.5:-0.5)));
+        var newPrice = s.price * (1 + rv.fx * v * 0.5);
+        if (newPrice < 1) newPrice = 1;
+        s.change = ((newPrice - s.price) / s.price) * 100;
+        s.price = Math.round(newPrice * 100) / 100;
+        s.history.push(s.price);
+        if (s.history.length > 20) s.history.shift();
+        var stream = document.getElementById('newsStream');
+        var div = document.createElement('div');
+        div.className = 'news-item rumour';
+        var ts = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+        div.innerHTML = '<span class="news-ts">' + ts + '</span><div class="news-hl">' + rv.hl + '</div><div class="news-det" style="font-style:italic;">Unconfirmed market speculation — prices may not yet reflect reality. Market efficiency theory: how quickly should this move the price?</div><span class="news-impact" style="background:rgba(139,92,246,0.15);color:#8b5cf6;">🔊 Rumour — unverified</span>';
+        stream.insertBefore(div, stream.firstChild);
+        if (stream.children.length > 15) stream.removeChild(stream.lastChild);
+        if (gameState.sessionNewsLog) gameState.sessionNewsLog.push({ hl: rv.hl, type: rv.type, sym: rv.sym, concept: 'Market efficiency — information and price signals.', major: false });
+        renderStockList(); updateSummaryBar();
+    }
+
+    // ===== END NOW =====
+    function endNow() {
+        if (!gameRunning && !gamePaused) return;
+        if (!confirm('End the current round now? Your results will be saved.')) return;
+        dismissNewspaper();
+        endWeek(true);
+    }
+
+    // ===== WEEK / GAME END =====
+    function stopIntervals() {
+        clearInterval(priceInterval); clearInterval(newsInterval);
+        clearInterval(shockInterval); clearInterval(timerInterval);
+        gameRunning = false; gamePaused = false;
+        document.getElementById('pauseBtn').disabled = true;
+        document.getElementById('endNowBtn').style.display = 'none';
+    }
+
+    function endWeek(force) {
+        stopIntervals();
+        var portVal = calcPortfolioValue();
+        var pl = portVal - weekStartValue;
+        weeklyResults.push({ week: currentWeek, pl: pl, portVal: portVal });
+        setStatus('Week ' + currentWeek + ' Complete', '');
+        if (force || currentWeek >= TOTAL_WEEKS) {
+            endGame();
+        } else {
+            showWeekEndScreen(pl, portVal);
+        }
+    }
+
+    function showWeekEndScreen(weekPl, portVal) {
+        var cumPl = weeklyResults.reduce(function(s,r){ return s+r.pl; }, 0);
+        document.getElementById('weIcon').textContent = weekPl >= 500 ? '📈' : weekPl >= 0 ? '✅' : '📉';
+        document.getElementById('weTitle').textContent = 'Week ' + currentWeek + ' Complete';
+        document.getElementById('weSub').textContent = weekPl >= 0 ? 'You made a profit this week.' : 'A tough week — but markets can recover.';
+        document.getElementById('weStats').innerHTML =
+            '<div class="week-stat"><div class="ws-label">Week P/L</div><div class="ws-val" style="color:' + (weekPl>=0?'var(--green)':'var(--red)') + '">' + (weekPl>=0?'+':'-') + '£' + Math.abs(weekPl).toFixed(0) + '</div></div>' +
+            '<div class="week-stat"><div class="ws-label">Portfolio Value</div><div class="ws-val">£' + portVal.toFixed(0) + '</div></div>' +
+            '<div class="week-stat"><div class="ws-label">Cumulative P/L</div><div class="ws-val" style="color:' + (cumPl>=0?'var(--green)':'var(--red)') + '">' + (cumPl>=0?'+':'-') + '£' + Math.abs(cumPl).toFixed(0) + '</div></div>' +
+            '<div class="week-stat"><div class="ws-label">Weeks Left</div><div class="ws-val">' + (TOTAL_WEEKS-currentWeek) + '</div></div>';
+        var pips = '';
+        for (var i=1; i<=TOTAL_WEEKS; i++) pips += '<div class="week-pip ' + (i<currentWeek?'done':i===currentWeek?'active':'') + '"></div>';
+        document.getElementById('weProgress').innerHTML = pips;
+        document.getElementById('weNextBtn').textContent = '▶ Start Week ' + (currentWeek+1);
+        document.getElementById('weekEndOverlay').style.display = 'flex';
+    }
+
+    function startNextWeek() {
+        document.getElementById('weekEndOverlay').style.display = 'none';
+        currentWeek++;
+        weekStartValue = calcPortfolioValue();
+        usedRumours = [];
+        gameState.sessionNewsLog = [];
+        mondayPaperShown = false; fridayPaperShown = false;
+        gameRunning = true; gamePaused = false;
+        timerTotal = chosenDuration * 60; timerRemaining = timerTotal;
+        document.getElementById('weekBadge').textContent = 'Week ' + currentWeek + ' of ' + TOTAL_WEEKS;
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('pauseBtn').style.display = '';
+        document.getElementById('resumeBtn').style.display = 'none';
+        document.getElementById('endNowBtn').style.display = '';
+        updateTimerDisplay();
+        setStatus('Week ' + currentWeek + ' Running — ' + chosenDuration + ' min', 'status-running');
+        priceInterval = setInterval(updatePrices, 5000);
+        newsInterval = setInterval(triggerNews, 9000);
+        shockInterval = setInterval(triggerMajor, 28000);
+        timerInterval = setInterval(function() {
+            timerRemaining--;
+            updateTimerDisplay();
+            if (!fridayPaperShown && timerRemaining <= Math.floor(timerTotal*0.10) && timerRemaining > 0) { fridayPaperShown=true; showFridayPaper(); }
+            if (timerRemaining <= 0) { endWeek(); }
+        }, 1000);
+        setTimeout(function(){ if(gameRunning) showMondayPaper(); }, 2000);
+        showMsg('Week ' + currentWeek + ' open. Portfolio carried over.', 'success');
+    }
+
+    // Override original endGame
+    var _origEndGame = endGame;
+    endGame = function() {
+        stopIntervals();
+        var portVal = calcPortfolioValue();
+        var cumPl = weeklyResults.reduce(function(s,r){ return s+r.pl; }, 0);
+        var pl = cumPl;
+        var plPct = ((pl / 10000) * 100).toFixed(1);
+        var diversification = calcDiversification();
+        var roleAchieved = activeRole ? activeRole.check() : false;
+        var grade, gradeLabel, gradeCol;
+        if (pl >= 4000) { grade = 'A+'; gradeLabel = 'Fund Manager'; gradeCol = 'var(--green)'; }
+        else if (pl >= 2000) { grade = 'A'; gradeLabel = 'Senior Analyst'; gradeCol = 'var(--green)'; }
+        else if (pl >= 500) { grade = 'B'; gradeLabel = 'Junior Analyst'; gradeCol = 'var(--blue)'; }
+        else if (pl >= 0) { grade = 'C'; gradeLabel = 'Trainee Trader'; gradeCol = 'var(--blue)'; }
+        else if (pl >= -2000) { grade = 'D'; gradeLabel = 'Under Review'; gradeCol = 'var(--amber)'; }
+        else { grade = 'F'; gradeLabel = 'Margin Called'; gradeCol = 'var(--red)'; }
+        var plSign = pl >= 0 ? '+' : '';
+        var plCls = pl >= 0 ? 'var(--green)' : 'var(--red)';
+        document.getElementById('endGrade').textContent = grade;
+        document.getElementById('endGrade').style.color = gradeCol;
+        document.getElementById('endGradeLabel').textContent = gradeLabel;
+        document.getElementById('endName').textContent = playerName;
+        var weekRows = weeklyResults.map(function(r){
+            var g = r.pl>=0; var s=(g?'+':'-')+'£'+Math.abs(r.pl).toFixed(0);
+            return '<div class="end-stat"><div class="es-label">Week '+r.week+' P/L</div><div class="es-val" style="color:'+(g?'var(--green)':'var(--red)')+'">'+s+'</div></div>';
+        }).join('');
+        document.getElementById('endStats').innerHTML = weekRows +
+            '<div class="end-stat" style="border-color:var(--amber);"><div class="es-label">Total P/L</div><div class="es-val" style="color:'+plCls+'">' + plSign + '£' + Math.abs(pl).toFixed(0) + ' (' + plSign + plPct + '%)</div></div>' +
+            '<div class="end-stat"><div class="es-label">Final Portfolio</div><div class="es-val">£' + portVal.toFixed(0) + '</div></div>';
+        if (activeRole) {
+            document.getElementById('endRole').innerHTML =
+                '<div class="er-title">' + activeRole.title + ' — ' + activeRole.type + '</div>' +
+                '<div style="font-size:0.85em;color:var(--text);margin:4px 0">' + activeRole.obj + '</div>' +
+                '<div style="font-weight:700;color:' + (roleAchieved?'var(--green)':'var(--red)') + ';margin-top:6px;">' + (roleAchieved?'Role objective achieved!':'Role objective not met') + '</div>' +
+                '<div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">' + activeRole.concept + '</div>';
+        }
+        document.getElementById('endOverlay').style.display = 'flex';
+        document.getElementById('endNowBtn').style.display = 'none';
+    };
+
+    // ===== MY RESULTS =====
+    var resultsList = [];
+
+    function submitAndShowResults() {
+        var portVal = calcPortfolioValue();
+        var cumPl = weeklyResults.length > 0 ? weeklyResults.reduce(function(s,r){ return s+r.pl; }, 0) : portVal - 10000;
+        var roleAchieved = activeRole ? activeRole.check() : false;
+        resultsList = resultsList.filter(function(e){ return e.name.toLowerCase() !== playerName.toLowerCase(); });
+        resultsList.push({ name: playerName, role: activeRole ? activeRole.title : '', pl: cumPl, portVal: portVal, mission: roleAchieved, weeks: TOTAL_WEEKS });
+        resultsList.sort(function(a,b){ return b.pl - a.pl; });
+        document.getElementById('endOverlay').style.display = 'none';
+        openResults();
+    }
+
+    function openResults() {
+        renderResultsTable();
+        document.getElementById('resultsOverlay').style.display = 'flex';
+    }
+    function closeResults() { document.getElementById('resultsOverlay').style.display = 'none'; }
+
+    function renderResultsTable() {
+        var body = document.getElementById('resultsBody');
+        if (!resultsList.length) {
+            body.innerHTML = '<div class="res-empty">No results yet. Finish a game and press <strong>See My Results</strong> to appear here.</div>';
+            return;
+        }
+        var maxAbs = Math.max.apply(null, resultsList.map(function(e){ return Math.abs(e.pl); })) || 1;
+        var html = '<table class="results-table"><thead><tr><th>#</th><th>Student</th><th>Profit / Loss</th><th>Final Value</th><th>Role</th><th>Objective</th></tr></thead><tbody>';
+        resultsList.forEach(function(e, i) {
+            var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+            var gain = e.pl >= 0;
+            var barW = Math.round((Math.abs(e.pl)/maxAbs)*100);
+            html += '<tr>' +
+                '<td><span class="res-rank">' + medal + '</span></td>' +
+                '<td class="res-name">' + e.name + '</td>' +
+                '<td><div class="res-bar-wrap"><div class="res-bar-track"><div class="res-bar-fill ' + (gain?'gain':'loss') + '" style="width:'+barW+'%"></div></div>' +
+                '<span class="res-pl ' + (gain?'gain':'loss') + '">' + (gain?'+':'-') + '£' + Math.abs(e.pl).toFixed(0) + '</span></div></td>' +
+                '<td>£' + e.portVal.toFixed(0) + '</td>' +
+                '<td style="font-size:0.82em;">' + (e.role||'—') + '</td>' +
+                '<td>' + (e.mission ? '✅' : '❌') + '</td>' +
+                '</tr>';
+        });
+        html += '</tbody></table>';
+        body.innerHTML = html;
+    }
+
+    function showAddScoreForm() {
+        var name = prompt('Student name:');
+        if (!name || !name.trim()) return;
+        var plStr = prompt('Their cumulative Profit / Loss (e.g. +£1240 or -£340):');
+        if (!plStr) return;
+        var pl = parseFloat(plStr.replace(/[^0-9.\-]/g,''));
+        if (isNaN(pl)) return;
+        if (plStr.indexOf('-') >= 0) pl = -Math.abs(pl);
+        resultsList = resultsList.filter(function(e){ return e.name.toLowerCase() !== name.trim().toLowerCase(); });
+        resultsList.push({ name: name.trim(), role: '✏️ Manual entry', pl: pl, portVal: 10000+pl, mission: false, weeks: TOTAL_WEEKS });
+        resultsList.sort(function(a,b){ return b.pl - a.pl; });
+        renderResultsTable();
+    }
+
+    function clearResults() {
+        if (!confirm('Clear all results?')) return;
+        resultsList = []; renderResultsTable();
+    }
+
+    function openClassBoard() {
+        var body = document.getElementById('cbBody');
+        if (!resultsList.length) {
+            body.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);font-family:\'Fraunces\',serif;font-size:1.3em;">No results yet.<br><span style="font-size:0.65em;font-family:\'DM Sans\',sans-serif;">Students tell you their score — use ➕ Add Score to enter them.</span></div>';
+            document.getElementById('classBoardOverlay').style.display = 'flex'; return;
+        }
+        var html = '';
+        resultsList.forEach(function(e, i) {
+            var rowCls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+            var rankCls = i===0?'gold':i===1?'silver':i===2?'bronze':'other';
+            var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+            var gain = e.pl >= 0;
+            html += '<div class="cb-row ' + rowCls + '" style="animation-delay:' + (i*0.06) + 's">' +
+                '<div class="cb-rank-cell ' + rankCls + '">' + medal + '</div>' +
+                '<div><div class="cb-name-cell">' + e.name + '</div><div class="cb-role-sub">' + e.role + '</div></div>' +
+                '<div class="cb-pl-block"><div class="cb-pl-val ' + (gain?'gain':'loss') + '">' + (gain?'+':'-') + '£' + Math.abs(e.pl).toFixed(0) + '</div><div class="cb-pl-label">Cumulative P/L</div></div>' +
+                '<div class="cb-port-block"><div class="cb-port-val">£' + e.portVal.toFixed(0) + '</div><div class="cb-port-label">Final Value</div></div>' +
+                '<div class="cb-role-block">' + (e.mission?'✅':'❌') + '<br>Objective</div>' +
+                '</div>';
+        });
+        body.innerHTML = html;
+        document.getElementById('classBoardOverlay').style.display = 'flex';
+    }
+
+    // ===== NEWSPAPER =====
+    var npCountdownTimer = null, npCountdownSecs = 20;
+
+    var mondayEditions = [
+        { kicker:'🏦 MONETARY POLICY — INTEREST RATES SPECIAL', headline:'Bank of England Holds Base Rate — But Warns: "The Hard Work Is Not Yet Done"',
+          article:'<p>The Bank of England\'s Monetary Policy Committee voted 6-3 to hold the base rate at its current level, resisting significant market pressure to cut borrowing costs. Governor Chen stated that while headline inflation has fallen, services inflation remains "persistently above target", warning that premature cuts could reignite price pressures.</p><p>The decision creates divergent pressures across sectors. Borrowing costs remain elevated, squeezing consumer disposable income and slowing retail spending. FinexBank and CreditOne, as interest rate beneficiaries, may see continued net interest margin expansion. Conversely, highly leveraged businesses in Retail and Manufacturing face continued cost pressure on debt servicing.</p><p><strong>ChipMaster Industries</strong> noted in its latest filing that capital expenditure plans are "under review" pending rate clarity. <strong>ElectroMotors PLC</strong> — which financed its latest factory expansion with floating-rate debt — faces rising interest costs if rates remain elevated. <strong>SolarGrid Energy</strong>, backed by long-term government contracts, is more insulated from rate sensitivity.</p>',
+          lesson:'<strong>💡 Exam link:</strong> Monetary policy transmission — how do changes in the base rate affect business investment, consumer spending, and exchange rates? Which of Porter\'s Five Forces is most affected by an interest rate hold?' },
+        { kicker:'🌍 TRADE POLICY — INTERNATIONAL MARKETS', headline:'UK Government Imposes New Digital Services Tariffs: Tech Giants in the Crosshairs',
+          article:'<p>The Department for Business and Trade announced overnight a new package of digital services tariffs targeting large technology platforms operating in the UK market. The measures, described as a "level playing field initiative", impose a 3% levy on digital advertising revenues and a 2% surcharge on data brokerage activities.</p><p>Analysts at Barclays estimate the new levies will reduce operating margins at <strong>SearchNet Ltd.</strong> by 4-6 percentage points, wiping an estimated £1.2bn from annual profits. <strong>TechCore Inc.</strong>, whose revenue exposure to digital advertising is more limited, faces a smaller but still material impact on its cloud services division.</p><p>The move is seen as part of a broader trend of "digital sovereignty" legislation spreading across Western democracies, following similar measures in France and Germany. Logistics and energy companies are unaffected directly, though <strong>LogiXpress Intl.</strong> may benefit if reduced tech-sector dominance opens new B2B markets.</p>',
+          lesson:'<strong>💡 Exam link:</strong> Political factors in PESTLE — how does government intervention through taxation and regulation affect business objectives and stakeholder interests? Consider the conflict between shareholder returns and government revenue objectives.' },
+        { kicker:'💡 TECHNOLOGY — AI AND AUTOMATION', headline:'AI Investment Reaches Inflection Point: "Every Sector Will Be Transformed"',
+          article:'<p>A landmark report published by McKinsey Global Institute this morning estimates that artificial intelligence will contribute £340bn to the UK economy by 2030, equivalent to a 10% productivity uplift across all sectors. The findings have triggered a significant reassessment of valuations across the technology and manufacturing sectors.</p><p><strong>ChipMaster Industries</strong> finds itself at the centre of the AI revolution: its latest generation of inference chips is now the de facto standard for large language model training, and analysts have raised price targets by 35% on the back of surging order books. <strong>TechCore Inc.</strong> is also positioned favourably, having quietly acquired three AI startups over the past 18 months.</p><p>Not all sectors benefit equally. Labour-intensive businesses including <strong>GlobalShop Group</strong> and <strong>LogiXpress Intl.</strong> face structural cost pressures as automation substitutes for warehouse and logistics roles — potentially triggering significant industrial relations challenges. The Ethical Investor role is particularly relevant: which companies are managing this transition responsibly?</p>',
+          lesson:'<strong>💡 Exam link:</strong> Technological change as an opportunity and a threat — how does disruptive innovation affect different stakeholder groups? Link to Schumpeter\'s concept of creative destruction and its implications for business strategy.' },
+        { kicker:'🌿 ENVIRONMENT — NET ZERO TRANSITION', headline:'Government Accelerates Net Zero Timeline: £200bn Green Investment Package Unveiled',
+          article:'<p>In a landmark Budget statement, the Chancellor confirmed that the UK\'s legally binding net zero target has been brought forward by five years to 2045, backed by a £200bn green investment package deployed over the next decade. The announcement immediately moved markets, with energy and manufacturing stocks seeing the sharpest reactions.</p><p><strong>SolarGrid Energy</strong> is among the most direct beneficiaries: the government has pre-committed to purchasing 15GW of additional solar capacity, of which SolarGrid is positioned to supply approximately 20%. The company\'s share price surged 12% in pre-market trading. <strong>ElectroMotors PLC</strong> also stands to gain significantly from the mandatory electrification of commercial vehicle fleets by 2032.</p><p>However, the transition creates significant adjustment costs for carbon-intensive businesses. <strong>GlobalShop Group\'s</strong> distribution network — currently heavily diesel-dependent — faces an estimated £800m fleet replacement cost. The announcement also intensifies ESG scrutiny: institutional investors have signalled they will vote against management at AGMs where credible transition plans are absent.</p>',
+          lesson:'<strong>💡 Exam link:</strong> Environmental factors in PESTLE and corporate social responsibility — how does the shift to sustainability affect different stakeholder groups? Should shareholder value maximisation remain the primary corporate objective in the context of net zero?' },
+        { kicker:'📉 MACROECONOMICS — RECESSION RISK', headline:'ONS Confirms GDP Contraction: Stagflation Scenario "Cannot Be Ruled Out"',
+          article:'<p>Office for National Statistics data published this morning shows GDP contracted by 0.3% in the previous quarter — the first negative print in four years. While technically not yet a recession (requiring two consecutive quarters of negative growth), economists at the Institute for Fiscal Studies warn that the combination of slowing growth and above-target inflation creates the conditions for a stagflationary episode not seen since the 1970s.</p><p>In recessionary environments, investors traditionally rotate towards defensive stocks — companies whose revenues are relatively insensitive to the economic cycle. <strong>PharmaX Sciences</strong> and <strong>SolarGrid Energy</strong> are typically characterised as defensive, while <strong>GlobalShop Group</strong> and <strong>StreamView Media</strong> are more exposed to discretionary consumer spending.</p><p>The contraction has also renewed pressure on highly indebted companies. <strong>ElectroMotors PLC</strong>, carrying significant debt from its recent expansion programme, faces elevated refinancing risk if credit conditions tighten further. <strong>FinexBank Corp.</strong> meanwhile warns of rising provisions for bad debt as household finances come under pressure.</p>',
+          lesson:'<strong>💡 Exam link:</strong> The economic cycle and its impact on business — distinguish between cyclical and defensive stocks. How does the macroeconomic environment affect business objectives, investment decisions, and stakeholder relationships?' },
+        { kicker:'🧑‍💼 LABOUR MARKETS — EMPLOYMENT TRENDS', headline:'Tight Labour Market Pushes Wage Growth to 6.8%: "Businesses Face Sustained Cost Pressure"',
+          article:'<p>The latest ONS Labour Market Statistics reveal that average weekly earnings growth accelerated to 6.8% in the most recent three-month period — well above the Bank of England\'s 3% target-consistent level. The data reinforces expectations that the MPC will hold rates higher for longer, and creates a challenging cost environment for labour-intensive businesses.</p><p><strong>GlobalShop Group</strong>, which employs over 80,000 warehouse and logistics staff in the UK, announced last week that its wage bill has increased by £340m year-on-year. The company is accelerating automation investment as a direct response, though analysts warn this creates short-term capital expenditure pressure. <strong>LogiXpress Intl.</strong> faces similar dynamics, having already issued a profit warning citing "exceptional labour cost inflation".</p><p>Technology and pharmaceutical companies are less directly exposed to headline wage growth, but face their own labour market pressures: competition for AI and data science talent has pushed graduate starting salaries at <strong>TechCore Inc.</strong> up 22% in two years. <strong>PharmaX Sciences</strong> has responded by partnering with three UK universities on sponsored PhD programmes to build a proprietary talent pipeline.</p>',
+          lesson:'<strong>💡 Exam link:</strong> Labour market conditions as an external business environment factor — how do rising wages affect different cost structures, pricing strategies, and competitive positions? Consider the stakeholder conflict between employees (seeking higher wages) and shareholders (seeking profit maximisation).' }
+    ];
+
+    function shuffleMondayEditions() {
+        mondayEditionQueue = mondayEditions.slice();
+        for (var i = mondayEditionQueue.length-1; i>0; i--) {
+            var j = Math.floor(Math.random()*(i+1));
+            var tmp = mondayEditionQueue[i]; mondayEditionQueue[i]=mondayEditionQueue[j]; mondayEditionQueue[j]=tmp;
+        }
+    }
+
+    function showMondayPaper() {
+        if (mondayPaperShown) return;
+        mondayPaperShown = true;
+        gamePaused = true;
+        var paper = document.getElementById('npPaper');
+        paper.className = 'np-paper';
+        document.getElementById('npDate').textContent = 'Monday — Week ' + currentWeek + ' Opens';
+        document.getElementById('npEdition').textContent = 'MONDAY EDITION — WEEK ' + currentWeek;
+        document.getElementById('npEdition2').textContent = 'A-LEVEL BUSINESS';
+        if (!mondayEditionQueue.length) shuffleMondayEditions();
+        var ed = mondayEditionQueue.shift();
+        document.getElementById('npKicker').textContent = ed.kicker;
+        document.getElementById('npHeadline').textContent = ed.headline;
+        document.getElementById('npArticle').innerHTML = ed.article;
+        document.getElementById('npLesson').innerHTML = ed.lesson;
+        document.getElementById('npOverlay').style.display = 'flex';
+        startNpCountdown(20);
+    }
+
+    function showFridayPaper() {
+        gamePaused = true;
+        var paper = document.getElementById('npPaper');
+        paper.className = 'np-paper';
+        document.getElementById('npDate').textContent = 'Friday — Week ' + currentWeek + ' Closes';
+        document.getElementById('npEdition').textContent = 'FRIDAY EDITION — WEEK ' + currentWeek;
+        document.getElementById('npEdition2').textContent = 'WEEK IN REVIEW';
+        document.getElementById('npKicker').textContent = '📊 PORTFOLIO REVIEW — FINAL TRADES CLOSING SOON';
+        var portVal = calcPortfolioValue();
+        var pl = portVal - weekStartValue;
+        var cumPl = weeklyResults.reduce(function(s,r){ return s+r.pl; }, 0) + pl;
+        var gainers = [], losers = [];
+        for (var sym in stocks) {
+            if (stocks[sym].history.length > 1) {
+                var chg = ((stocks[sym].price - stocks[sym].history[0]) / stocks[sym].history[0]) * 100;
+                if (chg > 0) gainers.push({sym:sym,chg:chg}); else losers.push({sym:sym,chg:chg});
+            }
+        }
+        gainers.sort(function(a,b){return b.chg-a.chg;}); losers.sort(function(a,b){return a.chg-b.chg;});
+        var tg = gainers[0], tl = losers[0];
+        document.getElementById('npHeadline').textContent = 'Markets Close: How Did Week ' + currentWeek + ' Shape Your Portfolio?';
+        document.getElementById('npArticle').innerHTML =
+            '<p>As the trading week draws to a close, your portfolio stands at <strong>£' + portVal.toFixed(0) + '</strong> — a week-on-week ' + (pl>=0?'gain':'loss') + ' of <strong>' + (pl>=0?'+':'-') + '£' + Math.abs(pl).toFixed(0) + '</strong>. Cumulative performance across all weeks: <strong>' + (cumPl>=0?'+':'-') + '£' + Math.abs(cumPl).toFixed(0) + '</strong>.</p>' +
+            (tg ? '<p>📈 <strong>Strongest performer this week:</strong> ' + tg.sym + ' — ' + stocks[tg.sym].company + ' (+' + tg.chg.toFixed(1) + '%)</p>' : '') +
+            (tl ? '<p>📉 <strong>Weakest performer this week:</strong> ' + tl.sym + ' — ' + stocks[tl.sym].company + ' (' + tl.chg.toFixed(1) + '%)</p>' : '') +
+            '<p>Final trades close imminently. Review your diversification, check your role card objective, and make any last adjustments before the market closes.</p>';
+        document.getElementById('npLesson').innerHTML = '<strong>💡 Reflect:</strong> Did the Monday paper\'s macroeconomic narrative play out in this week\'s price movements? Which PESTLE factors drove the most significant volatility? What would you do differently in Week ' + (currentWeek+1) + '?';
+        document.getElementById('npOverlay').style.display = 'flex';
+        startNpCountdown(15);
+    }
+
+    function startNpCountdown(secs) {
+        clearInterval(npCountdownTimer);
+        npCountdownSecs = secs;
+        document.getElementById('npCountdown').textContent = npCountdownSecs;
+        npCountdownTimer = setInterval(function(){
+            npCountdownSecs--;
+            document.getElementById('npCountdown').textContent = npCountdownSecs;
+            if (npCountdownSecs <= 0) { clearInterval(npCountdownTimer); dismissNewspaper(); }
+        }, 1000);
+    }
+
+    function dismissNewspaper() {
+        clearInterval(npCountdownTimer);
+        document.getElementById('npOverlay').style.display = 'none';
+        gamePaused = false;
+        setStatus('Market Running — Week ' + currentWeek, 'status-running');
+    }
+
+    // Escape key
+    var _origKeydown = document.onkeydown;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (document.getElementById('npOverlay').style.display !== 'none') { dismissNewspaper(); return; }
+            closeResults();
+            if (document.getElementById('classBoardOverlay').style.display !== 'none') { document.getElementById('classBoardOverlay').style.display = 'none'; }
+        }
+    });
+
+    // ===== ON LOAD =====
+    window.addEventListener('load', function() {
+        try {
+            var t = localStorage.getItem('biz-omics-theme');
+            if (t === 'light') { document.body.classList.add('light'); document.getElementById('themeBtn').textContent = 'Dark Mode'; }
+        } catch(e) {}
+        // Already handled by unlock check above — initGame called there or here
+        var overlay = document.getElementById('pwOverlay');
+        if (overlay.style.display === 'none') {
+            // already unlocked
+        }
+    });
+</script>
+</body>
+</html>
