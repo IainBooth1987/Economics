@@ -451,6 +451,31 @@
             .form-row { grid-template-columns: 1fr; }
             .game-hero h1 { font-size: 1.6em; }
         }
+        /* ===== MARKET INDICES STRIP ===== */
+        .indices-strip {
+            display: flex; gap: 8px; padding: 10px 0 4px;
+            margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .index-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 9px 14px; flex: 1; min-width: 140px;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .idx-label { font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; }
+        .idx-val   { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 900; }
+        .idx-chg   { font-size: 0.76em; font-weight: 700; }
+        .idx-chg.gain { color: var(--green); }
+        .idx-chg.loss { color: var(--red); }
+        .idx-spark { width: 80px; height: 20px; margin-top: 2px; }
+
+        /* vol badge on stock rows */
+        .vol-badge { font-size: 0.66em; padding: 1px 5px; border-radius: 4px; font-weight: 700; vertical-align: middle; margin-left: 4px; }
+        .vol-high     { background: rgba(239,68,68,0.12); color: var(--red); }
+        .vol-binary   { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .vol-commodity{ background: rgba(245,158,11,0.12); color: var(--amber); }
+        .vol-consumer { background: rgba(59,130,246,0.12); color: var(--blue); }
+        .vol-medium   { background: var(--surface2); color: var(--text-muted); }
+
         /* ===== WEEK BADGE ===== */
         .week-badge { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: var(--amber); font-family: 'Fraunces', serif; font-size: 0.95em; font-weight: 700; padding: 4px 14px; border-radius: 20px; flex-shrink: 0; }
 
@@ -694,6 +719,28 @@
     <div class="teacher-panel" id="teacherPanel" style="display:none;">
         <h3>Teacher Controls — Trigger Market Events</h3>
         <div class="teacher-grid" id="teacherGrid"></div>
+    </div>
+
+    <!-- MARKET INDICES STRIP -->
+    <div class="indices-strip" id="indicesStrip">
+        <div class="index-card" id="idx-ftse">
+            <div class="idx-label">📈 BIZ-OMICS All-Share</div>
+            <div class="idx-val" id="idx-ftse-val">—</div>
+            <div class="idx-chg" id="idx-ftse-chg">—</div>
+            <svg class="idx-spark" viewBox="0 0 80 20" id="idx-ftse-spark"></svg>
+        </div>
+        <div class="index-card" id="idx-tech">
+            <div class="idx-label">💻 Tech Index (TCORE·SRCH·CHIP)</div>
+            <div class="idx-val" id="idx-tech-val">—</div>
+            <div class="idx-chg" id="idx-tech-chg">—</div>
+            <svg class="idx-spark" viewBox="0 0 80 20" id="idx-tech-spark"></svg>
+        </div>
+        <div class="index-card" id="idx-consumer">
+            <div class="idx-label">🛍 Consumer Index (GLSHP·MRKT·VIEW)</div>
+            <div class="idx-val" id="idx-consumer-val">—</div>
+            <div class="idx-chg" id="idx-consumer-chg">—</div>
+            <svg class="idx-spark" viewBox="0 0 80 20" id="idx-consumer-spark"></svg>
+        </div>
     </div>
 
     <!-- SUMMARY BAR -->
@@ -1056,18 +1103,18 @@
     // ===== STOCK DATA =====
     // Sectors: Tech, Retail, Finance, Energy, Pharma, Manufacturing, Media, Transport
     var stocks = {
-        'TCORE': { company: 'TechCore Inc.',         price: 150.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
-        'SRCH':  { company: 'SearchNet Ltd.',         price: 280.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
-        'GLSHP': { company: 'GlobalShop Group',       price: 320.00, change: 0, sector: 'Retail',        history: [], sentiment: 0, lastNewsTime: 0 },
-        'MRKT':  { company: 'MarketFirst PLC',        price: 85.00,  change: 0, sector: 'Retail',        history: [], sentiment: 0, lastNewsTime: 0 },
-        'FNXB':  { company: 'FinexBank Corp.',        price: 220.00, change: 0, sector: 'Finance',       history: [], sentiment: 0, lastNewsTime: 0 },
-        'CRDT':  { company: 'CreditOne Group',        price: 130.00, change: 0, sector: 'Finance',       history: [], sentiment: 0, lastNewsTime: 0 },
-        'ELMO':  { company: 'ElectroMotors PLC',      price: 800.00, change: 0, sector: 'Manufacturing', history: [], sentiment: 0, lastNewsTime: 0 },
-        'CHIP':  { company: 'ChipMaster Industries',  price: 600.00, change: 0, sector: 'Technology',    history: [], sentiment: 0, lastNewsTime: 0 },
-        'PHARX': { company: 'PharmaX Sciences',       price: 190.00, change: 0, sector: 'Pharma',        history: [], sentiment: 0, lastNewsTime: 0 },
-        'SOLR':  { company: 'SolarGrid Energy',       price: 110.00, change: 0, sector: 'Energy',        history: [], sentiment: 0, lastNewsTime: 0 },
-        'VIEW':  { company: 'StreamView Media',       price: 500.00, change: 0, sector: 'Media',         history: [], sentiment: 0, lastNewsTime: 0 },
-        'LOGX':  { company: 'LogiXpress Intl.',       price: 95.00,  change: 0, sector: 'Transport',     history: [], sentiment: 0, lastNewsTime: 0 }
+        'TCORE': { company:'TechCore Inc.',        price:150.00, change:0, sector:'Technology',    history:[], sentiment:0, lastNewsTime:0, vol:0.042, volProfile:'high',    momentum:0, panicFlag:false },
+        'SRCH':  { company:'SearchNet Ltd.',        price:280.00, change:0, sector:'Technology',   history:[], sentiment:0, lastNewsTime:0, vol:0.038, volProfile:'high',    momentum:0, panicFlag:false },
+        'GLSHP': { company:'GlobalShop Group',      price:320.00, change:0, sector:'Retail',       history:[], sentiment:0, lastNewsTime:0, vol:0.022, volProfile:'consumer', momentum:0, panicFlag:false },
+        'MRKT':  { company:'MarketFirst PLC',       price:85.00,  change:0, sector:'Retail',       history:[], sentiment:0, lastNewsTime:0, vol:0.020, volProfile:'consumer', momentum:0, panicFlag:false },
+        'FNXB':  { company:'FinexBank Corp.',       price:220.00, change:0, sector:'Finance',      history:[], sentiment:0, lastNewsTime:0, vol:0.026, volProfile:'medium',  momentum:0, panicFlag:false },
+        'CRDT':  { company:'CreditOne Group',       price:130.00, change:0, sector:'Finance',      history:[], sentiment:0, lastNewsTime:0, vol:0.024, volProfile:'medium',  momentum:0, panicFlag:false },
+        'ELMO':  { company:'ElectroMotors PLC',     price:800.00, change:0, sector:'Manufacturing',history:[], sentiment:0, lastNewsTime:0, vol:0.028, volProfile:'medium',  momentum:0, panicFlag:false },
+        'CHIP':  { company:'ChipMaster Industries', price:600.00, change:0, sector:'Technology',   history:[], sentiment:0, lastNewsTime:0, vol:0.048, volProfile:'high',    momentum:0, panicFlag:false },
+        'PHARX': { company:'PharmaX Sciences',      price:190.00, change:0, sector:'Pharma',       history:[], sentiment:0, lastNewsTime:0, vol:0.018, volProfile:'binary',  momentum:0, panicFlag:false },
+        'SOLR':  { company:'SolarGrid Energy',      price:110.00, change:0, sector:'Energy',       history:[], sentiment:0, lastNewsTime:0, vol:0.030, volProfile:'commodity',momentum:0, panicFlag:false },
+        'VIEW':  { company:'StreamView Media',      price:500.00, change:0, sector:'Media',        history:[], sentiment:0, lastNewsTime:0, vol:0.032, volProfile:'consumer', momentum:0, panicFlag:false },
+        'LOGX':  { company:'LogiXpress Intl.',      price:95.00,  change:0, sector:'Transport',    history:[], sentiment:0, lastNewsTime:0, vol:0.022, volProfile:'medium',  momentum:0, panicFlag:false }
     };
 
     // ===== GAME STATE =====
@@ -1369,6 +1416,7 @@
         clearInterval(newsInterval);
         clearInterval(shockInterval);
         clearInterval(timerInterval);
+        clearInterval(analystInterval);
         timerRemaining = 0;
         updateTimerDisplay();
         document.getElementById('startBtn').style.display = 'none';
@@ -1465,6 +1513,7 @@
         priceInterval = setInterval(updatePrices, 5000);
         newsInterval = setInterval(triggerNews, 9000);
         shockInterval = setInterval(triggerMajor, 28000);
+        analystInterval = setInterval(triggerAnalystNote, 42000);
 
         timerInterval = setInterval(function() {
             timerRemaining--;
@@ -1494,6 +1543,7 @@
         clearInterval(newsInterval);
         clearInterval(shockInterval);
         clearInterval(timerInterval);
+        clearInterval(analystInterval);
         showMsg('Market paused. Good time to review your portfolio.', 'success');
     }
 
@@ -1509,6 +1559,7 @@
         priceInterval = setInterval(updatePrices, 5000);
         newsInterval = setInterval(triggerNews, 9000);
         shockInterval = setInterval(triggerMajor, 28000);
+        analystInterval = setInterval(triggerAnalystNote, 42000);
 
         timerInterval = setInterval(function() {
             timerRemaining--;
@@ -1566,6 +1617,8 @@
             s.history = [s.price];
             s.sentiment = 0;
             s.lastNewsTime = 0;
+            s.momentum = 0;
+            s.panicFlag = false;
         }
 
         document.getElementById('breakingArea').innerHTML = '';
@@ -1584,23 +1637,99 @@
     }
 
     // ===== PRICE UPDATES =====
+    // ===== COMMODITY DRIFT (energy sector) =====
+    var commodityDrift = 0; // ranges -0.4 to +0.4, drifts slowly
+
+    function tickCommodityDrift() {
+        commodityDrift += (Math.random() - 0.5) * 0.08;
+        commodityDrift = Math.max(-0.4, Math.min(0.4, commodityDrift));
+    }
+
     function updatePrices() {
+        tickCommodityDrift();
+
+        // Check for herd behaviour: count negative-sentiment stocks per sector
+        var sectorNegCount = {};
+        for (var sym in stocks) {
+            var sec = stocks[sym].sector;
+            if (stocks[sym].sentiment <= -1) sectorNegCount[sec] = (sectorNegCount[sec]||0) + 1;
+        }
+
         for (var sym in stocks) {
             var s = stocks[sym];
-            var volatility = 0.025;
-            var rand = (Math.random() - 0.5) * 2 * volatility;
-            var newPrice = s.price * (1 + rand);
+            var baseVol = s.vol;
+            var rand = (Math.random() - 0.49); // slight downward bias when negative sentiment
+
+            // --- VOLATILITY PROFILES ---
+            var profileMod = 1.0;
+            if (s.volProfile === 'high') {
+                // Tech: momentum-amplified, can run hard in either direction
+                profileMod = 1.0 + Math.abs(s.momentum) * 0.3;
+            } else if (s.volProfile === 'binary') {
+                // Pharma: mostly quiet with occasional large jumps
+                if (Math.random() < 0.08) profileMod = 2.8 + Math.random() * 2.0;
+                else profileMod = 0.35;
+            } else if (s.volProfile === 'commodity') {
+                // Energy: base vol plus commodity drift
+                rand += commodityDrift * 0.06;
+                profileMod = 1.0 + Math.abs(commodityDrift) * 0.4;
+            } else if (s.volProfile === 'consumer') {
+                // Retail/Media: more sensitive to negative sentiment (consumer confidence)
+                if (s.sentiment < 0) profileMod = 1.0 + Math.abs(s.sentiment) * 0.25;
+            } else if (s.volProfile === 'medium') {
+                profileMod = 0.85;
+            }
+
+            // --- SENTIMENT INFLUENCE ---
+            var sentMod = s.sentiment * 0.004;
+            rand += sentMod;
+
+            // --- HERD BEHAVIOUR: sector drag ---
+            var sectorNegs = sectorNegCount[s.sector] || 0;
+            if (sectorNegs >= 2) rand -= 0.008 * sectorNegs; // sector contagion
+
+            // --- MOMENTUM ---
+            rand += s.momentum * 0.003;
+            s.momentum = s.momentum * 0.85 + rand * 0.15; // momentum decays
+            s.momentum = Math.max(-2, Math.min(2, s.momentum));
+
+            var move = rand * baseVol * profileMod * 2;
+            var newPrice = s.price * (1 + move);
             if (newPrice < 1) newPrice = 1;
-            s.change = ((newPrice - s.price) / s.price) * 100;
+
+            var prevPrice = s.price;
+            s.change = ((newPrice - prevPrice) / prevPrice) * 100;
             s.price = Math.round(newPrice * 100) / 100;
             s.history.push(s.price);
             if (s.history.length > 20) s.history.shift();
+
+            // --- PANIC SELLING: single-tick drop > 7% ---
+            if (s.change < -7 && !s.panicFlag) {
+                s.panicFlag = true;
+                s.sentiment = Math.max(-3, s.sentiment - 1.5);
+                triggerPanicBanner(sym, s.change);
+                // FOMO inverse: contrarian buy signal when panic is extreme
+                if (s.sentiment <= -2.5) triggerOversoldSignal(sym);
+                setTimeout(function(symCopy){ return function(){ stocks[symCopy].panicFlag=false; }; }(sym), 15000);
+            }
+
+            // --- MOMENTUM BUBBLE: 10-tick gain > 18% ---
+            if (s.history.length >= 10) {
+                var tenTickChange = ((s.price - s.history[s.history.length-10]) / s.history[s.history.length-10]) * 100;
+                if (tenTickChange > 18 && s.volProfile === 'high') triggerFOMOSignal(sym, tenTickChange);
+            }
+
+            // Sentiment slow decay
+            if (s.sentiment > 0) s.sentiment = Math.max(0, s.sentiment - 0.03);
+            else if (s.sentiment < 0) s.sentiment = Math.min(0, s.sentiment + 0.03);
         }
+
         renderStockList();
         updateSummaryBar();
         renderPortfolio();
         renderSectorBreakdown();
         updateOrderCost();
+        updateIndices();
     }
 
     // ===== NEWS =====
@@ -1687,8 +1816,92 @@
         updateOrderCost();
     }
 
-    function addNewsItem(hl, det, imp, type, isMajor) {
+    // ===== BEHAVIOURAL ECONOMICS =====
+    var behaviouralCooldowns = {};
+
+    function triggerPanicBanner(sym, changePct) {
+        var s = stocks[sym];
+        addNewsItem(
+            '🚨 PANIC SELLING: ' + s.company + ' — heavy sell orders flooding the market',
+            'Share price down ' + Math.abs(changePct).toFixed(1) + '% in a single tick. Behavioural finance: fear is overriding rational analysis. Is this an overreaction?',
+            'Sentiment: Very Negative', 'neg', false
+        );
+        if (gameState.sessionNewsLog) gameState.sessionNewsLog.push({ hl:'PANIC SELLING: '+s.company, type:'neg', sym:sym, concept:'Behavioural economics — panic selling and loss aversion.', major:false });
+    }
+
+    function triggerOversoldSignal(sym) {
+        if (behaviouralCooldowns[sym+'_oversold'] && Date.now()-behaviouralCooldowns[sym+'_oversold'] < 20000) return;
+        behaviouralCooldowns[sym+'_oversold'] = Date.now();
+        var s = stocks[sym];
+        addNewsItem(
+            '📊 CONTRARIAN SIGNAL: ' + s.company + ' may be oversold',
+            'Technical indicators suggest ' + s.company + ' has fallen significantly below its intrinsic value. Contrarian investors often buy when sentiment is most negative. Is the market being irrational?',
+            'Potential value opportunity', 'pos', false
+        );
+    }
+
+    function triggerFOMOSignal(sym, changePct) {
+        if (behaviouralCooldowns[sym+'_fomo'] && Date.now()-behaviouralCooldowns[sym+'_fomo'] < 25000) return;
+        behaviouralCooldowns[sym+'_fomo'] = Date.now();
+        var s = stocks[sym];
+        // Buying into FOMO adds to sentiment (bubble) but increases crash risk
+        s.sentiment = Math.min(3, s.sentiment + 0.5);
+        addNewsItem(
+            '🚀 MOMENTUM ALERT: ' + s.company + ' — strong upward trend attracting attention',
+            'Up ' + changePct.toFixed(1) + '% over recent ticks. FOMO (Fear of Missing Out) is drawing in buyers, amplifying the move. Behavioural finance: is this rational, or a bubble forming?',
+            'High momentum — elevated risk', 'pos', false
+        );
+        if (gameState.sessionNewsLog) gameState.sessionNewsLog.push({ hl:'FOMO/Momentum: '+s.company, type:'pos', sym:sym, concept:'Behavioural economics — momentum trading, FOMO, and bubble risk.', major:false });
+    }
+
+    // ===== ANALYST RECOMMENDATIONS =====
+    var analystInterval = null;
+    var analystFirms = ['JP Markets','Goldman Stanley','BarclaysCapital','Deutsche Research','Morgan Keating','UBS Equities'];
+    var analystTemplates = [
+        { type:'upgrade',   imp:'pos', make: function(firm,sym){ return { hl: firm+' upgrades '+sym+' to BUY — price target raised', det:'Analysts cite improving fundamentals, strong forward earnings visibility, and sector tailwinds as key drivers of the upgrade. Consensus price target lifted by 15%.', fx:0.025 }; } },
+        { type:'downgrade', imp:'neg', make: function(firm,sym){ return { hl: firm+' downgrades '+sym+' to SELL — price target cut', det:'Analysts flag valuation concerns, rising cost pressures, and deteriorating margin outlook as reasons for the downgrade. The stock is rated "Underperform" relative to sector peers.', fx:-0.025 }; } },
+        { type:'hold',      imp:'neu', make: function(firm,sym){ return { hl: firm+' maintains HOLD on '+sym+' — "fairly valued at current levels"', det:'Analysts see balanced risk/reward. No immediate catalyst expected, though the stock remains on the watchlist for an upgrade if trading conditions improve.', fx:0.005 }; } },
+        { type:'conflict',  imp:'neu', make: function(firm,sym){ var firm2=analystFirms.filter(function(f){return f!==firm;})[Math.floor(Math.random()*5)]; return { hl:'Conflicting forecasts: '+firm+' says BUY, '+firm2+' says SELL on '+sym, det:'Divergent analyst views highlight significant uncertainty about the company\'s near-term outlook. Information asymmetry: both firms have access to the same public data but reach opposite conclusions. Which analysis do you trust?', fx:0.002 }; } }
+    ];
+    var usedAnalystTargets = [];
+
+    function triggerAnalystNote() {
+        if (!gameRunning || gamePaused) return;
+        var syms = Object.keys(stocks);
+        var available = syms.filter(function(s){ return usedAnalystTargets.indexOf(s) < 0; });
+        if (!available.length){ usedAnalystTargets=[]; available=syms.slice(); }
+        var sym = available[Math.floor(Math.random()*available.length)];
+        usedAnalystTargets.push(sym);
+        var firm = analystFirms[Math.floor(Math.random()*analystFirms.length)];
+        // Sentiment-influenced: negative stocks more likely to get downgrades
+        var weights = stocks[sym].sentiment < -1 ? [1,4,2,2] : stocks[sym].sentiment > 1 ? [4,1,2,1] : [2,2,3,2];
+        var pool=[], wt=weights;
+        for(var i=0;i<analystTemplates.length;i++) for(var w=0;w<wt[i];w++) pool.push(i);
+        var tmpl = analystTemplates[pool[Math.floor(Math.random()*pool.length)]];
+        var note = tmpl.make(firm, sym);
+        var s = stocks[sym];
+        var v = 0.7 + Math.random()*0.6;
+        var newPrice = s.price * (1 + note.fx*v);
+        if(newPrice<1)newPrice=1;
+        s.change = ((newPrice-s.price)/s.price)*100;
+        s.price = Math.round(newPrice*100)/100;
+        s.history.push(s.price); if(s.history.length>20)s.history.shift();
+        if(tmpl.imp==='pos') updateSentiment(sym, 0.5);
+        else if(tmpl.imp==='neg') updateSentiment(sym, -0.5);
+        var impTxt = tmpl.imp==='pos'?'Analyst: BUY':tmpl.imp==='neg'?'Analyst: SELL':'Analyst: HOLD';
+        var impCls = tmpl.imp==='pos'?'impact-pos':tmpl.imp==='neg'?'impact-neg':'';
         var stream = document.getElementById('newsStream');
+        var div = document.createElement('div');
+        div.className = 'news-item' + (tmpl.imp==='pos'?' pos':tmpl.imp==='neg'?' neg':'');
+        var ts = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+        div.innerHTML='<span class="news-ts">'+ts+'</span><div class="news-hl">🏦 '+note.hl+'</div><div class="news-det">'+note.det+' <em style="font-size:0.85em;color:var(--text-muted);">Information asymmetry — analysts have same data but different conclusions.</em></div><span class="news-impact '+impCls+'">'+impTxt+'</span>';
+        stream.insertBefore(div, stream.firstChild);
+        if(stream.children.length>15) stream.removeChild(stream.lastChild);
+        if(gameState.sessionNewsLog) gameState.sessionNewsLog.push({hl:note.hl, type:tmpl.imp==='neg'?'neg':'pos', sym:sym, concept:'Information asymmetry — analyst recommendations and imperfect information.', major:false});
+        renderStockList(); updateSummaryBar();
+    }
+
+    function addNewsItem(hl, det, imp, type, isMajor) {
         var div = document.createElement('div');
         div.className = 'news-item' + (isMajor ? (type === 'neg' ? ' shock-crash' : ' shock-boom') : (type === 'pos' ? ' pos' : ' neg'));
         var impCls = type === 'pos' ? 'impact-pos' : 'impact-neg';
@@ -2099,6 +2312,7 @@
     function stopIntervals() {
         clearInterval(priceInterval); clearInterval(newsInterval);
         clearInterval(shockInterval); clearInterval(timerInterval);
+        clearInterval(analystInterval);
         gameRunning = false; gamePaused = false;
         document.getElementById('pauseBtn').disabled = true;
         document.getElementById('endNowBtn').style.display = 'none';
@@ -2153,6 +2367,7 @@
         priceInterval = setInterval(updatePrices, 5000);
         newsInterval = setInterval(triggerNews, 9000);
         shockInterval = setInterval(triggerMajor, 28000);
+        analystInterval = setInterval(triggerAnalystNote, 42000);
         timerInterval = setInterval(function() {
             timerRemaining--;
             updateTimerDisplay();
@@ -2402,6 +2617,88 @@
             if (document.getElementById('classBoardOverlay').style.display !== 'none') { document.getElementById('classBoardOverlay').style.display = 'none'; }
         }
     });
+
+    // ===== MARKET INDICES =====
+    var indexDefs = {
+        'ftse':     { syms:['TCORE','SRCH','GLSHP','MRKT','FNXB','CRDT','ELMO','CHIP','PHARX','SOLR','VIEW','LOGX'], history:[], open:0 },
+        'tech':     { syms:['TCORE','SRCH','CHIP'], history:[], open:0 },
+        'consumer': { syms:['GLSHP','MRKT','VIEW'], history:[], open:0 }
+    };
+
+    function calcIndex(def) {
+        var total = 0;
+        for (var i=0; i<def.syms.length; i++) total += stocks[def.syms[i]].price;
+        return total / def.syms.length;
+    }
+
+    function initIndices() {
+        for (var id in indexDefs) {
+            indexDefs[id].open = calcIndex(indexDefs[id]);
+            indexDefs[id].history = [indexDefs[id].open];
+        }
+    }
+
+    function updateIndices() {
+        for (var id in indexDefs) {
+            var def = indexDefs[id];
+            var val = calcIndex(def);
+            def.history.push(val);
+            if (def.history.length > 20) def.history.shift();
+            var chgPct = def.open > 0 ? ((val - def.open) / def.open * 100) : 0;
+            var gain = chgPct >= 0;
+            var el = document.getElementById('idx-'+id+'-val');
+            var chgEl = document.getElementById('idx-'+id+'-chg');
+            if (el) el.textContent = val.toFixed(1);
+            if (chgEl) {
+                chgEl.textContent = (gain?'+':'') + chgPct.toFixed(2) + '%';
+                chgEl.className = 'idx-chg ' + (gain?'gain':'loss');
+            }
+            // Sparkline
+            var sparkEl = document.getElementById('idx-'+id+'-spark');
+            if (sparkEl && def.history.length >= 2) {
+                var h = def.history;
+                var mn=h[0], mx=h[0];
+                for(var i=1;i<h.length;i++){if(h[i]<mn)mn=h[i];if(h[i]>mx)mx=h[i];}
+                if(mx===mn)mx=mn+1;
+                var pts=h.map(function(v,j){return (j/(h.length-1)*76+2).toFixed(1)+','+(18-((v-mn)/(mx-mn))*16).toFixed(1);}).join(' ');
+                var col = h[h.length-1]>=h[0]?'#10b981':'#ef4444';
+                sparkEl.innerHTML='<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-linejoin="round"/>';
+            }
+        }
+    }
+
+    var _origRenderStockList = renderStockList;
+    renderStockList = function() {
+        var list = document.getElementById('stockList');
+        list.innerHTML = '';
+        var volLabels = { high:'HIGH VOL', binary:'BINARY', commodity:'COMMODITY', consumer:'CONSUMER', medium:'STABLE' };
+        for (var sym in stocks) {
+            var s = stocks[sym];
+            var chgCls = s.change > 0.05 ? 'chg-pos' : (s.change < -0.05 ? 'chg-neg' : 'chg-neu');
+            var chgSign = s.change > 0 ? '+' : '';
+            var row = document.createElement('div');
+            row.className = 'stock-row';
+            row.id = 'row-' + sym;
+            var sparkSvg = buildSparkline(s.history);
+            var volBadge = '<span class="vol-badge vol-'+(s.volProfile||'medium')+'">'+volLabels[s.volProfile||'medium']+'</span>';
+            row.innerHTML = '<div><div class="stock-sym">' + getSentimentDot(sym) + sym + volBadge + '</div><div class="stock-co">' + s.company + '</div><div class="stock-sector">' + s.sector + '</div></div>' +
+                '<svg class="sparkline" viewBox="0 0 60 28">' + sparkSvg + '</svg>' +
+                '<div class="stock-price">£' + s.price.toFixed(2) + '</div>' +
+                '<div class="stock-chg ' + chgCls + '">' + chgSign + s.change.toFixed(2) + '%</div>' +
+                '<div class="trade-actions">' +
+                '<button class="tbtn tbtn-buy" onclick="quickTrade(\'' + sym + '\',\'buy\')">Buy</button>' +
+                '<button class="tbtn tbtn-sell" onclick="quickTrade(\'' + sym + '\',\'sell\')">Sell</button>' +
+                '</div>';
+            list.appendChild(row);
+        }
+    };
+
+    // Initialise indices when game starts
+    var _origStartGame = startGame;
+    startGame = function() {
+        initIndices();
+        _origStartGame();
+    };
 
     // ===== ON LOAD =====
     window.addEventListener('load', function() {
