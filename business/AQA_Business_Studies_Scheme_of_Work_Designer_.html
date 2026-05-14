@@ -408,14 +408,18 @@
             grid-template-columns: 350px 1fr;
             gap: 25px;
             margin-top: 25px;
+            align-items: start;
         }
 
         .units-panel {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
-            max-height: 800px;
+            height: calc(100vh - 40px);
             overflow-y: auto;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
         }
 
         .units-panel h2 {
@@ -742,10 +746,35 @@
             background: #f8f3ff;
         }
 
-        .week-block.selectable:hover {
-            border-color: #7d3ba8;
-            background: #f0e5ff;
-            transform: scale(1.02);
+        .week-block.drag-over {
+            border-color: #9b4dca;
+            background: #f0e5ff !important;
+            box-shadow: 0 0 0 3px rgba(155,77,202,0.3);
+        }
+
+        .planned-item {
+            background: #e8d5f2;
+            border-left: 3px solid #9b4dca;
+            padding: 8px 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.85em;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .planned-item:active {
+            cursor: grabbing;
+            opacity: 0.6;
+        }
+
+        .planned-item.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
         }
 
         .selection-mode-banner {
@@ -807,25 +836,6 @@
 
         .week-content {
             min-height: 60px;
-        }
-
-        .week-block.drag-over {
-            border-color: #9b4dca;
-            background: #f8f3ff;
-        }
-
-        .planned-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 6px;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
-            position: relative;
         }
 
         .planned-item:hover {
@@ -1273,10 +1283,12 @@
 
             <div class="control-section">
                 <button onclick="clearAll()">Clear All</button>
-                <button onclick="exportData()">💾 Export JSON</button>
+                <button onclick="saveSOW()" style="background: #28a745; font-size: 1em; padding: 12px 22px;">💾 Save SOW</button>
+                <button onclick="exportData()">⬇️ Export JSON</button>
                 <button onclick="importData()">📂 Import JSON</button>
                 <button onclick="exportToPDF()">📄 Export PDF</button>
                 <button onclick="window.print()">🖨️ Print</button>
+                <span id="saveIndicator" style="font-size:0.85em; color:#28a745; display:none;">✓ Saved</span>
             </div>
 
             <!-- Teacher Configuration Section -->
@@ -2000,6 +2012,7 @@
     <script>
         let selectedTopic = null;
         let selectionMode = false;
+        let draggedPlannedItem = null;
         let schoolCalendar = [];
         let schemeNotes = {
             general: '',
@@ -2016,11 +2029,62 @@
             loadTeacherConfig();
             generateWeeks();
             setupClickSelection();
+            setupWeekDragDrop();
             updateStats();
             loadSchoolInfo();
+            tryRestoreAutosave();
         });
 
+        function saveCurrentSchedule() {
+            const saved = [];
+            document.querySelectorAll('.week-content').forEach(zone => {
+                const items = Array.from(zone.querySelectorAll('.planned-item')).map(item => ({
+                    unit: item.dataset.unit,
+                    title: item.querySelector('.planned-item-title').textContent,
+                    desc: item.querySelector('.planned-item-desc').textContent,
+                    isAssessment: item.classList.contains('assessment-type')
+                }));
+                if (items.length > 0) {
+                    saved.push({ week: zone.dataset.week, teacher: zone.dataset.teacher, items });
+                }
+            });
+            return saved;
+        }
+
+        function restoreSchedule(saved) {
+            saved.forEach(weekData => {
+                const zone = document.querySelector(
+                    `.week-content[data-week="${weekData.week}"][data-teacher="${weekData.teacher}"]`
+                );
+                if (zone) {
+                    weekData.items.forEach(itemData => {
+                        const sourceItem = document.querySelector(
+                            `.subunit-item[data-unit="${itemData.unit}"], .assessment-item[data-unit="${itemData.unit}"]`
+                        );
+                        if (sourceItem) {
+                            zone.appendChild(createPlannedItem(sourceItem));
+                        } else {
+                            // Reconstruct item from saved data if source not found (e.g. custom assessment)
+                            const div = document.createElement('div');
+                            div.className = 'planned-item' + (itemData.isAssessment ? ' assessment-type' : '');
+                            div.dataset.unit = itemData.unit;
+                            div.innerHTML = `
+                                <div class="planned-item-content">
+                                    <div class="planned-item-title">${itemData.title}</div>
+                                    <div class="planned-item-desc">${itemData.desc}</div>
+                                </div>
+                                <button class="remove-btn" onclick="removeItem(event, this)">×</button>
+                            `;
+                            setupPlannedItemDrag(div);
+                            zone.appendChild(div);
+                        }
+                    });
+                }
+            });
+        }
+
         function generateWeeks() {
+            const savedSchedule = saveCurrentSchedule();
             const weeks = parseInt(document.getElementById('weeksInput').value);
             const teacherA = document.getElementById('teacherA');
             const teacherB = document.getElementById('teacherB');
@@ -2033,8 +2097,11 @@
                 teacherB.appendChild(createWeekBlock(i, 'B'));
             }
             
+            restoreSchedule(savedSchedule);
             setupWeekClickHandlers();
+            setupWeekDragDrop();
             applyTeacherVisibility();
+            updateWeekBlockHighlights();
             updateStats();
         }
 
@@ -2128,12 +2195,56 @@
             });
         }
 
+        function setupPlannedItemDrag(item) {
+            item.setAttribute('draggable', true);
+            item.addEventListener('dragstart', function(e) {
+                e.stopPropagation();
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', 'move-planned');
+                e.dataTransfer.setData('sourceWeek', this.closest('.week-content').dataset.week);
+                e.dataTransfer.setData('sourceTeacher', this.closest('.week-content').dataset.teacher);
+                e.dataTransfer.setData('unitId', this.dataset.unit);
+                e.dataTransfer.setData('isAssessment', this.classList.contains('assessment-type') ? '1' : '0');
+                e.dataTransfer.setData('title', this.querySelector('.planned-item-title').textContent);
+                e.dataTransfer.setData('desc', this.querySelector('.planned-item-desc').textContent);
+                draggedPlannedItem = this;
+            });
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                draggedPlannedItem = null;
+            });
+        }
+
+        function setupWeekDragDrop() {
+            document.querySelectorAll('.week-content').forEach(zone => {
+                zone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.closest('.week-block').classList.add('drag-over');
+                });
+                zone.addEventListener('dragleave', function(e) {
+                    if (!this.contains(e.relatedTarget)) {
+                        this.closest('.week-block').classList.remove('drag-over');
+                    }
+                });
+                zone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.closest('.week-block').classList.remove('drag-over');
+                    const type = e.dataTransfer.getData('text/plain');
+                    if (type === 'move-planned' && draggedPlannedItem) {
+                        // Move planned item from one week to another
+                        this.appendChild(draggedPlannedItem);
+                        updateStats();
+                    }
+                });
+            });
+        }
+
         function createPlannedItem(sourceItem) {
             const item = document.createElement('div');
             item.className = 'planned-item';
             item.dataset.unit = sourceItem.dataset.unit;
             
-            // Check if it's an assessment item
             const isAssessment = sourceItem.dataset.type === 'assessment';
             if (isAssessment) {
                 item.classList.add('assessment-type');
@@ -2153,6 +2264,7 @@
                 <button class="remove-btn" onclick="removeItem(event, this)">×</button>
             `;
             
+            setupPlannedItemDrag(item);
             return item;
         }
 
@@ -2990,6 +3102,76 @@
             });
             
             return data;
+        }
+
+        // Save SOW - persists to localStorage AND downloads a JSON backup
+        function saveSOW() {
+            const data = exportDataEnhanced();
+            // Persist to localStorage
+            localStorage.setItem('sow_autosave', JSON.stringify(data));
+            // Also download file
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const schoolName = document.getElementById('schoolName').value || 'school';
+            const year = document.getElementById('academicYear').value || new Date().getFullYear();
+            a.download = `${schoolName.replace(/\s+/g, '-')}-SoW-${year}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            // Show indicator
+            const ind = document.getElementById('saveIndicator');
+            ind.style.display = 'inline';
+            setTimeout(() => { ind.style.display = 'none'; }, 3000);
+        }
+
+        // Auto-restore from localStorage on load
+        function tryRestoreAutosave() {
+            const saved = localStorage.getItem('sow_autosave');
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                if (data && data.schedule && data.schedule.length > 0) {
+                    if (confirm('A previously saved scheme of work was found. Would you like to restore it?')) {
+                        // Populate school info
+                        if (data.schoolInfo) {
+                            const fieldMap = { name: 'schoolName', department: 'department', academicYear: 'academicYear', startDate: 'courseStartDate', teacherA: 'teacherAName', teacherB: 'teacherBName' };
+                            Object.entries(fieldMap).forEach(([k, id]) => {
+                                if (data.schoolInfo[k]) document.getElementById(id).value = data.schoolInfo[k];
+                            });
+                        }
+                        if (data.settings) {
+                            if (data.settings.weeks) document.getElementById('weeksInput').value = data.settings.weeks;
+                            if (data.settings.lessonsPerWeek) document.getElementById('lessonsPerWeek').value = data.settings.lessonsPerWeek;
+                            if (data.settings.qualLevel) document.getElementById('qualLevel').value = data.settings.qualLevel;
+                        }
+                        generateWeeks();
+                        filterUnits();
+                        updateTeacherLabels();
+                        // Restore schedule
+                        data.schedule.forEach(weekData => {
+                            const zone = document.querySelector(`.week-content[data-week="${weekData.week}"][data-teacher="${weekData.teacher}"]`);
+                            if (zone) {
+                                weekData.items.forEach(itemData => {
+                                    const sourceItem = document.querySelector(`.subunit-item[data-unit="${itemData.unit}"], .assessment-item[data-unit="${itemData.unit}"]`);
+                                    if (sourceItem) {
+                                        zone.appendChild(createPlannedItem(sourceItem));
+                                    } else {
+                                        const div = document.createElement('div');
+                                        div.className = 'planned-item' + (itemData.isAssessment ? ' assessment-type' : '');
+                                        div.dataset.unit = itemData.unit;
+                                        div.innerHTML = `<div class="planned-item-content"><div class="planned-item-title">${itemData.title}</div><div class="planned-item-desc">${itemData.desc}</div></div><button class="remove-btn" onclick="removeItem(event,this)">×</button>`;
+                                        setupPlannedItemDrag(div);
+                                        zone.appendChild(div);
+                                    }
+                                });
+                            }
+                        });
+                        updateWeekBlockHighlights();
+                        updateStats();
+                    }
+                }
+            } catch(e) { /* ignore corrupt saves */ }
         }
 
         // Override the export function
