@@ -98,7 +98,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 .grade-ok{background:#fff3cd;color:#856404;}
 .grade-weak{background:#f8d7da;color:#721c24;}
 .sum-actions{display:flex;gap:10px;flex-wrap:wrap;}
+/* ── RESUME BANNER ── */
+.resume-banner{background:rgba(201,162,39,.12);border:1px solid var(--gold);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:fadeIn .3s ease;}
+.resume-banner.hidden{display:none!important;}
+.resume-text{font-size:13px;color:var(--navy);line-height:1.5;}
+.resume-text strong{font-weight:700;}
+.resume-text .sub{color:var(--muted);font-size:12px;display:block;margin-top:2px;}
+.resume-btns{display:flex;gap:8px;flex-shrink:0;}
+.resume-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;border:1px solid var(--gold);color:var(--navy);background:var(--gold);}
+.resume-btn.ghost{background:transparent;color:var(--muted);border-color:var(--border);}
+.resume-btn.ghost:hover{border-color:var(--navy);color:var(--navy);}
+
+/* ── SESSION HISTORY ── */
+.history-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.history-section h4{font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:10px;}
+.history-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.history-row:last-child{border-bottom:none;}
+.history-date{flex:0 0 140px;color:var(--text);font-weight:500;}
+.history-score{flex:0 0 44px;font-weight:700;color:var(--navy);text-align:right;}
+.history-qs{flex:0 0 80px;color:var(--muted);text-align:center;}
+.history-level{flex:1;color:var(--muted);}
+.history-empty{font-size:12px;color:var(--muted);font-style:italic;padding:8px 0;}
+
+/* ── CUMULATIVE STATS BAR ── */
+.cumulative-bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding:14px 18px;background:rgba(26,39,68,.04);border-radius:8px;border:1px solid var(--border);}
+.cum-stat{text-align:center;}
+.cum-stat .cv{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);line-height:1;}
+.cum-stat .cl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
 @media print {
+  .resume-banner,.history-section,.cumulative-bar{display:none!important;}
   .hdr .hdr-btns, .sidebar, .queue-bar, .q-meta .q-diff, .opt, .feedback, .next-btn { display:none!important; }
   .layout{grid-template-columns:1fr;}
   .main{padding:0;max-width:100%;}
@@ -158,6 +187,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
   </div>
 
   <div class="main">
+    <div id="resume-banner" class="resume-banner hidden">
+      <div class="resume-text">
+        <strong id="resume-title">Welcome back!</strong>
+        <span class="sub" id="resume-sub"></span>
+      </div>
+      <div class="resume-btns">
+        <button class="resume-btn" onclick="resumeSession()">Resume →</button>
+        <button class="resume-btn ghost" onclick="freshSession()">Fresh start</button>
+      </div>
+    </div>
     <div class="queue-bar">
       <span class="q-dot"></span>
       <span id="queue-label">Adaptive session — questions drawn from weak areas</span>
@@ -172,24 +211,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
     <div class="print-hdr">BIZ-OMICS — Microeconomics Adaptive MCQ · Session Report</div>
     <h2>Session Summary</h2>
     <div class="sub" id="sum-date"></div>
+    <div id="sum-cumulative" class="cumulative-bar"></div>
     <div class="summary-score-row">
       <div>
         <div class="summary-score-big" id="sum-pct">—</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px;">Overall score</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">This session</div>
       </div>
       <div class="summary-score-detail" id="sum-detail"></div>
     </div>
     <table class="sum-table" id="sum-table">
-      <thead><tr><th>Topic</th><th>Score</th><th>Correct / Asked</th><th class="bar-cell">Mastery</th><th>Grade</th></tr></thead>
+      <thead><tr><th>Topic</th><th>Elo</th><th>Correct / Asked</th><th class="bar-cell">Mastery</th><th>Grade</th></tr></thead>
       <tbody id="sum-tbody"></tbody>
     </table>
     <div style="margin-bottom:20px;font-size:13px;color:var(--muted);">
       <strong style="color:var(--navy);">Topics not yet covered</strong> will appear once the adaptive engine serves questions from them.
     </div>
-    <div class="sum-actions">
+    <div id="sum-history" class="history-section"></div>
+    <div class="sum-actions" style="margin-top:20px;">
       <button class="btn btn-primary" onclick="hideSummary()">← Continue session</button>
       <button class="btn" onclick="window.print()">⎙ Print this report</button>
-      <button class="btn btn-danger" onclick="resetSession()">↺ Start new session</button>
+      <button class="btn btn-danger" onclick="resetSession()">↺ New session</button>
+      <button class="btn" style="border-color:#94a3b8;color:#94a3b8;" onclick="confirmResetAll()">🗑 Reset all progress</button>
     </div>
   </div>
 </div>
@@ -684,39 +726,143 @@ const ALL_QUESTIONS = [
 ];
 
 // ── ADAPTIVE ENGINE ──────────────────────────────────────────────────────────
+
+const ELO_START   = 1000;
+const ELO_K_BASE  = 32;
+const DIFF_K      = { 1: 0.7, 2: 1.0, 3: 1.4 };
+const STORAGE_KEY = 'bizomics_micro';
+const WRONG_CAP   = 20; // max wrong-pool size persisted
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+
+function saveState() {
+  try {
+    const payload = {
+      masteryData,
+      wrongPool: wrongPool.slice(0, WRONG_CAP).map(q => q.id),
+      cumulative,
+      sessionHistory
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch(e) { /* storage full or unavailable */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+
+    // Restore mastery data
+    if (saved.masteryData) {
+      Object.keys(TOPICS).forEach(t => {
+        if (saved.masteryData[t]) {
+          masteryData[t] = {
+            correct: saved.masteryData[t].correct || 0,
+            total:   saved.masteryData[t].total   || 0,
+            elo:     saved.masteryData[t].elo      || ELO_START
+          };
+        }
+      });
+    }
+
+    // Restore wrong pool (IDs → question objects)
+    if (saved.wrongPool && Array.isArray(saved.wrongPool)) {
+      wrongPool = saved.wrongPool
+        .map(id => ALL_QUESTIONS.find(q => String(q.id) === String(id)))
+        .filter(Boolean)
+        .slice(0, WRONG_CAP);
+    }
+
+    // Restore cumulative stats
+    if (saved.cumulative) {
+      cumulative.total   = saved.cumulative.total   || 0;
+      cumulative.correct = saved.cumulative.correct || 0;
+      cumulative.sessions= saved.cumulative.sessions|| 0;
+    }
+
+    // Restore session history
+    if (saved.sessionHistory && Array.isArray(saved.sessionHistory)) {
+      sessionHistory = saved.sessionHistory.slice(0, 10);
+    }
+
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearAllProgress() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  Object.keys(TOPICS).forEach(t => masteryData[t] = { correct:0, total:0, elo:ELO_START });
+  wrongPool = [];
+  cumulative = { total:0, correct:0, sessions:0 };
+  sessionHistory = [];
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+
 const masteryData = {};
-Object.keys(TOPICS).forEach(t => masteryData[t] = { correct: 0, total: 0 });
-let recentIds = [];
-let sessionStats = { total: 0, correct: 0 };
-let currentQ = null;
-let answered = false;
-let wrongPool = [];
+Object.keys(TOPICS).forEach(t => masteryData[t] = { correct:0, total:0, elo:ELO_START });
+
+let recentIds      = [];
+let sessionStats   = { total:0, correct:0 };
+let currentQ       = null;
+let answered       = false;
+let wrongPool      = [];
+let cumulative     = { total:0, correct:0, sessions:0 };
+let sessionHistory = []; // [{date, score, pct, total, level}]
+
+// ── ELO ───────────────────────────────────────────────────────────────────────
+
+function questionRating(d) { return { 1:900, 2:1000, 3:1100 }[d] || 1000; }
+
+function updateElo(topic, isCorrect, difficulty) {
+  const d = masteryData[topic];
+  const expected = 1 / (1 + Math.pow(10, (questionRating(difficulty) - d.elo) / 400));
+  const K = ELO_K_BASE * (DIFF_K[difficulty] || 1.0);
+  d.elo = Math.max(600, Math.min(1400, Math.round(d.elo + K * ((isCorrect ? 1 : 0) - expected))));
+}
+
+function targetDifficulty() {
+  const seen = Object.values(masteryData).filter(d => d.total > 0);
+  if (!seen.length) return 1;
+  const mean = seen.reduce((s,d) => s + d.elo, 0) / seen.length;
+  return mean < 950 ? 1 : mean < 1050 ? 2 : 3;
+}
 
 function topicWeight(topic) {
-  const d = masteryData[topic];
-  if (d.total === 0) return 2.5;
-  const pct = d.correct / d.total;
-  if (pct < 0.4)  return 4;
-  if (pct < 0.65) return 2.5;
-  if (pct < 0.8)  return 1.2;
-  return 0.4;
+  const elo   = masteryData[topic].elo;
+  const total = masteryData[topic].total;
+  if (!total) return 2.5;
+  if (elo < 900)  return 5;
+  if (elo < 970)  return 3;
+  if (elo < 1050) return 1.5;
+  return 0.5;
 }
+
+// ── QUESTION PICKER ───────────────────────────────────────────────────────────
 
 function pickNextQuestion() {
   if (wrongPool.length > 0 && Math.random() < 0.3) {
     const idx = Math.floor(Math.random() * wrongPool.length);
-    const q = wrongPool[idx];
-    wrongPool.splice(idx, 1);
-    return q;
+    return wrongPool.splice(idx, 1)[0];
   }
+  const target = targetDifficulty();
+  const useDiffFilter = Math.random() < 0.70;
   let pool = [];
   ALL_QUESTIONS.forEach(q => {
     if (recentIds.includes(q.id)) return;
-    const w = topicWeight(q.topic);
-    const slots = Math.ceil(w);
+    if (useDiffFilter && q.difficulty !== target) return;
+    const slots = Math.ceil(topicWeight(q.topic));
     for (let i = 0; i < slots; i++) pool.push(q);
   });
-  if (pool.length === 0) pool = [...ALL_QUESTIONS];
+  if (!pool.length) {
+    ALL_QUESTIONS.forEach(q => {
+      if (recentIds.includes(q.id)) return;
+      const slots = Math.ceil(topicWeight(q.topic));
+      for (let i = 0; i < slots; i++) pool.push(q);
+    });
+  }
+  if (!pool.length) pool = [...ALL_QUESTIONS];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -725,7 +871,7 @@ function nextQuestion() {
   const q = pickNextQuestion();
   currentQ = q;
   recentIds.push(q.id);
-  if (recentIds.length > 8) recentIds.shift();
+  if (recentIds.length > 10) recentIds.shift();
   renderQuestion(q);
   updateSidebar();
 }
@@ -733,7 +879,8 @@ function nextQuestion() {
 // ── TABLE PARSER ─────────────────────────────────────────────────────────────
 function parseTableTag(raw) {
   const inner = raw.replace(/^\[TABLE:\s*/i, '').replace(/\]$/, '').trim();
-  const rows = inner.split('|').map(r => r.trim()).filter(Boolean);
+  // Support both | and \n as row separators
+  const rows = inner.split(/\||\n/).map(r => r.trim()).filter(Boolean);
   if (!rows.length) return `<em>${inner}</em>`;
   const simpleKV = rows.every(r => /^[\w\s£$\-\.]+:\s*[\S]/.test(r) && !r.includes('/') && !r.includes('—'));
   if (simpleKV) {
@@ -800,7 +947,8 @@ function parseTableTag(raw) {
 // ── STEM FORMATTER ────────────────────────────────────────────────────────────
 function formatStem(stem) {
   let s = stem.replace(/\\n/g, '\n');
-  s = s.replace(/\[TABLE:[^\]]*\]/g, tag => parseTableTag(tag));
+  // Match [TABLE:...] across newlines
+  s = s.replace(/\[TABLE:[\s\S]*?\]/g, tag => parseTableTag(tag));
   s = s.replace(/\[DIAGRAM OPTIONS:[^\]]*\]/g, tag => {
     const inner = tag.replace(/^\[DIAGRAM OPTIONS:\s*/i,'').replace(/\]$/,'');
     const opts = inner.split('|').map(o => o.trim()).filter(Boolean);
@@ -815,6 +963,10 @@ function renderQuestion(q) {
   const letters = ['A','B','C','D'];
   const dots = [1,2,3].map(i => `<span class="dot${i<=q.difficulty?' on':''}"></span>`).join('');
   const topicLabel = TOPICS[q.topic] || q.topic;
+  const td = targetDifficulty();
+  const tdLabel = ['','Foundation','Standard','Stretch'][td];
+  document.getElementById('queue-label').textContent =
+    `Adaptive · targeting ${tdLabel} questions · weak areas prioritised`;
   const opts = q.options.map((o,i) =>
     `<button class="opt" id="opt${i}" onclick="selectAnswer(${i})"><span class="ltr">${letters[i]}</span><span>${o}</span></button>`
   ).join('');
@@ -839,8 +991,15 @@ function selectAnswer(idx) {
   const isCorrect = idx === correct;
   sessionStats.total++;
   if (isCorrect) sessionStats.correct++;
+  cumulative.total++;
+  if (isCorrect) cumulative.correct++;
   masteryData[currentQ.topic].total++;
   if (isCorrect) masteryData[currentQ.topic].correct++;
+  updateElo(currentQ.topic, isCorrect, currentQ.difficulty);
+  if (!isCorrect) {
+    if (wrongPool.length < WRONG_CAP) wrongPool.push(currentQ);
+  }
+  saveState();
   for (let i = 0; i < currentQ.options.length; i++) {
     const btn = document.getElementById('opt'+i);
     btn.disabled = true;
@@ -852,41 +1011,54 @@ function selectAnswer(idx) {
   fb.innerHTML = isCorrect
     ? `<strong>✓ Correct!</strong>${currentQ.explanation}`
     : `<strong>✗ Incorrect — the answer is ${['A','B','C','D'][correct]}</strong>${currentQ.explanation}`;
-  if (!isCorrect) wrongPool.push(currentQ);
   document.getElementById('next-btn').classList.add('show');
   updateSidebar();
 }
 
 // ── SIDEBAR ──────────────────────────────────────────────────────────────────
+function eloLabel(elo) {
+  if (elo < 850)  return { text:'Developing',  cls:'low' };
+  if (elo < 950)  return { text:'Progressing', cls:'low' };
+  if (elo < 1050) return { text:'Secure',      cls:'mid' };
+  if (elo < 1150) return { text:'Strong',      cls:'good' };
+  return                 { text:'Mastered',    cls:'good' };
+}
+
 function updateSidebar() {
   document.getElementById('stat-q').textContent = sessionStats.total;
   document.getElementById('stat-c').textContent = sessionStats.correct;
   document.getElementById('stat-pct').textContent = sessionStats.total > 0
     ? Math.round(sessionStats.correct/sessionStats.total*100)+'%' : '—';
+
   const focusEl = document.getElementById('current-focus');
   if (currentQ) {
     const d = masteryData[currentQ.topic];
-    const pct = d.total > 0 ? Math.round(d.correct/d.total*100) : null;
+    const lbl = eloLabel(d.elo);
     focusEl.innerHTML = `<span style="font-weight:600;color:var(--navy)">${TOPICS[currentQ.topic]}</span>`
-      + (pct !== null ? `<br><span style="color:var(--muted)">Your score here: ${pct}%</span>` : '<br><span style="color:var(--muted)">First question in this topic</span>');
+      + (d.total > 0
+        ? `<br><span style="color:var(--muted)">Elo: ${d.elo} &middot; ${lbl.text}</span>`
+        : '<br><span style="color:var(--muted)">First question in this topic</span>');
   }
+
   const sorted = Object.keys(TOPICS)
     .map(t => ({ t, d: masteryData[t] }))
-    .sort((a,b) => {
-      const pa = a.d.total > 0 ? a.d.correct/a.d.total : 0.5;
-      const pb = b.d.total > 0 ? b.d.correct/b.d.total : 0.5;
-      return pa - pb;
-    });
+    .sort((a,b) => a.d.elo - b.d.elo);
+
   document.getElementById('mastery-list').innerHTML = sorted.map(({t,d}) => {
-    const pct = d.total > 0 ? Math.round(d.correct/d.total*100) : null;
-    const w = pct !== null ? pct : 0;
-    const cls = pct === null ? 'none' : pct >= 75 ? 'good' : pct >= 45 ? 'mid' : 'low';
-    const bar = pct !== null ? `<div class="pbar"><div class="pfill ${cls==='good'?'good':cls==='low'?'low':''}" style="width:${w}%"></div></div>` : `<div class="pbar"></div>`;
-    return `<div class="topic-row">
-      <span class="badge badge-${cls}"></span>
+    if (!d.total) return `<div class="topic-row">
+      <span class="badge badge-none"></span>
       <span class="tname" title="${TOPICS[t]}">${TOPICS[t]}</span>
-      ${bar}
-      <span class="tscore">${pct !== null ? `${pct}% (${d.correct}/${d.total})` : 'Not yet seen'}</span>
+      <div class="pbar"></div>
+      <span class="tscore" style="font-size:10px;">Not seen</span>
+    </div>`;
+    const lbl = eloLabel(d.elo);
+    const barPct = Math.round(((d.elo - 600) / 800) * 100);
+    const pct = Math.round(d.correct/d.total*100);
+    return `<div class="topic-row">
+      <span class="badge badge-${lbl.cls}"></span>
+      <span class="tname" title="${TOPICS[t]}">${TOPICS[t]}</span>
+      <div class="pbar"><div class="pfill ${lbl.cls==='good'?'good':lbl.cls==='low'?'low':''}" style="width:${barPct}%"></div></div>
+      <span class="tscore" title="Elo: ${d.elo} · ${pct}% (${d.correct}/${d.total})" style="font-size:10px;">${d.elo}</span>
     </div>`;
   }).join('');
 }
@@ -896,21 +1068,63 @@ function showSummary() {
   const pct = sessionStats.total > 0 ? Math.round(sessionStats.correct/sessionStats.total*100) : 0;
   document.getElementById('sum-pct').textContent = pct+'%';
   document.getElementById('sum-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const td = targetDifficulty();
+  const tdLabel = ['','Foundation','Standard','Stretch'][td];
   document.getElementById('sum-detail').innerHTML =
-    `${sessionStats.correct} correct from ${sessionStats.total} questions answered<br>`
+    `${sessionStats.correct} correct from ${sessionStats.total} answered &nbsp;&middot;&nbsp; `
+    +`Current level: <strong>${tdLabel}</strong><br>`
     +`${wrongPool.length} question${wrongPool.length!==1?'s':''} in reinsertion pool`;
-  const rows = Object.keys(TOPICS).map(t => ({ t, d: masteryData[t] })).filter(x => x.d.total > 0)
-    .sort((a,b) => (a.d.correct/a.d.total) - (b.d.correct/b.d.total));
+
+  // Cumulative stats bar
+  const cumPct = cumulative.total > 0 ? Math.round(cumulative.correct/cumulative.total*100) : 0;
+  document.getElementById('sum-cumulative').innerHTML =
+    `<div class="cum-stat"><div class="cv">${cumulative.total}</div><div class="cl">All-time answered</div></div>`
+    +`<div class="cum-stat"><div class="cv">${cumPct}%</div><div class="cl">All-time score</div></div>`
+    +`<div class="cum-stat"><div class="cv">${cumulative.sessions}</div><div class="cl">Sessions</div></div>`
+    +`<div class="cum-stat"><div class="cv">${tdLabel}</div><div class="cl">Current level</div></div>`;
+
+  // Topic table
+  const rows = Object.keys(TOPICS)
+    .map(t => ({ t, d: masteryData[t] }))
+    .filter(x => x.d.total > 0)
+    .sort((a,b) => a.d.elo - b.d.elo);
+
+  const thead = document.querySelector('#sum-table thead tr');
+  if (thead) thead.innerHTML = '<th>Topic</th><th>Elo</th><th>Correct / Asked</th><th class="bar-cell">Mastery</th><th>Grade</th>';
+
   document.getElementById('sum-tbody').innerHTML = rows.map(({t,d}) => {
     const p = Math.round(d.correct/d.total*100);
-    const barCol = p >= 75 ? 'var(--ok)' : p >= 45 ? 'var(--gold)' : 'var(--err)';
-    const grade = p >= 75 ? '<span class="grade-badge grade-strong">Strong</span>'
-      : p >= 45 ? '<span class="grade-badge grade-ok">Developing</span>'
-      : '<span class="grade-badge grade-weak">Needs work</span>';
-    return `<tr><td>${TOPICS[t]}</td><td><strong>${p}%</strong></td><td>${d.correct} / ${d.total}</td>
-      <td class="bar-cell"><div class="mini-bar"><div class="mini-fill" style="width:${p}%;background:${barCol}"></div></div></td>
+    const lbl = eloLabel(d.elo);
+    const barPct = Math.round(((d.elo - 600) / 800) * 100);
+    const barCol = lbl.cls==='good' ? 'var(--ok)' : lbl.cls==='low' ? 'var(--err)' : 'var(--gold)';
+    const grade = lbl.cls==='good'
+      ? `<span class="grade-badge grade-strong">${lbl.text}</span>`
+      : lbl.cls==='low'
+      ? `<span class="grade-badge grade-weak">${lbl.text}</span>`
+      : `<span class="grade-badge grade-ok">${lbl.text}</span>`;
+    return `<tr>
+      <td>${TOPICS[t]}</td><td><strong>${d.elo}</strong></td>
+      <td>${d.correct} / ${d.total} (${p}%)</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-fill" style="width:${barPct}%;background:${barCol}"></div></div></td>
       <td>${grade}</td></tr>`;
   }).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:16px">No questions answered yet.</td></tr>';
+
+  // Session history
+  const histEl = document.getElementById('sum-history');
+  if (sessionHistory.length > 0) {
+    const hrows = sessionHistory.slice().reverse().map(s =>
+      `<div class="history-row">
+        <span class="history-date">${s.date}</span>
+        <span class="history-score">${s.pct}%</span>
+        <span class="history-qs">${s.correct}/${s.total} Qs</span>
+        <span class="history-level">${s.level}</span>
+      </div>`
+    ).join('');
+    histEl.innerHTML = `<h4>Session history</h4>${hrows}`;
+  } else {
+    histEl.innerHTML = `<h4>Session history</h4><div class="history-empty">No previous sessions recorded yet.</div>`;
+  }
+
   document.getElementById('summary-overlay').classList.add('show');
 }
 
@@ -918,19 +1132,79 @@ function hideSummary() {
   document.getElementById('summary-overlay').classList.remove('show');
 }
 
+function confirmResetAll() {
+  if (confirm('This will permanently delete all your Elo ratings, mastery data and session history. Are you sure?')) {
+    clearAllProgress();
+    sessionStats = { total:0, correct:0 };
+    recentIds = [];
+    hideSummary();
+    document.getElementById('resume-banner').classList.add('hidden');
+    updateSidebar();
+    nextQuestion();
+  }
+}
+
 function resetSession() {
-  Object.keys(TOPICS).forEach(t => masteryData[t] = { correct:0, total:0 });
+  // Save the completed session to history before resetting
+  if (sessionStats.total > 0) {
+    const pct = Math.round(sessionStats.correct/sessionStats.total*100);
+    const td = targetDifficulty();
+    const tdLabel = ['','Foundation','Standard','Stretch'][td];
+    sessionHistory.push({
+      date: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+      pct,
+      correct: sessionStats.correct,
+      total:   sessionStats.total,
+      level:   tdLabel
+    });
+    if (sessionHistory.length > 10) sessionHistory.shift();
+    cumulative.sessions++;
+    saveState();
+  }
   sessionStats = { total:0, correct:0 };
-  wrongPool = [];
   recentIds = [];
   hideSummary();
   nextQuestion();
   updateSidebar();
 }
 
+// ── RESUME HANDLERS ───────────────────────────────────────────────────────────
+function resumeSession() {
+  document.getElementById('resume-banner').classList.add('hidden');
+}
+
+function freshSession() {
+  sessionStats = { total:0, correct:0 };
+  recentIds = [];
+  wrongPool = [];
+  saveState();
+  document.getElementById('resume-banner').classList.add('hidden');
+  nextQuestion();
+  updateSidebar();
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
-updateSidebar();
-nextQuestion();
+(function init() {
+  const hasData = loadState();
+
+  if (hasData) {
+    const seenTopics = Object.values(masteryData).filter(d => d.total > 0);
+    if (seenTopics.length > 0) {
+      const td = targetDifficulty();
+      const tdLabel = ['','Foundation','Standard','Stretch'][td];
+      const meanElo = Math.round(seenTopics.reduce((s,d) => s+d.elo,0) / seenTopics.length);
+      document.getElementById('resume-title').textContent = 'Welcome back!';
+      document.getElementById('resume-sub').textContent =
+        `${cumulative.total} questions answered all-time · Level: ${tdLabel} · Mean Elo: ${meanElo}`
+        + (wrongPool.length > 0 ? ` · ${wrongPool.length} to revisit` : '');
+      document.getElementById('resume-banner').classList.remove('hidden');
+    }
+  }
+
+  // Always render a question immediately — banner sits above it
+  updateSidebar();
+  nextQuestion();
+})();
 </script>
 </body>
 </html>
