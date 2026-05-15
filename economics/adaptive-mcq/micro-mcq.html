@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIZ-OMICS | Microeconomics Adaptive MCQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#1a2744; --navy-light:#243058; --gold:#c9a227; --gold-pale:#f5e9c0;
+  --white:#fff; --off:#f8f6f0; --text:#1a2744; --muted:#5a6a8a;
+  --ok:#1a7a4a; --ok-bg:#e8f5ee; --err:#c0392b; --err-bg:#fdecea; --border:#dde2ec;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);min-height:100vh;}
+.hdr{background:var(--navy);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.18);}
+.logo{font-family:'Playfair Display',serif;font-size:19px;color:var(--gold);}
+.logo span{color:#fff;font-weight:400;font-size:13px;margin-left:8px;font-family:'DM Sans',sans-serif;}
+.hdr-btns{display:flex;gap:10px;align-items:center;}
+.btn{padding:6px 16px;border-radius:4px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;border:1px solid var(--gold);color:var(--gold);background:transparent;}
+.btn:hover{background:var(--gold);color:var(--navy);}
+.btn-primary{background:var(--gold);color:var(--navy);border-color:var(--gold);}
+.btn-primary:hover{background:#e8bf4a;}
+.btn-danger{border-color:#e74c3c;color:#e74c3c;}
+.btn-danger:hover{background:#e74c3c;color:#fff;}
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 50px);}
+.sidebar{background:var(--white);border-right:1px solid var(--border);padding:20px 16px;overflow-y:auto;}
+.sidebar-section{margin-bottom:24px;}
+.sidebar h3{font-family:'Playfair Display',serif;font-size:13px;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:7px;border-bottom:2px solid var(--gold);}
+.stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.stat-box{background:var(--off);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;}
+.stat-box .val{font-family:'Playfair Display',serif;font-size:22px;color:var(--navy);line-height:1;}
+.stat-box .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.stat-box.gold .val{color:var(--gold);}
+.stat-box.green .val{color:var(--ok);}
+.topic-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.topic-row .tname{font-size:11.5px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topic-row .tscore{font-size:11px;color:var(--muted);white-space:nowrap;min-width:36px;text-align:right;}
+.pbar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;flex:0 0 60px;}
+.pfill{height:100%;border-radius:3px;background:var(--gold);transition:width .4s;}
+.pfill.good{background:var(--ok);}
+.pfill.low{background:var(--err);}
+.topic-row .badge{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.badge-good{background:var(--ok);}
+.badge-mid{background:var(--gold);}
+.badge-low{background:var(--err);}
+.badge-none{background:var(--border);}
+.current-topic-pill{display:inline-block;background:rgba(201,162,39,.15);border:1px solid var(--gold);color:var(--navy);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px;}
+.main{padding:28px 36px;max-width:800px;}
+.queue-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;font-size:12px;color:var(--muted);}
+.q-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;}
+.adaptive-badge{background:var(--navy);color:var(--gold);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:.5px;text-transform:uppercase;}
+.q-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px 32px;box-shadow:0 1px 6px rgba(0,0,0,.04);animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.q-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.q-topic-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;padding:3px 10px;border-radius:20px;background:var(--navy);color:var(--gold);}
+.q-diff{display:flex;gap:3px;}
+.q-diff .dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+.q-diff .dot.on{background:var(--gold);}
+.q-num{font-size:11px;color:var(--muted);margin-left:auto;}
+.q-stem{font-size:15.5px;line-height:1.65;color:var(--text);margin-bottom:18px;}
+.options{display:flex;flex-direction:column;gap:9px;}
+.opt{display:flex;align-items:flex-start;gap:11px;padding:12px 15px;border:1.5px solid var(--border);border-radius:8px;background:var(--off);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;color:var(--text);text-align:left;transition:all .15s;width:100%;}
+.opt:hover:not(:disabled){border-color:var(--navy);background:var(--white);}
+.opt .ltr{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:1px;}
+.opt.correct{border-color:var(--ok);background:var(--ok-bg);}
+.opt.correct .ltr{background:var(--ok);}
+.opt.wrong{border-color:var(--err);background:var(--err-bg);}
+.opt.wrong .ltr{background:var(--err);}
+.opt.revealed{border-color:var(--ok);background:var(--ok-bg);opacity:.8;}
+.opt.revealed .ltr{background:var(--ok);}
+.opt:disabled{cursor:default;}
+.feedback{margin-top:16px;padding:14px 18px;border-radius:8px;font-size:13.5px;line-height:1.6;display:none;}
+.feedback.show{display:block;animation:fadeIn .2s ease;}
+.feedback.ok{background:var(--ok-bg);border-left:4px solid var(--ok);color:#145a38;}
+.feedback.bad{background:var(--err-bg);border-left:4px solid var(--err);color:#7b1a12;}
+.feedback strong{display:block;margin-bottom:3px;font-size:14.5px;}
+.next-btn{margin-top:18px;padding:11px 30px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:none;transition:background .2s;}
+.next-btn.show{display:inline-block;}
+.next-btn:hover{background:var(--navy-light);}
+.summary-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;padding:24px;}
+.summary-overlay.show{display:flex;align-items:flex-start;justify-content:center;}
+.summary-panel{background:#fff;border-radius:16px;max-width:720px;width:100%;padding:36px;box-shadow:0 8px 40px rgba(0,0,0,.2);}
+.summary-panel h2{font-family:'Playfair Display',serif;font-size:26px;color:var(--navy);margin-bottom:4px;}
+.summary-panel .sub{color:var(--muted);font-size:14px;margin-bottom:24px;}
+.summary-score-big{font-family:'Playfair Display',serif;font-size:56px;color:var(--gold);line-height:1;}
+.summary-score-row{display:flex;align-items:flex-end;gap:16px;margin-bottom:24px;}
+.summary-score-detail{font-size:14px;color:var(--muted);padding-bottom:8px;}
+.sum-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+.sum-table th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:500;font-size:13px;}
+.sum-table td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;}
+.sum-table tr:last-child td{border-bottom:none;}
+.sum-table .bar-cell{width:120px;}
+.sum-table .mini-bar{height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.sum-table .mini-fill{height:100%;border-radius:4px;}
+.grade-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.grade-strong{background:#d4edda;color:#155724;}
+.grade-ok{background:#fff3cd;color:#856404;}
+.grade-weak{background:#f8d7da;color:#721c24;}
+.sum-actions{display:flex;gap:10px;flex-wrap:wrap;}
+@media print {
+  .hdr .hdr-btns, .sidebar, .queue-bar, .q-meta .q-diff, .opt, .feedback, .next-btn { display:none!important; }
+  .layout{grid-template-columns:1fr;}
+  .main{padding:0;max-width:100%;}
+  body{background:#fff;}
+  .summary-overlay{position:static!important;background:none!important;padding:0!important;display:block!important;}
+  .summary-panel{box-shadow:none!important;border:none!important;padding:0!important;}
+  .sum-actions{display:none!important;}
+  .print-hdr{display:block!important;}
+}
+.print-hdr{display:none;font-family:'Playfair Display',serif;font-size:16pt;color:var(--navy);margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--gold);}
+.q-table-wrap{margin:14px 0;overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+.q-table{width:100%;border-collapse:collapse;font-size:13.5px;font-family:'DM Sans',sans-serif;}
+.q-table thead tr{background:var(--navy);}
+.q-table thead th{padding:8px 14px;text-align:left;font-weight:600;font-size:12px;color:var(--gold);letter-spacing:0.4px;white-space:nowrap;}
+.q-table tbody tr{border-bottom:1px solid var(--border);}
+.q-table tbody tr:last-child{border-bottom:none;}
+.q-table tbody tr:nth-child(even){background:rgba(26,39,68,0.03);}
+.q-table td{padding:8px 14px;vertical-align:middle;line-height:1.4;}
+.q-table td.tbl-key{font-weight:600;color:var(--navy);white-space:nowrap;background:rgba(26,39,68,0.04);border-right:1px solid var(--border);}
+.q-table td.tbl-val{color:var(--text);text-align:right;font-variant-numeric:tabular-nums;}
+.q-diagram-note{margin:12px 0;padding:10px 14px;background:rgba(26,39,68,0.05);border-left:3px solid var(--gold);border-radius:0 6px 6px 0;font-size:13px;}
+.q-diagram-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;}
+.q-diagram-note ul{list-style:none;padding:0;display:flex;flex-direction:column;gap:4px;}
+.q-diagram-note li{color:var(--text);padding:2px 0;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">BIZ-OMICS <span>Microeconomics · Adaptive MCQ</span></div>
+  <div class="hdr-btns">
+    <a href="index.html" class="btn" style="text-decoration:none">⌂ Home</a>
+    <button class="btn" onclick="showSummary()">📊 Summary</button>
+    <button class="btn btn-danger" onclick="resetSession()">↺ Restart</button>
+    <button class="btn" onclick="window.print()">⎙ Print</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <h3>Session</h3>
+      <div class="stats-strip">
+        <div class="stat-box"><div class="val" id="stat-q">0</div><div class="lbl">Answered</div></div>
+        <div class="stat-box green"><div class="val" id="stat-c">0</div><div class="lbl">Correct</div></div>
+        <div class="stat-box gold"><div class="val" id="stat-pct">—</div><div class="lbl">Score</div></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <h3>Current focus</h3>
+      <div id="current-focus" style="font-size:12px;color:var(--muted);">Starting session…</div>
+    </div>
+    <div class="sidebar-section">
+      <h3>Topic mastery</h3>
+      <div id="mastery-list"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="queue-bar">
+      <span class="q-dot"></span>
+      <span id="queue-label">Adaptive session — questions drawn from weak areas</span>
+      <span class="adaptive-badge">Adaptive</span>
+    </div>
+    <div id="q-container"></div>
+  </div>
+</div>
+
+<div class="summary-overlay" id="summary-overlay">
+  <div class="summary-panel">
+    <div class="print-hdr">BIZ-OMICS — Microeconomics Adaptive MCQ · Session Report</div>
+    <h2>Session Summary</h2>
+    <div class="sub" id="sum-date"></div>
+    <div class="summary-score-row">
+      <div>
+        <div class="summary-score-big" id="sum-pct">—</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;">Overall score</div>
+      </div>
+      <div class="summary-score-detail" id="sum-detail"></div>
+    </div>
+    <table class="sum-table" id="sum-table">
+      <thead><tr><th>Topic</th><th>Score</th><th>Correct / Asked</th><th class="bar-cell">Mastery</th><th>Grade</th></tr></thead>
+      <tbody id="sum-tbody"></tbody>
+    </table>
+    <div style="margin-bottom:20px;font-size:13px;color:var(--muted);">
+      <strong style="color:var(--navy);">Topics not yet covered</strong> will appear once the adaptive engine serves questions from them.
+    </div>
+    <div class="sum-actions">
+      <button class="btn btn-primary" onclick="hideSummary()">← Continue session</button>
+      <button class="btn" onclick="window.print()">⎙ Print this report</button>
+      <button class="btn btn-danger" onclick="resetSession()">↺ Start new session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOPICS = {
+  behavioural:   'Behavioural economics',
+  competition:   'Competition policy',
+  costs_returns: 'Costs & returns to scale',
+  elasticity:    'Elasticity',
+  labour:        'Labour markets',
+  market_fail:   'Market failure & externalities',
+  market_struct: 'Market structures',
+  methodology:   'Economic methodology',
+  poverty:       'Poverty & inequality',
+  production:    'Production theory',
+  supply_demand: 'Supply & demand',
+  utility:       'Utility theory'
+};
+
+const ALL_QUESTIONS = [
+  { id:1, topic:'behavioural', difficulty:1,
+    stem:'Which one of the following best describes mandated choice?',
+    options:['A limited range of options is provided','Individuals are required by law to choose an option','Options are framed to influence the outcome of decisions','The option is selected automatically if an alternative is not chosen'],
+    answer:1, explanation:'Mandated choice requires individuals to actively make a decision — they are legally obliged to choose an option. This is distinct from a default (automatic enrolment if no choice is made), framing effects, or restricting the choice set.' },
+  { id:2, topic:'costs_returns', difficulty:2,
+    stem:'The table below shows inputs and output before and after a firm expands to increase productive capacity.\n\n[TABLE: / Before expansion / After expansion\nCapital employed / 500 units / 800 units\nLand employed / 20 units / 32 units\nLabour employed / 1,000 workers / 1,600 workers\nOutput produced / 200,000 units / 350,000 units]\n\nAll inputs rose by 60%. Output rose by 75%. Which one of the following do the data show has resulted from the expansion?',
+    options:['Diseconomies of scale','Falling labour productivity','Increasing marginal returns','Increasing returns to scale'],
+    answer:3, explanation:'All inputs increased by 60% (e.g. capital 500→800 units). Output increased by 75% (200,000→350,000 units). Because output rose proportionally more than inputs, the firm is experiencing increasing returns to scale.' },
+  { id:3, topic:'market_struct', difficulty:2,
+    stem:'A large company experiences a significant fall in its year-end profits attributed to the divorce of ownership from control. Which one of the following is most likely to explain why this may have harmed the firm\'s performance?',
+    options:['As part of their earnings, managers receive profit-related pay and share options','Due to the satisficing principle, managers act in the interests of shareholders','Moral hazard means shareholders take more risks to achieve greater rewards','Profit maximisation is not the most important objective for all managers'],
+    answer:3, explanation:'When ownership is separated from control, managers may pursue their own objectives (empire-building, salary, job security) rather than maximising profit for shareholders. This principal-agent problem explains the profit fall.' },
+  { id:4, topic:'labour', difficulty:3,
+    stem:'The table below shows the size of the UK labour force and the percentage belonging to a trade union in 2012 and 2022.\n\n[TABLE: Year / Size of labour force (millions) / Proportion in trade union\n2012 / 29.6 / 26.1%\n2022 / 32.8 / 22.3%]\n\nAccording to the data, what is the percentage fall, to one decimal place, in the number of workers belonging to a trade union between 2012 and 2022?',
+    options:['3.8%','5.3%','5.6%','9.8%'],
+    answer:1, explanation:'2012 union members: 29.6m × 26.1% = 7.726m. 2022 union members: 32.8m × 22.3% = 7.314m. Fall = 0.412m. Percentage fall = 0.412 ÷ 7.726 × 100 = 5.3%.' },
+  { id:5, topic:'labour', difficulty:2,
+    stem:'The table below shows four situations where one group of workers earns less than another, with the reason given by employers.\n\n[TABLE: / Situation / Reason given by employer\nA / Ethnic minority shelf-stackers paid less per hour than others / Different trade unions represent each group\nB / Full-time females earn less than males in similar roles / Males have longer average service; bonus included\nC / Female teachers earn less than male teachers on average / More male teachers work full-time\nD / Under-20 workers paid less than over-20 for similar roles / All paid the national minimum wage]\n\nWhich one is the best example of wage discrimination?',
+    options:['A firm pays shelf-stackers from one ethnic group less per hour than those from another group','Full-time female workers earn less on average than male colleagues performing similar roles','The average female teacher earns less in a year than the average male teacher','Workers aged under 20 are paid less per hour than workers aged over 20 performing similar roles'],
+    answer:0, explanation:'Wage discrimination is paying workers in identical roles differently for reasons unrelated to productivity. Option A pays workers doing the same job differently based on ethnicity. The employer\'s reason (different unions) does not justify different hourly rates for the same work.' },
+  { id:6, topic:'poverty', difficulty:2,
+    stem:'Which one of the following is most likely to lead to individuals currently in relative poverty remaining in relative poverty?',
+    options:['A major housebuilding programme reduces the number of workers who are geographically immobile','Average earnings rise more slowly than the increase in the national minimum wage','The government changes the income tax system to make it more progressive','The rate of increase in the price of necessities, such as energy, is higher than for all goods and services'],
+    answer:3, explanation:'Relative poverty is defined relative to median income. If necessity prices rise faster than general prices, those in relative poverty — who spend a higher share of income on necessities — face a disproportionate real income squeeze, making escape harder.' },
+  { id:7, topic:'competition', difficulty:2,
+    stem:'Which one of the following statements regarding UK competition policy is correct?',
+    options:['An objective of competition policy is to reduce firms\' profits by preventing prices above marginal cost','Competition policy aims to increase social welfare by discouraging firms from entering already-competitive markets','Competition policy recognises that a monopoly may be preferable to many small firms due to diseconomies of scale','High concentration ratios and consumer complaints may suggest anti-competitive behaviour and prompt CMA investigation'],
+    answer:3, explanation:'The CMA uses indicators such as high market concentration ratios and consumer complaints to identify markets where competition may be harmed. These trigger investigations. Options A, B and C misrepresent the objectives of competition policy.' },
+  { id:8, topic:'supply_demand', difficulty:1,
+    stem:'Which one of the following is a consequence of the basic economic problem of limited resources and unlimited wants?',
+    options:['All goods and services will have a market price','Employment of factors of production has an opportunity cost','Markets are unable to allocate resources efficiently','There will not be an excess supply in markets'],
+    answer:1, explanation:'Because resources are scarce, using them in one way means they cannot be used in another — every use of a factor of production has an opportunity cost. Not all goods have market prices (public goods), markets can allocate efficiently, and excess supply can exist.' },
+  { id:9, topic:'market_fail', difficulty:1,
+    stem:'A profit-maximising firm in the service sector needs to recruit a new employee. Which one of the following explains why asymmetric information could mean the most suitable person is not chosen?',
+    options:['It is difficult to calculate the marginal revenue productivity of workers in the service sector','Occupational immobility means there is a limited supply of workers with the right skills','The firm may have to recruit locally because labour is often geographically immobile','The firm is unlikely to know everything about a job applicant\'s skills, abilities and motivation'],
+    answer:3, explanation:'Asymmetric information arises when the applicant knows more about themselves than the employer. The firm cannot fully assess true skills, effort and motivation — meaning the best person may not be identified and hired.' },
+  { id:10, topic:'elasticity', difficulty:2,
+    stem:'A household\'s annual income increases from £35,000 to £38,500. Income elasticity of demand for Good X is −0.2 and for Good Y is 0.4. Which one of the following statements is correct?',
+    options:['Spending on Good X will fall by £70 and spending on Good Y will increase by £140','Spending on Good X will fall by £700 and spending on Good Y will increase by £1,400','Spending on Good X will fall by 2% and spending on Good Y will increase by 4%','Spending on Good X will fall by 20% and spending on Good Y will increase by 40%'],
+    answer:2, explanation:'Income rose by 10% (£35,000→£38,500). YED for X = −0.2, so %ΔQx = −0.2 × 10% = −2%. YED for Y = +0.4, so %ΔQy = +0.4 × 10% = +4%. Spending on X falls by 2% and spending on Y rises by 4%.' },
+  { id:11, topic:'market_struct', difficulty:2,
+    stem:'According to the kinked demand curve model of oligopoly, which one of the following would most likely explain price stability in an oligopolistic market?',
+    options:['A firm\'s revenue would fall with any change in price','Collusion between firms is likely to lead to price-fixing','Firms do not seek to maximise their profits','Individual firms do not have the ability to set prices'],
+    answer:0, explanation:'In the kinked demand curve model, rivals match price cuts but not price rises. This creates a kink and a discontinuity in the MR curve. Over a range of costs, MC still passes through this gap so price and output remain unchanged — any price change reduces revenue.' },
+  { id:12, topic:'market_struct', difficulty:2,
+    stem:'The table below shows how price affects the number of shirts sold per week.\n\n[TABLE: Price of shirts / Number of shirts sold\n£40 / 10\n£36 / 11\n£33 / 12]\n\nThe marginal revenue of the 12th shirt sold is',
+    options:['−£3','£0','£33','£396'],
+    answer:1, explanation:'TR at 11 shirts: 11 × £36 = £396. TR at 12 shirts: 12 × £33 = £396. MR of 12th shirt = £396 − £396 = £0. When total revenue is unchanged as output rises by one unit, marginal revenue is zero.' },
+  { id:13, topic:'market_fail', difficulty:1,
+    stem:'In 2015, the UK government introduced a tax on firms using landfill sites. After the tax was introduced, there was a significant rise in illegal waste dumping. This is most likely to be an example of',
+    options:['a negative externality in consumption','government failure due to unintended consequences','market failure resulting from imperfect information','the tragedy of the commons'],
+    answer:1, explanation:'The tax was intended to reduce landfill use, but caused illegal dumping instead — an unintended negative consequence. This is government failure: the intervention created a new, worse problem rather than solving the original one.' },
+  { id:14, topic:'market_struct', difficulty:2,
+    stem:'A firm has a downward-sloping average revenue curve and a U-shaped average total cost curve. Which one of the following meets the condition for the firm to be productively efficient?\n\nThe firm is producing the quantity at which',
+    options:['average revenue equals average total cost','average revenue equals marginal cost','marginal cost equals average total cost','marginal revenue equals marginal cost'],
+    answer:2, explanation:'Productive efficiency occurs at minimum average total cost — the point where MC = ATC (the bottom of the U-shaped ATC curve). MR = MC is the profit-maximising condition, not productive efficiency.' },
+  { id:15, topic:'labour', difficulty:3,
+    stem:'The table below shows how workers employed affects total output per hour and price.\n\n[TABLE: Number of workers / Total output per hour / Price (£)\n1 / 3 / 5.00\n2 / 7 / 4.50\n3 / 15 / 4.20\n4 / 20 / 4.10\n5 / 24 / 4.00]\n\nThe firm pays workers £18 per hour, has fixed costs of £3 per hour, and no other variable costs. How many workers will the firm employ?',
+    options:['2','3','4','5'],
+    answer:2, explanation:'MRP = change in TR per additional worker. TR: 1w=£15, 2w=£31.50, 3w=£63, 4w=£82, 5w=£96. MRP of each: 1st=£15, 2nd=£16.50, 3rd=£31.50, 4th=£19, 5th=£14. Hire while MRP ≥ wage (£18). Workers 3 (MRP=£31.50) and 4 (MRP=£19) qualify; worker 5 (MRP=£14) does not. Employ 4 workers.' },
+  { id:16, topic:'supply_demand', difficulty:1,
+    stem:'A good is in joint demand when it is',
+    options:['an alternative to buying another good','consumed by more than one person','consumed together with another good','demanded for two or more distinct uses'],
+    answer:2, explanation:'Joint (complementary) demand occurs when two goods are consumed together — e.g. cars and petrol. This is distinct from competitive demand (substitutes) or composite demand (demanded for multiple uses).' },
+  { id:17, topic:'production', difficulty:1,
+    stem:'Which one of the following is the most likely outcome of greater division of labour in a tractor factory?',
+    options:['A reduction in labour costs','Higher job satisfaction','Less use of machinery','More skills acquired by workers'],
+    answer:0, explanation:'Division of labour allows workers to specialise in repetitive tasks, increasing productivity and reducing unit labour costs. It typically reduces job satisfaction (monotony), leads to more specialised machinery use, and narrows rather than broadens skills.' },
+  { id:18, topic:'supply_demand', difficulty:3,
+    stem:'A government sets a maximum price for fruit below the market price to encourage healthier eating. All other things being equal, which of the following will result in the lowest amount of excess demand at the maximum price?',
+    options:['Demand is income elastic and supply is price elastic','Demand is income inelastic and supply is price inelastic','Demand is price elastic and supply is price elastic','Demand is price inelastic and supply is price inelastic'],
+    answer:3, explanation:'A maximum price below equilibrium creates excess demand (Qd > Qs). Excess demand is minimised when demand rises little at the lower price (price inelastic demand) AND supply falls little (price inelastic supply). Both inelastic = smallest gap between Qd and Qs.' },
+  { id:19, topic:'elasticity', difficulty:1,
+    stem:'The income elasticity of demand for cheese sandwiches is −1.2. This means that cheese sandwiches',
+    options:['are a normal good','are an inferior good','have an income inelastic demand','have many substitutes'],
+    answer:1, explanation:'A negative YED means demand falls as income rises — the good is inferior. The magnitude of 1.2 means demand is income elastic (not inelastic). The number of substitutes relates to PED, not YED.' },
+  { id:20, topic:'behavioural', difficulty:2,
+    stem:'Following flooding described as a "once in a century event", there is a sharp increase in residents buying additional flood insurance. Which combination of biases are the residents most likely to have experienced?',
+    options:['Anchoring and framing bias','Availability bias and social norms','Rules of thumb and anchoring','Social norms and rules of thumb'],
+    answer:1, explanation:'Availability bias means people overestimate the probability of vivid recent events (the flood is fresh in memory). Social norms influence behaviour when residents see neighbours buying insurance and follow suit.' },
+  { id:21, topic:'market_struct', difficulty:2,
+    stem:'In 2020, the market leader sold around three times as many vacuum cleaners as its closest rival, with dominance built on technical innovation protected by patents. Rivals have since developed their own designs and are challenging the market leader. What feature of competitive markets does this illustrate?',
+    options:['Collusive oligopoly','Creative destruction','Hit and run competition','Static efficiency'],
+    answer:1, explanation:'Creative destruction (Schumpeter) describes how innovation creates market dominance, but rivals then innovate to displace the incumbent. The rivals\' new designs challenging the patent-holder are a classic example of this process.' },
+  { id:22, topic:'production', difficulty:2,
+    stem:'The table below shows workers employed and total output, with other factors of production fixed.\n\n[TABLE: Number of workers / Total output\n1 / 8\n2 / 28\n3 / 54\n4 / 82\n5 / 103\n6 / 103\n7 / 99]\n\nFor this firm, diminishing marginal returns to labour occur when the',
+    options:['4th worker is employed','5th worker is employed','6th worker is employed','7th worker is employed'],
+    answer:1, explanation:'Marginal product: 1st=8, 2nd=20, 3rd=26, 4th=28, 5th=21, 6th=0, 7th=−4. MP rises up to the 4th worker (28). The 5th adds only 21, less than the 4th worker\'s 28 — so diminishing marginal returns begin with the 5th worker.' },
+  { id:23, topic:'market_struct', difficulty:2,
+    stem:'A firm faces a downward-sloping demand curve. Any increase or decrease from its current output leads to a fall in total revenue. This means that at its current output, marginal revenue is',
+    options:['equal to average revenue','negative','positive','zero'],
+    answer:3, explanation:'If TR falls when output either increases or decreases from the current level, TR is at a maximum at this output. When TR is at its maximum, MR = 0 (the derivative of TR with respect to Q is zero at the peak).' },
+  { id:24, topic:'market_struct', difficulty:1,
+    stem:'Which one of the following is the most likely result of a divorce of ownership from control in an organisation?',
+    options:['Profits are maximised','Shareholders make all organisational decisions','The adoption of satisficing behaviour','The free-rider problem'],
+    answer:2, explanation:'When managers are separated from owners, managers may pursue satisficing — achieving satisfactory rather than maximum profit — while pursuing personal goals such as salary, status or job security. This is the principal-agent problem.' },
+  { id:25, topic:'labour', difficulty:2,
+    stem:'Which one of the following is most likely to affect the elasticity of demand for labour in a particular occupation?',
+    options:['The proportion of employers\' total costs which are made up by wages','The quantity demanded of the final output that the workers produce','The size of the pool of skilled labour available in the local area','The time taken to achieve the qualifications needed for the role'],
+    answer:0, explanation:'The Marshall-Hicks rules state that labour demand is more elastic when labour costs are a higher proportion of total costs. Options C and D affect the elasticity of labour supply. Option B affects the position, not the elasticity, of the labour demand curve.' },
+  { id:26, topic:'behavioural', difficulty:1,
+    stem:'Which one of the following is a nudge technique that could be used to encourage healthy eating?',
+    options:['Banning supermarkets from selling high-calorie energy drinks','Increasing taxes on high-fat products to raise their price','Moving products with a high sugar content away from supermarket checkouts','Subsidising fruit and vegetables to reduce their prices'],
+    answer:2, explanation:'A nudge preserves freedom of choice but changes the choice architecture to guide behaviour. Moving high-sugar products away from checkouts reduces impulse purchases without banning anything. Bans and taxes are regulatory or price-based interventions, not nudges.' },
+  { id:27, topic:'market_struct', difficulty:1,
+    stem:'A firm charging different customers different prices for the same product is practising',
+    options:['limit pricing','marginal cost pricing','price discrimination','price leadership'],
+    answer:2, explanation:'Price discrimination means charging different prices to different customers for the same good, not based on cost differences. Limit pricing deters entry; price leadership occurs when rivals follow one firm\'s price changes.' },
+  { id:28, topic:'supply_demand', difficulty:2,
+    stem:'Which one of the following is a reason why the supply of cars is likely to be price elastic in the short run when price increases?',
+    options:['Car manufacturers\' stocks of unsold cars are low','The demand for cars is also price elastic','The marginal cost of producing cars increases significantly with output','There is considerable spare capacity in the car industry'],
+    answer:3, explanation:'Spare capacity means firms can increase output relatively easily and cheaply in response to a price rise — making supply more elastic. Low stocks would limit extra supply. Rising MC makes supply less responsive. Demand elasticity is irrelevant to supply elasticity.' },
+  { id:29, topic:'poverty', difficulty:1,
+    stem:'Which one of the following best explains the existence of relative poverty?',
+    options:['Some households have to pay more in income tax than other households','The Gini coefficient in some countries is low','The income of some households is significantly less than the median household income','The prices of items essential for life differ between countries'],
+    answer:2, explanation:'Relative poverty is defined as having income significantly below the median — typically below 60% of median household income. It is a measure of inequality within a society. A low Gini coefficient would suggest more equality, not poverty.' },
+  { id:30, topic:'market_struct', difficulty:2,
+    stem:'There is a reduction in market demand for the product supplied by firms in a perfectly competitive industry. All other things being equal, which one of the following will happen to firms\' average and marginal revenue?',
+    options:['Average revenue and marginal revenue will both fall','Average revenue and marginal revenue will not change','Average revenue will fall and marginal revenue will increase','Average revenue will increase and marginal revenue will fall'],
+    answer:0, explanation:'In perfect competition each firm is a price-taker. A fall in market demand shifts the demand curve left, reducing the equilibrium price. Since AR = P and MR = AR = P in perfect competition, both AR and MR fall.' },
+  { id:31, topic:'labour', difficulty:1,
+    stem:'The average university graduate can expect to earn more over their working life than the average school leaver. This is most likely to be explained by',
+    options:['discrimination in the labour markets for non-graduates','the higher marginal revenue productivity of graduates','the higher price elasticity of demand for graduates','the relatively low elasticity of supply of non-graduates'],
+    answer:1, explanation:'In a competitive labour market, wages reflect marginal revenue productivity. Graduates typically have higher skills, making them more productive with higher MRP and therefore higher wages.' },
+  { id:32, topic:'market_fail', difficulty:1,
+    stem:'A person is considering buying a used motorbike from an internet dealer, described as in perfect condition and priced accordingly. In this situation, asymmetric information is most likely to lead the person to',
+    options:['buy the motorbike because they believe the price is justified by its condition','know more about the motorbike\'s market value than the dealer','maximise their utility by buying a cheaper motorbike from a different dealer','not buy the motorbike because they do not know as much about it as the dealer'],
+    answer:3, explanation:'The seller knows far more about the bike\'s true condition than the buyer (Akerlof\'s market for lemons). The buyer cannot verify "perfect condition" and rationally fears a fault. This uncertainty may deter the purchase entirely.' },
+  { id:33, topic:'behavioural', difficulty:1,
+    stem:'A feature of the UK workplace pension scheme is that employers enrol employees unless they consciously opt out. An individual remaining in their workplace pension scheme is an example of a person',
+    options:['accepting the default choice','acting irrationally by ignoring an economic incentive','being anchored by a previous financial decision','using a rule of thumb to make the choice'],
+    answer:0, explanation:'Auto-enrolment sets pension membership as the default. An employee who does not opt out accepts the default choice — they have not actively chosen but remain enrolled due to inertia, exploiting status quo bias.' },
+  { id:34, topic:'labour', difficulty:2,
+    stem:'An increase in the national minimum wage may make income distribution more equal. Such a policy is most likely to be effective when the elasticity of demand for labour in low-paid work is',
+    options:['elastic','inelastic','perfectly elastic','unitary elastic'],
+    answer:1, explanation:'If demand for low-paid labour is inelastic, firms will not significantly cut employment when the minimum wage rises. Workers keep their jobs and earn more — inequality falls. With elastic demand, many lose jobs, potentially worsening inequality.' },
+  { id:35, topic:'market_struct', difficulty:3,
+    stem:'A monopolistically competitive firm\'s demand curve for good X has a price elasticity of demand of −1.0 throughout its entire range. All other things being equal, which one of the following is most likely to result in an increase in the firm\'s profits?',
+    options:['A decrease in the cost of producing the good','A decrease in the price of the good','An increase in the price of the good','An increase in the scale of its operation'],
+    answer:0, explanation:'With unit elastic demand (PED = −1), any price change leaves total revenue unchanged — neither a price rise nor a price cut increases revenue. The only way to increase profit is to reduce costs. (Note: A or C accepted per the original mark scheme.)' },
+  { id:36, topic:'production', difficulty:1,
+    stem:'All other things being equal, which one of the following is the most likely consequence of technological innovation in the production process by firms within an industry?',
+    options:['A decrease in the number of firms in the industry','A reduction in firms\' unit costs of production','The elimination of entry barriers into the industry','The invention of a product that did not previously exist'],
+    answer:1, explanation:'Process innovation increases productivity and reduces cost per unit of output. It does not necessarily reduce the number of firms, eliminate barriers (patents may create them), or produce an entirely new product.' },
+  { id:37, topic:'supply_demand', difficulty:1,
+    stem:'Economics is a social science because',
+    options:['all economic hypotheses are based on value judgements','economic policies can only be based on positive analysis','it involves the study of human behaviour and economic decision making','quantitative data cannot be used to test economic theories'],
+    answer:2, explanation:'Economics is a social science because it studies human behaviour — how people make decisions about allocating scarce resources — using scientific methods while recognising the complexity of human behaviour.' },
+  { id:38, topic:'labour', difficulty:2,
+    stem:'All other things being equal, the demand for labour is more likely to be wage elastic if',
+    options:['it is difficult to substitute capital for labour','the cost of labour is a low percentage of total costs','the final product has a high price elasticity of demand','the supply curve for labour is wage elastic'],
+    answer:2, explanation:'Marshall-Hicks: demand for labour is more elastic when the final product\'s demand is more elastic. A wage rise raises costs and price; elastic product demand then causes a large fall in sales and therefore labour demand. Difficult capital substitution (option A) makes demand less elastic.' },
+  { id:39, topic:'poverty', difficulty:2,
+    stem:'Over the last decade, the top five decile groups each experienced a fall in their share of total income, while the bottom five decile groups experienced a substantial increase. The distribution of income has become',
+    options:['more equal','more equal but less equitable','more equitable','more equitable but less equal'],
+    answer:0, explanation:'Equality refers to the evenness of distribution. The bottom half gained income share and the top half lost it — the distribution became more even/equal. Whether it became more equitable (fair) cannot be concluded from data alone, as equity involves value judgements.' },
+  { id:40, topic:'utility', difficulty:1,
+    stem:'According to the hypothesis of diminishing marginal utility, when marginal utility is zero',
+    options:['average utility is negative','the good is a demerit good','total utility from consuming the good is maximised','total utility will increase by consuming more of the good'],
+    answer:2, explanation:'Total utility rises as long as MU is positive. When MU = 0, total utility is at its maximum. Consuming one more unit adds nothing to total utility, and further consumption with negative MU would reduce total utility.' },
+  { id:41, topic:'market_fail', difficulty:1,
+    stem:'Which one of the following distinguishes a private good from a pure public good?',
+    options:['A private good can only be provided by private firms and not the government','Consumption of a private good creates negative externalities for other consumers','Consumers of a private good have full knowledge of any externalities in its production','One person\'s consumption of a private good reduces the amount available for other consumers'],
+    answer:3, explanation:'Private goods are both excludable and rival. Rivalry means one person\'s consumption reduces availability for others — this distinguishes them from non-rival public goods. Governments can also provide private goods. Externalities and information are separate issues.' },
+  { id:42, topic:'market_fail', difficulty:2,
+    stem:'Which one of the following government policies is most likely to reduce market failure and improve the allocation of resources?',
+    options:['A higher rate of tax on all firms earning profit','A minimum price for demerit goods above their free market price','Free market pricing for the provision of public goods','Subsidies paid to all loss-making firms to maintain full employment'],
+    answer:1, explanation:'Demerit goods are overproduced because their true social cost is not reflected in price. A minimum price above the free market price reduces overconsumption, moving allocation closer to the social optimum. The other options distort incentives without addressing specific market failures.' },
+  { id:43, topic:'behavioural', difficulty:2,
+    stem:'The behaviour of a consumer buying a 75-inch TV is biased due to bounded rationality and the anchoring effect. This implies that the choice is based on the price of',
+    options:['all available 75-inch TVs, given sufficient time to obtain the information','the cheapest available 75-inch TV, in order to maximise utility','the first 75-inch TV seen and imperfect information about available alternatives','the most expensive 75-inch TV, believing this indicates the best quality'],
+    answer:2, explanation:'Bounded rationality means the consumer cannot process all information. The anchoring effect means the first price seen disproportionately influences the decision. Together, the choice is based on the initial TV seen and incomplete information about alternatives.' },
+  { id:44, topic:'market_struct', difficulty:2,
+    stem:'A monopolistically competitive firm\'s demand curve is',
+    options:['also the market demand curve','inelastic throughout its length','the firm\'s average revenue curve','the same as its marginal revenue curve'],
+    answer:2, explanation:'For any firm, the demand curve is its average revenue (AR) curve, since AR = P = TR/Q. In monopolistic competition the firm faces a downward-sloping demand/AR curve. MR lies below AR. The market demand curve is the aggregate across all firms.' },
+  { id:45, topic:'market_fail', difficulty:2,
+    stem:'Which one of the following is most likely to result in complete market failure?',
+    options:['Negative externalities in production and consumption','Non-excludability and no enforceable property rights','The existence of demerit goods in some markets','The government setting maximum prices for excludable and rival goods'],
+    answer:1, explanation:'Complete market failure (no market at all) arises with pure public goods. Non-excludability means no one can be charged, so private firms have no incentive to supply. Without enforceable property rights the free-rider problem prevents any market forming. Externalities and demerit goods cause partial, not complete, market failure.' },
+  { id:46, topic:'utility', difficulty:1,
+    stem:'The hypothesis of diminishing marginal utility',
+    options:['assumes that at least one factor of production is fixed in the short run','can be used to help explain why a demand curve is downward sloping','explains why firms try to maximise profit','states that total utility must fall as consumption increases'],
+    answer:1, explanation:'Diminishing MU means each extra unit consumed gives less additional satisfaction. To justify buying an extra unit, price must fall — so consumers buy more only at lower prices, giving a downward-sloping demand curve. Total utility rises as long as MU > 0.' },
+  { id:47, topic:'market_fail', difficulty:2,
+    stem:'A rational consumer\'s final choice is between Car 1 (£8,000, 3-month guarantee) and Car 2 (£10,000, 12-month guarantee). The most likely explanation for purchasing Car 2 is that she',
+    options:['has £10,000 of savings available to buy a used car','has a positive income elasticity of demand for used cars','has a price inelastic demand curve for used cars','wants to reduce the risks from asymmetric information'],
+    answer:3, explanation:'The buyer cannot verify the car\'s true condition (asymmetric information — seller knows more). A longer guarantee signals quality and reduces the risk of a faulty purchase. Paying more for the guarantee is rational as a way to mitigate asymmetric information.' },
+  { id:48, topic:'poverty', difficulty:2,
+    stem:'All other things being equal, which one of the following would most likely result in a reduction in inequality in the distribution of income in the UK? An increase in the',
+    options:['amount of government tax revenue','average standard of living','level of median income','share of income of the lowest quintile'],
+    answer:3, explanation:'Inequality is about distribution. If the lowest quintile\'s share increases, the bottom gains relative to the top — inequality falls. Higher tax revenue, higher median income, or higher average living standards can all occur without the distribution becoming more equal.' },
+  { id:49, topic:'poverty', difficulty:1,
+    stem:'The table below shows the Gini coefficient for a country between 2012 and 2016, during which the government used progressive taxation.\n\n[TABLE: Year / Gini coefficient\n2012 / 0.60\n2013 / 0.55\n2014 / 0.50\n2015 / 0.45\n2016 / 0.40]\n\nBased on the data, which one of the following is a positive statement?',
+    options:['A progressive tax system is the fairest way of correcting income inequality','Between 2012 and 2016 the distribution of income in the country became more equal','The Gini coefficient is the best way of measuring changes in the distribution of income','The government should continue to tax the rich to improve the distribution of income'],
+    answer:1, explanation:'A positive statement is a factual, testable claim with no value judgement. Option B is directly verifiable — the Gini coefficient fell from 0.60 to 0.40, indicating a more equal distribution. Options A, C and D all contain value judgements ("fairest", "best", "should").' },
+  { id:52, topic:'labour', difficulty:2,
+    stem:'All other things being equal, which one of the following is most likely to cause the MRP of labour curve in the shoe manufacturing industry to shift to the right?',
+    options:['A decrease in money wage rates in the shoe industry','A decrease in the number of workers employed in the shoe industry','An increase in the market demand for shoes','An increase in the number of firms competing in the shoe industry'],
+    answer:2, explanation:'MRP = MR × MP. The MRP curve shifts right when MR increases. An increase in market demand for shoes raises shoe prices, increasing MR and therefore the MRP of each worker. Wage changes affect the quantity of labour demanded, not the MRP curve itself.' },
+  { id:53, topic:'market_fail', difficulty:2,
+    stem:'Which one of the following applies to merit goods?',
+    options:['Their marginal private benefit is greater than their marginal social benefit','They are likely to be provided by the market','They can only be supplied by the government','They have the characteristics of non-excludability and non-rivalry'],
+    answer:1, explanation:'Merit goods (e.g. education, healthcare) are provided by private markets but are under-consumed relative to the social optimum because consumers underestimate their benefit, or because of positive externalities. They are excludable and rival. MPB < MSB (not greater).' },
+  { id:54, topic:'market_fail', difficulty:2,
+    stem:'Which one of the following provides a reason for government intervention in a market?',
+    options:['Firms in an oligopolistic market may limit price competition','Market failures can only be corrected by using regulations','Monopolistically competitive firms earn abnormal profits in the long run','Public goods are excludable and rival'],
+    answer:0, explanation:'Oligopolists may tacitly collude to limit price competition, harming consumer welfare — a market failure justifying intervention. Market failures can be corrected by multiple tools, not only regulation. Monopolistically competitive firms earn only normal profit in the long run. Public goods are non-excludable and non-rival.' },
+  { id:55, topic:'elasticity', difficulty:2,
+    stem:'The price of good Y, a substitute for good X, rises from 75p to £1. As a result, quantity demanded of good X rises from 3 million to 5 million units per month. What is the cross elasticity of demand for good X with respect to good Y?',
+    options:['+0.5','−0.5','+2.0','−2.0'],
+    answer:2, explanation:'XED = (%ΔQx) ÷ (%ΔPy). %ΔQx = (5−3)/3 × 100 = 66.7%. %ΔPy = (100−75)/75 × 100 = 33.3%. XED = 66.7 ÷ 33.3 = +2.0. The positive sign confirms X and Y are substitutes.' },
+  { id:56, topic:'behavioural', difficulty:1,
+    stem:'Which one of the following is most likely to be associated with behavioural economic theory?',
+    options:['All consumer behaviour is based on rational utility-maximising decisions','An individual\'s economic decisions may be biased','Price changes cannot explain how competitive markets achieve equilibrium','The behaviour of firms is based on their desire to maximise profit'],
+    answer:1, explanation:'Behavioural economics challenges perfect rationality, showing that cognitive biases (anchoring, availability bias, loss aversion, social norms) cause decisions to systematically deviate from rational utility maximisation.' },
+  { id:57, topic:'supply_demand', difficulty:2,
+    stem:'At initial market equilibrium, the income elasticity of demand for fresh chickens is +1.5 and the price elasticity of supply is +1.0. Then there is a 5% increase in consumers\' income. Which one of the following shows the most likely changes in equilibrium price and quantity?',
+    options:['Price: Higher / Quantity: Unchanged','Price: Higher / Quantity: Higher','Price: Unchanged / Quantity: Unchanged','Price: Lower / Quantity: Higher'],
+    answer:1, explanation:'YED = +1.5 and income rises 5%, so demand rises 7.5% (rightward shift). Supply has PES = +1.0 (upward sloping, not perfectly elastic). When demand shifts right, the new equilibrium has a higher price and higher quantity.' },
+  { id:58, topic:'production', difficulty:2,
+    stem:'The table below shows a firm\'s total and average product in the short run with different inputs of labour.\n\n[TABLE: Number of workers / Total product / Average product\n4 / 128 / 32\n5 / 260 / 52\n6 / 420 / 70\n7 / 497 / 71\n8 / 528 / 66]\n\nDiminishing marginal returns to labour set in when the firm employs',
+    options:['5 workers','6 workers','7 workers','8 workers'],
+    answer:2, explanation:'Marginal product: 5th worker adds 132 (260−128), 6th adds 160 (420−260), 7th adds 77 (497−420), 8th adds 31 (528−497). MP rises from the 5th to the 6th worker, then falls from the 6th to the 7th. Diminishing marginal returns begin with the 7th worker.' },
+  { id:59, topic:'utility', difficulty:3,
+    stem:'A person eats six biscuits a day to maximise total utility. The price increases by 50%, leading to a change in daily consumption. Which one of the following shows the most likely changes in total utility and marginal utility?',
+    options:['Total utility: Decrease / Marginal utility of last biscuit: Decrease','Total utility: Increase / Marginal utility of last biscuit: Decrease','Total utility: Decrease / Marginal utility of last biscuit: Increase','Total utility: Increase / Marginal utility of last biscuit: Increase'],
+    answer:2, explanation:'At 6 biscuits MU = 0 (utility maximised). The price rise causes consumption to fall (say to 4). Total utility falls. But consuming fewer biscuits means the person is on the left of the MU curve where MU > 0 — the marginal utility of the last biscuit consumed increases.' },
+  { id:60, topic:'costs_returns', difficulty:2,
+    stem:'A firm benefits from significant and persistent economies of scale as it increases output. Which one of the following is the most likely consequence as it grows in size?',
+    options:['The firm\'s ability to set its own prices will increase','The firm\'s long-run average cost curve will become U-shaped','The firm\'s increasing profitability will attract many new entrants','The firm\'s total cost of production will decrease'],
+    answer:0, explanation:'Persistent economies of scale give the firm lower costs than rivals, increasing market share and dominance. As it grows larger relative to the market, it gains more pricing power. A U-shaped LRAC would imply diseconomies eventually; total costs still rise as output rises even if unit costs fall.' },
+
+  // ── SECOND PDF: 59 questions (Q1–Q60 excluding Q17 SRAS) ──────────────────
+  { id:'b1', topic:'poverty', difficulty:1,
+    stem:'Which one of the following policies is most likely to have an immediate effect in helping to reduce the amount of poverty in the UK?',
+    options:['An increase in government subsidies for buyers of electric cars','A shift in the burden of taxation from direct to indirect taxes','Setting a price floor for basic foods','The introduction of a price ceiling for household energy'],
+    answer:3, explanation:'A price ceiling (maximum price) for household energy set below the market price immediately reduces energy bills for households — directly benefiting those in poverty who spend a higher proportion of income on energy. Subsidies for electric cars help higher-income households; shifting to indirect taxes is regressive; a price floor raises food prices.' },
+  { id:'b2', topic:'competition', difficulty:1,
+    stem:'Which one of the following is most likely to measure the degree of competition in an oligopolistic industry?',
+    options:['The price elasticity of supply in the industry','The profitability of the 10 largest firms in the industry','The three firm concentration ratio','The value of the Gini coefficient'],
+    answer:2, explanation:'A concentration ratio measures the combined market share of the largest firms. A three-firm concentration ratio directly shows how much of the market is controlled by the top three firms — a high value indicates low competition. The Gini coefficient measures income inequality, not market concentration.' },
+  { id:'b3', topic:'labour', difficulty:2,
+    stem:'In a labour market dominated by a monopsonist, wages and employment are usually lower than in a competitive labour market. This is because a monopsonist',
+    options:['employs workers up to the point where the marginal revenue product of labour is equal to the wage rate','is a monopoly supplier of labour','equates the marginal revenue product of labour with its marginal cost not the wage rate','restricts output to raise the price of the product sold'],
+    answer:2, explanation:'A monopsonist (single buyer of labour) faces an upward-sloping labour supply curve, so its marginal cost of labour exceeds the wage rate. It hires where MRP = MCL (not MRP = wage), resulting in fewer workers employed and a lower wage than in a competitive market.' },
+  { id:'b4', topic:'methodology', difficulty:1,
+    stem:'Economic decision making and policies are influenced by value judgements because',
+    options:['all people are motivated by the desire to maximise their incomes','economic analysis and decision making is assumed to be based on complete information','they are based on the same methodology as the natural sciences','they involve moral and political considerations as well as positive analysis'],
+    answer:3, explanation:'Value judgements are normative views about what ought to be. Economic policies inevitably involve choices about distribution, fairness, and trade-offs between objectives — these are moral and political judgements, not purely objective positive analysis.' },
+  { id:'b5', topic:'utility', difficulty:1,
+    stem:'The law of diminishing marginal utility states that',
+    options:['as more of a product is consumed, the extra satisfaction will decline','as more of all factors are employed, the additional output produced will fall','as more variable factors are added to a fixed factor, the additional output produced will decline','the total satisfaction from consuming a product will be maximised when marginal utility starts to fall'],
+    answer:0, explanation:'Diminishing marginal utility: each successive unit of a good consumed yields less additional satisfaction than the previous unit. Option B describes diminishing returns to scale; option C describes the law of diminishing marginal returns. Total utility is maximised when MU = 0, not merely when it starts to fall.' },
+  { id:'b6', topic:'costs_returns', difficulty:3,
+    stem:'A firm employs three factors of production. The table below shows how output is affected by changing inputs.\n\n[TABLE: Units of output / Units of capital / Units of land / Labour (workers)\n500 / 20 / 40 / 60\n1000 / 80 / 160 / 240\n2000 / 140 / 280 / 420\n3000 / 210 / 420 / 630\n4000 / 300 / 580 / 860]\n\nThe firm experiences constant returns to scale when it increases its output from',
+    options:['500 to 1000 units','1000 to 2000 units','2000 to 3000 units','3000 to 4000 units'],
+    answer:2, explanation:'Check input ratios for each doubling/increase. 500→1000: inputs roughly quadruple (20→80 capital) while output doubles — decreasing returns. 1000→2000: capital 80→140 (+75%), output doubles (+100%) — increasing returns. 2000→3000: capital 140→210 (+50%), land 280→420 (+50%), labour 420→630 (+50%), output +50% — constant returns to scale. 3000→4000: inputs rise more than output — decreasing returns.' },
+  { id:'b7', topic:'production', difficulty:1,
+    stem:'The table below shows possible differences between the meanings of invention and innovation. Which combination correctly identifies the difference?\n\n[TABLE: / Invention / Innovation\nA / Applies to changes in goods only / Applies to changes in services only\nB / Applies to changes in services only / Applies to changes in goods only\nC / Discovering something entirely new / Turns the results of invention into a product\nD / Turns the results of innovation into a product / Discovering something entirely new]',
+    options:['A — goods only / services only','B — services only / goods only','C — discovering something new / turns invention into a product','D — turns innovation into a product / discovering something new'],
+    answer:2, explanation:'Invention is the discovery or creation of something entirely new (an idea or process). Innovation is the commercial application of an invention — turning it into a marketable product or process. Both apply to goods and services.' },
+  { id:'b8', topic:'market_struct', difficulty:2,
+    stem:'The table below shows output, average total cost and average revenue for a firm.\n\n[TABLE: Units of output / Average total cost (£) / Average revenue (£)\n10 / 15 / 26\n11 / 14 / 24\n12 / 13 / 23\n13 / 12 / 21]\n\nAt which level of output will the firm maximise its profits?',
+    options:['10 units','11 units','12 units','13 units'],
+    answer:2, explanation:'Total profit = TR − TC = (AR − ATC) × Q. At 10: (26−15)×10 = £110. At 11: (24−14)×11 = £110. At 12: (23−13)×12 = £120. At 13: (21−12)×13 = £117. Profit is maximised at 12 units (£120).' },
+  { id:'b9', topic:'labour', difficulty:1,
+    stem:'The marginal revenue product of labour is the',
+    options:['addition to total revenue when the firm produces and sells an extra unit of output','amount produced per worker per time period','change in total output that is produced when one extra worker is employed','revenue gained by selling the extra output produced by employing one more worker'],
+    answer:3, explanation:'MRP of labour = the additional revenue a firm gains from employing one more worker. It equals the marginal product of labour multiplied by the marginal revenue from selling that extra output. Options A and C describe marginal revenue and marginal product separately, not MRP.' },
+  { id:'b10', topic:'poverty', difficulty:1,
+    stem:'Which one of the following values for the Gini coefficient shows the greatest inequality?',
+    options:['−0.5','0','0.5','1'],
+    answer:3, explanation:'The Gini coefficient ranges from 0 (perfect equality — everyone has the same income) to 1 (perfect inequality — one person has all income). A value of 1 represents the greatest possible inequality. Negative values do not occur in practice.' },
+  { id:'b11', topic:'market_fail', difficulty:1,
+    stem:'The tragedy of the commons can be applied to the fishing industry. What is the nature of this market failure?',
+    options:['Over-fishing resulting in declining fish populations','The imposition of fishing quotas by the European Union','The positive externalities associated with fish consumption','The third-party effects on dolphins as a result of tuna fishing'],
+    answer:0, explanation:'The tragedy of the commons occurs when a shared resource (the commons) is over-exploited because individual users have no incentive to conserve it. In fishing, each boat maximises its own catch, leading to over-fishing and declining fish stocks — the market fails to account for the social cost of depletion.' },
+  { id:'b12', topic:'market_fail', difficulty:2,
+    stem:'Immobility of labour may lead to a misallocation of resources and market failure because',
+    options:['a change in the pattern of demand results in structural unemployment','the education and training needed to reduce labour immobility is a public good','the government\'s target for the rate of inflation is too high','the immobility of factors of production is a negative externality in production'],
+    answer:0, explanation:'When demand shifts away from declining industries, workers with specific skills cannot easily move to growing sectors (occupational immobility) or regions (geographical immobility). Labour is misallocated — unemployment in some areas coexists with vacancies in others — a labour market failure.' },
+  { id:'b13', topic:'elasticity', difficulty:1,
+    stem:'The price elasticity of demand for games consoles is −1.2. A 10% reduction in their price would lead to a percentage change in demand of',
+    options:['−8.3%','−12.0%','+8.3%','+12.0%'],
+    answer:3, explanation:'PED = %ΔQd ÷ %ΔP. −1.2 = %ΔQd ÷ (−10%). %ΔQd = −1.2 × −10% = +12.0%. A price reduction increases quantity demanded; with PED of −1.2, a 10% price fall leads to a 12% rise in demand.' },
+  { id:'b14', topic:'costs_returns', difficulty:1,
+    stem:'Which one of the following is a true statement about average fixed costs? Average fixed costs',
+    options:['do not change as output changes','fall as output increases','include rent and raw materials','equal total costs minus total variable costs'],
+    answer:1, explanation:'Average fixed cost = Total fixed cost ÷ output. As output rises, the same fixed costs are spread over more units, so AFC falls continuously. Total fixed costs do not change, but AFC (per unit) falls. Raw materials are variable costs, not fixed. Total costs minus total variable costs equals total fixed costs (not average).' },
+  { id:'b15', topic:'utility', difficulty:2,
+    stem:'The table below shows the total utility of consuming chocolate bars.\n\n[TABLE: Quantity / Total utility\n1 / 100\n2 / 180\n3 / 250\n4 / 300\n5 / 330]\n\nWhat is the marginal utility gained by consuming the fourth chocolate bar?',
+    options:['30','50','70','300'],
+    answer:1, explanation:'Marginal utility = change in total utility. TU at 3 bars = 250; TU at 4 bars = 300. MU of 4th bar = 300 − 250 = 50.' },
+  { id:'b16', topic:'poverty', difficulty:1,
+    stem:'Which one of the following is used to measure inequality in the distribution of income?',
+    options:['The size of the employed labour force','The value of the Gini coefficient','The size of the income multiplier','The marginal rate of income tax'],
+    answer:1, explanation:'The Gini coefficient is the standard measure of income inequality, ranging from 0 (perfect equality) to 1 (perfect inequality). The Lorenz curve underpins its calculation. Labour force size, the multiplier, and marginal tax rates do not directly measure distributional inequality.' },
+  { id:'b18', topic:'market_fail', difficulty:2,
+    stem:'The table below shows the marginal private and external benefits and costs of two products at their free market equilibrium level of output.\n\n[TABLE: / Product X (£) / Product Y (£)\nMarginal private benefit / 200 / 70\nMarginal external benefit / 50 / 40\nMarginal private cost / 200 / 70\nMarginal external cost / 90 / 30]\n\nTo improve the allocation of resources, what should the government do?',
+    options:['Tax product X and subsidise product Y','Tax product X and tax product Y','Subsidise product X and tax product Y','Subsidise product X and subsidise product Y'],
+    answer:0, explanation:'Product X: MEC = £90, MEB = £50 → net negative externality (MSC > MSB) → over-produced → tax to reduce output. Product Y: MEB = £40, MEC = £30 → net positive externality (MSB > MSC) → under-produced → subsidise to increase output. Tax X and subsidise Y.' },
+  { id:'b19', topic:'market_fail', difficulty:2,
+    stem:'The lack of clearly defined property rights in a country is most likely to lead to',
+    options:['overproduction of merit goods','equality of private costs with social costs','overuse of scarce natural resources','an efficient allocation of resources'],
+    answer:2, explanation:'Without property rights, no one owns the resource, so no one has an incentive to conserve it. Users can exploit it freely, ignoring the social cost — leading to overuse and depletion (tragedy of the commons). Property rights are essential for internalising externalities.' },
+  { id:'b20', topic:'elasticity', difficulty:1,
+    stem:'If the price elasticity of supply of a good is +4.0 and its price increases by 10%, the increase in quantity supplied is',
+    options:['0.4%','2.5%','25%','40%'],
+    answer:3, explanation:'PES = %ΔQs ÷ %ΔP. 4.0 = %ΔQs ÷ 10%. %ΔQs = 4.0 × 10% = 40%.' },
+  { id:'b21', topic:'labour', difficulty:1,
+    stem:'Assuming a perfectly competitive labour market, a firm\'s demand curve for labour would be derived from its marginal',
+    options:['cost curve','revenue product curve','utility curve','revenue curve'],
+    answer:1, explanation:'In a perfectly competitive labour market, a firm hires workers up to the point where MRP = wage. The MRP curve is therefore the firm\'s labour demand curve — it shows the maximum wage the firm would pay for each additional worker.' },
+  { id:'b22', topic:'behavioural', difficulty:1,
+    stem:'An essential difference between behavioural and traditional economic theory is that behavioural economic models assume that',
+    options:['people act rationally','consumers attempt to maximise utility','people consider all the available options when making choices','emotional factors influence economic decision-making'],
+    answer:3, explanation:'Traditional economics assumes rational, utility-maximising agents with full information. Behavioural economics recognises that emotions, biases, and cognitive limitations influence decisions — people do not always act rationally or consider all options.' },
+  { id:'b23', topic:'poverty', difficulty:1,
+    stem:'The table below shows the Gini coefficient of income for two countries.\n\n[TABLE: Country / Gini coefficient\nX / 0.4\nY / 0.6]\n\nFrom the table it can be inferred that',
+    options:['the distribution of income is more equal in country X','the distribution of wealth is more equal in country Y','40% of the population in country X have more than the median income','60% of the population in country Y have more than the mean income'],
+    answer:0, explanation:'A lower Gini coefficient means more equal income distribution. Country X (0.4) has a lower coefficient than Country Y (0.6), so income is more equally distributed in X. The Gini coefficient measures income, not wealth. Statements C and D cannot be inferred from the Gini coefficient.' },
+  { id:'b24', topic:'utility', difficulty:1,
+    stem:'A rational consumer will always attempt to',
+    options:['minimise their marginal utility','consume all of their income','maximise their total utility','save so they are prepared for unexpected events'],
+    answer:2, explanation:'Rational utility maximisation is the core assumption of neoclassical consumer theory. A rational consumer allocates spending to maximise total utility given their budget constraint. Consuming all income or always saving are not necessarily utility-maximising.' },
+  { id:'b25', topic:'labour', difficulty:1,
+    stem:'The price elasticity of demand for labour measures the responsiveness of',
+    options:['the supply of labour to a change in the demand for labour','the wage rate to a change in the demand for labour','the demand for labour to a change in the supply of labour','demand for labour to a change in the wage rate'],
+    answer:3, explanation:'Wage elasticity of demand for labour (often called price elasticity of demand for labour) = %ΔQd of labour ÷ %Δwage rate. It measures how sensitive the quantity of labour demanded is to a change in the wage rate.' },
+  { id:'b26', topic:'elasticity', difficulty:1,
+    stem:'Inferior goods always have a',
+    options:['positive price elasticity of demand','negative income elasticity of demand','positive cross elasticity of demand','negative price elasticity of supply'],
+    answer:1, explanation:'By definition, inferior goods have a negative income elasticity of demand — as income rises, demand falls. PED is still negative for inferior goods (they obey the law of demand). Cross elasticity depends on the relationship with other goods. PES is unrelated to whether a good is inferior.' },
+  { id:'b27', topic:'costs_returns', difficulty:2,
+    stem:'A firm produces 10 units per week. At this output: MC = £50, AVC = £35, ATC = £40. The firm\'s total fixed costs are',
+    options:['£5','£10','£15','£50'],
+    answer:3, explanation:'AFC = ATC − AVC = £40 − £35 = £5 per unit. Total fixed costs = AFC × Q = £5 × 10 = £50.' },
+  { id:'b28', topic:'behavioural', difficulty:2,
+    stem:'Behavioural economic theory suggests that when consumers face complex financial decisions, such as choosing between pension schemes, social welfare is likely to increase if consumers are',
+    options:['presented with all the options that are available','presented with a limited set of pre-selected options','provided with as much information as possible about each available option','not given any choice'],
+    answer:1, explanation:'Behavioural economics (Thaler and Sunstein) shows that bounded rationality means too many options causes decision paralysis. Presenting a curated, limited set of pre-selected options (a nudge via choice architecture) helps people make better decisions without overwhelming them.' },
+  { id:'b29', topic:'market_struct', difficulty:2,
+    stem:'Profit maximising monopolies are said to be allocatively inefficient due to',
+    options:['their marginal revenue being greater than their marginal cost','their average revenue being greater than their average cost','their average revenue being greater than their marginal cost','their marginal revenue being equal to their marginal cost'],
+    answer:2, explanation:'Allocative efficiency requires P (= AR) = MC. A profit-maximising monopoly sets MR = MC, but since MR < AR (price), this means AR > MC at the profit-maximising output. Price exceeds marginal cost → too little output → allocative inefficiency.' },
+  { id:'b30', topic:'elasticity', difficulty:2,
+    stem:'When a firm increases the price from £50 to £55, total revenue increases from £10,000 to £11,000. Over this price range, the price elasticity of demand is',
+    options:['elastic','unit elastic','inelastic','perfectly inelastic'],
+    answer:2, explanation:'When price rises and total revenue also rises, demand is price inelastic (PED between 0 and −1). If demand were elastic, revenue would fall when price rises. Unit elastic would leave revenue unchanged. Here TR rose from £10,000 to £11,000 when price increased — demand is inelastic.' },
+  { id:'b31', topic:'costs_returns', difficulty:1,
+    stem:'In an industry, the minimum efficient scale of production is low in comparison to the size of the market. This industry is likely to be characterised by',
+    options:['a high concentration ratio','a few firms with monopoly power','increasing returns to scale at high levels of output','lots of small firms competing with each other'],
+    answer:3, explanation:'Minimum efficient scale (MES) is the lowest output at which long-run average costs are minimised. If MES is low relative to market size, many small firms can each operate efficiently — leading to a competitive market with many firms. High MES relative to market size leads to natural monopoly.' },
+  { id:'b32', topic:'labour', difficulty:2,
+    stem:'A firm hires 20 workers at £10 per hour but must pay £11 per hour to recruit a 21st worker. All workers are now paid the new rate. What is the marginal cost of the 21st worker?',
+    options:['£10','£11','£21','£31'],
+    answer:3, explanation:'Marginal cost of labour = change in total wage bill. Before: 20 × £10 = £200. After: 21 × £11 = £231. MCL = £231 − £200 = £31. The monopsonist must pay all existing workers the higher wage, so the marginal cost exceeds the new wage rate.' },
+  { id:'b33', topic:'market_fail', difficulty:2,
+    stem:'The table below shows the marginal private and external benefits and costs of a product at free market equilibrium.\n\n[TABLE: / £\nMarginal private benefit / 12\nMarginal external benefit / 9\nMarginal private cost / 12\nMarginal external cost / 0]\n\nGovernment intervention could improve resource allocation because the product is most likely to be',
+    options:['a public good','a demerit good','an inferior good','a merit good'],
+    answer:3, explanation:'MPB = MPC (market equilibrium) but MEB = £9 and MEC = £0 → positive net externality → MSB > MSC. The product generates positive externalities (external benefits exceed external costs), so it is under-consumed relative to the social optimum — the definition of a merit good.' },
+  { id:'b34', topic:'supply_demand', difficulty:2,
+    stem:'Which one of the following situations would lead to an increase in equilibrium price?',
+    options:['Demand is perfectly inelastic and labour costs rise','Demand is perfectly elastic and labour costs rise','Supply is perfectly elastic and the price of a substitute good falls','Demand is perfectly inelastic and labour costs fall'],
+    answer:0, explanation:'If demand is perfectly inelastic (vertical demand curve), a rise in labour costs shifts supply left. With perfectly inelastic demand, any leftward supply shift raises price — quantity is unchanged but price rises fully to reflect cost increases. With perfectly elastic demand, a supply shift causes only quantity to fall, not price.' },
+  { id:'b35', topic:'market_fail', difficulty:3,
+    stem:'The table below shows private and external costs for four products. Which product has a market price which takes least account of negative externalities?\n\n[TABLE: Product / Private cost per unit (£) / External cost per unit (£) / Market price (£)\nA / 10 / 2 / 12\nB / 12 / 5 / 15\nC / 16 / 7 / 22\nD / 22 / 8 / 24]',
+    options:['Product A','Product B','Product C','Product D'],
+    answer:3, explanation:'The market price reflects only private costs. To take full account of externalities, price should equal private cost + external cost. Compare: A: gap = 0 (12=10+2 ✓). B: gap = 15−17 = −2 (B actually over-prices). C: gap = 22−23 = −1. D: gap = 24−30 = −6. Product D\'s market price (£24) is furthest below its full social cost (£30), so it takes the least account of negative externalities.' },
+  { id:'b36', topic:'market_fail', difficulty:2,
+    stem:'Which combination of example and policy is most likely to be consistent with the source of market failure identified?\n\n[TABLE: / Source of market failure / Example / Policy\nA / Missing market / Health care / State provision\nB / Positive consumption externalities / Education / Minimum price\nC / Merit good / Petrol / Indirect taxation\nD / Negative production externalities / Electricity generation / Pollution permits]',
+    options:['A — Missing market / Health care / State provision','B — Positive externalities / Education / Minimum price','C — Merit good / Petrol / Indirect taxation','D — Negative production externalities / Electricity generation / Pollution permits'],
+    answer:3, explanation:'Option D is internally consistent: electricity generation creates negative production externalities (pollution). Pollution permits (tradable allowances) are a market-based policy that internalises this externality by putting a price on pollution. Option A is plausible but healthcare is better described as a merit good. Option B should use a subsidy, not minimum price. Option C petrol is a demerit good taxed to reduce consumption — but petrol\'s main issue is negative externalities in consumption, not being a merit good.' },
+  { id:'b37', topic:'market_fail', difficulty:2,
+    stem:'At current levels of output, the marginal social cost of making a good is greater than its marginal private cost. Also, the marginal social benefit of the good is greater than its marginal private benefit. As a result, there will probably be',
+    options:['a misallocation of resources','positive externalities in production','negative externalities in consumption','economies of scale'],
+    answer:0, explanation:'MSC > MPC means negative externalities in production (external costs). MSB > MPB means positive externalities in consumption (external benefits). The net effect is uncertain — resource misallocation is the safe conclusion since both externalities are present and the market price does not reflect full social costs and benefits.' },
+  { id:'b38', topic:'market_fail', difficulty:2,
+    stem:'The table below shows private and external costs and benefits from building a coal-burning power station.\n\n[TABLE: / £ million\nPrivate benefit / 180\nPrivate cost / 190\nExternal benefit / 110\nExternal cost / 140]\n\nThe social cost minus the social benefit equals',
+    options:['£120 million','£40 million','£30 million','£10 million'],
+    answer:1, explanation:'Social cost = private cost + external cost = £190m + £140m = £330m. Social benefit = private benefit + external benefit = £180m + £110m = £290m. Social cost − social benefit = £330m − £290m = £40m.' },
+  { id:'b39', topic:'methodology', difficulty:1,
+    stem:'Which one of the following would not be classified by an economist as a factor of production?',
+    options:['Labour temporarily out of work','Money in a firm\'s bank account','Non-agricultural land','Risk-taking entrepreneurs'],
+    answer:1, explanation:'The four factors of production are land, labour, capital, and enterprise. Money in a bank account is financial capital, not physical/productive capital — it is not itself a factor of production. Unemployed labour is still part of the labour factor. Land (agricultural or non-agricultural) and risk-taking entrepreneurs are factors of production.' },
+  { id:'b40', topic:'methodology', difficulty:1,
+    stem:'The central purpose of economic activity is the production of goods and services to satisfy needs and wants. Which of the following is one of the three key economic decisions that has to be taken to achieve this?',
+    options:['How to achieve economies of scale','What goods and services to produce','Where to locate businesses','Whether to maximise profit or sales'],
+    answer:1, explanation:'The three fundamental economic questions are: What to produce? How to produce it? For whom to produce it? "What goods and services to produce" is one of these core allocative decisions. The others listed (economies of scale, location, profit vs sales) are business decisions, not the fundamental economic questions.' },
+  { id:'b41', topic:'market_struct', difficulty:1,
+    stem:'A firm hopes to increase its market share by setting its prices lower than most of its competitors. What is the most likely reason for this strategy?',
+    options:['The firm has a licence that gives it a temporary monopoly','The firm is a price taker in a very competitive market','The firm is aiming to differentiate its products from its competitors','The firm is aiming to increase its long-run profits'],
+    answer:3, explanation:'Pricing below competitors to gain market share is a predatory or penetration pricing strategy aimed at increasing long-run profits — once market share is gained, the firm has more pricing power. A price taker cannot set prices at all. A monopoly would price above competitors. Differentiation involves non-price competition.' },
+  { id:'b42', topic:'costs_returns', difficulty:2,
+    stem:'A firm sells personalised mugs for £15 each. Each mug costs £3 and paint/labour costs £7 extra. Fixed costs are £150 per month. The firm produces and sells 60 mugs per month. What is the average cost of producing one personalised mug?',
+    options:['£2.50','£5','£10','£12.50'],
+    answer:3, explanation:'Total variable cost per mug = £3 + £7 = £10. Total variable costs = 60 × £10 = £600. Total costs = £600 + £150 (fixed) = £750. Average cost = £750 ÷ 60 = £12.50.' },
+  { id:'b43', topic:'market_fail', difficulty:1,
+    stem:'One reason why merit goods, such as education and health care, can lead to market failure is that',
+    options:['individuals are unwilling to pay for merit goods','individuals have incomplete information about merit goods','merit goods are generally provided free by the government','merit goods are subject to the free-rider problem'],
+    answer:1, explanation:'Merit goods are under-consumed in free markets partly because individuals have imperfect information about their true private benefits (e.g. they underestimate the long-term returns to education or healthcare). This information failure leads to under-consumption relative to the social optimum.' },
+  { id:'b44', topic:'supply_demand', difficulty:1,
+    stem:'Microchips are used in a wide range of products, including mobile phones and traffic lights. If demand increases for one of these products, this affects the price of other products that need microchips. This is an example of',
+    options:['complementary goods','composite demand','joint supply','substitute goods'],
+    answer:1, explanation:'Composite demand occurs when a good or resource is demanded for multiple uses. Microchips are in composite demand — they are used across many different products. An increase in demand for one product raises microchip demand and prices, increasing costs for other microchip-using products.' },
+  { id:'b45', topic:'competition', difficulty:2,
+    stem:'The table below shows percentage market share of firms in an industry in 2020 and 2023.\n\n[TABLE: / Market share 2020 (%) / Market share 2023 (%)\nFirm 1 / 28 / 31\nFirm 2 / 24 / 29\nFirm 3 / 20 / 6\nFirm 4 / 18 / 16\nFirm 5 / 3 / 1\nAll other firms / 7 / 17]\n\nWhat was the change in the three-firm concentration ratio over the period?',
+    options:['A fall of 6 percentage points','A fall of 7 percentage points','A rise of 4 percentage points','A rise of 5 percentage points'],
+    answer:2, explanation:'2020 top 3 firms: 28 + 24 + 20 = 72%. 2023 top 3 firms: 31 + 29 + 16 = 76%. Change = 76 − 72 = +4 percentage points. Note: in 2023 Firm 3 dropped to 6%, so Firm 4 (16%) enters the top 3.' },
+  { id:'b46', topic:'supply_demand', difficulty:1,
+    stem:'All other things being equal, which one of the following is most likely to result in a fall in the market price of rice?',
+    options:['Farmers releasing less rice for sale','Good weather conditions for growing rice','More wheat being planted instead of rice','The removal of a subsidy for growing rice'],
+    answer:1, explanation:'Good weather increases rice yields, shifting the supply curve rightward. With an unchanged demand curve, supply increasing leads to a lower equilibrium price. Less rice released and removing subsidies reduce supply; more wheat planted instead of rice is joint supply — reducing rice supply.' },
+  { id:'b47', topic:'supply_demand', difficulty:1,
+    stem:'Which one of the following is most likely to influence the price elasticity of supply of a good or service?',
+    options:['The availability of spare capacity','The number of substitutes for the product','The percentage of income spent on the good','The price of complementary goods'],
+    answer:0, explanation:'Price elasticity of supply depends on how easily output can be increased. Spare capacity means firms can respond quickly and cheaply to price rises — making supply more elastic. Substitutes and income share affect demand elasticity. Complementary good prices affect demand.' },
+  { id:'b48', topic:'market_fail', difficulty:1,
+    stem:'Which one of the following is the best example of a situation where there is asymmetric information?',
+    options:['A firm operating in perfect competition','A seller knowing more than a buyer','Two buyers being equally informed','Two firms working together on a new product'],
+    answer:1, explanation:'Asymmetric information arises when one party in a transaction has more or better information than the other. The classic case (Akerlof) is a seller knowing more about product quality than the buyer. Perfect competition assumes perfect information for all.' },
+  { id:'b49', topic:'elasticity', difficulty:2,
+    stem:'The table below shows weekly demand for apples and pears before and after a change in the price of pears.\n\n[TABLE: / Price of apples (£/kg) / Price of pears (£/kg) / Demand for apples (kg) / Demand for pears (kg)\nBefore / 1.60 / 2.50 / 5000 / 2000\nAfter / 1.60 / 3.00 / 5500 / 1500]\n\nWhat is the cross elasticity of demand for apples following the change in the price of pears?',
+    options:['−5.0','−1.25','+0.5','+2.0'],
+    answer:2, explanation:'XED = (%ΔQd apples) ÷ (%ΔP pears). %ΔQd apples = (5500−5000)/5000 × 100 = +10%. %ΔP pears = (3.00−2.50)/2.50 × 100 = +20%. XED = +10% ÷ +20% = +0.5. Positive XED confirms apples and pears are substitutes.' },
+  { id:'b50', topic:'production', difficulty:1,
+    stem:'Developed economies are characterised by high levels of specialisation involving workers concentrating on specific tasks. This specialisation is possible because in such economies',
+    options:['an effective medium of exchange exists','markets tend to have high levels of concentration','production is concentrated in the service sector','production tends to involve mainly unskilled labour'],
+    answer:0, explanation:'Specialisation requires exchange — workers who produce only one thing must be able to trade for everything else they need. An effective medium of exchange (money) facilitates this trade, making deep specialisation viable. Without money, barter would severely limit the degree of specialisation possible.' },
+  { id:'b51', topic:'market_struct', difficulty:3,
+    stem:'The table below shows indices for total revenue and total cost for a firm in 2021–2023, with 2022 as the base year.\n\n[TABLE: Year / Index of total revenue / Index of total cost\n2021 / 96 / 98\n2022 / 100 / 100\n2023 / 102 / 102.9]\n\nIn 2021, total revenue was £180,000 and total cost was £160,000. What was the firm\'s total profit in 2023?',
+    options:['£20,000','£20,180','£22,960','£23,250'],
+    answer:3, explanation:'2022 TR = £180,000 ÷ (96/100) = £187,500. 2022 TC = £160,000 ÷ (98/100) = £163,265. 2023 TR = £187,500 × (102/100) = £191,250. 2023 TC = £163,265 × (102.9/100) ≈ £168,000. Profit 2023 = £191,250 − £168,000 = £23,250.' },
+  { id:'b52', topic:'market_fail', difficulty:1,
+    stem:'Which one of the following is an example of government failure due to unintended consequences?',
+    options:['A government target to increase police officers is missed due to a low number of applicants','Government provision of a free flu vaccine for the over 60s has a low take-up','The government cancels a plan for a new railway line after an expensive planning enquiry','The government introduces a charge at a waste disposal site which leads to illegal dumping'],
+    answer:3, explanation:'Government failure from unintended consequences occurs when a policy creates a new problem it did not intend. Charging for waste disposal was meant to reduce waste, but caused illegal dumping instead — a worse outcome. The other options are failures of implementation or policy changes, not unintended consequences.' },
+  { id:'b53', topic:'methodology', difficulty:1,
+    stem:'Which one of the following best describes how a social scientist would develop an economic theory?',
+    options:['Apply logic to make connections between normative and positive economic concepts','Create a hypothesis and test whether it can predict the behaviour of economic agents','Develop a number of policies and test whether they are successful in the real world','Form a set of value judgements and test whether they are supported by statistical data'],
+    answer:1, explanation:'The scientific method in economics: form a hypothesis about economic behaviour, derive testable predictions, then test them against real-world data. This is positive economic methodology. Value judgements and policy testing describe normative or applied approaches, not theory development.' },
+  { id:'b54', topic:'market_struct', difficulty:3,
+    stem:'An entrepreneur has £300,000 invested in a firm. The same investment would generate a 35% annual return elsewhere. Annual total costs of production (excluding opportunity cost of capital) are £370,000, and annual total revenue is £550,000. How much abnormal profit is the business making each year?',
+    options:['£180,000','£125,000','£75,000','£22,500'],
+    answer:2, explanation:'Opportunity cost of capital = £300,000 × 35% = £105,000. Total economic cost = £370,000 + £105,000 = £475,000. Total revenue = £550,000. Abnormal (supernormal) profit = £550,000 − £475,000 = £75,000.' },
+  { id:'b55', topic:'market_fail', difficulty:2,
+    stem:'A government announces that over 10 years it plans to reduce the number of tradable pollution permits it issues each year. Which one of the following is the most likely response from affected firms?',
+    options:['Firms are likely to delay investment into more environmentally friendly production methods','Only the firms that generate the most pollution are likely to react at all','Over time, more firms will have an incentive to reduce their pollution','The firms with the lowest costs of reducing pollution will buy the most permits'],
+    answer:2, explanation:'As permit supply falls over time, permit prices rise. This increases the cost of polluting, giving more and more firms an incentive to invest in cleaner technology to reduce their pollution (and their permit requirements). The announcement creates a forward-looking incentive to reduce pollution progressively.' },
+  { id:'b56', topic:'supply_demand', difficulty:1,
+    stem:'Which one of the following is a function of prices in a market economy?',
+    options:['Allocating resources to the production of public goods','Ensuring that the distribution of goods and services is fair','Incentivising firms to produce the goods consumers want','Providing a measurement of positive and negative externalities'],
+    answer:2, explanation:'Prices signal profitability. When consumers demand more of a good, price rises signal to firms that more should be produced — incentivising resource reallocation toward goods consumers want. Prices do not allocate public goods (they are non-excludable), do not ensure fairness, and do not measure externalities.' },
+  { id:'b57', topic:'methodology', difficulty:1,
+    stem:'Which one of the following is a normative statement? The price of petrol',
+    options:['fell in real terms last year','is affected by supply','is now too high','will rise next year'],
+    answer:2, explanation:'"The price of petrol is now too high" is a normative (value-judgement) statement — it expresses an opinion about what ought to be. "Fell in real terms last year" is a positive statement (verifiable). "Is affected by supply" is a positive economic principle. "Will rise next year" is a positive prediction (testable).' },
+  { id:'b58', topic:'market_fail', difficulty:1,
+    stem:'Partial market failure occurs when',
+    options:['prices fall causing firms to make losses','there are no positive externalities in consumption','there is a missing market for the product','there is immobility of factors of production'],
+    answer:3, explanation:'Partial market failure occurs when the market exists but produces the wrong quantity — e.g. due to externalities, imperfect information, or factor immobility causing structural unemployment and misallocation. Complete (total) market failure is when the market is missing entirely (e.g. pure public goods). Immobility of factors causes the market to allocate resources inefficiently — a partial failure.' },
+  { id:'b59', topic:'elasticity', difficulty:2,
+    stem:'The price of carrots falls from 60p to 54p per kilo. As a result, the quantity supplied falls by a quarter. What is the price elasticity of supply?',
+    options:['0.25','0.4','2.5','4'],
+    answer:2, explanation:'%ΔP = (54−60)/60 × 100 = −10%. %ΔQs = −25% (a quarter fall). PES = %ΔQs ÷ %ΔP = −25% ÷ −10% = 2.5. (Taking absolute values gives 2.5, confirming elastic supply.)' },
+  { id:'b60', topic:'market_struct', difficulty:1,
+    stem:'In a perfectly competitive market, a firm is most likely to',
+    options:['charge the same price as other firms','earn large profits in the long run','produce the same output as its competitors','spend large amounts of money on advertising'],
+    answer:0, explanation:'In perfect competition, all firms are price-takers — they accept the market price set by supply and demand. All firms therefore charge the same price. In the long run, only normal profit is earned (supernormal profits attract entry until they are competed away). Firms in perfect competition produce homogeneous products, so there is no need for advertising.' }
+];
+
+// ── ADAPTIVE ENGINE ──────────────────────────────────────────────────────────
+const masteryData = {};
+Object.keys(TOPICS).forEach(t => masteryData[t] = { correct: 0, total: 0 });
+let recentIds = [];
+let sessionStats = { total: 0, correct: 0 };
+let currentQ = null;
+let answered = false;
+let wrongPool = [];
+
+function topicWeight(topic) {
+  const d = masteryData[topic];
+  if (d.total === 0) return 2.5;
+  const pct = d.correct / d.total;
+  if (pct < 0.4)  return 4;
+  if (pct < 0.65) return 2.5;
+  if (pct < 0.8)  return 1.2;
+  return 0.4;
+}
+
+function pickNextQuestion() {
+  if (wrongPool.length > 0 && Math.random() < 0.3) {
+    const idx = Math.floor(Math.random() * wrongPool.length);
+    const q = wrongPool[idx];
+    wrongPool.splice(idx, 1);
+    return q;
+  }
+  let pool = [];
+  ALL_QUESTIONS.forEach(q => {
+    if (recentIds.includes(q.id)) return;
+    const w = topicWeight(q.topic);
+    const slots = Math.ceil(w);
+    for (let i = 0; i < slots; i++) pool.push(q);
+  });
+  if (pool.length === 0) pool = [...ALL_QUESTIONS];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function nextQuestion() {
+  answered = false;
+  const q = pickNextQuestion();
+  currentQ = q;
+  recentIds.push(q.id);
+  if (recentIds.length > 8) recentIds.shift();
+  renderQuestion(q);
+  updateSidebar();
+}
+
+// ── TABLE PARSER ─────────────────────────────────────────────────────────────
+function parseTableTag(raw) {
+  const inner = raw.replace(/^\[TABLE:\s*/i, '').replace(/\]$/, '').trim();
+  const rows = inner.split('|').map(r => r.trim()).filter(Boolean);
+  if (!rows.length) return `<em>${inner}</em>`;
+  const simpleKV = rows.every(r => /^[\w\s£$\-\.]+:\s*[\S]/.test(r) && !r.includes('/') && !r.includes('—'));
+  if (simpleKV) {
+    const trs = rows.map(r => {
+      const colon = r.indexOf(':');
+      return `<tr><td class="tbl-key">${r.slice(0,colon).trim()}</td><td class="tbl-val">${r.slice(colon+1).trim()}</td></tr>`;
+    }).join('');
+    return `<div class="q-table-wrap"><table class="q-table"><tbody>${trs}</tbody></table></div>`;
+  }
+  const hasDash = rows.some(r => r.includes('—') || r.includes('\u2014'));
+  if (hasDash) {
+    const parsed = rows.map(r => {
+      const dashIdx = r.search(/\s[—\-]{1,2}\s/);
+      if (dashIdx >= 0) {
+        const label = r.slice(0, dashIdx).trim();
+        const rest = r.slice(dashIdx).replace(/^\s*[—\-]+\s*/, '').trim();
+        return { label, cols: rest.split('/').map(c => c.trim()) };
+      }
+      return { label: '', cols: r.split('/').map(c => c.trim()) };
+    });
+    const colHeadersFromFirst = parsed[0].cols.map(c => {
+      const m = c.match(/^(.*?)\s+([\£\$\-\d\.\%:]+)$/);
+      return m ? m[1] : c;
+    });
+    const consistent = parsed.every(p => p.cols.every((c, ci) => {
+      if (ci >= colHeadersFromFirst.length) return true;
+      const hdr = colHeadersFromFirst[ci];
+      return c.startsWith(hdr) || !isNaN(parseFloat(c.replace(/[£$%\-]/,'')));
+    }));
+    let headers = [], dataRows = [];
+    if (consistent && colHeadersFromFirst.some(h => h.length > 2)) {
+      headers = colHeadersFromFirst;
+      dataRows = parsed.map(p => ({ label: p.label, vals: p.cols.map((c,ci) => { const hdr = headers[ci]||''; return c.startsWith(hdr)?c.slice(hdr.length).trim():c; }) }));
+    } else {
+      dataRows = parsed.map(p => ({ label: p.label, vals: p.cols }));
+    }
+    const hasLabels = dataRows.some(r => r.label);
+    let thead = '';
+    if (headers.length) {
+      const hdrCells = (hasLabels ? '<th></th>' : '') + headers.map(h => `<th>${h}</th>`).join('');
+      thead = `<thead><tr>${hdrCells}</tr></thead>`;
+    }
+    const tbodyRows = dataRows.map(r => {
+      const lc = hasLabels ? `<td class="tbl-key">${r.label}</td>` : '';
+      return `<tr>${lc}${r.vals.map(v => `<td class="tbl-val">${v}</td>`).join('')}</tr>`;
+    }).join('');
+    return `<div class="q-table-wrap"><table class="q-table">${thead}<tbody>${tbodyRows}</tbody></table></div>`;
+  }
+  const allRows = rows.map(r => r.split('/').map(c => c.trim()));
+  const firstRowCells = allRows[0];
+  const firstRowHasNums = firstRowCells.filter(c => /\d/.test(c)).length;
+  const isHeaderRow = firstRowHasNums <= 1 && firstRowCells.length > 1;
+  let thead = '', bodyRows = allRows;
+  if (isHeaderRow && allRows.length > 1) {
+    thead = `<thead><tr>${firstRowCells.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
+    bodyRows = allRows.slice(1);
+  }
+  const tbodyRows = bodyRows.map(r =>
+    '<tr>' + r.map((c,ci) => ci===0 ? `<td class="tbl-key">${c}</td>` : `<td class="tbl-val">${c}</td>`).join('') + '</tr>'
+  ).join('');
+  return `<div class="q-table-wrap"><table class="q-table">${thead}<tbody>${tbodyRows}</tbody></table></div>`;
+}
+
+// ── STEM FORMATTER ────────────────────────────────────────────────────────────
+function formatStem(stem) {
+  let s = stem.replace(/\\n/g, '\n');
+  s = s.replace(/\[TABLE:[^\]]*\]/g, tag => parseTableTag(tag));
+  s = s.replace(/\[DIAGRAM OPTIONS:[^\]]*\]/g, tag => {
+    const inner = tag.replace(/^\[DIAGRAM OPTIONS:\s*/i,'').replace(/\]$/,'');
+    const opts = inner.split('|').map(o => o.trim()).filter(Boolean);
+    return `<div class="q-diagram-note"><span class="q-diagram-label">Diagram options</span><ul>${opts.map(o=>`<li>${o}</li>`).join('')}</ul></div>`;
+  });
+  s = s.replace(/\n/g, '<br>');
+  return s;
+}
+
+// ── RENDER QUESTION ───────────────────────────────────────────────────────────
+function renderQuestion(q) {
+  const letters = ['A','B','C','D'];
+  const dots = [1,2,3].map(i => `<span class="dot${i<=q.difficulty?' on':''}"></span>`).join('');
+  const topicLabel = TOPICS[q.topic] || q.topic;
+  const opts = q.options.map((o,i) =>
+    `<button class="opt" id="opt${i}" onclick="selectAnswer(${i})"><span class="ltr">${letters[i]}</span><span>${o}</span></button>`
+  ).join('');
+  document.getElementById('q-container').innerHTML = `
+    <div class="q-card">
+      <div class="q-meta">
+        <span class="q-topic-tag">${topicLabel}</span>
+        <span class="q-diff">${dots}</span>
+        <span class="q-num">Q${q.id}</span>
+      </div>
+      <div class="q-stem">${formatStem(q.stem)}</div>
+      <div class="options">${opts}</div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next question →</button>
+    </div>`;
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const correct = currentQ.answer;
+  const isCorrect = idx === correct;
+  sessionStats.total++;
+  if (isCorrect) sessionStats.correct++;
+  masteryData[currentQ.topic].total++;
+  if (isCorrect) masteryData[currentQ.topic].correct++;
+  for (let i = 0; i < currentQ.options.length; i++) {
+    const btn = document.getElementById('opt'+i);
+    btn.disabled = true;
+    if (i === correct && i !== idx) btn.classList.add('revealed');
+    if (i === idx) btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'bad');
+  fb.innerHTML = isCorrect
+    ? `<strong>✓ Correct!</strong>${currentQ.explanation}`
+    : `<strong>✗ Incorrect — the answer is ${['A','B','C','D'][correct]}</strong>${currentQ.explanation}`;
+  if (!isCorrect) wrongPool.push(currentQ);
+  document.getElementById('next-btn').classList.add('show');
+  updateSidebar();
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────────────────────────
+function updateSidebar() {
+  document.getElementById('stat-q').textContent = sessionStats.total;
+  document.getElementById('stat-c').textContent = sessionStats.correct;
+  document.getElementById('stat-pct').textContent = sessionStats.total > 0
+    ? Math.round(sessionStats.correct/sessionStats.total*100)+'%' : '—';
+  const focusEl = document.getElementById('current-focus');
+  if (currentQ) {
+    const d = masteryData[currentQ.topic];
+    const pct = d.total > 0 ? Math.round(d.correct/d.total*100) : null;
+    focusEl.innerHTML = `<span style="font-weight:600;color:var(--navy)">${TOPICS[currentQ.topic]}</span>`
+      + (pct !== null ? `<br><span style="color:var(--muted)">Your score here: ${pct}%</span>` : '<br><span style="color:var(--muted)">First question in this topic</span>');
+  }
+  const sorted = Object.keys(TOPICS)
+    .map(t => ({ t, d: masteryData[t] }))
+    .sort((a,b) => {
+      const pa = a.d.total > 0 ? a.d.correct/a.d.total : 0.5;
+      const pb = b.d.total > 0 ? b.d.correct/b.d.total : 0.5;
+      return pa - pb;
+    });
+  document.getElementById('mastery-list').innerHTML = sorted.map(({t,d}) => {
+    const pct = d.total > 0 ? Math.round(d.correct/d.total*100) : null;
+    const w = pct !== null ? pct : 0;
+    const cls = pct === null ? 'none' : pct >= 75 ? 'good' : pct >= 45 ? 'mid' : 'low';
+    const bar = pct !== null ? `<div class="pbar"><div class="pfill ${cls==='good'?'good':cls==='low'?'low':''}" style="width:${w}%"></div></div>` : `<div class="pbar"></div>`;
+    return `<div class="topic-row">
+      <span class="badge badge-${cls}"></span>
+      <span class="tname" title="${TOPICS[t]}">${TOPICS[t]}</span>
+      ${bar}
+      <span class="tscore">${pct !== null ? `${pct}% (${d.correct}/${d.total})` : 'Not yet seen'}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── SUMMARY ──────────────────────────────────────────────────────────────────
+function showSummary() {
+  const pct = sessionStats.total > 0 ? Math.round(sessionStats.correct/sessionStats.total*100) : 0;
+  document.getElementById('sum-pct').textContent = pct+'%';
+  document.getElementById('sum-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('sum-detail').innerHTML =
+    `${sessionStats.correct} correct from ${sessionStats.total} questions answered<br>`
+    +`${wrongPool.length} question${wrongPool.length!==1?'s':''} in reinsertion pool`;
+  const rows = Object.keys(TOPICS).map(t => ({ t, d: masteryData[t] })).filter(x => x.d.total > 0)
+    .sort((a,b) => (a.d.correct/a.d.total) - (b.d.correct/b.d.total));
+  document.getElementById('sum-tbody').innerHTML = rows.map(({t,d}) => {
+    const p = Math.round(d.correct/d.total*100);
+    const barCol = p >= 75 ? 'var(--ok)' : p >= 45 ? 'var(--gold)' : 'var(--err)';
+    const grade = p >= 75 ? '<span class="grade-badge grade-strong">Strong</span>'
+      : p >= 45 ? '<span class="grade-badge grade-ok">Developing</span>'
+      : '<span class="grade-badge grade-weak">Needs work</span>';
+    return `<tr><td>${TOPICS[t]}</td><td><strong>${p}%</strong></td><td>${d.correct} / ${d.total}</td>
+      <td class="bar-cell"><div class="mini-bar"><div class="mini-fill" style="width:${p}%;background:${barCol}"></div></div></td>
+      <td>${grade}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" style="color:var(--muted);padding:16px">No questions answered yet.</td></tr>';
+  document.getElementById('summary-overlay').classList.add('show');
+}
+
+function hideSummary() {
+  document.getElementById('summary-overlay').classList.remove('show');
+}
+
+function resetSession() {
+  Object.keys(TOPICS).forEach(t => masteryData[t] = { correct:0, total:0 });
+  sessionStats = { total:0, correct:0 };
+  wrongPool = [];
+  recentIds = [];
+  hideSummary();
+  nextQuestion();
+  updateSidebar();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+updateSidebar();
+nextQuestion();
+</script>
+</body>
+</html>
