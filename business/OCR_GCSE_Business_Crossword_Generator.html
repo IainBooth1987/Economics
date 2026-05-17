@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OCR GCSE Business | Crossword Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --surface2: #1a2640;
+  --border: rgba(255,255,255,0.08);
+  --text: #e8edf5;
+  --text-muted: rgba(232,237,245,0.55);
+  --text-dim: rgba(232,237,245,0.28);
+  --p1: #3b82f6;
+  --p1-lt: #60a5fa;
+  --p1-glow: rgba(59,130,246,0.15);
+  --p2: #10b981;
+  --p2-lt: #34d399;
+  --p2-glow: rgba(16,185,129,0.15);
+  --gold: #f59e0b;
+  --red: #ef4444;
+  --radius: 14px;
+}
+[data-paper="2"] { --active: var(--p2); --active-lt: var(--p2-lt); --active-glow: var(--p2-glow); }
+[data-paper="1"] { --active: var(--p1); --active-lt: var(--p1-lt); --active-glow: var(--p1-glow); }
+
+
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface2: #f1f5f9;
+  --border: rgba(15,23,42,0.10);
+  --text: #0f172a;
+  --text-muted: rgba(15,23,42,0.60);
+  --text-dim: rgba(15,23,42,0.35);
+  --p1-glow: rgba(59,130,246,0.08);
+  --p2-glow: rgba(16,185,129,0.08);
+}
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(59,130,246,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 100%, rgba(16,185,129,0.06) 0%, transparent 55%);
+}
+[data-theme="light"] .header {
+  background: rgba(248,250,252,0.92);
+}
+[data-theme="light"] .cell input {
+  background: white;
+  color: #111;
+}
+[data-theme="light"] .cell.black {
+  background: #1e293b;
+}
+[data-theme="light"] .cell.correct input {
+  background: #d1fae5;
+  color: #065f46;
+}
+[data-theme="light"] .cell.active-cell input {
+  background: #eff6ff;
+}
+[data-theme="light"] .cell.active-cell-p2 input {
+  background: #ecfdf5;
+}
+[data-theme="light"] .teacher-panel {
+  background: #fff5f5;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(59,130,246,0.06) 0%,transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(16,185,129,0.05) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+/* ── Header ── */
+.header{position:sticky;top:0;z-index:100;background:rgba(10,15,30,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 32px;height:62px;display:flex;align-items:center;gap:16px;}
+.logo{font-family:'Fraunces',serif;font-size:17px;font-weight:900;color:var(--text);white-space:nowrap;}
+.logo span{color:var(--p1);}
+
+.theme-toggle {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--p1);
+  background: var(--p1-glow);
+}
+
+.header-tag{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);border:1px solid var(--border);padding:4px 12px;border-radius:20px;}
+.header-spacer{flex:1;}
+
+/* ── Paper tabs ── */
+.paper-tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;}
+.paper-tab{padding:8px 20px;border-radius:9px;border:none;background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.paper-tab.active-p1{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:var(--p1-lt);}
+.paper-tab.active-p2{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--p2-lt);}
+.paper-tab:not(.active-p1):not(.active-p2):hover{background:rgba(255,255,255,0.04);color:var(--text);}
+
+/* ── Main layout ── */
+.main{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:28px 32px 60px;}
+
+/* ── Unit nav ── */
+.unit-nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.unit-pill{padding:7px 16px;border-radius:24px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.unit-pill:hover{background:rgba(255,255,255,0.05);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.unit-pill.active-p1{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.4);color:var(--p1-lt);}
+.unit-pill.active-p2{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.4);color:var(--p2-lt);}
+
+/* ── Sub-topic selector ── */
+.subtopic-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
+.subtopic-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);white-space:nowrap;}
+.subtopic-btn{padding:7px 15px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;}
+.subtopic-btn:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.subtopic-btn.sel-p1{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.45);color:var(--p1-lt);}
+.subtopic-btn.sel-p2{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.45);color:var(--p2-lt);}
+
+/* ── Info bar ── */
+.info-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.topic-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:5px 12px;border-radius:8px;background:var(--p1-glow);border:1px solid rgba(59,130,246,0.25);color:var(--p1-lt);}
+.topic-badge.p2{background:var(--p2-glow);border-color:rgba(16,185,129,0.25);color:var(--p2-lt);}
+.tip{font-size:12px;color:var(--text-muted);}
+.tip strong{color:var(--text);}
+.actions{display:flex;gap:8px;margin-left:auto;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.btn-primary-p1{background:var(--p1);color:#fff;}
+.btn-primary-p1:hover{background:#2563eb;transform:translateY(-1px);}
+.btn-primary-p2{background:var(--p2);color:#fff;}
+.btn-primary-p2:hover{background:#059669;transform:translateY(-1px);}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text-muted);}
+.btn-outline:hover{border-color:rgba(255,255,255,0.2);color:var(--text);background:rgba(255,255,255,0.04);}
+.btn-teacher{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;}
+.btn-teacher:hover{background:rgba(239,68,68,0.18);}
+
+/* ── Game area ── */
+.game-area{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;}
+
+/* ── Grid ── */
+#grid{display:grid;gap:0;background:#000;border:2px solid #000;width:fit-content;border-radius:4px;overflow:hidden;}
+.cell{width:34px;height:34px;background:white;position:relative;border:1px solid #bbb;box-sizing:border-box;}
+.cell.black{background:#1a1a2e;border:1px solid #000;}
+.cell input{width:100%;height:100%;border:none;text-align:center;font-size:16px;font-weight:700;text-transform:uppercase;outline:none;background:white;color:#111;padding:0;font-family:'DM Sans',sans-serif;}
+.cell.correct input{background:#d1fae5;color:#065f46;font-weight:800;}
+.cell.active-cell input{background:#eff6ff;outline:3px solid var(--p1);outline-offset:-3px;}
+.cell.active-cell-p2 input{background:#ecfdf5;outline:3px solid var(--p2);outline-offset:-3px;}
+.number{position:absolute;top:1px;left:2px;font-size:8px;color:#555;pointer-events:none;font-weight:700;line-height:1;}
+
+/* ── Clues ── */
+.clues-panel{flex:1;min-width:260px;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:16px;}
+.clues-header{font-family:'Fraunces',serif;font-size:17px;font-weight:700;margin-bottom:4px;}
+.clue-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.clue-item{display:flex;gap:8px;margin-bottom:7px;line-height:1.45;font-size:13px;color:var(--text-muted);}
+.clue-num{font-weight:700;color:var(--text);min-width:22px;flex-shrink:0;}
+.clue-text{flex:1;}
+
+/* ── Teacher panel ── */
+.teacher-panel{background:var(--surface);border:1px solid rgba(239,68,68,0.25);border-top:3px solid var(--red);border-radius:var(--radius);padding:20px;margin-top:20px;display:none;}
+.teacher-panel h3{font-family:'Fraunces',serif;font-size:16px;color:#fca5a5;margin-bottom:12px;}
+.teacher-words{display:flex;flex-wrap:wrap;gap:8px;}
+.teacher-word{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);padding:5px 12px;border-radius:8px;font-size:13px;font-weight:700;color:#fca5a5;}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.4;}
+.empty-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;}
+
+/* ── Print ── */
+@media print {
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{background:#fff!important;color:#000;padding:0;}
+  .header,.paper-tabs,.unit-nav,.subtopic-row,.info-bar .actions,.teacher-panel,.btn,.tip{display:none!important;}
+  .info-bar{justify-content:center;margin-bottom:6mm;}
+  .topic-badge{background:#e8f4fd!important;color:#1d4ed8!important;border-color:#93c5fd!important;-webkit-print-color-adjust:exact;}
+  .main{padding:0;max-width:none;}
+  .game-area{display:block;width:100%;}
+  #grid{margin:0 auto 8mm auto;background:#000!important;border:1.5pt solid #000;width:max-content;page-break-inside:avoid;}
+  .cell{width:7.5mm!important;height:7.5mm!important;border:0.4pt solid #888!important;background:#fff!important;}
+  .cell.black{background:#111!important;}
+  .cell input{font-size:0!important;color:transparent!important;background:transparent!important;}
+  .cell.correct input{background:transparent!important;}
+  .number{font-size:5pt;top:0.3mm;left:0.5mm;color:#000!important;}
+  .clues-panel{max-width:none;width:100%;background:#fff!important;border:none;padding:0;box-shadow:none;column-count:2;column-gap:10mm;}
+  .clues-header{column-span:all;font-size:14pt;color:#000!important;margin-bottom:4mm;}
+  .clue-section-title{font-size:11pt;color:#000!important;border-color:#ccc!important;}
+  .clue-item{font-size:9pt;color:#000!important;margin-bottom:1.5mm;break-inside:avoid;}
+  .clue-num{color:#000!important;}
+  @page{size:A4 portrait;margin:10mm;}
+}
+</style>
+</head>
+<body data-paper="1">
+
+<header class="header">
+  <div class="logo">BIZ-<span>OMICS</span></div>
+  <div class="header-tag">OCR GCSE Business · J204</div>
+  <div class="header-spacer"></div>
+  <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle theme">☀</button>
+  <div class="paper-tabs">
+    <button class="paper-tab active-p1" onclick="setPaper(1)">📄 Paper 1 — Business Activity, Marketing &amp; People</button>
+    <button class="paper-tab" onclick="setPaper(2)">📄 Paper 2 — Operations, Finance &amp; Influences</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Unit nav -->
+  <div class="unit-nav" id="unitNav"></div>
+
+  <!-- Sub-topic row -->
+  <div class="subtopic-row" id="subtopicRow">
+    <span class="subtopic-label">Sub-topic</span>
+    <div id="subtopicBtns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- Info bar -->
+  <div class="info-bar">
+    <div class="topic-badge" id="topicBadge">Select a topic above</div>
+    <span class="tip"><strong>Tip:</strong> Type to fill · Arrow keys to move · Space/Tab switches direction</span>
+    <div class="actions">
+      <button class="btn btn-primary-p1" id="genBtn" onclick="generateCrossword()">⟳ Generate Crossword</button>
+      <button class="btn btn-outline" onclick="window.print()">🖨 Print / PDF</button>
+      <button class="btn btn-teacher" onclick="toggleTeacher()">🔑 Teacher Mode</button>
+    </div>
+  </div>
+
+  <!-- Game area -->
+  <div class="game-area">
+    <div id="grid">
+      <div class="empty-state">
+        <div class="empty-icon">✏️</div>
+        <div class="empty-title">Choose a topic to begin</div>
+        <p>Select a unit and sub-topic above, then click Generate Crossword.</p>
+      </div>
+    </div>
+    <div class="clues-panel" id="cluesPanel">
+      <div class="clues-header">Clues</div>
+      <div>
+        <div class="clue-section-title">Across</div>
+        <div id="acrossClues"><p style="color:var(--text-dim);font-size:13px;">Generate a crossword to see clues.</p></div>
+      </div>
+      <div>
+        <div class="clue-section-title">Down</div>
+        <div id="downClues"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher panel -->
+  <div class="teacher-panel" id="teacherPanel">
+    <h3>🔑 Teacher Answer Key</h3>
+    <p style="font-size:12px;color:#fca5a5;margin-bottom:12px;">Hidden when printing. Password protected.</p>
+    <div class="teacher-words" id="teacherWords"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  TOPIC DATA — OCR GCSE Business J204
+// ═══════════════════════════════════════════════════════
+const PAPERS = {
+  1: {
+    label: 'Paper 1 — Business Activity, Marketing & People',
+    units: [
+      {
+        id: 'u1', label: '1. Business Activity',
+        subtopics: [
+          {
+            id: 'u1_1', label: '1.1 Enterprise & Entrepreneurship',
+            words: [
+              { answer: 'ENTREPRENEUR', clue: 'A person who sets up and runs a business, taking on financial risk' },
+              { answer: 'ENTERPRISE', clue: 'The willingness to take risks and start a new business venture' },
+              { answer: 'RISK', clue: 'The chance of financial loss when starting or running a business' },
+              { answer: 'REWARD', clue: 'The financial gain or profit an entrepreneur receives for taking risk' },
+              { answer: 'INNOVATION', clue: 'Creating something new or improving an existing product or process' },
+              { answer: 'CREATIVITY', clue: 'The ability to generate original ideas for a business' },
+              { answer: 'OPPORTUNITY', clue: 'A gap in the market that a new business could fill' },
+              { answer: 'DETERMINATION', clue: 'The drive to succeed and overcome challenges in business' },
+              { answer: 'CONFIDENCE', clue: 'Belief in your own ability to succeed' },
+              { answer: 'PROFIT', clue: 'The financial surplus after all costs are subtracted from revenue' }
+            ]
+          },
+          {
+            id: 'u1_2', label: '1.2 Business Planning',
+            words: [
+              { answer: 'BUSINESSPLAN', clue: 'A document outlining goals, strategies and financial forecasts' },
+              { answer: 'CASHFLOW', clue: 'The movement of money in and out of a business' },
+              { answer: 'MARKET', clue: 'The group of potential customers a business aims to sell to' },
+              { answer: 'COMPETITION', clue: 'Other businesses offering similar products or services' },
+              { answer: 'FINANCE', clue: 'Money used to fund and run a business' },
+              { answer: 'OBJECTIVE', clue: 'A specific measurable goal a business wants to achieve' },
+              { answer: 'RISK', clue: 'The chance of loss that a business plan helps to reduce' },
+              { answer: 'FORECAST', clue: 'A prediction about future sales, costs or cash flow' },
+              { answer: 'STRATEGY', clue: 'A plan of action designed to achieve a business goal' }
+            ]
+          },
+          {
+            id: 'u1_3', label: '1.3 Business Ownership',
+            words: [
+              { answer: 'SOLETRADER', clue: 'A business owned and run by one person with unlimited liability' },
+              { answer: 'PARTNERSHIP', clue: 'A business owned by two or more people sharing profits and losses' },
+              { answer: 'LIMITEDLIABILITY', clue: 'Owners can only lose what they invested in the business' },
+              { answer: 'UNLIMITEDLIABILITY', clue: 'Owners are personally responsible for all business debts' },
+              { answer: 'PRIVATELTD', clue: 'A company with limited liability that cannot sell shares publicly' },
+              { answer: 'PUBLICLTD', clue: 'A company that can sell shares on a stock exchange' },
+              { answer: 'SHAREHOLDER', clue: 'A person who owns shares in a limited company' },
+              { answer: 'DIVIDEND', clue: 'A share of a company\'s profits paid to shareholders' },
+              { answer: 'OWNERSHIP', clue: 'Who has legal control of a business' }
+            ]
+          },
+          {
+            id: 'u1_4', label: '1.4 Business Aims & Objectives',
+            words: [
+              { answer: 'AIM', clue: 'The overall long-term goal of a business' },
+              { answer: 'OBJECTIVE', clue: 'A specific, measurable target set by a business' },
+              { answer: 'SURVIVAL', clue: 'Staying in business, especially important for new businesses' },
+              { answer: 'PROFIT', clue: 'Revenue minus all costs; a common business objective' },
+              { answer: 'GROWTH', clue: 'Increasing the size, sales or market share of a business' },
+              { answer: 'MARKETSHARE', clue: 'A business\'s sales as a percentage of total market sales' },
+              { answer: 'SMART', clue: 'Objectives should be Specific, Measurable, Achievable, Realistic, Time-bound' },
+              { answer: 'SOCIALRESPONSIBILITY', clue: 'A business aim to benefit wider society and the environment' },
+              { answer: 'REPUTATION', clue: 'How a business is regarded by its customers and stakeholders' }
+            ]
+          },
+          {
+            id: 'u1_5', label: '1.5 Stakeholders',
+            words: [
+              { answer: 'STAKEHOLDER', clue: 'Anyone with an interest in a business and its activities' },
+              { answer: 'SHAREHOLDER', clue: 'An internal stakeholder who owns shares in the business' },
+              { answer: 'EMPLOYEE', clue: 'A person who works for the business' },
+              { answer: 'CUSTOMER', clue: 'A person who buys goods or services from the business' },
+              { answer: 'SUPPLIER', clue: 'A business that provides goods or materials to another business' },
+              { answer: 'COMMUNITY', clue: 'The local area affected by a business\'s activities' },
+              { answer: 'GOVERNMENT', clue: 'Sets laws and taxes that affect how businesses operate' },
+              { answer: 'CONFLICT', clue: 'When different stakeholders have opposing interests' },
+              { answer: 'INFLUENCE', clue: 'The power a stakeholder has to affect business decisions' }
+            ]
+          },
+          {
+            id: 'u1_6', label: '1.6 Business Growth',
+            words: [
+              { answer: 'ORGANICGROWTH', clue: 'Growing a business through increasing its own sales and output' },
+              { answer: 'EXTERNALGROWTH', clue: 'Growing through mergers, takeovers or partnerships' },
+              { answer: 'MERGER', clue: 'Two businesses joining together to form one new company' },
+              { answer: 'TAKEOVER', clue: 'One business buying a controlling interest in another' },
+              { answer: 'HORIZONTAL', clue: 'Integration with a business at the same stage of production' },
+              { answer: 'VERTICAL', clue: 'Integration with a business at a different stage of production' },
+              { answer: 'DIVERSIFICATION', clue: 'A growth strategy involving new products in new markets' },
+              { answer: 'MARKETSHARE', clue: 'Increasing this is a common reason for business growth' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'u2', label: '2. Marketing',
+        subtopics: [
+          {
+            id: 'u2_1', label: '2.1 Role of Marketing',
+            words: [
+              { answer: 'MARKETING', clue: 'The process of identifying and satisfying customer needs profitably' },
+              { answer: 'CUSTOMER', clue: 'The person marketing aims to understand and satisfy' },
+              { answer: 'BRAND', clue: 'A name or symbol that identifies a business and its products' },
+              { answer: 'AWARENESS', clue: 'Letting customers know a product or business exists' },
+              { answer: 'SALES', clue: 'Increasing this is a key purpose of marketing' },
+              { answer: 'LOYALTY', clue: 'When customers repeatedly buy from the same business' },
+              { answer: 'COMPETITION', clue: 'Marketing helps a business stand out from this' },
+              { answer: 'TARGET', clue: 'The specific group of customers a marketing campaign is aimed at' }
+            ]
+          },
+          {
+            id: 'u2_2', label: '2.2 Market Research',
+            words: [
+              { answer: 'MARKETRESEARCH', clue: 'Collecting and analysing information about customers and markets' },
+              { answer: 'PRIMARYRESEARCH', clue: 'New data collected first-hand by the business' },
+              { answer: 'SECONDARYRESEARCH', clue: 'Using data that already exists from other sources' },
+              { answer: 'QUESTIONNAIRE', clue: 'A set of questions used to collect primary data' },
+              { answer: 'INTERVIEW', clue: 'A one-to-one conversation used to gather detailed primary data' },
+              { answer: 'FOCUSGROUP', clue: 'A discussion with a small group of people representing customers' },
+              { answer: 'TRIALLING', clue: 'Testing a product with a small group before full launch' },
+              { answer: 'QUALITATIVE', clue: 'Data expressed in words or opinions rather than numbers' },
+              { answer: 'QUANTITATIVE', clue: 'Numerical data that can be analysed statistically' },
+              { answer: 'BIAS', clue: 'When research results are distorted or misleading' },
+              { answer: 'SAMPLE', clue: 'A group selected from the population to take part in research' }
+            ]
+          },
+          {
+            id: 'u2_3', label: '2.3 Market Segmentation',
+            words: [
+              { answer: 'SEGMENTATION', clue: 'Dividing the market into groups of customers with similar needs' },
+              { answer: 'AGE', clue: 'A demographic variable used to segment a market' },
+              { answer: 'GENDER', clue: 'Male or female — a common basis for market segmentation' },
+              { answer: 'INCOME', clue: 'Earnings used to segment customers by spending power' },
+              { answer: 'LOCATION', clue: 'Where customers live — a geographic basis for segmentation' },
+              { answer: 'LIFESTYLE', clue: 'How people live and spend their time — psychographic segmentation' },
+              { answer: 'TARGETMARKET', clue: 'The specific segment a business decides to sell to' },
+              { answer: 'NICHE', clue: 'A small, specialised segment of the market' },
+              { answer: 'MASS', clue: 'Targeting the whole market with one product or approach' }
+            ]
+          },
+          {
+            id: 'u2_4', label: '2.4 The Marketing Mix',
+            words: [
+              { answer: 'MARKETINGMIX', clue: 'The combination of product, price, place and promotion' },
+              { answer: 'PRODUCT', clue: 'What a business sells to meet customer needs' },
+              { answer: 'PRICE', clue: 'The amount customers pay for a product or service' },
+              { answer: 'PLACE', clue: 'Where and how customers can buy the product' },
+              { answer: 'PROMOTION', clue: 'Methods used to inform customers and increase sales' },
+              { answer: 'PRODUCTLIFECYCLE', clue: 'The stages a product goes through from launch to decline' },
+              { answer: 'SKIMMING', clue: 'Pricing strategy that sets a high price when a product is new' },
+              { answer: 'PENETRATION', clue: 'Pricing strategy using a low price to gain market share quickly' },
+              { answer: 'COMPETITIVE', clue: 'Pricing a product in line with rivals' },
+              { answer: 'SOCIALMEDIA', clue: 'Online platforms used as a promotional tool' },
+              { answer: 'DISTRIBUTION', clue: 'Getting a product from producer to customer' },
+              { answer: 'ECOMMERCE', clue: 'Buying and selling goods and services over the internet' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'u3', label: '3. People',
+        subtopics: [
+          {
+            id: 'u3_1', label: '3.1 Role of Human Resources',
+            words: [
+              { answer: 'HUMANRESOURCES', clue: 'Department responsible for managing employees' },
+              { answer: 'RECRUITMENT', clue: 'The process of finding and hiring new employees' },
+              { answer: 'TRAINING', clue: 'Helping workers improve their skills' },
+              { answer: 'RETENTION', clue: 'Keeping employees within the business' },
+              { answer: 'WORKFORCE', clue: 'All employees working in a business' },
+              { answer: 'MOTIVATION', clue: 'Encouraging employees to work effectively' },
+              { answer: 'SKILLS', clue: 'Abilities employees possess to carry out their job' }
+            ]
+          },
+          {
+            id: 'u3_2', label: '3.2 Organisational Structures',
+            words: [
+              { answer: 'TALL', clue: 'An organisational structure with many layers of management' },
+              { answer: 'FLAT', clue: 'An organisational structure with few management levels' },
+              { answer: 'SPANOFCONTROL', clue: 'The number of employees a manager is directly responsible for' },
+              { answer: 'CHAINOFCOMMAND', clue: 'The route through which authority and instructions pass' },
+              { answer: 'DELEGATION', clue: 'Passing authority or responsibility to another employee' },
+              { answer: 'FULLTIME', clue: 'Working a standard full working week' },
+              { answer: 'PARTTIME', clue: 'Working fewer hours than a full-time employee' },
+              { answer: 'REMOTEWORKING', clue: 'Working away from the employer premises using technology' },
+              { answer: 'TEMPORARY', clue: 'Employment for a limited or fixed period' }
+            ]
+          },
+          {
+            id: 'u3_3', label: '3.3 Communication',
+            words: [
+              { answer: 'COMMUNICATION', clue: 'The exchange of information between people or groups' },
+              { answer: 'EMAIL', clue: 'Digital written communication method' },
+              { answer: 'MEETING', clue: 'A planned discussion between two or more people' },
+              { answer: 'SOCIALMEDIA', clue: 'Online platforms used to communicate with stakeholders' },
+              { answer: 'FEEDBACK', clue: 'A response that confirms whether a message has been understood' },
+              { answer: 'DIGITAL', clue: 'Communication using electronic technology' },
+              { answer: 'CLARITY', clue: 'Making a message easy to understand' },
+              { answer: 'PRODUCTIVITY', clue: 'Good communication can improve this in a business' }
+            ]
+          },
+          {
+            id: 'u3_4', label: '3.4 Recruitment & Selection',
+            words: [
+              { answer: 'RECRUITMENT', clue: 'The process of attracting applicants for a job vacancy' },
+              { answer: 'SELECTION', clue: 'Choosing the most suitable applicant for a job' },
+              { answer: 'JOBDESCRIPTION', clue: 'Document outlining duties and responsibilities of a role' },
+              { answer: 'PERSONSPECIFICATION', clue: 'Document outlining the qualities and skills needed for a role' },
+              { answer: 'INTERVIEW', clue: 'A selection method involving questions from an employer' },
+              { answer: 'CV', clue: 'A summary of an applicant\'s qualifications, skills and experience' },
+              { answer: 'REFERENCES', clue: 'Statements from others about an applicant\'s suitability' },
+              { answer: 'INTERNAL', clue: 'Recruiting from within the existing workforce' },
+              { answer: 'EXTERNAL', clue: 'Recruiting new employees from outside the business' }
+            ]
+          },
+          {
+            id: 'u3_5', label: '3.5 Motivation & Retention',
+            words: [
+              { answer: 'MOTIVATION', clue: 'The desire to work effectively and achieve goals' },
+              { answer: 'PAY', clue: 'Money earned from employment — a financial motivator' },
+              { answer: 'BONUSES', clue: 'Extra financial rewards for good performance' },
+              { answer: 'PROFITSHARING', clue: 'Employees receiving a share of company profits' },
+              { answer: 'FRINGEBENEFITS', clue: 'Non-wage perks offered by employers such as a company car' },
+              { answer: 'PRAISE', clue: 'Positive recognition from managers — non-financial motivator' },
+              { answer: 'RETENTION', clue: 'Keeping employees so the business avoids costly recruitment' },
+              { answer: 'PERFORMANCE', clue: 'How well an employee carries out their work' }
+            ]
+          },
+          {
+            id: 'u3_6', label: '3.6 Training & Development',
+            words: [
+              { answer: 'TRAINING', clue: 'Activities that improve an employee\'s ability to do their job' },
+              { answer: 'INDUCTION', clue: 'Training given to new employees when they join a business' },
+              { answer: 'ONTHEJOB', clue: 'Training that takes place while carrying out work duties' },
+              { answer: 'OFFTHEJOB', clue: 'Training that takes place away from normal work duties' },
+              { answer: 'DEVELOPMENT', clue: 'Longer-term improvement of an employee\'s skills and potential' },
+              { answer: 'SKILLSGAP', clue: 'The difference between skills employees have and those needed' },
+              { answer: 'APPRENTICESHIP', clue: 'Work-based training combining practical experience and study' },
+              { answer: 'PRODUCTIVITY', clue: 'Training can improve this by making employees more efficient' }
+            ]
+          },
+          {
+            id: 'u3_7', label: '3.7 Employment Law',
+            words: [
+              { answer: 'DISCRIMINATION', clue: 'Unfair treatment based on protected characteristics' },
+              { answer: 'CONTRACT', clue: 'Legal agreement between employer and employee' },
+              { answer: 'MINIMUMWAGE', clue: 'The lowest hourly pay employers must legally provide' },
+              { answer: 'HOURSOFWORK', clue: 'Time employees are expected to work, regulated by law' },
+              { answer: 'HEALTHANDSAFETY', clue: 'Rules designed to protect workers from workplace harm' },
+              { answer: 'EQUALITY', clue: 'Treating all employees fairly regardless of protected characteristics' },
+              { answer: 'TRIBUNAL', clue: 'A legal body that hears employment disputes' },
+              { answer: 'DISMISSAL', clue: 'Ending an employee\'s contract of employment' },
+              { answer: 'UNFAIRDISMISSAL', clue: 'When an employee is dismissed without a fair reason or process' }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  2: {
+    label: 'Paper 2 — Operations, Finance & Influences',
+    units: [
+      {
+        id: 'u4', label: '4. Operations',
+        subtopics: [
+          {
+            id: 'u4_1', label: '4.1 Production Processes',
+            words: [
+              { answer: 'JOBPRODUCTION', clue: 'Making one unique product at a time to customer specification' },
+              { answer: 'BATCHPRODUCTION', clue: 'Making a set of identical products before switching to another batch' },
+              { answer: 'FLOWPRODUCTION', clue: 'Continuous production of large quantities on an assembly line' },
+              { answer: 'AUTOMATION', clue: 'Using machines or technology to replace human labour' },
+              { answer: 'TECHNOLOGY', clue: 'Machines and systems that can improve production efficiency' },
+              { answer: 'EFFICIENCY', clue: 'Producing output at the lowest cost and least waste' },
+              { answer: 'LABOURINTENSIVE', clue: 'Production that relies mainly on human workers' },
+              { answer: 'CAPITALINTENSIVE', clue: 'Production that relies mainly on machinery and technology' }
+            ]
+          },
+          {
+            id: 'u4_2', label: '4.2 Quality',
+            words: [
+              { answer: 'QUALITY', clue: 'How well a product meets the needs and expectations of customers' },
+              { answer: 'QUALITYCONTROL', clue: 'Checking finished products to identify and remove defects' },
+              { answer: 'QUALITYASSURANCE', clue: 'Building quality checks into the production process' },
+              { answer: 'DEFECT', clue: 'A fault or flaw in a product that makes it fail quality standards' },
+              { answer: 'REPUTATION', clue: 'How customers perceive a business; quality management protects this' },
+              { answer: 'RETURNS', clue: 'Customers sending back faulty products, which quality management reduces' },
+              { answer: 'COMPLAINTS', clue: 'Negative customer feedback resulting from poor quality' },
+              { answer: 'STANDARD', clue: 'A level of quality that a product must meet' }
+            ]
+          },
+          {
+            id: 'u4_3', label: '4.3 Sales & Customer Service',
+            words: [
+              { answer: 'CUSTOMERSERVICE', clue: 'How a business looks after customers before, during and after a sale' },
+              { answer: 'ECOMMERCE', clue: 'Buying and selling goods and services over the internet' },
+              { answer: 'AFTERSALES', clue: 'Support provided to a customer after they have bought a product' },
+              { answer: 'LOYALTY', clue: 'Repeat customers who continue to buy from the same business' },
+              { answer: 'SATISFACTION', clue: 'When customers feel their needs have been fully met' },
+              { answer: 'COMPLAINT', clue: 'Negative feedback from a customer about a product or service' },
+              { answer: 'TELESALES', clue: 'Selling products to customers over the telephone' },
+              { answer: 'FACETOFACE', clue: 'Direct in-person method of selling to customers' }
+            ]
+          },
+          {
+            id: 'u4_4', label: '4.4 Consumer Law',
+            words: [
+              { answer: 'CONSUMERLAW', clue: 'Rules that protect customers when buying goods and services' },
+              { answer: 'CONSUMERRIGHTS', clue: 'Legal protections for people who buy products' },
+              { answer: 'REFUND', clue: 'Money returned to a customer for a faulty or unsatisfactory product' },
+              { answer: 'QUALITY', clue: 'Products must be of satisfactory standard under consumer law' },
+              { answer: 'DESCRIPTION', clue: 'Products must match their advertised purpose under consumer law' },
+              { answer: 'FINE', clue: 'A financial penalty for breaking consumer protection rules' },
+              { answer: 'REPUTATION', clue: 'Damaged when a business breaks consumer law' },
+              { answer: 'TRADING', clue: 'Standards body that enforces consumer protection rules' }
+            ]
+          },
+          {
+            id: 'u4_5', label: '4.5 Business Location',
+            words: [
+              { answer: 'LOCATION', clue: 'Where a business decides to set up its premises' },
+              { answer: 'FOOTFALL', clue: 'The number of people passing a retail location' },
+              { answer: 'TRANSPORT', clue: 'Good links to roads and railways affect business location' },
+              { answer: 'LABOUR', clue: 'Availability and cost of workers affects location choice' },
+              { answer: 'RENT', clue: 'Cost of premises is a major location factor' },
+              { answer: 'PROXIMITY', clue: 'Being close to customers or suppliers affects location decisions' },
+              { answer: 'ECOMMERCE', clue: 'Online trading that reduces the importance of physical location' },
+              { answer: 'COMPETITORS', clue: 'Presence of rival businesses in an area can influence location' }
+            ]
+          },
+          {
+            id: 'u4_6', label: '4.6 Working with Suppliers',
+            words: [
+              { answer: 'SUPPLIER', clue: 'A business that provides goods or materials to another business' },
+              { answer: 'PROCUREMENT', clue: 'The process of sourcing and purchasing goods and services' },
+              { answer: 'SUPPLYCHAIN', clue: 'The network of businesses involved in producing and delivering a product' },
+              { answer: 'LOGISTICS', clue: 'Managing the storage and movement of goods' },
+              { answer: 'RELIABILITY', clue: 'Suppliers must deliver on time and to the correct standard' },
+              { answer: 'COSTOFGOODS', clue: 'The price paid by a business to its suppliers' },
+              { answer: 'LEAD', clue: '___ time: the delay between ordering and receiving goods' },
+              { answer: 'QUALITY', clue: 'Suppliers must provide materials that meet the required standard' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'u5', label: '5. Finance',
+        subtopics: [
+          {
+            id: 'u5_1', label: '5.1 Role of Finance',
+            words: [
+              { answer: 'FINANCE', clue: 'Money used to fund and run a business' },
+              { answer: 'REVENUE', clue: 'Income received by a business from selling goods or services' },
+              { answer: 'COST', clue: 'Money spent by a business to produce or sell its products' },
+              { answer: 'PROFIT', clue: 'Revenue minus total costs' },
+              { answer: 'LOSS', clue: 'When costs are greater than revenue' },
+              { answer: 'INVESTMENT', clue: 'Spending money now to generate future returns' },
+              { answer: 'PLANNING', clue: 'Finance supports business decision-making and future ___' },
+              { answer: 'CASHFLOW', clue: 'The movement of money into and out of a business' }
+            ]
+          },
+          {
+            id: 'u5_2', label: '5.2 Sources of Finance',
+            words: [
+              { answer: 'LOAN', clue: 'Borrowing money from a bank, repaid with interest' },
+              { answer: 'OVERDRAFT', clue: 'A bank facility allowing a business to spend more than it holds' },
+              { answer: 'CROWDFUNDING', clue: 'Raising small amounts from a large number of people online' },
+              { answer: 'RETAINEDPROFIT', clue: 'Profits kept in the business rather than paid to owners' },
+              { answer: 'SHAREISSUE', clue: 'Raising finance by selling ownership stakes in the business' },
+              { answer: 'TRADECREDIT', clue: 'Buying goods now and paying the supplier later' },
+              { answer: 'MORTGAGE', clue: 'A long-term secured loan used to buy business premises' },
+              { answer: 'GRANT', clue: 'Money given to a business that does not need to be repaid' }
+            ]
+          },
+          {
+            id: 'u5_3', label: '5.3 Revenue, Costs, Profit & Loss',
+            words: [
+              { answer: 'REVENUE', clue: 'Price multiplied by quantity sold' },
+              { answer: 'FIXEDCOST', clue: 'A cost that does not change with the level of output' },
+              { answer: 'VARIABLECOST', clue: 'A cost that changes directly with the level of output' },
+              { answer: 'TOTALCOST', clue: 'Fixed costs plus variable costs' },
+              { answer: 'GROSSPROFIT', clue: 'Revenue minus cost of goods sold' },
+              { answer: 'NETPROFIT', clue: 'Gross profit minus all other operating expenses' },
+              { answer: 'PROFITMARGIN', clue: 'Profit expressed as a percentage of revenue' },
+              { answer: 'AVERAGERATEORETURN', clue: 'Annual profit as a percentage of the amount invested' }
+            ]
+          },
+          {
+            id: 'u5_4', label: '5.4 Break-even',
+            words: [
+              { answer: 'BREAKEVEN', clue: 'The output level at which total revenue equals total costs' },
+              { answer: 'CONTRIBUTION', clue: 'Selling price minus variable cost per unit' },
+              { answer: 'MARGINOFSAFETY', clue: 'The difference between actual output and the break-even point' },
+              { answer: 'FIXEDCOST', clue: 'Costs that must be covered before a business can break even' },
+              { answer: 'VARIABLECOST', clue: 'A cost that increases with every unit produced' },
+              { answer: 'REVENUE', clue: 'Total income, shown as a straight line on a break-even chart' },
+              { answer: 'OUTPUT', clue: 'The quantity produced; shown on the x-axis of a break-even chart' }
+            ]
+          },
+          {
+            id: 'u5_5', label: '5.5 Cash & Cash Flow',
+            words: [
+              { answer: 'CASHFLOW', clue: 'The movement of money in and out of a business over time' },
+              { answer: 'INFLOW', clue: 'Money received by a business' },
+              { answer: 'OUTFLOW', clue: 'Money paid out by a business' },
+              { answer: 'NETCASHFLOW', clue: 'Total inflows minus total outflows in a period' },
+              { answer: 'CASHFLOWFORECAST', clue: 'A prediction of future cash inflows and outflows' },
+              { answer: 'OVERDRAFT', clue: 'A short-term solution to a negative cash flow problem' },
+              { answer: 'LIQUIDITY', clue: 'The ability of a business to meet its short-term debts' },
+              { answer: 'PROFIT', clue: 'Different from cash flow; a business can be profitable but cash-poor' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'u6', label: '6. Influences on Business',
+        subtopics: [
+          {
+            id: 'u6_1', label: '6.1 Ethical & Environmental',
+            words: [
+              { answer: 'ETHICS', clue: 'Moral principles that guide business behaviour' },
+              { answer: 'SUSTAINABILITY', clue: 'Meeting current needs without harming future generations' },
+              { answer: 'ENVIRONMENT', clue: 'Businesses must consider their impact on the natural world' },
+              { answer: 'CARBONFOOTPRINT', clue: 'The total greenhouse gas emissions caused by a business' },
+              { answer: 'FAIRTRADE', clue: 'A scheme ensuring producers in developing countries receive fair prices' },
+              { answer: 'REPUTATION', clue: 'Ethical behaviour can strengthen a business\'s image' },
+              { answer: 'POLLUTION', clue: 'Environmental damage businesses must try to minimise' },
+              { answer: 'RECYCLING', clue: 'Reprocessing waste materials to reduce environmental impact' }
+            ]
+          },
+          {
+            id: 'u6_2', label: '6.2 The Economic Climate',
+            words: [
+              { answer: 'ECONOMICCLIMATE', clue: 'The overall state of the economy affecting business activity' },
+              { answer: 'RECESSION', clue: 'A period of negative economic growth' },
+              { answer: 'INFLATION', clue: 'A sustained rise in the general level of prices' },
+              { answer: 'UNEMPLOYMENT', clue: 'The number of people without a job who are actively seeking work' },
+              { answer: 'INCOME', clue: 'Consumer earnings; when this falls, spending usually falls too' },
+              { answer: 'INTERESTRATE', clue: 'The cost of borrowing money, set by the central bank' },
+              { answer: 'CONSUMER', clue: 'Confidence from these people drives economic growth' },
+              { answer: 'DEMAND', clue: 'Economic downturns typically reduce this for non-essential goods' }
+            ]
+          },
+          {
+            id: 'u6_3', label: '6.3 Globalisation',
+            words: [
+              { answer: 'GLOBALISATION', clue: 'The increasing interconnection of the world\'s economies' },
+              { answer: 'MULTINATIONAL', clue: 'A company that operates in more than one country' },
+              { answer: 'IMPORTS', clue: 'Goods and services bought from other countries' },
+              { answer: 'EXPORTS', clue: 'Goods and services sold to other countries' },
+              { answer: 'EXCHANGERATE', clue: 'The value of one currency compared to another' },
+              { answer: 'COMPETITION', clue: 'Globalisation increases this by opening markets to foreign businesses' },
+              { answer: 'OUTSOURCING', clue: 'Using overseas businesses to carry out tasks at lower cost' },
+              { answer: 'GLOBALBRANDING', clue: 'Selling the same branded product worldwide' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'u7', label: '7. Interdependence',
+        subtopics: [
+          {
+            id: 'u7_1', label: '7. Interdependent Nature of Business',
+            words: [
+              { answer: 'INTERDEPENDENCE', clue: 'How the different parts of a business rely on each other' },
+              { answer: 'OPERATIONS', clue: 'Function that produces the goods or delivers the service' },
+              { answer: 'MARKETING', clue: 'Function that identifies and meets customer needs' },
+              { answer: 'FINANCE', clue: 'Function that manages money and supports decision making' },
+              { answer: 'HUMANRESOURCES', clue: 'Function that manages and develops the workforce' },
+              { answer: 'CASHFLOW', clue: 'Operations, marketing and HR decisions all affect this' },
+              { answer: 'DECISIONMAKING', clue: 'Requires information from all business functions' },
+              { answer: 'RISK', clue: 'The impact of financial information helps businesses assess this' }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let currentPaper = 1;
+let currentUnitId = null;
+let currentTopicId = null;
+let currentDirection = 'across';
+const gridSize = 20;
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+function init() {
+  var savedTheme = localStorage.getItem("biz-omics-theme") || "dark";
+  var btn = document.getElementById("themeBtn");
+  if (btn) btn.textContent = savedTheme === "light" ? "🌙" : "☀";
+
+  setPaper(1, false);
+}
+
+function setPaper(n, generate = false) {
+  currentPaper = n;
+  document.body.setAttribute('data-paper', n);
+
+  // Update paper tab styles
+  const tabs = document.querySelectorAll('.paper-tab');
+  tabs.forEach((t, i) => {
+    t.classList.remove('active-p1', 'active-p2');
+    if (i === n - 1) t.classList.add(n === 1 ? 'active-p1' : 'active-p2');
+  });
+
+  // Update generate button class
+  const genBtn = document.getElementById('genBtn');
+  genBtn.className = `btn btn-primary-p${n}`;
+
+  // Update topic badge class
+  const badge = document.getElementById('topicBadge');
+  badge.className = `topic-badge${n === 2 ? ' p2' : ''}`;
+
+  // Build unit nav
+  const units = PAPERS[n].units;
+  const nav = document.getElementById('unitNav');
+  nav.innerHTML = '';
+  units.forEach(u => {
+    const btn = document.createElement('button');
+    btn.className = 'unit-pill';
+    btn.textContent = u.label;
+    btn.onclick = () => selectUnit(u.id);
+    btn.id = 'upill_' + u.id;
+    nav.appendChild(btn);
+  });
+
+  // Reset selections
+  currentUnitId = null;
+  currentTopicId = null;
+  document.getElementById('subtopicBtns').innerHTML = '';
+  document.getElementById('topicBadge').textContent = 'Select a topic above';
+  document.getElementById('grid').innerHTML = `<div class="empty-state"><div class="empty-icon">✏️</div><div class="empty-title">Choose a topic to begin</div><p>Select a unit and sub-topic above, then click Generate.</p></div>`;
+  document.getElementById('acrossClues').innerHTML = '<p style="color:var(--text-dim);font-size:13px;">Generate a crossword to see clues.</p>';
+  document.getElementById('downClues').innerHTML = '';
+  document.getElementById('teacherWords').innerHTML = '';
+  document.getElementById('teacherPanel').style.display = 'none';
+
+  // Auto-select first unit
+  if (units.length) selectUnit(units[0].id, false);
+}
+
+function selectUnit(unitId, autoSelectSub = true) {
+  currentUnitId = unitId;
+  const n = currentPaper;
+  const units = PAPERS[n].units;
+  const unit = units.find(u => u.id === unitId);
+  if (!unit) return;
+
+  // Update unit pills
+  document.querySelectorAll('.unit-pill').forEach(p => {
+    p.classList.remove('active-p1', 'active-p2');
+    if (p.id === 'upill_' + unitId) p.classList.add(n === 1 ? 'active-p1' : 'active-p2');
+  });
+
+  // Build subtopic buttons
+  const container = document.getElementById('subtopicBtns');
+  container.innerHTML = '';
+  unit.subtopics.forEach(st => {
+    const btn = document.createElement('button');
+    btn.className = 'subtopic-btn';
+    btn.textContent = st.label;
+    btn.id = 'stbtn_' + st.id;
+    btn.onclick = () => selectSubtopic(st.id);
+    container.appendChild(btn);
+  });
+
+  // Auto-select first subtopic
+  if (autoSelectSub && unit.subtopics.length) {
+    selectSubtopic(unit.subtopics[0].id);
+  }
+}
+
+function selectSubtopic(topicId) {
+  currentTopicId = topicId;
+  const n = currentPaper;
+  const units = PAPERS[n].units;
+  let found = null;
+  for (const u of units) {
+    for (const st of u.subtopics) {
+      if (st.id === topicId) { found = st; break; }
+    }
+    if (found) break;
+  }
+  if (!found) return;
+
+  // Update subtopic buttons
+  document.querySelectorAll('.subtopic-btn').forEach(b => {
+    b.classList.remove('sel-p1', 'sel-p2');
+    if (b.id === 'stbtn_' + topicId) b.classList.add(n === 1 ? 'sel-p1' : 'sel-p2');
+  });
+
+  // Update badge
+  document.getElementById('topicBadge').textContent = found.label;
+
+  // Auto-generate
+  generateCrossword();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CROSSWORD ENGINE
+// ═══════════════════════════════════════════════════════
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+function createEmptyGrid(size) { return Array.from({length:size},()=>Array(size).fill(null)); }
+
+function getTopicWords() {
+  if (!currentTopicId) return [];
+  const units = PAPERS[currentPaper].units;
+  for (const u of units) {
+    for (const st of u.subtopics) {
+      if (st.id === currentTopicId) return st.words;
+    }
+  }
+  return [];
+}
+
+function canPlace(word, row, col, dir, grid, requireIntersection = false) {
+  let intersections = 0;
+  for (let i = 0; i < word.length; i++) {
+    const r = dir === 'across' ? row : row + i;
+    const c = dir === 'across' ? col + i : col;
+    if (r < 0 || c < 0 || r >= gridSize || c >= gridSize) return false;
+    const cur = grid[r][c];
+    if (cur !== null) {
+      if (cur !== word[i]) return false;
+      intersections++;
+    } else {
+      if (dir === 'across') {
+        if ((r > 0 && grid[r-1][c] !== null) || (r < gridSize-1 && grid[r+1][c] !== null)) return false;
+      } else {
+        if ((c > 0 && grid[r][c-1] !== null) || (c < gridSize-1 && grid[r][c+1] !== null)) return false;
+      }
+    }
+  }
+  const br = dir === 'across' ? row : row - 1;
+  const bc = dir === 'across' ? col - 1 : col;
+  const ar = dir === 'across' ? row : row + word.length;
+  const ac = dir === 'across' ? col + word.length : col;
+  if (br >= 0 && bc >= 0 && br < gridSize && bc < gridSize && grid[br][bc] !== null) return false;
+  if (ar >= 0 && ac >= 0 && ar < gridSize && ac < gridSize && grid[ar][ac] !== null) return false;
+  if (requireIntersection && intersections === 0) return false;
+  return true;
+}
+
+function placeWord(wordObj, row, col, dir, grid, placed) {
+  const word = wordObj.answer;
+  for (let i = 0; i < word.length; i++) {
+    const r = dir === 'across' ? row : row + i;
+    const c = dir === 'across' ? col + i : col;
+    grid[r][c] = word[i];
+  }
+  placed.push({...wordObj, row, col, direction: dir});
+}
+
+function generateCrossword() {
+  const allWords = getTopicWords();
+  if (!allWords.length) return;
+  const words = shuffle(allWords).slice(0, 9);
+  const grid = createEmptyGrid(gridSize);
+  const placed = [];
+
+  // Place first word in centre
+  const first = words[0];
+  const startRow = Math.floor(gridSize / 2);
+  const startCol = Math.floor((gridSize - first.answer.length) / 2);
+  placeWord(first, startRow, startCol, 'across', grid, placed);
+
+  for (let w = 1; w < words.length; w++) {
+    const wordObj = words[w];
+    const word = wordObj.answer;
+    let placedFlag = false;
+    const acrossCount = placed.filter(p => p.direction === 'across').length;
+    const downCount = placed.filter(p => p.direction === 'down').length;
+    const prefDir = acrossCount <= downCount ? 'across' : 'down';
+
+    for (const existing of placed) {
+      if (placedFlag) break;
+      for (let i = 0; i < existing.answer.length; i++) {
+        for (let j = 0; j < word.length; j++) {
+          if (existing.answer[i] === word[j]) {
+            const dir = prefDir;
+            let row, col;
+            if (dir === 'across') { row = existing.row + i; col = existing.col - j; }
+            else { row = existing.row - j; col = existing.col + i; }
+            if (row >= 0 && col >= 0 && canPlace(word, row, col, dir, grid, true)) {
+              placeWord(wordObj, row, col, dir, grid, placed);
+              placedFlag = true;
+              break;
+            }
+            // try other direction
+            const altDir = dir === 'across' ? 'down' : 'across';
+            let ar, ac;
+            if (altDir === 'across') { ar = existing.row + i; ac = existing.col - j; }
+            else { ar = existing.row - j; ac = existing.col + i; }
+            if (ar >= 0 && ac >= 0 && canPlace(word, ar, ac, altDir, grid, true)) {
+              placeWord(wordObj, ar, ac, altDir, grid, placed);
+              placedFlag = true;
+              break;
+            }
+          }
+        }
+        if (placedFlag) break;
+      }
+    }
+  }
+
+  renderGrid(grid, placed);
+  renderClues(placed);
+  renderTeacher(placed);
+}
+
+function renderGrid(grid, placed) {
+  const el = document.getElementById('grid');
+  el.innerHTML = '';
+  el.style.display = 'grid';
+  el.style.gridTemplateColumns = `repeat(${gridSize}, 34px)`;
+
+  const numbering = {};
+  let num = 1;
+  placed.forEach(w => {
+    const key = `${w.row}-${w.col}`;
+    if (!numbering[key]) numbering[key] = num++;
+    w.number = numbering[key];
+  });
+
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (grid[r][c] === null) {
+        cell.classList.add('black');
+      } else {
+        const inp = document.createElement('input');
+        inp.maxLength = 1;
+        inp.dataset.answer = grid[r][c];
+        inp.dataset.row = r;
+        inp.dataset.col = c;
+        inp.addEventListener('focus', () => markActive(inp));
+        inp.addEventListener('input', handleInput);
+        inp.addEventListener('keydown', handleKey);
+        cell.appendChild(inp);
+        const key = `${r}-${c}`;
+        if (numbering[key]) {
+          const n = document.createElement('div');
+          n.className = 'number';
+          n.textContent = numbering[key];
+          cell.appendChild(n);
+        }
+      }
+      el.appendChild(cell);
+    }
+  }
+
+  const first = el.querySelector('input');
+  if (first) { first.focus(); markActive(first); }
+}
+
+function renderClues(placed) {
+  const ac = document.getElementById('acrossClues');
+  const dn = document.getElementById('downClues');
+  ac.innerHTML = '';
+  dn.innerHTML = '';
+  [...placed].sort((a,b)=>a.number-b.number).forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'clue-item';
+    div.innerHTML = `<span class="clue-num">${w.number}.</span><span class="clue-text">${w.clue} <span style="color:var(--text-dim);font-size:11px;">(${w.answer.length})</span></span>`;
+    (w.direction === 'across' ? ac : dn).appendChild(div);
+  });
+}
+
+function renderTeacher(placed) {
+  const el = document.getElementById('teacherWords');
+  el.innerHTML = '';
+  [...placed].sort((a,b)=>a.answer.localeCompare(b.answer)).forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'teacher-word';
+    d.textContent = `${w.number}. ${w.answer}`;
+    el.appendChild(d);
+  });
+}
+
+function toggleTeacher() {
+  const panel = document.getElementById('teacherPanel');
+  if (panel.style.display === 'none' || !panel.style.display) {
+    const pw = prompt('Enter teacher password:');
+    if (pw === 'BIZANSWERS' || pw === 'bizanswers') {
+      panel.style.display = 'block';
+    } else if (pw !== null) {
+      alert('Incorrect password.');
+    }
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+// ── Input handlers ──
+function getAt(r, c) { return document.querySelector(`#grid input[data-row="${r}"][data-col="${c}"]`); }
+
+function markActive(inp) {
+  document.querySelectorAll('#grid .cell').forEach(c => c.classList.remove('active-cell','active-cell-p2'));
+  inp.parentElement.classList.add(currentPaper === 1 ? 'active-cell' : 'active-cell-p2');
+}
+
+function focusCell(r, c) {
+  const t = getAt(r, c);
+  if (t) { t.focus(); t.select(); markActive(t); return true; }
+  return false;
+}
+
+function findNext(r, c, dir, step=1) {
+  let nr = r, nc = c;
+  for (let i = 0; i < gridSize; i++) {
+    if (dir === 'across') nc += step; else nr += step;
+    if (nr < 0 || nc < 0 || nr >= gridSize || nc >= gridSize) return null;
+    const t = getAt(nr, nc);
+    if (t) return t;
+  }
+  return null;
+}
+
+function move(inp, dir, step=1) {
+  const r = +inp.dataset.row, c = +inp.dataset.col;
+  const t = findNext(r, c, dir, step);
+  if (t) { t.focus(); t.select(); markActive(t); }
+}
+
+function handleInput(e) {
+  const inp = e.target;
+  inp.value = inp.value.toUpperCase().replace(/[^A-Z]/g,'').slice(-1);
+  checkAnswers();
+  if (inp.value) move(inp, currentDirection, 1);
+}
+
+function handleKey(e) {
+  const inp = e.target;
+  const r = +inp.dataset.row, c = +inp.dataset.col;
+  if (e.key==='ArrowRight'){ e.preventDefault(); currentDirection='across'; focusCell(r,c+1); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); currentDirection='across'; focusCell(r,c-1); }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); currentDirection='down'; focusCell(r+1,c); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); currentDirection='down'; focusCell(r-1,c); }
+  else if(e.key===' '||e.key==='Tab'){ e.preventDefault(); currentDirection=currentDirection==='across'?'down':'across'; }
+  else if(e.key==='Backspace'&&inp.value===''){ e.preventDefault(); move(inp,currentDirection,-1); }
+}
+
+function checkAnswers() {
+  document.querySelectorAll('#grid input').forEach(inp => {
+    if (inp.value.toUpperCase() === inp.dataset.answer) inp.parentElement.classList.add('correct');
+    else inp.parentElement.classList.remove('correct');
+  });
+}
+
+
+// ── Theme toggle ──
+(function(){
+  var t = localStorage.getItem('biz-omics-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('biz-omics-theme', next);
+  var btn = document.getElementById('themeBtn');
+  if (btn) btn.textContent = next === 'light' ? '🌙' : '☀';
+}
+
+init();
+</script>
+</body>
+</html>
