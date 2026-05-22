@@ -224,6 +224,36 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
     .sq-score-num{font-size:2rem;font-weight:800;color:#10b981;line-height:1;margin-bottom:4px;}
     .sq-score-label{font-size:0.72rem;color:#7a8fa8;letter-spacing:0.1em;text-transform:uppercase;}
     .sq-score-msg{font-size:0.84rem;color:#b0bcd0;margin-top:10px;line-height:1.6;}
+
+/* -- MONTH SUMMARY OVERLAY -- */
+.month-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:1500;display:none;align-items:center;justify-content:center;padding:20px;}
+.month-overlay.show{display:flex;}
+.month-card{background:var(--surface);border:1px solid var(--border-acc);border-radius:20px;padding:28px 32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;animation:ovslide .25s ease;}
+.month-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.month-name{font-family:var(--ffs);font-size:22px;font-weight:900;color:var(--text);}
+.month-sub{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:3px;}
+.kpi-delta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.kd-item{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;}
+.kd-label{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);font-weight:700;margin-bottom:4px;}
+.kd-val{font-size:14px;font-weight:700;font-family:var(--ffs);}
+.kd-val.pos{color:#34d399;}.kd-val.neg{color:#f87171;}.kd-val.neu{color:var(--muted);}
+.month-consequence{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#fcd34d;line-height:1.75;}
+.month-consequence-title{font-weight:700;font-size:13px;margin-bottom:6px;}
+.month-q-wrap{background:var(--surface2);border:1px solid var(--border-acc);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.month-q-label{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:8px;}
+.month-q-text{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:12px;}
+.month-q-opts{display:flex;flex-direction:column;gap:6px;}
+.month-q-opt{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;text-align:left;font-family:var(--ff);}
+.month-q-opt:hover:not(:disabled){border-color:var(--accent);color:var(--text);}
+.month-q-opt.correct{background:rgba(16,185,129,0.1);border-color:#10b981;color:#34d399;font-weight:700;}
+.month-q-opt.wrong{background:rgba(239,68,68,0.1);border-color:#ef4444;color:#f87171;}
+.month-continue-btn{width:100%;padding:12px;background:var(--surface2);color:var(--dim);border:1px solid var(--border);border-radius:9px;font-size:13px;font-weight:700;font-family:var(--ff);cursor:not-allowed;margin-top:2px;}
+.month-continue-btn.unlocked{background:var(--accent);color:#000;border-color:transparent;cursor:pointer;}
+.month-continue-btn.unlocked:hover{opacity:.88;}
+/* -- NARRATIVE EVENT STYLES -- */
+.ev-narrative{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.45;}
+.ev-body{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:12px;}
+.choice-impact{display:block;font-size:10px;color:var(--dim);margin-top:4px;font-weight:400;}
 </style>
 </head>
 <body>
@@ -277,13 +307,18 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
     </div>
     <div class="kpi-div"></div>
     <div class="season-pill" id="season-pill">🌸 Spring +5%</div>
-    <div class="week-pill" id="week-pill">Week 1</div>
+    <div class="week-pill" id="month-pill">Week 1</div>
   </div>
 
   <!-- LEFT: ACTIONS -->
   <div class="panel">
     <div class="panel-hdr"><div class="panel-hdr-title">Actions</div></div>
     <div class="panel-body">
+      <!-- Trade-off feedback box -->
+      <div id="tradeoff-note" style="display:none;margin-bottom:8px;padding:9px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:8px;font-size:0.72rem;color:#d97706;line-height:1.55;"></div>
+      <!-- Staff neglect alert -->
+      <div id="staff-alert" style="display:none;margin-bottom:8px;padding:8px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:0.72rem;color:#ef4444;font-weight:600;">⚠️ Staff morale declining — no training in 4+ weeks. A wages dispute may be imminent.</div>
+
       <div class="goal-wrap">
         <div class="goal-title">Victory Goal</div>
         <div class="goal-track"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
@@ -292,7 +327,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
 
       <div class="ap-bar">
         <div>
-          <div class="ap-label">Actions this week</div>
+          <div class="ap-label">Actions this month</div>
           <div class="ap-dots" id="ap-dots">
             <div class="ap-dot" id="ap-dot-1"></div>
             <div class="ap-dot" id="ap-dot-2"></div>
@@ -361,7 +396,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
       <div class="map-title">🗺️ Territory Map</div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="pause-btn" id="pause-btn" onclick="togglePause()">⏸ Pause</button>
-        <button class="next-btn" id="next-btn" onclick="advanceTurn()">Next Week →</button>
+        <button class="next-btn" id="next-btn" onclick="if(this._countdownInterval){clearInterval(this._countdownInterval);this._countdownInterval=null;this.textContent='Next Month →';}advanceTurn()">Next Month →</button>
       </div>
     </div>
     <div class="territory-grid" id="territory-grid"></div>
@@ -449,8 +484,8 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
     <div class="ov-title">Build Your<br><em>Franchise Empire</em></div>
     <div class="ov-body">You're the CEO of a fast-food chain. Expand strategically, manage your brand and navigate real business challenges to dominate the market.</div>
     <ul class="ov-list">
-      <li><strong>2 actions per week:</strong> Each week you get 2 action points — spend them wisely on expansion, marketing or operations</li>
-      <li><strong>End the week:</strong> Once you've used your actions (or want to skip), click <strong>Next Week →</strong> — it pulses green when you're ready</li>
+      <li><strong>2 actions per month:</strong> Each month you get 2 action points — spend them wisely on expansion, marketing or operations</li>
+      <li><strong>End the week:</strong> Once you've used your actions (or want to skip), click <strong>Next Month →</strong> — it pulses green when you're ready</li>
       <li><strong>Expand:</strong> Open restaurants (£60k each) or sell franchises to earn royalties</li>
       <li><strong>Territories:</strong> Click map squares to claim areas — they boost total revenue</li>
       <li><strong>Events:</strong> Respond to supply chain shocks, staff disputes, ethical dilemmas and more</li>
@@ -504,7 +539,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
 </div>
 
 <script>
-/* ── THEME ── */
+/* -- THEME -- */
 function toggleTheme(){
   const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',n);
@@ -517,7 +552,7 @@ function toggleTheme(){
   document.getElementById('theme-btn').textContent=t==='light'?'🌙':'☀';
 })();
 
-/* ── CURRICULUM TABS ── */
+/* -- CURRICULUM TABS -- */
 function switchCTab(id,btn){
   document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.ctab-panel').forEach(p=>p.classList.remove('active'));
@@ -525,7 +560,7 @@ function switchCTab(id,btn){
   document.getElementById('ctab-'+id).classList.add('active');
 }
 
-/* ── GAME STATE ── */
+/* -- GAME STATE -- */
 const S={
   cash:400000,restaurants:15,turn:1,
   brand:45,marketShare:18,
@@ -539,17 +574,28 @@ const S={
   actionsThisWeek:0,maxActionsPerWeek:2,
   decisionLog:[],
   achievements:[],
-  prev:{}
+  prev:{},
+  // Trade-off tracking
+  expandsThisMonth:0,        // expansions in last 4 weeks
+  weeksSinceTraining:0,      // weeks without a training action
+  wagesDisputeFired:false,   // prevent duplicate event
+  supplyDiversified:false,   // did player ever invest in supply chain resilience
+  expandHistory:[],          // ring buffer of last 4 weeks' expand counts
+  // Monthly summary tracking
+  gameOver:false,profitMod:1.0,
+  prevMonthKPIs:{cash:400000,rev:0,restaurants:15,brand:45,quality:65,morale:75,satisfaction:70},
+  monthConsequences:[],
+  monthQAnswered:false,
 };
 const SEASONS=['Spring','Summer','Autumn','Winter'];
 const SEASON_EMOJI={Spring:'🌸',Summer:'☀️',Autumn:'🍂',Winter:'❄️'};
 const SEASON_BONUS={Spring:1.05,Summer:1.15,Autumn:1.0,Winter:0.9};
 
-/* ── FORMAT ── */
+/* -- FORMAT -- */
 const fc=v=>'£'+Math.floor(v).toLocaleString();
 const fp=v=>Math.floor(v)+'%';
 
-/* ── INIT ── */
+/* -- INIT -- */
 function initTerritories(){
   for(let i=0;i<80;i++){
     S.territories[i]={id:i,owned:false,cost:25000+Math.floor(Math.random()*25000),bonus:0.02+Math.random()*0.08,type:'empty'};
@@ -573,7 +619,7 @@ function createGrid(){
   }
 }
 
-/* ── TERRITORY MODAL ── */
+/* -- TERRITORY MODAL -- */
 function openTerrModal(id){
   const t=S.territories[id];
   const modal=document.getElementById('terr-modal');
@@ -622,40 +668,155 @@ function claimTerritory(id){
   checkAchievements();
 }
 
-/* ── ACTIONS ── */
+/* -- ACTIONS -- */
 function doAction(type){
   if(S.paused||S.pendingDecision)return;
   if(S.actionsThisWeek>=S.maxActionsPerWeek){
-    notify('No actions left this week — click Next Week to advance!',true);
-    // Flash the next button to guide the student
+    notify('No actions left this month — click Next Month to advance!',true);
     const nb=document.getElementById('next-btn');
     nb.classList.add('ready');
-    setTimeout(()=>{},0);
     return;
   }
   const actions={
-    expand:{cost:60000,fn:()=>{S.restaurants++;S.marketShare+=0.5;S.revMult+=0.005;recalc();notify('🏗️ New restaurant opened! Economies of scale improving.');S.decisionLog.push('expand');}},
-    franchise:{cost:0,fn:()=>{S.franchises++;S.cash+=45000;S.franchiseRoyalties+=Math.floor(S.weeklyRevenue*0.03/Math.max(1,S.restaurants));recalc();notify('🤝 Franchise sold! Royalty income added.');S.decisionLog.push('franchise');}},
-    'mkt-local':{cost:15000,fn:()=>{S.brand=Math.min(100,S.brand+3);S.marketShare+=0.5;recalc();notify('📍 Local campaign done! Brand awareness up.');S.decisionLog.push('marketing');}},
-    'mkt-regional':{cost:40000,fn:()=>{S.brand=Math.min(100,S.brand+8);S.marketShare+=1.5;recalc();notify('📢 Regional campaign! Strong brand boost.');S.decisionLog.push('marketing');}},
-    'mkt-national':{cost:100000,fn:()=>{S.brand=Math.min(100,S.brand+15);S.marketShare+=3;recalc();notify('📺 National campaign! Massive brand recognition.');S.decisionLog.push('marketing');}},
-    training:{cost:20000,fn:()=>{S.quality=Math.min(100,S.quality+5);S.morale=Math.min(100,S.morale+4);recalc();notify('👨‍🍳 Staff training complete! Quality & morale up.');S.decisionLog.push('training');}},
-    equipment:{cost:35000,fn:()=>{S.efficiency=Math.min(150,S.efficiency+3);recalc();notify('⚙️ Equipment upgraded! Efficiency increased.');S.decisionLog.push('equipment');}},
-    ethics:{cost:25000,fn:()=>{S.brand=Math.min(100,S.brand+4);S.satisfaction=Math.min(100,S.satisfaction+5);S.morale=Math.min(100,S.morale+6);recalc();notify('🌱 CSR initiative launched! Brand & morale boosted.');S.decisionLog.push('csr');}}
+    expand:{cost:60000,fn:()=>{
+      S.restaurants++;
+      S.marketShare+=0.5;
+      S.revMult+=0.005;
+      S.expandsThisMonth++;
+      // TRADE-OFF: rapid expansion strains quality — brand promises outrun delivery
+      if(S.expandsThisMonth>=3){
+        const qDrop=Math.min(8, S.expandsThisMonth*2);
+        S.quality=Math.max(20,S.quality-qDrop);
+        S.satisfaction=Math.max(20,S.satisfaction-4);
+        recalc();
+        notify(`🏗️ Restaurant #${S.restaurants} opened — but rapid expansion is stretching quality control. Quality ↓${qDrop}%.`);
+        showTradeoffNote('Overexpansion: Growing faster than operations can manage reduces consistency — a key risk in franchising (AQA 3.3).');
+      } else {
+        recalc();
+        notify('🏗️ New restaurant opened! Economies of scale improving.');
+      }
+      S.decisionLog.push('expand');
+    }},
+    franchise:{cost:0,fn:()=>{
+      S.franchises++;
+      S.cash+=45000;
+      S.franchiseRoyalties+=Math.floor(S.weeklyRevenue*0.03/Math.max(1,S.restaurants));
+      recalc();
+      notify('🤝 Franchise sold! Royalty income added — capital-light growth strategy.');
+      S.decisionLog.push('franchise');
+    }},
+    'mkt-local':{cost:15000,fn:()=>{
+      S.brand=Math.min(100,S.brand+3);
+      S.marketShare+=0.5;
+      recalc();
+      // TRADE-OFF: marketing without quality creates satisfaction gap
+      if(S.brand > S.quality+20){
+        S.satisfaction=Math.max(20,S.satisfaction-3);
+        notify('📍 Local campaign done! Brand up — but customers expect quality not yet delivering. Satisfaction dipped.');
+        showTradeoffNote('Brand promise gap: Marketing raises expectations. If quality does not match, satisfaction falls — the overpromise problem (AQA 3.4).');
+      } else {
+        notify('📍 Local campaign done! Brand awareness up.');
+      }
+      S.decisionLog.push('marketing');
+    }},
+    'mkt-regional':{cost:40000,fn:()=>{
+      S.brand=Math.min(100,S.brand+8);
+      S.marketShare+=1.5;
+      recalc();
+      if(S.brand > S.quality+20){
+        S.satisfaction=Math.max(20,S.satisfaction-6);
+        notify('📢 Regional campaign live! But your brand now exceeds your quality — customer satisfaction has slipped.');
+        showTradeoffNote('Brand promise gap: Advertising raises expectations faster than operations can deliver. Invest in quality to close the gap (AQA 3.4).');
+      } else {
+        notify('📢 Regional campaign! Strong brand boost.');
+      }
+      S.decisionLog.push('marketing');
+    }},
+    'mkt-national':{cost:100000,fn:()=>{
+      S.brand=Math.min(100,S.brand+15);
+      S.marketShare+=3;
+      recalc();
+      if(S.brand > S.quality+20){
+        S.satisfaction=Math.max(20,S.satisfaction-10);
+        notify('📺 National campaign! Huge reach — but quality gaps are now visible nationally. Satisfaction hit badly.');
+        showTradeoffNote('Brand promise gap: A national campaign amplifies any quality problems. The bigger the audience, the more visible the inconsistency (AQA 3.4).');
+      } else {
+        notify('📺 National campaign! Massive brand recognition.');
+      }
+      S.decisionLog.push('marketing');
+    }},
+    training:{cost:20000,fn:()=>{
+      S.quality=Math.min(100,S.quality+5);
+      S.morale=Math.min(100,S.morale+4);
+      S.weeksSinceTraining=-1;  // -1 so after advanceTurn increments it = 0 (trained this month)
+      recalc();
+      notify('👨‍🍳 Staff training complete! Quality & morale up.');
+      S.decisionLog.push('training');
+    }},
+    equipment:{cost:35000,fn:()=>{
+      S.efficiency=Math.min(150,S.efficiency+3);
+      S.supplyDiversified=true;  // counts as operational resilience investment
+      recalc();
+      notify('⚙️ Equipment upgraded! Efficiency increased.');
+      S.decisionLog.push('equipment');
+    }},
+    ethics:{cost:25000,fn:()=>{
+      S.brand=Math.min(100,S.brand+4);
+      S.satisfaction=Math.min(100,S.satisfaction+5);
+      S.morale=Math.min(100,S.morale+6);
+      recalc();
+      notify('🌱 CSR initiative launched! Brand & morale boosted.');
+      S.decisionLog.push('csr');
+    }}
   };
   const a=actions[type];
   if(!a)return;
   if(type!=='franchise'&&S.cash<a.cost){notify('Insufficient funds!',true);return;}
-  if(type==='franchise'){a.fn();S.actionsThisWeek++;updateDisplay();updateAP();checkAchievements();return;}
+  if(type==='franchise'){a.fn();S.actionsThisWeek++;updateDisplay();updateAP();updateStretchWarnings();checkAchievements();return;}
   S.cash-=a.cost;
   a.fn();
   S.actionsThisWeek++;
   updateDisplay();
   updateAP();
+  updateStretchWarnings();
   checkAchievements();
+
+  // Auto-advance once both actions are spent
+  if(S.actionsThisWeek>=S.maxActionsPerWeek && !S.pendingDecision){
+    autoAdvanceWeek();
+  }
 }
 
-/* ── REVENUE CALC ── */
+/* Trade-off notification panel */
+function showTradeoffNote(text){
+  S.monthConsequences.push(text);
+  let box=document.getElementById('tradeoff-note');
+  if(!box)return;
+  box.textContent=text;
+  box.style.display='block';
+  clearTimeout(box._timer);
+  box._timer=setTimeout(()=>{box.style.display='none';},8000);
+}
+
+/* Update stretch / staff warnings on action panel */
+function updateStretchWarnings(){
+  const stretchBtn=document.getElementById('btn-expand');
+  const staffAlert=document.getElementById('staff-alert');
+  if(stretchBtn){
+    if(S.expandsThisMonth>=2){
+      stretchBtn.title='⚠️ Overexpansion risk — quality may suffer if you expand further this month';
+      stretchBtn.style.borderColor='#f59e0b';
+    } else {
+      stretchBtn.title='';
+      stretchBtn.style.borderColor='';
+    }
+  }
+  if(staffAlert){
+    staffAlert.style.display=S.weeksSinceTraining>=4?'block':'none';
+  }
+}
+
+/* -- REVENUE CALC -- */
 function recalc(){
   const base=S.revBase*S.restaurants;
   const mult=S.revMult;
@@ -664,12 +825,12 @@ function recalc(){
   const eBonus=S.efficiency/100;
   const mBonus=1+(S.morale/100)*0.15;
   S.weeklyRevenue=Math.floor(base*mult*qBonus*bBonus*eBonus*mBonus*S.seasonBonus)+S.franchiseRoyalties;
-  S.weeklyProfit=Math.floor(S.weeklyRevenue*0.70);
+  S.weeklyProfit=Math.floor(S.weeklyRevenue*0.70*S.profitMod);
   S.satisfaction=Math.min(100,50+S.quality*0.35+S.brand*0.15+S.morale*0.1);
   document.getElementById('expand-roi').textContent=`~${fc(Math.floor(S.weeklyRevenue/S.restaurants))}/week per store`;
 }
 
-/* ── DISPLAY ── */
+/* -- DISPLAY -- */
 function updateDisplay(){
   function setKPI(id,chgId,val,fmt,key){
     const el=document.getElementById(id);
@@ -700,7 +861,7 @@ function updateDisplay(){
   document.getElementById('m-royalty').textContent=fc(S.franchiseRoyalties)+'/wk';
   const seasonPct=((S.seasonBonus-1)*100).toFixed(0);
   document.getElementById('season-pill').textContent=`${SEASON_EMOJI[S.season]} ${S.season} ${S.seasonBonus>=1?'+':''}${seasonPct}%`;
-  document.getElementById('week-pill').textContent=`Week ${S.turn}`;
+  document.getElementById('month-pill').textContent=getMonthName(S.turn);
   const rp=(S.restaurants/50)*50+(S.weeklyRevenue/1000000)*50;
   document.getElementById('goal-fill').style.width=Math.min(100,rp)+'%';
   document.getElementById('goal-txt').textContent=`${S.restaurants}/50 restaurants · ${fc(S.weeklyRevenue)}/£1M revenue`;
@@ -718,7 +879,7 @@ function updateButtons(){
   document.getElementById('next-btn').disabled=S.pendingDecision||S.paused;
 }
 
-/* ── ACTION POINTS UI ── */
+/* -- ACTION POINTS UI -- */
 function updateAP(){
   const rem=S.maxActionsPerWeek-S.actionsThisWeek;
   document.getElementById('ap-dot-1').className='ap-dot'+(S.actionsThisWeek>=1?' used':'');
@@ -730,158 +891,279 @@ function updateAP(){
   else{nb.classList.remove('ready');nb.classList.add('waiting');}
 }
 
-/* ── TURN ── */
+/* -- TURN -- */
 function advanceTurn(){
   if(S.pendingDecision||S.paused)return;
   S.prev={cash:S.cash,rev:S.weeklyRevenue,rest:S.restaurants,brand:S.brand,mkt:S.marketShare};
   S.turn++;
   S.actionsThisWeek=0;
+
+  // -- Track staff neglect ----------------------------------------------
+  // weeksSinceTraining increments unless training was done this week
+  // (training action resets it to 0 in doAction)
+  S.weeksSinceTraining++;
+
+  // -- Reset monthly expand counter every 4 weeks ----------------------─
+  S.expandHistory.push(S.expandsThisMonth);
+  if(S.expandHistory.length>4)S.expandHistory.shift();
+  S.expandsThisMonth=0;
+
+  // -- Brand promise gap: satisfaction drift --------------------------─
+  // If brand consistently outpaces quality, customers feel misled each week
+  if(S.brand > S.quality+20){
+    S.satisfaction=Math.max(10,S.satisfaction-2);
+  } else if(S.brand<=S.quality && S.satisfaction<95){
+    // Quality-led brand: satisfaction slowly recovers
+    S.satisfaction=Math.min(100,S.satisfaction+1);
+  }
+
+  // -- Morale decay from staff neglect --------------------------------─
+  // Normal drift ±2; but if neglected for 5+ weeks, decay accelerates
+  if(S.weeksSinceTraining>=5){
+    S.morale=Math.max(10,S.morale-(3+Math.random()*3));
+  } else {
+    S.morale=Math.max(10,Math.min(100,S.morale+(Math.random()*4-2)));
+  }
+
   recalc();
   S.cash+=S.weeklyProfit;
-  // Morale drift
-  S.morale=Math.max(20,Math.min(100,S.morale+(Math.random()*4-2)));
-  // Season change every 12 weeks
-  if(S.turn%12===0){
-    const idx=Math.floor(S.turn/12)%4;
-    S.season=SEASONS[idx];
+
+  // -- Season changes every 3 months (Spring=Jan-Mar, Summer=Apr-Jun, Autumn=Jul-Sep, Winter=Oct-Dec)
+  const seasonIdx=Math.floor(((S.turn-1)%12)/3);
+  const newSeason=SEASONS[seasonIdx];
+  if(newSeason!==S.season){
+    S.season=newSeason;
     S.seasonBonus=SEASON_BONUS[S.season];
     recalc();
     notify(`${SEASON_EMOJI[S.season]} Season changed to ${S.season}!`);
   }
-  // Random event ~25%
-  if(Math.random()<0.25)triggerEvent();
+
+  // -- DECISION-DRIVEN EVENTS --------------------------------------------
+  // Wages dispute: guaranteed if staff neglected for 5+ consecutive weeks
+  if(S.weeksSinceTraining>=5 && !S.wagesDisputeFired && !S.pendingDecision){
+    S.wagesDisputeFired=true;
+    triggerSpecificEvent('wages');
+  }
+  // Food safety: more likely if quality is critically low
+  else if(S.quality<50 && Math.random()<0.40 && !S.pendingDecision){
+    triggerSpecificEvent('food-safety');
+  }
+  // Normal random event ~25% (skip if driven event already fired)
+  else if(Math.random()<0.25 && !S.pendingDecision){
+    triggerEvent();
+  }
+
   updateDisplay();
   updateAP();
+  updateStretchWarnings();
   checkAchievements();
   checkVictory();
+  if(!S.gameOver){
+    setTimeout(showMonthlySummary, 400);
+  }
 }
 
-/* ── EVENTS ── */
+/* -- EVENTS -- */
 const EVENTS=[
+
+  /* --─ EXTERNAL SHOCKS --─ */
   {
-    tag:'Supply Chain',tagColor:'var(--red)',
-    title:'Supply Chain Disruption',
-    desc:'Your main beef supplier has experienced a warehouse fire. Costs are up 25% and there may be shortages. How do you respond?',
-    spec:'Supply chain management · AQA 3.5 · Edexcel Theme 2',
+    tag:'External Shock',tagColor:'var(--red)',
+    narrative:'The government has announced a 9.8% rise in the National Living Wage, effective next month.',
+    body:'Every restaurant you own employs front-line staff on or near minimum wage. Your competitors face the same cost — but firms with higher productivity and better staff retention will absorb it more easily. How do you respond?',
+    spec:'Labour costs · Employment law · AQA 3.6 · Edexcel Theme 3',
     choices:[
-      {text:'Find alternative supplier (£20k, slight quality dip)',type:'pos',fn:()=>{S.cash-=20000;S.quality=Math.max(0,S.quality-2);recalc();notify('🔄 New supplier secured. Quality slightly lower temporarily.');S.decisionLog.push('supply-chain');}},
-      {text:'Absorb the cost increase (margin compression)',type:'neg',fn:()=>{S.weeklyProfit=Math.floor(S.weeklyProfit*0.90);notify('💸 Margins compressed. Quality maintained.');S.decisionLog.push('supply-chain');}},
-      {text:'Pass cost to customers (risk loyalty)',type:'neu',fn:()=>{S.revMult*=0.97;S.satisfaction=Math.max(0,S.satisfaction-8);recalc();notify('📈 Prices raised. Customer satisfaction hit.');S.decisionLog.push('supply-chain');}}
-    ]
-  },
-  {
-    tag:'Staff',tagColor:'var(--amber)',
-    title:'Staff Wages Dispute',
-    desc:'Your workforce is demanding a 15% pay rise following rising living costs. Refusing risks industrial action. What do you do?',
-    spec:'Workforce management · AQA 3.6 · OCR 2.4',
-    choices:[
-      {text:'Grant the full 15% rise (costs rise, morale up)',type:'pos',fn:()=>{S.weeklyProfit=Math.floor(S.weeklyProfit*0.88);S.morale=Math.min(100,S.morale+12);recalc();notify('✅ Pay rise granted. Morale up, costs up.');S.decisionLog.push('staffing');}},
-      {text:'Offer 7% compromise (partial improvement)',type:'neu',fn:()=>{S.weeklyProfit=Math.floor(S.weeklyProfit*0.94);S.morale=Math.min(100,S.morale+5);recalc();notify('🤝 Compromise agreed. Some morale improvement.');S.decisionLog.push('staffing');}},
-      {text:'Refuse (short-term savings, risk strike)',type:'neg',fn:()=>{if(Math.random()<0.4){S.morale=Math.max(10,S.morale-20);S.quality=Math.max(0,S.quality-8);recalc();notify('⚠️ Strike action! Quality and morale severely hit.');}else{notify('Dispute continues. Morale gradually falling.');}S.decisionLog.push('staffing');}}
-    ]
-  },
-  {
-    tag:'Ethics',tagColor:'var(--accent)',
-    title:'Ethical Sourcing Pressure',
-    desc:'A consumer group has highlighted poor working conditions in your supply chain. Switching to ethical suppliers costs more but could boost your brand.',
-    spec:'Business ethics · CSR · AQA 3.7 · Edexcel Theme 3',
-    choices:[
-      {text:'Switch to ethical suppliers (£35k, brand boost)',type:'pos',fn:()=>{S.cash-=35000;S.brand=Math.min(100,S.brand+8);S.satisfaction=Math.min(100,S.satisfaction+6);recalc();notify('🌱 Ethical sourcing adopted. Brand significantly boosted.');S.decisionLog.push('csr');}},
-      {text:'Issue a PR statement but keep current suppliers',type:'neu',fn:()=>{S.brand=Math.min(100,S.brand+2);notify('📣 PR statement issued. Minimal brand impact.');S.decisionLog.push('csr');}},
-      {text:'Ignore the story (risk of viral backlash)',type:'neg',fn:()=>{if(Math.random()<0.5){S.brand=Math.max(0,S.brand-12);S.satisfaction=Math.max(0,S.satisfaction-10);recalc();notify('🔥 Story went viral! Brand seriously damaged.');}else{notify('Story faded. No immediate impact.');}S.decisionLog.push('csr');}}
-    ]
-  },
-  {
-    tag:'Competition',tagColor:'var(--red)',
-    title:'Competitor Price War',
-    desc:'Your main rival has slashed prices by 20%. You\'re losing customers fast. How do you respond?',
-    spec:'Competitive strategy · Market structures · AQA 3.4 · Edexcel Theme 2',
-    choices:[
-      {text:'Match their prices (margin hit, retain customers)',type:'neg',fn:()=>{S.revMult*=0.92;recalc();notify('⚔️ Prices matched. Revenue down but market share held.');S.decisionLog.push('competition');}},
-      {text:'Invest in quality/brand to differentiate (£50k)',type:'pos',fn:()=>{if(S.cash>=50000){S.cash-=50000;S.brand=Math.min(100,S.brand+10);S.quality=Math.min(100,S.quality+5);recalc();notify('🎯 Quality differentiation strategy launched.');}else{notify('Insufficient funds!',true);}S.decisionLog.push('competition');}},
-      {text:'Focus on loyal customers with rewards scheme',type:'neu',fn:()=>{S.satisfaction=Math.min(100,S.satisfaction+7);S.revMult*=0.98;recalc();notify('💌 Loyalty scheme launched. Satisfaction improved.');S.decisionLog.push('competition');}}
-    ]
-  },
-  {
-    tag:'Opportunity',tagColor:'var(--accent)',
-    title:'Prime Location Available',
-    desc:'A flagship city-centre site has come up — 3x the foot traffic of a standard location but costs £90k to open.',
-    spec:'Location decisions · Economies of scale · AQA 3.5',
-    choices:[
-      {text:'Secure the prime site (£90k, premium revenue)',type:'pos',fn:()=>{if(S.cash>=90000){S.cash-=90000;S.restaurants++;S.revMult+=0.07;S.marketShare+=2;recalc();notify('🌟 Prime location secured! Premium revenue boost.');checkAchievements();}else{notify('Insufficient funds!',true);}S.decisionLog.push('expand');}},
-      {text:'Pass — keep cash for other investments',type:'neu',fn:()=>{notify('💰 Cash preserved for other strategic investments.');S.decisionLog.push('strategy');}}
-    ]
-  },
-  {
-    tag:'Technology',tagColor:'var(--blue)',
-    title:'Digital Ordering Investment',
-    desc:'A tech firm is offering an AI-powered ordering and delivery platform. It will cost £60k but could increase efficiency and reach.',
-    spec:'Technology in business · Operations · Edexcel Theme 3',
-    choices:[
-      {text:'Invest in the platform (£60k)',type:'pos',fn:()=>{if(S.cash>=60000){S.cash-=60000;S.efficiency=Math.min(150,S.efficiency+8);S.revMult+=0.04;recalc();notify('📱 Digital platform live! Efficiency and revenue up.');S.decisionLog.push('equipment');}else{notify('Insufficient funds!',true);}}},
-      {text:'Trial in 3 stores first (£15k)',type:'neu',fn:()=>{if(S.cash>=15000){S.cash-=15000;S.efficiency=Math.min(150,S.efficiency+2);recalc();notify('🔬 Pilot launched in 3 stores. Testing underway.');}else{notify('Insufficient funds!',true);}S.decisionLog.push('equipment');}},
-      {text:'Decline — focus on physical quality',type:'neu',fn:()=>{notify('🍔 Staying focused on in-store quality.');}}
+      {text:'Absorb the cost — protect morale and retention',impact:'Monthly profit down 8%. Staff morale up 5%.',type:'neu',fn:()=>{S.profitMod*=0.92;S.morale=Math.min(100,S.morale+5);recalc();S.decisionLog.push('staffing');}},
+      {text:'Raise menu prices by 5% to offset the rise',impact:'Revenue protected. Customer satisfaction down 6%.',type:'neg',fn:()=>{S.revMult*=1.05;S.satisfaction=Math.max(20,S.satisfaction-6);recalc();S.decisionLog.push('marketing');}},
+      {text:'Invest in automation to reduce headcount',impact:'Cost of 45k. Efficiency rises. Morale down 8%.',type:'neg',fn:()=>{if(S.cash>=45000){S.cash-=45000;S.efficiency=Math.min(150,S.efficiency+5);S.morale=Math.max(10,S.morale-8);recalc();}S.decisionLog.push('equipment');}}
     ]
   },
   {
     tag:'External Shock',tagColor:'var(--red)',
-    title:'Economic Recession',
-    desc:'GDP has fallen for two consecutive quarters. Consumer spending is down and your revenue has dropped. How do you manage through it?',
-    spec:'Macroeconomic influences · Business cycle · AQA 3.8 · Edexcel Theme 4',
+    narrative:'A drought in South America has pushed beef and chicken commodity prices up 22% in three weeks.',
+    body:'Your food costs account for roughly 30% of revenue. This shock will compress margins unless you act. Your supply contract expires next month, making the timing particularly uncomfortable.',
+    spec:'Supply chain · Commodity markets · AQA 3.5',
     choices:[
-      {text:'Cut costs — reduce staff hours temporarily',type:'neg',fn:()=>{S.morale=Math.max(10,S.morale-10);S.weeklyProfit=Math.floor(S.weeklyProfit*0.95);recalc();notify('✂️ Costs cut. Morale dips but survival secured.');S.decisionLog.push('staffing');}},
-      {text:'Invest counter-cyclically — increase marketing',type:'pos',fn:()=>{if(S.cash>=40000){S.cash-=40000;S.brand=Math.min(100,S.brand+6);recalc();notify('📈 Counter-cyclical investment. Brand grows during downturn.');}else{notify('Insufficient funds!',true);}S.decisionLog.push('marketing');}},
-      {text:'Hold steady — use cash reserves',type:'neu',fn:()=>{notify('💼 Holding position. Cash reserves being managed carefully.');}}
+      {text:'Lock in a forward contract at current prices (£30k)',impact:'Protects margins for 6 months. Costs 30k now.',type:'pos',fn:()=>{if(S.cash>=30000){S.cash-=30000;S.supplyDiversified=true;recalc();}notify('Forward contract secured — margins protected.');S.decisionLog.push('supply-chain');}},
+      {text:'Switch to a cheaper alternative supplier',impact:'Quality down 5%. Cost savings protect margins.',type:'neg',fn:()=>{S.quality=Math.max(20,S.quality-5);recalc();notify('Cheaper supplier signed. Quality slightly lower.');S.decisionLog.push('supply-chain');}},
+      {text:'Absorb the costs and review the menu next quarter',impact:'Profit down 12% this month. Buys time.',type:'neu',fn:()=>{S.profitMod*=0.88;recalc();notify('Absorbing the cost increase. Margins compressed.');S.decisionLog.push('supply-chain');}}
     ]
   },
   {
-    tag:'Food Safety',tagColor:'var(--red)',
-    title:'Food Safety Incident',
-    desc:'A hygiene issue at two restaurants has gone public. Customer trust is falling fast. You must act immediately.',
-    spec:'Reputation management · Stakeholder management · OCR 2.3',
+    tag:'Competition',tagColor:'var(--red)',
+    narrative:'BurgerBlitz — a well-funded rival chain — has just opened three sites within half a mile of your busiest locations.',
+    body:'Their prices are 10% lower and they are running a launch promotion. You are already seeing footfall drop. Your brand is stronger, but price-sensitive customers are switching. How do you compete?',
+    spec:'Competitive strategy · AQA 3.4',
     choices:[
-      {text:'Full transparency — close affected stores, refund customers (£30k)',type:'pos',fn:()=>{S.cash-=Math.min(30000,S.cash);S.brand=Math.max(0,S.brand-4);S.satisfaction=Math.min(100,S.satisfaction+5);recalc();notify('✅ Transparent response. Long-term trust maintained.');S.decisionLog.push('csr');}},
-      {text:'Quiet internal fix without public statement',type:'neg',fn:()=>{if(Math.random()<0.6){S.brand=Math.max(0,S.brand-15);S.satisfaction=Math.max(0,S.satisfaction-12);recalc();notify('🔥 Cover-up exposed! Serious reputational damage.');}else{notify('Issue quietly resolved. Risk narrowly avoided.');}S.decisionLog.push('csr');}}
+      {text:'Match their prices in affected sites',impact:'Revenue down 8% in those sites. Market share holds.',type:'neg',fn:()=>{S.revMult*=0.95;recalc();notify('Price match activated in affected sites.');S.decisionLog.push('competition');}},
+      {text:'Double down on quality — loyalty campaign for existing customers',impact:'20k cost. Satisfaction up 8%. Retains loyal segment.',type:'pos',fn:()=>{if(S.cash>=20000){S.cash-=20000;S.satisfaction=Math.min(100,S.satisfaction+8);S.brand=Math.min(100,S.brand+3);recalc();}S.decisionLog.push('marketing');}},
+      {text:'Open a new site near their flagship to signal strength',impact:'60k expansion. Sends a deterrence signal.',type:'neu',fn:()=>{if(S.cash>=60000){S.cash-=60000;S.restaurants++;S.marketShare+=1;recalc();notify('Deterrence site opened near BurgerBlitz flagship.');}S.decisionLog.push('expand');}}
     ]
   },
   {
-    tag:'Growth',tagColor:'var(--accent)',
-    title:'International Expansion Offer',
-    desc:'A European investment group wants to license your brand for overseas markets. Upfront: £0. Ongoing royalties: 4% of their revenue.',
-    spec:'Business growth · Franchising · International business · AQA 3.3',
+    tag:'Regulatory',tagColor:'var(--amber)',
+    narrative:'The Food Standards Agency has announced unannounced hygiene inspections across all fast-food chains this quarter.',
+    body:'Three of your older sites have flagged minor hygiene issues in internal audits. A failed inspection means temporary closure and national press coverage. How do you prepare?',
+    spec:'Regulation · Risk management · AQA 3.7',
     choices:[
-      {text:'Accept the deal — overseas royalties from Week 2',type:'pos',fn:()=>{S.franchiseRoyalties+=5000;S.brand=Math.min(100,S.brand+5);recalc();notify('🌍 International licence signed! Royalties starting next week.');S.decisionLog.push('franchise');}},
-      {text:'Negotiate better terms first (delay)',type:'neu',fn:()=>{notify('⏳ Negotiations underway. Deal may come back next quarter.');S.decisionLog.push('strategy');}},
-      {text:'Decline — focus on domestic growth',type:'neg',fn:()=>{notify('🏠 Staying domestic. Focusing on UK market share.');}}
+      {text:'Emergency deep clean and staff refresher at all sites (£25k)',impact:'25k cost. Passes inspection. Quality up 3%.',type:'pos',fn:()=>{if(S.cash>=25000){S.cash-=25000;S.quality=Math.min(100,S.quality+3);recalc();notify('All sites inspection-ready.');}S.decisionLog.push('training');}},
+      {text:'Focus remediation on the three flagged sites only (£10k)',impact:'10k cost. Likely passes, some residual risk.',type:'neu',fn:()=>{if(S.cash>=10000){S.cash-=10000;S.quality=Math.min(100,S.quality+1);recalc();}S.decisionLog.push('training');}},
+      {text:'Do nothing — inspections are random and may not reach you',impact:'Free now. If failed: brand down 20%, closure risk.',type:'neg',fn:()=>{if(S.quality<65&&Math.random()<0.55){S.brand=Math.max(0,S.brand-20);S.satisfaction=Math.max(20,S.satisfaction-15);recalc();notify('Failed inspection! National press coverage. Brand severely hit.');}else{notify('Inspection passed — this time.');}S.decisionLog.push('csr');}}
     ]
   },
   {
-    tag:'Menu',tagColor:'var(--amber)',
-    title:'New Product Development',
-    desc:'Your R&D team has created a premium plant-based burger. Launch cost is £45k but it could attract new customers and boost brand.',
-    spec:'Product development · Ansoff Matrix · Marketing mix · AQA 3.4',
+    tag:'Viral Moment',tagColor:'var(--blue)',
+    narrative:'A TikTok video showing packaging waste from your chain in a nature reserve has reached 4 million views overnight.',
+    body:'#FranchiseEmpireShame is trending. Your PR team says you have 48 hours to respond before the story solidifies. Do nothing and the brand takes a sustained hit. Respond well and you could come out stronger.',
+    spec:'Reputation management · CSR · AQA 3.7',
     choices:[
-      {text:'Full launch across all restaurants (£45k)',type:'pos',fn:()=>{if(S.cash>=45000){S.cash-=45000;S.revMult+=0.04;S.brand=Math.min(100,S.brand+5);S.quality=Math.min(100,S.quality+3);recalc();notify('🌿 Plant-based burger launched! Revenue and brand up.');S.decisionLog.push('marketing');}else{notify('Insufficient funds!',true);}S.decisionLog.push('marketing');}},
-      {text:'Pilot in 5 stores first (£12k)',type:'neu',fn:()=>{if(S.cash>=12000){S.cash-=12000;S.brand=Math.min(100,S.brand+2);recalc();notify('🔬 Pilot launch in 5 stores. Testing market response.');}else{notify('Insufficient funds!',true);}S.decisionLog.push('marketing');}},
-      {text:'Stick with current menu',type:'neu',fn:()=>{notify('📋 Menu unchanged. Investment preserved.');}}
+      {text:'Full transparency: public apology, packaging pledge, charity donation (£40k)',impact:'40k cost. Brand up 6%. Turns negative into positive PR.',type:'pos',fn:()=>{if(S.cash>=40000){S.cash-=40000;S.brand=Math.min(100,S.brand+6);S.satisfaction=Math.min(100,S.satisfaction+4);recalc();notify('Transparency strategy praised. Brand recovered and strengthened.');}S.decisionLog.push('csr');}},
+      {text:'Corporate non-apology: "We are investigating"',impact:'Free. Brand down 4%. Story stays alive.',type:'neg',fn:()=>{S.brand=Math.max(0,S.brand-4);recalc();notify('Bland statement issued. Story continues.');S.decisionLog.push('csr');}},
+      {text:'Counter-narrative: sponsor a beach clean-up today (£15k)',impact:'15k cost. Narrative shifts. Brand neutral.',type:'neu',fn:()=>{if(S.cash>=15000){S.cash-=15000;S.brand=Math.min(100,S.brand+2);recalc();notify('Beach clean-up posted. Counter-narrative gaining traction.');}S.decisionLog.push('csr');}}
+    ]
+  },
+
+  /* --─ OPPORTUNITY KNOCKS --─ */
+  {
+    tag:'Investment Opportunity',tagColor:'var(--accent)',
+    narrative:'Apex Capital, a private equity firm, has approached with an offer to buy a 25% stake in Franchise Empire for £800,000.',
+    body:'The valuation implies your business is worth 3.2 million. The cash injection would fund significant expansion. But PE firms typically expect exit in 4-5 years and push for aggressive growth targets. You keep 75% and control, but decisions will face scrutiny.',
+    spec:'Sources of finance · Equity vs debt · Stakeholder objectives · AQA 3.3',
+    choices:[
+      {text:'Accept the deal — take the £800k',impact:'Cash up 800k. New stakeholder. Growth targets set.',type:'pos',fn:()=>{S.cash+=800000;S.brand=Math.min(100,S.brand+4);notify('PE deal closed. 800,000 received. Growth targets agreed.');S.decisionLog.push('franchise');}},
+      {text:'Negotiate — accept only 15% stake for £400k',impact:'Cash up 400k. Less dilution. Lower pressure.',type:'neu',fn:()=>{S.cash+=400000;S.brand=Math.min(100,S.brand+2);notify('Negotiated 15% stake. 400,000 secured.');S.decisionLog.push('strategy');}},
+      {text:'Decline — retain full independence',impact:'No cash. Full control maintained. Slower growth.',type:'neg',fn:()=>{notify('Independence maintained. Growing organically.');S.decisionLog.push('strategy');}}
+    ]
+  },
+  {
+    tag:'Partnership',tagColor:'var(--accent)',
+    narrative:'England footballer Marcus Stride wants to co-brand a limited-edition "Stride Burger" menu in exchange for equity.',
+    body:'He has 8 million Instagram followers. The association could be transformative for brand awareness — or a liability if he attracts negative press. He wants 3% equity plus 30k in production costs.',
+    spec:'Marketing mix · Celebrity endorsement · Brand equity · AQA 3.4',
+    choices:[
+      {text:'Accept the full deal — 3% equity plus £30k production',impact:'Brand up 14%. Revenue boost for 3 months.',type:'pos',fn:()=>{if(S.cash>=30000){S.cash-=30000;S.brand=Math.min(100,S.brand+14);S.revMult+=0.06;recalc();notify('Stride Burger launches! Brand surges.');}S.decisionLog.push('marketing');}},
+      {text:'Counter-offer: flat fee of £80k, no equity',impact:'80k cost. Brand up 8%. You keep full ownership.',type:'neu',fn:()=>{if(S.cash>=80000){S.cash-=80000;S.brand=Math.min(100,S.brand+8);S.revMult+=0.03;recalc();notify('Flat-fee deal agreed. Stride Burger launching.');}S.decisionLog.push('marketing');}},
+      {text:'Pass — celebrity endorsements are unpredictable',impact:'No cost. Brand unchanged. Rival may take the deal.',type:'neg',fn:()=>{notify('Passed on the endorsement.');S.decisionLog.push('strategy');}}
+    ]
+  },
+  {
+    tag:'Acquisition',tagColor:'var(--accent)',
+    narrative:'FastBites, a rival chain with 8 sites, has entered administration. Their sites are available for immediate acquisition.',
+    body:'Administrators are accepting offers. The sites are in good locations but the brand is tarnished — you would rebrand them. Total cost: 280,000 for all 8. That is less than 35k per site versus your usual 60k to open new. Cash is the constraint.',
+    spec:'External growth · Acquisition strategy · Integration risk · AQA 3.3',
+    choices:[
+      {text:'Buy all 8 sites (£280k)',impact:'8 restaurants added. Cash down 280k. Integration risk high.',type:'pos',fn:()=>{if(S.cash>=280000){S.cash-=280000;S.restaurants+=8;S.quality=Math.max(20,S.quality-8);S.marketShare+=4;S.expandsThisMonth+=4;recalc();notify('FastBites acquisition complete. 8 sites rebranding now.');showTradeoffNote('Integrating 8 sites simultaneously will stretch quality control. Expect a quality dip for 2-3 months.');}else{notify('Insufficient funds for full acquisition.',true);}S.decisionLog.push('expand');}},
+      {text:'Buy the best 4 sites (£140k)',impact:'4 restaurants added. Manageable integration.',type:'neu',fn:()=>{if(S.cash>=140000){S.cash-=140000;S.restaurants+=4;S.quality=Math.max(20,S.quality-3);S.marketShare+=2;S.expandsThisMonth+=2;recalc();notify('4 FastBites sites acquired and rebranding.');}else{notify('Insufficient funds.',true);}S.decisionLog.push('expand');}},
+      {text:'Pass — integration risk outweighs the bargain',impact:'No cost. No risk. A rival may take the sites.',type:'neg',fn:()=>{notify('Passed on FastBites acquisition.');S.decisionLog.push('strategy');}}
+    ]
+  },
+  {
+    tag:'Property Deal',tagColor:'var(--blue)',
+    narrative:'A hospitality REIT has offered to buy your owned properties and lease them back over 25 years.',
+    body:'You own the freehold on 6 of your sites. The REIT offers 1.2 million, then charges 8,000 per month rent per site. This frees capital but creates a long-term rental obligation — a classic corporate finance trade-off used by McDonald itself — the original sale-and-leaseback company.',
+    spec:'Sale-and-leaseback · Capital structure · AQA 3.3',
+    choices:[
+      {text:'Accept — take the £1.2m capital injection',impact:'Cash up 1.2m. Monthly costs rise. Long-term obligation.',type:'pos',fn:()=>{S.cash+=1200000;S.profitMod*=0.88;recalc();notify('Sale-and-leaseback complete. 1.2M received. Rental obligations begin.');S.decisionLog.push('strategy');}},
+      {text:'Partial deal — sell 3 properties for £600k',impact:'Cash up 600k. Monthly costs rise slightly.',type:'neu',fn:()=>{S.cash+=600000;S.profitMod*=0.94;recalc();notify('Partial sale-and-leaseback. 600k received.');S.decisionLog.push('strategy');}},
+      {text:'Decline — retain property ownership as a long-term asset',impact:'No immediate cash. Properties stay on balance sheet.',type:'neg',fn:()=>{notify('Property portfolio retained as long-term asset.');S.decisionLog.push('strategy');}}
+    ]
+  },
+
+  /* --─ CONSEQUENCE EVENTS --─ */
+  {
+    tag:'Customer Feedback',tagColor:'var(--amber)',
+    narrative:'"Standards have slipped since they started opening everywhere." — top TripAdvisor review this month.',
+    body:'You now have over 200 reviews mentioning inconsistency between sites. Quality in your original restaurants is fine — but newer openings have not been trained to the same standard. This is the operational challenge of scale.',
+    spec:'Quality management · Diseconomies of scale · AQA 3.5',
+    choices:[
+      {text:'Company-wide quality audit and retraining (£35k)',impact:'35k cost. Quality up 6%. Reviews recover.',type:'pos',fn:()=>{if(S.cash>=35000){S.cash-=35000;S.quality=Math.min(100,S.quality+6);S.weeksSinceTraining=-1;recalc();notify('Company-wide retraining complete. Quality recovering.');}S.decisionLog.push('training');}},
+      {text:'Personally respond to reviews and offer vouchers (£10k)',impact:'10k cost. Satisfaction up 4%. Addresses perception.',type:'neu',fn:()=>{if(S.cash>=10000){S.cash-=10000;S.satisfaction=Math.min(100,S.satisfaction+4);recalc();}notify('Personal responses and vouchers issued.');S.decisionLog.push('marketing');}},
+      {text:'Dismiss the reviews — outliers always complain',impact:'Free. Quality continues to drift. Brand risk grows.',type:'neg',fn:()=>{S.quality=Math.max(20,S.quality-3);recalc();notify('Quality drift continues. Further reviews expected.');S.decisionLog.push('csr');}}
+    ]
+  },
+  {
+    tag:'Supply Chain',tagColor:'var(--red)',
+    narrative:'Your main beef supplier warehouse has burned down. They cannot fulfil orders for at least 6 weeks.',
+    body:'You have no alternative supplier currently contracted. Every site is affected. Competitors who diversified their supply base are already sourcing from backup suppliers. The decision you make now will determine how long your sites are impaired.',
+    spec:'Supply chain management · Risk · AQA 3.5',
+    choices:[
+      {text:'Emergency contract with alternative supplier (£20k premium)',impact:'20k cost. Quality down 3%. Sites operational within a week.',type:'pos',fn:()=>{if(S.cash>=20000){S.cash-=20000;S.quality=Math.max(20,S.quality-3);recalc();notify('Emergency supplier secured. Sites operational.');}S.decisionLog.push('supply-chain');}},
+      {text:'Temporarily switch to a plant-based menu (lower cost)',impact:'Free. Revenue down 8%. Differentiation opportunity.',type:'neu',fn:()=>{S.revMult*=0.94;S.brand=Math.min(100,S.brand+3);recalc();notify('Plant-based temporary menu launched.');S.decisionLog.push('supply-chain');}},
+      {text:'Close affected sites temporarily — protect quality',impact:'Revenue down 25% this month. Brand integrity held.',type:'neg',fn:()=>{S.revMult*=0.78;recalc();notify('Affected sites temporarily closed.');S.decisionLog.push('supply-chain');}}
+    ]
+  }
+,
+
+  /* -- GUARANTEED CONSEQUENCE EVENTS (triggered by decisions) -- */
+  {
+    tag:'Staff Crisis',tagColor:'#f97316',
+    narrative:'Your workforce has had enough. Morale has been falling for months and staff are demanding a 15% pay rise or they walk.',
+    body:'This was foreseeable. No investment in training, falling morale, and growing resentment created the conditions for this dispute. The regional manager warns that industrial action before the next busy period would be catastrophic.',
+    spec:'Industrial relations · Herzberg · Trade unions · AQA 3.6',
+    choices:[
+      {text:'Grant the full 15% rise immediately',impact:'Profit down 12%. Morale up 18%. Dispute resolved.',type:'pos',fn:()=>{S.profitMod*=0.88;S.morale=Math.min(100,S.morale+18);S.weeksSinceTraining=-1;recalc();notify('Full pay rise granted. Dispute resolved. Morale surges.');S.decisionLog.push('staffing');}},
+      {text:'Offer 8% plus a training and development programme',impact:'Profit down 7%. Morale up 10%.',type:'neu',fn:()=>{S.profitMod*=0.93;S.morale=Math.min(100,S.morale+10);S.weeksSinceTraining=-1;recalc();notify('8% offer plus training programme accepted.');S.decisionLog.push('staffing');}},
+      {text:'Refuse — threaten to replace striking staff with agency workers',impact:'High risk. If strike: quality down 15%, brand hit.',type:'neg',fn:()=>{if(Math.random()<0.55){S.morale=Math.max(10,S.morale-20);S.quality=Math.max(20,S.quality-15);S.brand=Math.max(0,S.brand-8);recalc();notify('Strike action called! Quality and brand severely hit.');}else{notify('Dispute simmering. No strike yet. Tension remains.');}S.decisionLog.push('staffing');}}
+    ]
+  },
+  {
+    tag:'Food Safety',tagColor:'#ef4444',
+    narrative:'An environmental health officer is at your door. A customer complaint triggered an emergency inspection of three sites.',
+    body:'Quality has been slipping and it has caught up with you. The inspector has flagged hygiene issues that require immediate remediation. Failing to act risks a formal closure notice — and the press will be watching.',
+    spec:'Regulation · Quality management · AQA 3.5 · AQA 3.7',
+    choices:[
+      {text:'Full emergency remediation — close for 48 hours and deep clean (£30k)',impact:'30k cost. Passes inspection. Quality up 5%.',type:'pos',fn:()=>{if(S.cash>=30000){S.cash-=30000;S.quality=Math.min(100,S.quality+5);S.weeksSinceTraining=-1;recalc();notify('Emergency remediation complete. Sites pass inspection.');}S.decisionLog.push('training');}},
+      {text:'Rapid surface clean and charm offensive with inspector (£8k)',impact:'8k cost. 60% chance of passing.',type:'neu',fn:()=>{if(S.cash>=8000){S.cash-=8000;if(Math.random()<0.6){notify('Passed — inspector satisfied with remediation.');}else{S.brand=Math.max(0,S.brand-12);S.satisfaction=Math.max(20,S.satisfaction-10);recalc();notify('Failed inspection. Closure notice issued. National press coverage.');}}S.decisionLog.push('training');}},
+      {text:'Dispute the findings — refuse entry and call your legal team',impact:'Free. Legal fees. Brand damage regardless.',type:'neg',fn:()=>{S.brand=Math.max(0,S.brand-8);S.satisfaction=Math.max(20,S.satisfaction-8);recalc();notify('Legal dispute ongoing. Brand damage from refusal to cooperate.');S.decisionLog.push('csr');}}
     ]
   }
 ];
 
+function triggerSpecificEvent(key){
+  const map={
+    'wages':       EVENTS.find(e=>e.tag==='Staff Crisis'),
+    'food-safety': EVENTS.find(e=>e.tag==='Food Safety'),
+    'supply':      EVENTS.find(e=>e.tag==='Supply Chain'),
+  };
+  const ev=map[key];
+  if(!ev)return;
+  // For wages: personalise the intro to signal it was caused by neglect
+  if(key==='wages'){
+    ev._injectedDesc = 'Your workforce has had enough. There has been no investment in training for weeks, morale has been falling, and staff are now demanding a 15% pay rise. Refusing risks industrial action.';
+  }
+  // For supply chain: if player invested in equipment/resilience, give them a better option
+  if(key==='supply' && S.supplyDiversified){
+    ev._injectedDesc = 'Your main supplier has experienced a warehouse fire. Because you invested in operational resilience earlier, you already have backup supplier relationships — but there are still costs to manage.';
+  }
+  renderEvent(ev);
+}
+
 function triggerEvent(){
   const ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];
-  const body=document.getElementById('events-body');
+  renderEvent(ev);
+}
+
+function renderEvent(ev){
+  const evBody=document.getElementById('events-body');
   S.pendingDecision=true;
   updateButtons();
-  body.innerHTML=`
-    <div class="event-card">
-      <div class="ev-tag" style="color:${ev.tagColor}">${ev.tag.toUpperCase()}</div>
-      <div class="ev-title">${ev.title}</div>
-      <div class="ev-desc">${ev.desc}</div>
-      <div class="ev-spec">📚 Spec link: ${ev.spec}</div>
-      <div class="ev-choices">${ev.choices.map((c,i)=>`<button class="choice-btn ${c.type==='neg'?'neg':c.type==='neu'?'neu':''}" onclick="resolveEvent(${i})">${c.text}</button>`).join('')}</div>
-    </div>`;
-  body._currentEvent=ev;
+  const injected=ev._injectedDesc||null;
+  delete ev._injectedDesc;
+  const narrativeLine = ev.narrative || ev.title || '';
+  const bodyText = injected || ev.body || ev.desc || '';
+  const choicesHTML = ev.choices.map(function(c,i){
+    const impactSpan = c.impact ? '<span class="choice-impact">\u2192 '+c.impact+'</span>' : '';
+    const cls = c.type==='neg'?'neg':c.type==='neu'?'neu':'';
+    return '<button class="choice-btn '+cls+'" onclick="resolveEvent('+i+')">'+c.text+impactSpan+'</button>';
+  }).join('');
+  evBody.innerHTML='<div class="event-card">'
+    +'<div class="ev-tag" style="color:'+ev.tagColor+'">'+ev.tag.toUpperCase()+'</div>'
+    +'<div class="ev-narrative">'+narrativeLine+'</div>'
+    +'<div class="ev-body">'+bodyText+'</div>'
+    +'<div class="ev-spec">\ud83d\udcda '+ev.spec+'</div>'
+    +'<div class="ev-choices">'+choicesHTML+'</div>'
+    +'</div>';
+  evBody._currentEvent=ev;
 }
 
 function resolveEvent(idx){
@@ -890,10 +1172,11 @@ function resolveEvent(idx){
   ev.choices[idx].fn();
   S.pendingDecision=false;
   updateDisplay();
-  document.getElementById('events-body').innerHTML='<div class="ev-placeholder">Decision made. Advance to the next week to continue…</div>';
+  document.getElementById('events-body').innerHTML='<div class="ev-placeholder">Decision recorded. Continue playing\u2026</div>';
+  updateButtons();
 }
 
-/* ── ACHIEVEMENTS ── */
+/* -- ACHIEVEMENTS -- */
 const ACHIEVEMENTS=[
   {id:'first_open',title:'First Step',desc:'Opened your first new restaurant',check:()=>S.restaurants>=16},
   {id:'chain_25',title:'Chain Master',desc:'Reached 25 restaurants',check:()=>S.restaurants>=25},
@@ -920,9 +1203,10 @@ function showAchievement(title,desc){
   setTimeout(()=>p.classList.remove('show'),4000);
 }
 
-/* ── VICTORY / DEBRIEF ── */
+/* -- VICTORY / DEBRIEF -- */
 function checkVictory(){
   if(S.restaurants>=50&&S.weeklyRevenue>=1000000){
+    S.gameOver=true;
     setTimeout(()=>showDebrief(true),600);
   }
 }
@@ -949,7 +1233,7 @@ function showDebrief(victory=true){
     {val:fc(S.weeklyRevenue),lbl:'Weekly Revenue'},
     {val:fp(S.marketShare),lbl:'Market Share'},
     {val:fp(S.brand),lbl:'Brand Strength'},
-    {val:S.turn+' weeks',lbl:'Time Taken'},
+    {val:getMonthName(S.turn),lbl:'Final Month'},
     {val:S.franchises,lbl:'Franchises Sold'},
     {val:S.achievements.length,lbl:'Achievements'},
     {val:fp(S.quality),lbl:'Final Quality'}
@@ -995,7 +1279,124 @@ function calcScore(){
   return s;
 }
 
-/* ── PAUSE ── */
+
+/* -- MONTH NAMES -- */
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const START_YEAR=2024;
+function getMonthName(turn){
+  const idx=(turn-1)%12;
+  const year=START_YEAR+Math.floor((turn-1)/12);
+  return MONTH_FULL[idx]+' '+year;
+}
+
+/* -- MONTHLY CURRICULUM QUESTIONS -- */
+const MONTH_QUESTIONS=[
+  {q:"Revenue per store stayed flat despite opening new sites. What business concept does this illustrate?",opts:["Diseconomies of scale","Economies of scale","Market saturation","Sunk cost fallacy"],a:0,exp:"When expansion outpaces operational capacity, performance per unit falls — a form of diseconomies of scale. Managing quality across a growing chain is the key challenge in franchising."},
+  {q:"You increased marketing spend but customer satisfaction fell. What is the most likely explanation?",opts:["The market is saturated","Brand promise exceeded quality delivery","Competitors matched your campaign","Franchise royalties are too high"],a:1,exp:"When marketing raises customer expectations faster than operations deliver, a brand promise gap opens. Satisfaction falls because reality does not match the promise — a classic marketing vs operations tension."},
+  {q:"Staff morale fell despite no change in wages. What HR concept best explains this?",opts:["Herzberg: hygiene factors prevent dissatisfaction but do not create motivation","Taylor: piece-rate pay needed","Maslow: physiological needs unmet","McGregor: Theory X management needed"],a:0,exp:"Herzberg argued hygiene factors (pay, conditions) prevent dissatisfaction but positive morale requires motivators — recognition, development, meaningful work. Neglecting training removes a key motivator."},
+  {q:"You sold a franchise rather than opening a company-owned site. What is the main financial advantage?",opts:["Higher long-run profits","Capital-light growth — franchisee funds the site","Full quality control retained","Higher brand awareness immediately"],a:1,exp:"Franchising allows expansion without the capital cost of opening and running sites directly. The franchisee funds their own operation — the franchisor earns royalties without taking on the financial risk."},
+  {q:"A recession reduced your revenue. Which response best reflects counter-cyclical strategy?",opts:["Cut all marketing spend immediately","Raise prices to protect margins","Increase marketing to build brand while rivals retreat","Close underperforming sites"],a:2,exp:"Counter-cyclical investment means spending when competitors cut back. Firms that maintain or increase marketing during downturns often emerge with stronger brand positions — Keynes applied to business strategy."},
+  {q:"Your market share rose but profit margin fell. What is the most likely cause?",opts:["Prices were raised too aggressively","Revenue growth was outpaced by rising costs","Too many staff were cut","Brand equity fell"],a:1,exp:"Revenue growth does not guarantee profit growth. If expanding operations increases costs faster than revenue, margins compress. This is the classic tension between growth and profitability."},
+  {q:"A competitor cut prices by 20%. You chose to invest in quality instead. What strategy is this?",opts:["Cost leadership","Market penetration","Differentiation","Horizontal integration"],a:2,exp:"Porter differentiation strategy means competing on quality, brand, or experience rather than price. Investing in quality when a rival cuts prices targets a different segment and signals premium positioning."},
+  {q:"You opened a new site in a prime city-centre location at higher cost. What does this illustrate?",opts:["Economies of scope","Location as a source of competitive advantage","Diseconomies of scale","Backward vertical integration"],a:1,exp:"Location decisions are a key part of operations management. A prime location commands higher footfall and can justify premium pricing. The ROI calculation — higher cost vs higher revenue — is the central trade-off."},
+  {q:"Your franchise royalty income grew without you opening new sites. What type of income is this?",opts:["Capital income","Earned income from direct labour","Passive income from contractual rights","Speculative income"],a:2,exp:"Franchise royalties are passive contractual income — they flow from an agreement rather than from your own labour. This is a key advantage of the franchise model: income scales without proportional effort."},
+  {q:"CSR investment boosted brand and morale but reduced short-run profit. How do you evaluate this?",opts:["Always wrong — profit is the only objective","Depends on whether long-run benefit exceeds short-run cost","CSR never affects profit","Only matters if you have shareholders"],a:1,exp:"Business decisions should be evaluated against long-run as well as short-run outcomes. CSR can build brand equity, attract and retain staff, and reduce regulatory risk — all of which have financial value."},
+  {q:"Your business absorbed a supply chain disruption better due to prior investment in resilience. What does this illustrate?",opts:["Vertical integration","Supply chain resilience","Economies of scale","Just-in-time production"],a:1,exp:"Supply chain resilience is the ability to absorb and recover from disruptions. Firms investing in supplier diversification are better protected against shocks — at a higher cost in normal times."},
+  {q:"Revenue and profit both grew strongly. What does a high ROI figure tell you about your strategy?",opts:["You are spending too little on investment","Your investment is generating efficient returns","Your market share is too high","You should reduce prices"],a:1,exp:"ROI = (profit divided by cost of investment) times 100. A high ROI indicates each pound of investment is generating strong returns — more useful than raw profit figures for comparing strategic decisions."},
+];
+
+/* -- MONTHLY SUMMARY -- */
+function showMonthlySummary(){
+  if(S.gameOver)return;
+  const prev=S.prevMonthKPIs||{cash:400000,rev:0,restaurants:15,brand:45,quality:65,morale:75};
+  const deltas=[
+    {lbl:'Cash',prev:prev.cash,now:S.cash,fmt:v=>'£'+Math.round(v/1000)+'k'},
+    {lbl:'Monthly Revenue',prev:prev.rev,now:S.weeklyRevenue,fmt:v=>'£'+Math.round(v/1000)+'k'},
+    {lbl:'Restaurants',prev:prev.restaurants,now:S.restaurants,fmt:v=>String(v)},
+    {lbl:'Brand Strength',prev:prev.brand,now:S.brand,fmt:v=>Math.round(v)+'%'},
+    {lbl:'Quality Score',prev:prev.quality,now:S.quality,fmt:v=>Math.round(v)+'%'},
+    {lbl:'Staff Morale',prev:prev.morale,now:S.morale,fmt:v=>Math.round(v)+'%'},
+  ];
+  document.getElementById('mo-name').textContent=getMonthName(S.turn);
+  document.getElementById('mo-month-num').textContent='Month '+S.turn;
+  const grid=document.getElementById('mo-deltas');
+  grid.innerHTML=deltas.map(d=>{
+    const diff=d.now-d.prev;
+    const cls=diff>0.5?'pos':diff<-0.5?'neg':'neu';
+    const arrow=diff>0.5?'▲':diff<-0.5?'▼':'—';
+    return '<div class="kd-item"><div class="kd-label">'+d.lbl+'</div><div class="kd-val '+cls+'">'+arrow+' '+d.fmt(d.now)+'</div></div>';
+  }).join('');
+  const cbox=document.getElementById('mo-consequence');
+  if(S.monthConsequences&&S.monthConsequences.length>0){
+    cbox.style.display='block';
+    cbox.innerHTML='<div class="month-consequence-title">⚠️ Trade-off consequences this month:</div>'+
+      S.monthConsequences.map(c=>'<div style="margin-top:4px;">• '+c+'</div>').join('');
+    S.monthConsequences=[];
+  } else {
+    if(S.monthConsequences)S.monthConsequences=[];
+    cbox.style.display='none';
+  }
+  const qi=(S.turn-1)%MONTH_QUESTIONS.length;
+  const q=MONTH_QUESTIONS[qi];
+  document.getElementById('mo-q-text').textContent=q.q;
+  document.getElementById('mo-q-exp').style.display='none';
+  document.getElementById('mo-continue-btn').className='month-continue-btn';
+  S.monthQAnswered=false;
+  const optsEl=document.getElementById('mo-q-opts');
+  optsEl.innerHTML=q.opts.map((o,i)=>'<button class="month-q-opt" onclick="answerMonthQ('+i+')">'+o+'</button>').join('');
+  S.prevMonthKPIs={cash:S.cash,rev:S.weeklyRevenue,restaurants:S.restaurants,brand:S.brand,quality:S.quality,morale:S.morale,satisfaction:S.satisfaction};
+  document.getElementById('month-overlay').classList.add('show');
+  S.paused=true;
+  updateButtons();
+}
+
+function answerMonthQ(idx){
+  if(S.monthQAnswered)return;
+  S.monthQAnswered=true;
+  const qi=(S.turn-1)%MONTH_QUESTIONS.length;
+  const q=MONTH_QUESTIONS[qi];
+  document.querySelectorAll('.month-q-opt').forEach((o,i)=>{
+    o.disabled=true;
+    if(i===q.a)o.classList.add('correct');
+    else if(i===idx)o.classList.add('wrong');
+  });
+  const exp=document.getElementById('mo-q-exp');
+  exp.textContent=q.exp;
+  exp.style.display='block';
+  document.getElementById('mo-continue-btn').className='month-continue-btn unlocked';
+}
+
+function closeMonthlySummary(){
+  if(!S.monthQAnswered)return;
+  document.getElementById('month-overlay').classList.remove('show');
+  S.paused=false;
+  updateButtons();
+}
+
+/* -- AUTO-ADVANCE -- */
+function autoAdvanceWeek(){
+  if(S.pendingDecision||S.paused)return;
+  const nb=document.getElementById('next-btn');
+  let secs=3;
+  nb.textContent=`Next Month → (${secs})`;
+  nb.disabled=false;
+  nb.classList.add('ready');
+  const iv=setInterval(()=>{
+    secs--;
+    if(secs>0){
+      nb.textContent=`Next Month → (${secs})`;
+    } else {
+      clearInterval(iv);
+      nb.textContent='Next Month →';
+      if(!S.pendingDecision&&!S.paused) advanceTurn();
+    }
+  },1000);
+  // Allow manual skip — clicking the button cancels countdown and advances immediately
+  nb._countdownInterval=iv;
+}
+
+/* -- PAUSE -- */
 function togglePause(){
   S.paused=!S.paused;
   document.getElementById('pause-overlay').classList.toggle('show',S.paused);
@@ -1003,7 +1404,7 @@ function togglePause(){
   updateButtons();
 }
 
-/* ── NOTIFICATIONS ── */
+/* -- NOTIFICATIONS -- */
 function notify(msg,err=false){
   const n=document.createElement('div');
   n.className='notif'+(err?' err':'');
@@ -1012,19 +1413,22 @@ function notify(msg,err=false){
   setTimeout(()=>n.remove(),4000);
 }
 
-/* ── TUTORIAL / CLOSE ── */
+/* -- TUTORIAL / CLOSE -- */
 function closeTutorial(){
   document.getElementById('tutorial-overlay').classList.remove('show');
 }
 
-/* ── KEYBOARD ── */
+/* -- KEYBOARD -- */
 document.addEventListener('keydown',e=>{
   if(e.code==='Space'&&!S.pendingDecision&&!S.paused&&!document.getElementById('tutorial-overlay').classList.contains('show')){
-    e.preventDefault();advanceTurn();
+    e.preventDefault();
+    const nb=document.getElementById('next-btn');
+    if(nb._countdownInterval){clearInterval(nb._countdownInterval);nb._countdownInterval=null;nb.textContent='Next Month →';}
+    advanceTurn();
   }
 });
 
-/* ── START ── */
+/* -- START -- */
 initTerritories();
 createGrid();
 recalc();
@@ -1066,5 +1470,27 @@ updateAP();
     })();
 
 </script>
+
+<!-- MONTH SUMMARY -->
+<div class="month-overlay" id="month-overlay">
+  <div class="month-card">
+    <div class="month-hdr">
+      <div>
+        <div class="month-sub">Month in review</div>
+        <div class="month-name" id="mo-name">January 2024</div>
+      </div>
+      <div id="mo-month-num" style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:2px;"></div>
+    </div>
+    <div class="kpi-delta-grid" id="mo-deltas"></div>
+    <div class="month-consequence" id="mo-consequence" style="display:none;"></div>
+    <div class="month-q-wrap">
+      <div class="month-q-label">Quick check</div>
+      <div class="month-q-text" id="mo-q-text"></div>
+      <div class="month-q-opts" id="mo-q-opts"></div>
+      <div id="mo-q-exp" style="display:none;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;padding:8px 12px;background:var(--surface);border-radius:7px;border-left:3px solid var(--accent);"></div>
+    </div>
+    <button class="month-continue-btn" id="mo-continue-btn" onclick="closeMonthlySummary()">Answer the question to continue</button>
+  </div>
+</div>
 </body>
 </html>
