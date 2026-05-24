@@ -625,6 +625,8 @@ header{
 // To add an issue: copy one object below, fill in the details,
 // and add it to the array. That's all — it appears on the shelf automatically.
 // ═══════════════════════════════════════════════════════════════
+const BASE = 'https://iainbooth1987.github.io/Economics/foundations/';
+
 const ISSUES = [
   {
     id:         'surge-pricing',
@@ -634,16 +636,32 @@ const ISSUES = [
     totalPages: 11,
     badge:      'New',
     color:      '#f59e0b',
+    // ── Page filenames in your foundations/ folder on GitHub ──
+    pageFiles: [
+      '00_Cover.png',
+      '01_Page_1.png',
+      '02_Page_2.png',
+      '03_Page_3.png',
+      '04_Page_4.png',
+      '05_Page_5.png',
+      '06_Page_6.png',
+      '07_Page_7.png',
+      '08_Page_8.png',
+      '09_Page_9.png',
+      '10_Page_10.png',
+    ],
   },
-  // ── ADD NEW ISSUES BELOW ───────────────────────────────────
+  // ── ADD NEW ISSUES BELOW ─────────────────────────────────────────────
+  // Copy this block, update all fields, add pageFiles pointing to your PNGs
   // {
   //   id:         'invisible-hand',
   //   number:     'Issue 2',
   //   title:      'The Invisible Hand',
   //   subtitle:   'How Markets Work Without Anyone in Charge',
   //   totalPages: 10,
-  //   badge:      'Coming Soon',
+  //   badge:      'New',
   //   color:      '#3b82f6',
+  //   pageFiles: ['00_Cover.png','01_Page_1.png', /* etc */ ],
   // },
 ];
 
@@ -652,6 +670,26 @@ const issuePages = {};
 ISSUES.forEach(function(iss){ issuePages[iss.id] = []; });
 var currentIssueId = null;
 var currentSpread  = 0;
+
+// ── Auto-load pages from GitHub Pages URLs ────────────────────
+function autoLoadIssue(iss, callback) {
+  if (!iss.pageFiles || iss.pageFiles.length === 0) { callback(); return; }
+  var loaded = 0;
+  var total  = iss.pageFiles.length;
+  iss.pageFiles.forEach(function(filename) {
+    var url = BASE + filename;
+    var page = { dataUrl: url, title: '', body: '', name: filename };
+    // Check if already loaded
+    var existing = issuePages[iss.id].findIndex(function(p){ return p.name === filename; });
+    if (existing === -1) issuePages[iss.id].push(page);
+    if (++loaded === total) {
+      issuePages[iss.id].sort(function(a,b){
+        return a.name.localeCompare(b.name, undefined, {numeric:true});
+      });
+      callback();
+    }
+  });
+}
 
 // ── Shelf ─────────────────────────────────────────────────────
 function renderShelf(){
@@ -694,7 +732,15 @@ function openIssue(id){
   document.getElementById('reader-wrap').classList.add('visible');
   document.getElementById('reader-issue-label').textContent = iss.number;
   document.getElementById('reader-issue-title').textContent = iss.title;
-  refreshReader();
+  // Show loading state then auto-load from GitHub
+  if (issuePages[id].length === 0 && iss.pageFiles && iss.pageFiles.length > 0) {
+    document.getElementById('no-pages-msg').style.display = 'block';
+    document.getElementById('no-pages-msg').textContent   = 'Loading pages…';
+    document.getElementById('spread-wrap').style.display  = 'none';
+    autoLoadIssue(iss, function(){ refreshReader(); });
+  } else {
+    refreshReader();
+  }
 }
 
 function refreshReader(){
