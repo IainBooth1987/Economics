@@ -580,7 +580,7 @@ header{
     </div>
     <input type="file" id="file-input" accept="image/*" multiple>
 
-    <div id="no-pages-msg" class="no-pages-msg">No pages uploaded yet — use the button above to add pages</div>
+    <div id="no-pages-msg" class="no-pages-msg" style="text-align:center;padding:4rem 2rem;font-family:var(--ff-mono);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);opacity:0.35;">Loading pages…</div>
 
     <div id="spread-wrap" style="display:none;">
       <div class="flipbook-stage">
@@ -666,30 +666,16 @@ const ISSUES = [
 ];
 
 // ── Runtime state ─────────────────────────────────────────────
-const issuePages = {};
-ISSUES.forEach(function(iss){ issuePages[iss.id] = []; });
 var currentIssueId = null;
 var currentSpread  = 0;
 
-// ── Auto-load pages from GitHub Pages URLs ────────────────────
-function autoLoadIssue(iss, callback) {
-  if (!iss.pageFiles || iss.pageFiles.length === 0) { callback(); return; }
-  var loaded = 0;
-  var total  = iss.pageFiles.length;
-  iss.pageFiles.forEach(function(filename) {
-    var url = BASE + filename;
-    var page = { dataUrl: url, title: '', body: '', name: filename };
-    // Check if already loaded
-    var existing = issuePages[iss.id].findIndex(function(p){ return p.name === filename; });
-    if (existing === -1) issuePages[iss.id].push(page);
-    if (++loaded === total) {
-      issuePages[iss.id].sort(function(a,b){
-        return a.name.localeCompare(b.name, undefined, {numeric:true});
-      });
-      callback();
-    }
+// ── Pre-populate pages directly from GitHub Pages URLs ────────
+const issuePages = {};
+ISSUES.forEach(function(iss){
+  issuePages[iss.id] = (iss.pageFiles || []).map(function(filename){
+    return { dataUrl: BASE + filename, title: '', body: '', name: filename };
   });
-}
+});
 
 // ── Shelf ─────────────────────────────────────────────────────
 function renderShelf(){
@@ -732,15 +718,7 @@ function openIssue(id){
   document.getElementById('reader-wrap').classList.add('visible');
   document.getElementById('reader-issue-label').textContent = iss.number;
   document.getElementById('reader-issue-title').textContent = iss.title;
-  // Show loading state then auto-load from GitHub
-  if (issuePages[id].length === 0 && iss.pageFiles && iss.pageFiles.length > 0) {
-    document.getElementById('no-pages-msg').style.display = 'block';
-    document.getElementById('no-pages-msg').textContent   = 'Loading pages…';
-    document.getElementById('spread-wrap').style.display  = 'none';
-    autoLoadIssue(iss, function(){ refreshReader(); });
-  } else {
-    refreshReader();
-  }
+  refreshReader();
 }
 
 function refreshReader(){
