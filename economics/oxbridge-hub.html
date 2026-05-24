@@ -1502,6 +1502,8 @@ renderCalendar();
 // Each issue needs: id, number, title, subtitle, totalPages, badge (optional)
 // Pages are uploaded by the user at runtime and stored per-issue in issuePages.
 // ═══════════════════════════════════════════════════════════════════════
+const BASE_OXBRIDGE = 'https://iainbooth1987.github.io/Economics/oxbridge/';
+
 const ISSUES = [
   {
     id:       'financial-crisis',
@@ -1510,7 +1512,25 @@ const ISSUES = [
     subtitle: 'A Comic Strip Timeline: 2001–2007',
     totalPages: 15,
     badge:    'New',
-    color:    '#ef4444',   // accent colour for this issue
+    color:    '#ef4444',
+    // ── Page filenames in your oxbridge/ folder on GitHub ──
+    pageFiles: [
+      '00_Front_Cover.png',
+      '01_Page_1.png',
+      '02_Page_2.png',
+      '03_Page_3.png',
+      '04_Page_4.png',
+      '05_Page_5.png',
+      '06_Page_6.png',
+      '07_Page_7.png',
+      '08_Page_8.png',
+      '09_Page_9.png',
+      '10_Page_10.png',
+      '11_Page_11.png',
+      '12_Page_12.png',
+      '13_Page_13.png',
+      '14_Page_14.png',
+    ],
   },
   // ── ADD NEW ISSUES BELOW — copy the block above and fill in details ──
   // {
@@ -1519,18 +1539,35 @@ const ISSUES = [
   //   title:    'The Invisible Hand',
   //   subtitle: 'Adam Smith and the Birth of Markets',
   //   totalPages: 12,
-  //   badge:    'Coming Soon',
+  //   badge:    'New',
   //   color:    '#3b82f6',
+  //   pageFiles: ['00_Front_Cover.png','01_Page_1.png', /* etc */ ],
   // },
 ];
 
 // ── Runtime state ────────────────────────────────────────────────────────
-// issuePages stores uploaded pages per issue: { issueId: [ {dataUrl, title, body, name} ] }
 const issuePages = {};
 ISSUES.forEach(iss => { issuePages[iss.id] = []; });
 
 let currentIssueId = null;
 let currentSpread  = 0;
+
+// ── Auto-load pages from GitHub Pages URLs ───────────────────────────────
+function autoLoadIssue(iss, callback) {
+  if (!iss.pageFiles || iss.pageFiles.length === 0) { callback(); return; }
+  let loaded = 0;
+  const total = iss.pageFiles.length;
+  iss.pageFiles.forEach(function(filename) {
+    const url  = BASE_OXBRIDGE + filename;
+    const page = { dataUrl: url, title: '', body: '', name: filename };
+    const existing = issuePages[iss.id].findIndex(p => p.name === filename);
+    if (existing === -1) issuePages[iss.id].push(page);
+    if (++loaded === total) {
+      issuePages[iss.id].sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric:true}));
+      callback();
+    }
+  });
+}
 
 // ── Shelf ────────────────────────────────────────────────────────────────
 function renderShelf() {
@@ -1575,10 +1612,17 @@ function openIssue(id) {
   document.getElementById('reader-view').style.display = 'block';
   document.getElementById('viewer-issue-label').textContent = iss.number;
   document.getElementById('viewer-issue-title').textContent = iss.title;
-  // tint upload zone border with issue colour
   document.getElementById('upload-zone').style.borderColor =
     (iss.color || 'rgba(245,158,11,0.35)').replace('#','rgba(').replace(')',',0.35)') || 'rgba(245,158,11,0.35)';
-  refreshReader();
+  // Auto-load from GitHub if not yet loaded
+  if (issuePages[id].length === 0 && iss.pageFiles && iss.pageFiles.length > 0) {
+    document.getElementById('no-pages-msg').style.display   = 'block';
+    document.getElementById('no-pages-msg').textContent     = 'Loading pages…';
+    document.getElementById('spread-wrap').style.display    = 'none';
+    autoLoadIssue(iss, () => refreshReader());
+  } else {
+    refreshReader();
+  }
 }
 
 // ── Reader ───────────────────────────────────────────────────────────────
