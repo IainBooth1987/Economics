@@ -1546,28 +1546,16 @@ const ISSUES = [
 ];
 
 // ── Runtime state ────────────────────────────────────────────────────────
-const issuePages = {};
-ISSUES.forEach(iss => { issuePages[iss.id] = []; });
-
 let currentIssueId = null;
 let currentSpread  = 0;
 
-// ── Auto-load pages from GitHub Pages URLs ───────────────────────────────
-function autoLoadIssue(iss, callback) {
-  if (!iss.pageFiles || iss.pageFiles.length === 0) { callback(); return; }
-  let loaded = 0;
-  const total = iss.pageFiles.length;
-  iss.pageFiles.forEach(function(filename) {
-    const url  = BASE_OXBRIDGE + filename;
-    const page = { dataUrl: url, title: '', body: '', name: filename };
-    const existing = issuePages[iss.id].findIndex(p => p.name === filename);
-    if (existing === -1) issuePages[iss.id].push(page);
-    if (++loaded === total) {
-      issuePages[iss.id].sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric:true}));
-      callback();
-    }
-  });
-}
+// ── Pre-populate pages directly from GitHub Pages URLs ───────────────────
+const issuePages = {};
+ISSUES.forEach(iss => {
+  issuePages[iss.id] = (iss.pageFiles || []).map(filename => ({
+    dataUrl: BASE_OXBRIDGE + filename, title: '', body: '', name: filename
+  }));
+});
 
 // ── Shelf ────────────────────────────────────────────────────────────────
 function renderShelf() {
@@ -1614,15 +1602,7 @@ function openIssue(id) {
   document.getElementById('viewer-issue-title').textContent = iss.title;
   document.getElementById('upload-zone').style.borderColor =
     (iss.color || 'rgba(245,158,11,0.35)').replace('#','rgba(').replace(')',',0.35)') || 'rgba(245,158,11,0.35)';
-  // Auto-load from GitHub if not yet loaded
-  if (issuePages[id].length === 0 && iss.pageFiles && iss.pageFiles.length > 0) {
-    document.getElementById('no-pages-msg').style.display   = 'block';
-    document.getElementById('no-pages-msg').textContent     = 'Loading pages…';
-    document.getElementById('spread-wrap').style.display    = 'none';
-    autoLoadIssue(iss, () => refreshReader());
-  } else {
-    refreshReader();
-  }
+  refreshReader();
 }
 
 // ── Reader ───────────────────────────────────────────────────────────────
