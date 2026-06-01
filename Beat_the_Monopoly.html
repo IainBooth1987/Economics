@@ -1924,6 +1924,16 @@ function updateDisplay() {
     setStatColour('statEfficiency', s.allocativeEfficiency >= 70 ? 'green' : s.allocativeEfficiency >= 50 ? 'amber' : 'red');
     setStatColour('statDWL', s.deadweightLoss === 'Low' ? 'green' : s.deadweightLoss === 'Medium' ? 'amber' : 'red');
 
+    // Low-cash warning badge on cash stat
+    const cashEl = document.getElementById('statCash');
+    if (s.cash < 10000 && s.cash >= 0) {
+        cashEl.title = '⚠️ Low reserves — some options may be unavailable';
+        cashEl.style.outline = '2px solid #f87171';
+        cashEl.style.borderRadius = '4px';
+    } else {
+        cashEl.style.outline = '';
+    }
+
     // Market bar
     const others = Math.max(0, 100 - s.marketShare - s.teacher4meMarketShare);
     updateBar('barT4M', 'pctT4M', s.teacher4meMarketShare);
@@ -2035,14 +2045,20 @@ function loadScenario() {
              <div class="decisions-container">`;
 
     scenario.decisions.forEach((d, i) => {
+        const canAfford = d.cost <= 0 || d.cost <= gameState.cash;
         const costChip = d.cost < 0
             ? `<span class="decision-cost-chip cost-gain">💰 You receive £${Math.abs(d.cost).toLocaleString()}</span>`
             : d.cost === 0
                 ? `<span class="decision-cost-chip cost-free">✅ No direct cost</span>`
-                : `<span class="decision-cost-chip cost-spend">💸 Cost: £${d.cost.toLocaleString()}</span>`;
+                : canAfford
+                    ? `<span class="decision-cost-chip cost-spend">💸 Cost: £${d.cost.toLocaleString()}</span>`
+                    : `<span class="decision-cost-chip cost-spend" style="background:#fde8e8;color:#c0392b;border-color:#f87171">🔒 £${d.cost.toLocaleString()} — insufficient funds</span>`;
+
+        const disabledAttr = canAfford ? '' : 'style="opacity:0.45;cursor:not-allowed;border-color:#e0d0d0;background:#fafafa"';
+        const onclickAttr = canAfford ? `onclick="makeDecision(${i})"` : `onclick="makeDecision(${i})"`;
 
         html += `
-            <div class="decision-btn" id="decBtn_${i}" onclick="makeDecision(${i})">
+            <div class="decision-btn" id="decBtn_${i}" ${onclickAttr} ${disabledAttr}>
                 <div class="decision-title">${d.title}</div>
                 <div class="decision-desc">${d.desc}</div>
                 ${costChip}
@@ -2056,6 +2072,9 @@ function loadScenario() {
 
     document.getElementById('scenarioContainer').innerHTML = html;
     document.getElementById('outcomeContainer').innerHTML = '';
+
+    // After render, inject a survival option if player can't afford anything
+    injectSurvivalOptionIfNeeded(scenario);
 }
 
 function buildHarmBox() {
@@ -2096,6 +2115,87 @@ function buildHarmBox() {
 // ═══════════════════════════════════════════════════════
 //  DECISION HANDLING
 // ═══════════════════════════════════════════════════════
+function injectSurvivalOptionIfNeeded(scenario) {
+    if (!scenario) return;
+    const allBlocked = scenario.decisions.every(d => d.cost > 0 && d.cost > gameState.cash);
+    if (!allBlocked) return;
+
+    // Show a low-cash warning banner
+    const scenarioBox = document.querySelector('.scenario-box');
+    if (scenarioBox) {
+        const banner = document.createElement('div');
+        banner.className = 'info-box action';
+        banner.style.marginTop = '14px';
+        banner.innerHTML = `<h5>💸 Cash Crisis — All Paid Options Blocked</h5>
+            <p>Your reserves (${gameState.cash >= 0 ? '£' + (gameState.cash/1000).toFixed(1) + 'k' : '-£' + (Math.abs(gameState.cash)/1000).toFixed(1) + 'k'}) are insufficient for every option this round. 
+            This mirrors real-world capital constraints faced by entrants competing against deep-pocketed incumbents. 
+            You can limp on with an emergency cost-cut, but momentum is lost.</p>`;
+        scenarioBox.after(banner);
+    }
+
+    // Inject a free survival decision button
+    const container = document.querySelector('.decisions-container');
+    if (!container) return;
+
+    const survivalBtn = document.createElement('div');
+    survivalBtn.className = 'decision-btn';
+    survivalBtn.style.borderColor = '#c0392b';
+    survivalBtn.style.borderStyle = 'dashed';
+    survivalBtn.id = 'decBtn_survival';
+    survivalBtn.innerHTML = `
+        <div class="decision-title" style="color:#c0392b">🆘 Emergency Cost-Cut (Survival Mode)</div>
+        <div class="decision-desc">Slash all non-essential spending, pause growth, and focus on keeping existing subscribers. No investment possible this round — minimal protection only.</div>
+        <span class="decision-cost-chip cost-free">✅ No direct cost (but severe opportunity cost)</span>
+        <div class="decision-theory-pill"><strong>Theory:</strong> Financial constraints theory — capital-scarce entrants cannot sustain investment races against deep-pocketed incumbents (Bolton & Scharfstein, 1990). Survival preserves the option value of continuing, but cedes strategic ground.</div>
+        <div class="decision-consequence"><strong>Likely consequences:</strong> Market share stagnates or falls. Teacher4Me consolidates advantage. You survive this round but the long-run prognosis is poor without external finance.</div>`;
+    survivalBtn.onclick = () => makeSurvivalDecision();
+    container.appendChild(survivalBtn);
+}
+
+function makeSurvivalDecision() {
+    document.querySelectorAll('.decision-btn').forEach(btn => btn.classList.add('disabled'));
+
+    gameState.previousDecisions.push({
+        round: gameState.round,
+        title: 'Emergency Cost-Cut (Survival Mode)',
+        theory: 'Financial constraints theory — capital-scarce entrants cannot sustain investment races against incumbents.',
+        branch: 'survival'
+    });
+    gameState.branchPath.push('Survival Mode');
+
+    // Minimal/negative effects — survival only
+    const shareHit = Math.floor(Math.random() * 2) + 1; // -1 or -2
+    gameState.marketShare = Math.max(1, gameState.marketShare - shareHit);
+    gameState.teacher4meMarketShare = Math.min(92, gameState.teacher4meMarketShare + shareHit);
+    gameState.consumerWelfare = Math.max(0, gameState.consumerWelfare - 3);
+    processEconomicConsequences();
+    updateDisplay();
+
+    addToEventLog(`⚠️ Survival mode: market share slipped to ${gameState.marketShare}% — capital constraints cede competitive ground`, true);
+
+    const container = document.getElementById('outcomeContainer');
+    container.innerHTML = `
+        <div class="outcome-box negative">
+            <h4>⚠️ Economic Outcome: Survival Mode</h4>
+            <p style="margin-bottom:8px"><strong>Decision:</strong> Emergency Cost-Cut</p>
+            <p style="margin-bottom:8px;font-size:0.9em;color:#5a6a8a"><strong>Theoretical basis:</strong> Bolton & Scharfstein (1990) — financial constraints prevent capital-scarce entrants from matching incumbents' investment, enabling predatory strategies to succeed passively without overt predation.</p>
+            <p style="font-size:0.9em"><strong>Consequences:</strong> You survive this round but lose ground. Without new capital, this pattern repeats. Consider whether angel investment (if available) can break the cycle.</p>
+        </div>`;
+
+    showNextRoundButton();
+}
+
+function checkAffordability() {
+    const scenario = getCurrentScenario();
+    if (!scenario) return;
+    const allBlocked = scenario.decisions.every(d => d.cost > 0 && d.cost > gameState.cash);
+    if (allBlocked) {
+        addToEventLog("💸 All strategic options exhausted — cash reserves depleted. Predatory strategy succeeded.", true);
+        gameState.cash = -15000; // Ensure bankruptcy branch in endGame
+        setTimeout(() => endGame("final"), 1800);
+    }
+}
+
 function makeDecision(index) {
     const scenario = getCurrentScenario();
     const decision = scenario.decisions[index];
