@@ -1456,11 +1456,10 @@ document.addEventListener('DOMContentLoaded', function(){
             <div class="speed-control">
                 <label for="speedSelect">⚡ Simulation Speed:</label>
                 <select id="speedSelect">
-                    <option value="1000">Very Fast (1s)</option>
-                    <option value="2000">Fast (2s)</option>
-                    <option value="3000" selected>Normal (3s)</option>
-                    <option value="5000">Slow (5s)</option>
-                    <option value="10000">Very Slow (10s)</option>
+                    <option value="3000">Fast (3s)</option>
+                    <option value="6000" selected>Normal (6s)</option>
+                    <option value="10000">Slow (10s)</option>
+                    <option value="15000">Classroom Slow (15s)</option>
                 </select>
             </div>
             <button class="btn-control" id="pauseBtn">⏸ Pause</button>
@@ -1473,7 +1472,13 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="scenarioScreen">
         <div class="scenario-container">
             <div class="scenario-title">⚡ FOREX Trading Simulator</div>
-            <div class="scenario-subtitle">Choose your trading environment</div>
+            <div class="scenario-subtitle">Choose your trading environment — 20-day simulation</div>
+            <div style="text-align:center; margin-bottom:20px;">
+                <label style="display:inline-flex;align-items:center;gap:10px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:10px 20px;cursor:pointer;font-size:0.85em;color:#ccc;">
+                    <input type="checkbox" id="classroomModeToggle" style="width:16px;height:16px;accent-color:#00d4ff;">
+                    <span>🎓 <strong style="color:#00d4ff;">Classroom Mode</strong> — slower pace (15s/day) · fewer questions · ideal for whole-class use</span>
+                </label>
+            </div>
             <div class="scenario-grid">
                 <div class="scenario-card free-play" onclick="simulator.startScenario('free')">
                     <div class="scenario-difficulty">★☆☆ Any level</div>
@@ -1504,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     <span class="scenario-tag tag-scenario">SCENARIO</span>
                 </div>
             </div>
-            <div style="text-align:center; font-size:0.78em; color:#555;">All scenarios include in-game questions, theory sidebar &amp; movement explanations</div>
+            <div style="text-align:center; font-size:0.78em; color:#555;">All scenarios include in-game knowledge checks, theory sidebar &amp; movement explanations &mdash; 20-day game</div>
         </div>
     </div>
 
@@ -1719,11 +1724,12 @@ document.addEventListener('DOMContentLoaded', function(){
                 this.isPaused = false;
                 this.isGameOver = false;
                 this.initialBalance = 10000;
-                this.tickSpeed = 3000;
+                this.tickSpeed = 6000;
                 this.commissionRate = 0.001;
                 this.totalCommissions = 0;
                 this.scenarioMode = 'free';
                 this.lastMovementEvent = null;
+                this.classroomMode = false;
                 
                 // Currency base data with correlations
                 this.currencies = {
@@ -1821,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 this.pendingEventAfterQuiz = null;
                 this.quizScoreLog = []; // 'correct' | 'incorrect'
                 this.recentTradesForDebrief = [];
-                this.debriefInterval = 15; // every 15 days (was 10)
+                this.debriefInterval = 20; // every 20 days — one debrief max in classroom game
                 this.lastDebriefDay = 0;
                 this.usedKnowledgeIds = new Set();
 
@@ -1875,36 +1881,6 @@ document.addEventListener('DOMContentLoaded', function(){
                         correct: 1,
                         explanation: 'Australia is a major commodity exporter — iron ore, coal, and LNG go primarily to China. A Chinese slowdown reduces demand for these exports, weakening Australia\'s terms of trade and reducing AUD demand. The AUD is often called a "commodity currency" for this reason.',
                         intel: '⛏️ Commodity demand softening. AUD/USD looks vulnerable — a short-term sell of AUD could outperform this week.'
-                    },
-                    {
-                        id: 'k6',
-                        trigger: 'global',
-                        question: 'What does a "carry trade" involve in FOREX markets?',
-                        hint: 'Imagine borrowing money cheaply in one country and depositing it in a bank in another country that pays higher interest. The profit is the difference.',
-                        options: ['Physically transporting currency between countries', 'Borrowing in a low-interest currency and investing in a high-interest currency', 'Trading currency futures contracts on the CME', 'Buying and immediately selling the same currency pair'],
-                        correct: 1,
-                        explanation: 'A carry trade involves borrowing in a currency with low interest rates (historically JPY or CHF) and investing in higher-yielding currencies (e.g. AUD or NZD). Profit comes from the interest rate differential. The risk is currency movements that can wipe out the interest gain.',
-                        intel: '💹 JPY carry trades are building up — if markets turn volatile, a sharp JPY spike could be coming as positions unwind.'
-                    },
-                    {
-                        id: 'k7',
-                        trigger: 'USD',
-                        question: 'The US publishes better-than-expected Non-Farm Payrolls (NFP) data, showing strong job creation. What typically happens next?',
-                        hint: 'More jobs = stronger economy. If the economy is strong, does the Fed need to cut interest rates to stimulate it? What does that mean for the dollar?',
-                        options: ['USD weakens as more jobs means more spending and imports', 'USD strengthens as strong jobs data reduces Fed rate cut expectations', 'USD is unaffected — the Fed only cares about inflation', 'USD weakens as strong jobs = higher wages = higher inflation'],
-                        correct: 1,
-                        explanation: 'Strong NFP data signals a robust labour market, which reduces the urgency for the Fed to cut rates. Higher-for-longer rates support the USD. NFP is one of the most market-moving data releases globally — FOREX traders watch it very closely on the first Friday of each month.',
-                        intel: '💼 Jobs data beat. Dollar strength expected to persist — USD pairs like USD/JPY could push higher this week.'
-                    },
-                    {
-                        id: 'k8',
-                        trigger: 'global',
-                        question: 'Which of the following best describes "purchasing power parity" (PPP) in exchange rate theory?',
-                        hint: 'Think about the price of a burger. If it costs £4 in the UK and $5 in the US, PPP suggests something about what the exchange rate should be.',
-                        options: ['Exchange rates are set purely by central bank decisions', 'In the long run, exchange rates should adjust so a basket of goods costs the same across countries', 'Exchange rates are determined solely by trade flows', 'PPP states that currencies always return to their historic average'],
-                        correct: 1,
-                        explanation: 'PPP theory holds that exchange rates should adjust over time to equalise the real price of goods internationally. The Economist\'s "Big Mac Index" is a fun illustration of this. In practice, PPP works better as a long-run guide than a short-term predictor — capital flows and sentiment dominate in the short run.',
-                        intel: '🌍 The dollar looks overvalued on PPP measures. In the medium term, a correction is plausible — consider building EUR or GBP positions.'
                     }
                 ];
 
@@ -1921,18 +1897,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         intel: '🎯 Pre-Fed insight: Position in USD/JPY before the announcement — the move will likely be fast and significant.'
                     },
                     {
-                        eventDay: 8,
-                        badge: '🇪🇺 ECB Preview',
-                        context: 'The European Central Bank is meeting today. Economists are divided on whether the ECB will signal rate cuts ahead.',
-                        question: 'If the ECB surprises with a dovish signal (hinting at rate CUTS), what should happen to EUR/USD?',
-                        hint: '"Dovish" means lower interest rates. Lower rates = lower returns on Euro savings. Would investors want to hold more or fewer Euros?',
-                        options: ['EUR/USD rises — rate cuts boost the economy and the Euro', 'EUR/USD falls — lower rates make Euro-denominated assets less attractive', 'EUR/USD is unchanged — the ECB rarely moves markets', 'EUR/USD rises temporarily then falls sharply'],
-                        correct: 1,
-                        explanation: 'A dovish ECB signal means lower future returns on Euro assets, reducing demand for EUR. Capital flows toward higher-yielding alternatives, causing EUR to weaken against USD. This is a direct application of uncovered interest rate parity — lower rates = weaker currency.',
-                        intel: '📉 Dovish ECB risk is high. If they signal cuts, EUR/USD could drop quickly — a short-term sell of EUR could be profitable.'
-                    },
-                    {
-                        eventDay: 15,
+                        eventDay: 13,
                         badge: '🇬🇧 BoE Decision Preview',
                         context: 'The Bank of England is set to announce its latest decision. UK inflation remains stubbornly above target.',
                         question: 'With UK inflation above target, what is the most likely BoE action and its effect on GBP?',
@@ -1941,17 +1906,6 @@ document.addEventListener('DOMContentLoaded', function(){
                         correct: 1,
                         explanation: 'When inflation is above target, a central bank\'s credibility depends on acting hawkishly (holding or raising rates). This signals commitment to price stability, boosting confidence in the currency. Even a "hold" can strengthen GBP if it dispels fears of premature rate cuts.',
                         intel: '🇬🇧 Hawkish BoE expected. GBP/USD may firm up after the announcement — consider a buy position pre-decision.'
-                    },
-                    {
-                        eventDay: 22,
-                        badge: '🇯🇵 BoJ Preview',
-                        context: 'The Bank of Japan is meeting. The BoJ has long maintained ultra-low (even negative) interest rates, unlike other major central banks.',
-                        question: 'The BoJ has kept rates near zero while other central banks raised rates. What has this caused over recent years?',
-                        hint: 'If Japan pays near-zero interest but other countries pay 5%, where would a global investor prefer to keep their money? What does that mean for demand for yen?',
-                        options: ['JPY to strengthen as Japanese savers earn no interest', 'JPY to weaken significantly as investors borrow cheap JPY for carry trades', 'JPY to be very stable as the BoJ controls the market', 'USD/JPY to fall as dollar demand declines'],
-                        correct: 1,
-                        explanation: 'Japan\'s ultra-low rates made JPY a prime carry trade currency — investors borrowed in JPY at near-zero cost and invested in higher-yielding currencies. This massive outflow of JPY weakened the currency substantially. USD/JPY reached 30-year highs as a result. Any BoJ hawkish shift could trigger a violent JPY reversal.',
-                        intel: '🇯🇵 Carry trade alert: Watch USD/JPY closely. Any BoJ hawkish surprise could cause rapid JPY strengthening — be careful with JPY short positions.'
                     }
                 ];
 
@@ -1976,14 +1930,20 @@ document.addEventListener('DOMContentLoaded', function(){
 
             startScenario(mode) {
                 this.scenarioMode = mode;
+                // Apply classroom mode settings if toggled
+                this.classroomMode = document.getElementById('classroomModeToggle').checked;
+                if (this.classroomMode) {
+                    this.tickSpeed = 15000;
+                    document.getElementById('speedSelect').value = '15000';
+                }
                 document.getElementById('scenarioScreen').style.display = 'none';
                 document.getElementById('theoryToggle').style.display = 'block';
 
                 const scenarioMeta = {
                     free:      { title: null, desc: null },
-                    rateHike:  { title: '🏛️ Scenario: Interest Rate Shock', desc: 'The Fed is hiking aggressively while the ECB holds. Watch interest rate differentials drive currency movements over 30 days.' },
-                    political: { title: '⚡ Scenario: Political Instability', desc: 'Government collapses, geopolitical crises, and election uncertainty rock markets. Safe havens surge; risk currencies suffer.' },
-                    inflation: { title: '📈 Scenario: Inflation Crisis', desc: 'Inflation is surging globally but hitting each economy differently. Central bank responses — fast or slow — will be the key driver.' }
+                    rateHike:  { title: '🏛️ Scenario: Interest Rate Shock', desc: 'The Fed is hiking aggressively while the ECB holds. Watch interest rate differentials drive currency movements over 20 days.' },
+                    political: { title: '⚡ Scenario: Political Instability', desc: 'Government collapses, geopolitical crises, and election uncertainty rock markets. Safe havens surge; risk currencies suffer. 20-day game.' },
+                    inflation: { title: '📈 Scenario: Inflation Crisis', desc: 'Inflation is surging globally but hitting each economy differently. Central bank responses — fast or slow — will be the key driver. 20 days.' }
                 };
                 const meta = scenarioMeta[mode];
                 if (meta.title) {
@@ -2095,7 +2055,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         this.renderCurrencies();
                         this.renderPortfolio();
                         this.updateHeader();
-                        if (this.day >= 30) this.endGame();
+                        if (this.day >= 20) this.endGame();
                         return;
                     }
                 }
@@ -2117,7 +2077,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 this.renderCurrencies();
                 this.renderPortfolio();
                 this.updateHeader();
-                if (this.day >= 30) this.endGame();
+                if (this.day >= 20) this.endGame();
             }
 
             updatePricesWithCorrelations() {
@@ -2156,8 +2116,8 @@ document.addEventListener('DOMContentLoaded', function(){
                     setTimeout(() => this.showAutoMovementPanel(event, impact), 600);
                 }
 
-                // 25% chance of a knowledge question on scheduled events
-                if (Math.random() < 0.25) {
+                // 15% chance of a knowledge question on scheduled events (classroom-friendly)
+                if (Math.random() < 0.15) {
                     setTimeout(() => this.showKnowledgeQuestion(event.region), 800);
                 }
             }
@@ -2169,8 +2129,8 @@ document.addEventListener('DOMContentLoaded', function(){
                 this.applyRegionalShock(shock.region, impact);
                 this.addNews(shock.message, true);
 
-                // 15% chance of a knowledge quiz on random shocks
-                if (Math.random() < 0.15) {
+                // 8% chance of a knowledge quiz on random shocks (classroom-friendly)
+                if (Math.random() < 0.08) {
                     setTimeout(() => this.showKnowledgeQuestion(shock.region), 800);
                 }
             }
@@ -2726,7 +2686,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 this.renderPortfolio();
                 this.updateHeader();
 
-                if (this.day >= 30) {
+                if (this.day >= 20) {
                     this.endGame();
                 }
             }
@@ -2887,7 +2847,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
             updateHeader() {
                 document.getElementById('balance').textContent = `$${this.balance.toFixed(2)}`;
-                document.getElementById('day').textContent = this.day;
+                document.getElementById('day').textContent = `${this.day} / 20`;
                 
                 let portfolioValue = 0;
                 for (let pair in this.portfolio) {
