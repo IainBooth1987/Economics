@@ -382,7 +382,7 @@ footer{
 
 <header>
   <a class="logo" href="index.html">BIZ-<span>OMICS</span></a>
-  <a class="back-link" href="index.html">← Back to Hub</a>
+  <a class="back-link" href="Economics_Games.html">← Back to Arcade</a>
   <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
 </header>
 
@@ -682,32 +682,164 @@ function assignNumbers(placed, gridSize){
 }
 
 /* ══════════════════
-   AI GENERATION
+   HARDCODED WORD BANK
+   {word, clue, topic, diff:'gcse'|'alevel'}
 ══════════════════ */
-async function callClaude(prompt){
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      messages:[{role:'user', content: prompt}]
-    })
-  });
-  if(!resp.ok) throw new Error('API error ' + resp.status);
-  const data = await resp.json();
-  return data.content.map(b => b.text||'').join('');
-}
+const WORD_BANK = [
+  // Supply & Demand
+  {word:'DEMAND',clue:'Quantity consumers willing and able to buy at each price.',topic:'supply_demand',diff:'gcse'},
+  {word:'SUPPLY',clue:'Quantity producers willing and able to sell at each price.',topic:'supply_demand',diff:'gcse'},
+  {word:'EQUILIBRIUM',clue:'Price where quantity demanded equals quantity supplied.',topic:'supply_demand',diff:'gcse'},
+  {word:'SURPLUS',clue:'Excess supply when price is above equilibrium.',topic:'supply_demand',diff:'gcse'},
+  {word:'SHORTAGE',clue:'Excess demand when price is below equilibrium.',topic:'supply_demand',diff:'gcse'},
+  {word:'SUBSTITUTE',clue:'Good that can replace another; cross-price elasticity is positive.',topic:'supply_demand',diff:'gcse'},
+  {word:'COMPLEMENT',clue:'Good consumed jointly with another; cross-price elasticity is negative.',topic:'supply_demand',diff:'gcse'},
+  {word:'INFERIOR',clue:'Good for which demand falls as income rises.',topic:'supply_demand',diff:'gcse'},
+  {word:'NORMAL',clue:'Good for which demand rises as income rises.',topic:'supply_demand',diff:'gcse'},
+  {word:'CONTRACTION',clue:'Movement up the demand curve when price rises.',topic:'supply_demand',diff:'gcse'},
+  {word:'EXTENSION',clue:'Movement down the demand curve when price falls.',topic:'supply_demand',diff:'gcse'},
+  {word:'CETERIS',clue:'Latin phrase meaning all other things being equal.',topic:'supply_demand',diff:'alevel'},
+  {word:'PARIBUS',clue:'Second word of the assumption that other variables are held constant.',topic:'supply_demand',diff:'alevel'},
+  {word:'COBWEB',clue:'Model explaining cyclical price instability in agricultural markets.',topic:'supply_demand',diff:'alevel'},
+  {word:'DISEQUILIBRIUM',clue:'State where market forces are not yet balanced.',topic:'supply_demand',diff:'alevel'},
+  // Market Failure
+  {word:'EXTERNALITY',clue:'Cost or benefit falling on a third party outside a transaction.',topic:'market_failure',diff:'gcse'},
+  {word:'MERIT',clue:'Good under-consumed because private benefits are underestimated.',topic:'market_failure',diff:'gcse'},
+  {word:'DEMERIT',clue:'Good over-consumed because private costs are underestimated.',topic:'market_failure',diff:'gcse'},
+  {word:'PUBLIC',clue:'Non-rival and non-excludable good under-provided by markets.',topic:'market_failure',diff:'gcse'},
+  {word:'FREERIDE',clue:'Consuming a good without paying for it.',topic:'market_failure',diff:'gcse'},
+  {word:'ASYMMETRIC',clue:'Type of information failure where one party knows more than another.',topic:'market_failure',diff:'alevel'},
+  {word:'PIGOUVIAN',clue:'Tax set equal to the marginal external cost to correct a negative externality.',topic:'market_failure',diff:'alevel'},
+  {word:'DEADWEIGHT',clue:'Loss of welfare where allocative efficiency is not achieved.',topic:'market_failure',diff:'alevel'},
+  {word:'OVERPROVISION',clue:'Market produces beyond the socially optimal output.',topic:'market_failure',diff:'alevel'},
+  {word:'SUBSIDY',clue:'Government payment to producers to increase supply of a merit good.',topic:'market_failure',diff:'gcse'},
+  {word:'REGULATION',clue:'Government rules to control firm or consumer behaviour.',topic:'market_failure',diff:'gcse'},
+  {word:'NUDGE',clue:'Behavioural intervention that steers choices without restricting them.',topic:'market_failure',diff:'alevel'},
+  // Elasticity
+  {word:'ELASTICITY',clue:'Responsiveness of one variable to a change in another.',topic:'elasticity',diff:'gcse'},
+  {word:'INELASTIC',clue:'Demand that responds little to a change in price.',topic:'elasticity',diff:'gcse'},
+  {word:'ELASTIC',clue:'Demand that is highly responsive to a change in price.',topic:'elasticity',diff:'gcse'},
+  {word:'UNITARY',clue:'Elasticity value of exactly one; total revenue unchanged.',topic:'elasticity',diff:'gcse'},
+  {word:'INCOME',clue:'Measures responsiveness of demand to a change in consumer income.',topic:'elasticity',diff:'gcse'},
+  {word:'CROSS',clue:'Measures responsiveness of demand for one good to another good price change.',topic:'elasticity',diff:'gcse'},
+  {word:'NECESSITY',clue:'Good with inelastic demand because consumers must purchase it.',topic:'elasticity',diff:'gcse'},
+  {word:'LUXURY',clue:'Good with elastic demand; consumers delay or avoid purchase if price rises.',topic:'elasticity',diff:'gcse'},
+  {word:'REVENUE',clue:'Price multiplied by quantity; changes depend on elasticity.',topic:'elasticity',diff:'gcse'},
+  {word:'PROPORTION',clue:'Larger share of income spent raises price elasticity of demand.',topic:'elasticity',diff:'alevel'},
+  {word:'ADDICTION',clue:'Makes demand highly inelastic as consumers cannot easily reduce consumption.',topic:'elasticity',diff:'alevel'},
+  // Fiscal Policy
+  {word:'FISCAL',clue:'Policy using government spending and taxation to influence the economy.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'DEFICIT',clue:'Excess of government spending over tax revenues.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'SURPLUS',clue:'Excess of tax revenues over government spending.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'AUSTERITY',clue:'Reducing government spending to cut the budget deficit.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'MULTIPLIER',clue:'The magnified effect of an injection on national income.',topic:'fiscal_policy',diff:'alevel'},
+  {word:'CROWDING',clue:'Government borrowing raises interest rates and displaces private investment.',topic:'fiscal_policy',diff:'alevel'},
+  {word:'AUTOMATIC',clue:'Stabilisers that adjust tax and spending without active government decisions.',topic:'fiscal_policy',diff:'alevel'},
+  {word:'STRUCTURAL',clue:'Part of the deficit that persists even at full employment.',topic:'fiscal_policy',diff:'alevel'},
+  {word:'CYCLICAL',clue:'Part of the deficit caused by the economic cycle.',topic:'fiscal_policy',diff:'alevel'},
+  {word:'TRANSFER',clue:'Government payment such as benefits not tied to production.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'INJECTION',clue:'Government spending, investment or exports adding to the circular flow.',topic:'fiscal_policy',diff:'gcse'},
+  {word:'LEAKAGE',clue:'Savings, taxes or imports withdrawing money from the circular flow.',topic:'fiscal_policy',diff:'gcse'},
+  // Monetary Policy
+  {word:'INTEREST',clue:'Cost of borrowing; central banks use this as a policy tool.',topic:'monetary_policy',diff:'gcse'},
+  {word:'INFLATION',clue:'Sustained rise in the general price level.',topic:'monetary_policy',diff:'gcse'},
+  {word:'TARGET',clue:'The Bank of England aims to keep inflation at two percent.',topic:'monetary_policy',diff:'gcse'},
+  {word:'QUANTITATIVE',clue:'First word of the policy where the central bank creates money to buy assets.',topic:'monetary_policy',diff:'alevel'},
+  {word:'LIQUIDITY',clue:'Ease with which an asset can be converted to cash.',topic:'monetary_policy',diff:'alevel'},
+  {word:'TRANSMISSION',clue:'Mechanism by which interest rate changes affect the economy.',topic:'monetary_policy',diff:'alevel'},
+  {word:'REPO',clue:'Rate at which the Bank of England lends to commercial banks overnight.',topic:'monetary_policy',diff:'alevel'},
+  {word:'EASING',clue:'Looser monetary policy to stimulate demand.',topic:'monetary_policy',diff:'alevel'},
+  {word:'TIGHTENING',clue:'Restrictive monetary policy to reduce inflationary pressure.',topic:'monetary_policy',diff:'alevel'},
+  // Inflation
+  {word:'DEFLATION',clue:'Sustained fall in the general price level.',topic:'inflation',diff:'gcse'},
+  {word:'STAGFLATION',clue:'Simultaneous high inflation and high unemployment.',topic:'inflation',diff:'alevel'},
+  {word:'DEMAND',clue:'Type of inflation caused by excess aggregate demand.',topic:'inflation',diff:'gcse'},
+  {word:'COST',clue:'Type of inflation caused by rising production costs.',topic:'inflation',diff:'gcse'},
+  {word:'HYPERINFLATION',clue:'Extremely rapid price rises destroying the value of money.',topic:'inflation',diff:'gcse'},
+  {word:'EXPECTATIONS',clue:'Beliefs about future inflation that can become self-fulfilling.',topic:'inflation',diff:'alevel'},
+  {word:'WAGE',clue:'Spiral where higher pay leads to higher prices and further pay demands.',topic:'inflation',diff:'alevel'},
+  {word:'VELOCITY',clue:'Speed at which money circulates in the economy.',topic:'inflation',diff:'alevel'},
+  {word:'DISINFLATION',clue:'Fall in the rate of inflation, not price levels.',topic:'inflation',diff:'alevel'},
+  // Unemployment
+  {word:'FRICTIONAL',clue:'Short-term unemployment as workers move between jobs.',topic:'unemployment',diff:'gcse'},
+  {word:'STRUCTURAL',clue:'Unemployment caused by mismatch of skills and available jobs.',topic:'unemployment',diff:'gcse'},
+  {word:'CYCLICAL',clue:'Unemployment caused by lack of aggregate demand in a recession.',topic:'unemployment',diff:'gcse'},
+  {word:'SEASONAL',clue:'Unemployment that rises and falls with the time of year.',topic:'unemployment',diff:'gcse'},
+  {word:'VOLUNTARY',clue:'Unemployment where workers choose not to accept available jobs.',topic:'unemployment',diff:'alevel'},
+  {word:'NATURAL',clue:'Rate of unemployment consistent with stable inflation.',topic:'unemployment',diff:'alevel'},
+  {word:'HYSTERESIS',clue:'Long-term unemployment causing permanent loss of skills.',topic:'unemployment',diff:'alevel'},
+  {word:'CLAIMANT',clue:'Measure of unemployment counting those claiming jobseeker benefits.',topic:'unemployment',diff:'gcse'},
+  {word:'LABOUR',clue:'Supply side: the workforce available for employment.',topic:'unemployment',diff:'gcse'},
+  // Economic Growth
+  {word:'GROWTH',clue:'Increase in real GDP over time.',topic:'economic_growth',diff:'gcse'},
+  {word:'RECESSION',clue:'Two consecutive quarters of negative GDP growth.',topic:'economic_growth',diff:'gcse'},
+  {word:'POTENTIAL',clue:'Maximum output an economy can produce at full employment.',topic:'economic_growth',diff:'alevel'},
+  {word:'ACTUAL',clue:'Real GDP growth achieved, which may be below potential.',topic:'economic_growth',diff:'alevel'},
+  {word:'OUTPUT',clue:'Gap between actual and potential GDP.',topic:'economic_growth',diff:'alevel'},
+  {word:'CAPITAL',clue:'Investment in physical or human resources that drives long-run growth.',topic:'economic_growth',diff:'gcse'},
+  {word:'PRODUCTIVITY',clue:'Output per unit of input; key driver of sustainable growth.',topic:'economic_growth',diff:'gcse'},
+  {word:'SUSTAINABLE',clue:'Growth that can continue without depleting future resources.',topic:'economic_growth',diff:'gcse'},
+  {word:'INNOVATION',clue:'New products or processes that shift the production possibility frontier.',topic:'economic_growth',diff:'gcse'},
+  // International Trade
+  {word:'COMPARATIVE',clue:'Advantage based on lower opportunity cost, not absolute productivity.',topic:'trade',diff:'alevel'},
+  {word:'TARIFF',clue:'Tax on imports used to protect domestic industry.',topic:'trade',diff:'gcse'},
+  {word:'QUOTA',clue:'Limit on the quantity of imports allowed.',topic:'trade',diff:'gcse'},
+  {word:'PROTECTIONISM',clue:'Policy of shielding domestic firms from foreign competition.',topic:'trade',diff:'gcse'},
+  {word:'DUMPING',clue:'Selling exports below cost to undercut foreign competitors.',topic:'trade',diff:'alevel'},
+  {word:'BALANCE',clue:'Record of all financial transactions between a country and the world.',topic:'trade',diff:'gcse'},
+  {word:'CURRENT',clue:'Account recording trade in goods and services.',topic:'trade',diff:'gcse'},
+  {word:'RETALIATION',clue:'Country responds to trade barriers by imposing its own restrictions.',topic:'trade',diff:'gcse'},
+  // Exchange Rates
+  {word:'APPRECIATION',clue:'Rise in the value of a currency in a floating exchange rate system.',topic:'exchange_rates',diff:'gcse'},
+  {word:'DEPRECIATION',clue:'Fall in the value of a currency in a floating exchange rate system.',topic:'exchange_rates',diff:'gcse'},
+  {word:'DEVALUATION',clue:'Deliberate reduction of a currency fixed exchange rate.',topic:'exchange_rates',diff:'alevel'},
+  {word:'MARSHALL',clue:'First name of the condition requiring elasticities to sum above one.',topic:'exchange_rates',diff:'alevel'},
+  {word:'LERNER',clue:'Second name of the condition for depreciation to improve the current account.',topic:'exchange_rates',diff:'alevel'},
+  {word:'JCURVE',clue:'Short-run worsening before long-run improvement after depreciation.',topic:'exchange_rates',diff:'alevel'},
+  {word:'FLOATING',clue:'Exchange rate system determined entirely by market forces.',topic:'exchange_rates',diff:'gcse'},
+  {word:'MANAGED',clue:'Exchange rate system with central bank intervention to smooth fluctuations.',topic:'exchange_rates',diff:'alevel'},
+  {word:'COMPETITIVENESS',clue:'Ability to sell exports at attractive prices in world markets.',topic:'exchange_rates',diff:'gcse'},
+  // Labour Markets
+  {word:'WAGE',clue:'Payment for labour, determined in the labour market.',topic:'labour_markets',diff:'gcse'},
+  {word:'MINIMUM',clue:'Legally enforceable lowest hourly pay rate.',topic:'labour_markets',diff:'gcse'},
+  {word:'MONOPSONY',clue:'Single buyer of labour with power to set wages below competitive level.',topic:'labour_markets',diff:'alevel'},
+  {word:'UNION',clue:'Organisation of workers that bargains collectively for pay and conditions.',topic:'labour_markets',diff:'gcse'},
+  {word:'PRODUCTIVITY',clue:'Output per worker; determines the demand for labour.',topic:'labour_markets',diff:'gcse'},
+  {word:'MOBILITY',clue:'Ability of labour to move between jobs or regions.',topic:'labour_markets',diff:'gcse'},
+  {word:'DISCRIMINATION',clue:'Paying different wages based on gender, race or other non-productive factors.',topic:'labour_markets',diff:'gcse'},
+  {word:'DERIVED',clue:'Demand for labour depends on demand for the goods it produces.',topic:'labour_markets',diff:'alevel'},
+  {word:'ELASTICITY',clue:'Responsiveness of labour supply or demand to a wage change.',topic:'labour_markets',diff:'alevel'},
+  // Competition & Monopoly
+  {word:'MONOPOLY',clue:'Single firm dominating a market with significant barriers to entry.',topic:'competition',diff:'gcse'},
+  {word:'OLIGOPOLY',clue:'Market dominated by a few large interdependent firms.',topic:'competition',diff:'gcse'},
+  {word:'DUOPOLY',clue:'Market structure with exactly two dominant firms.',topic:'competition',diff:'alevel'},
+  {word:'CARTEL',clue:'Group of firms colluding to fix prices or restrict output.',topic:'competition',diff:'alevel'},
+  {word:'COLLUSION',clue:'Secret cooperation between firms to avoid competition.',topic:'competition',diff:'alevel'},
+  {word:'BARRIER',clue:'Obstacle preventing new firms from entering a market.',topic:'competition',diff:'gcse'},
+  {word:'PREDATORY',clue:'Pricing strategy to drive out rivals by cutting price below cost.',topic:'competition',diff:'alevel'},
+  {word:'SUPERNORMAL',clue:'Profit above normal profit; attracts entry in competitive markets.',topic:'competition',diff:'alevel'},
+  {word:'CONTESTABLE',clue:'Market where threat of entry disciplines incumbent firm behaviour.',topic:'competition',diff:'alevel'},
+  {word:'KINKED',clue:'Demand curve model explaining price rigidity in oligopoly.',topic:'competition',diff:'alevel'},
+  {word:'ALLOCATIVE',clue:'Efficiency where price equals marginal cost.',topic:'competition',diff:'alevel'},
+  {word:'PRODUCTIVE',clue:'Efficiency achieved at minimum point of average cost curve.',topic:'competition',diff:'alevel'},
+];
 
 function getTopicLabel(){
   return TOPICS.find(t => t.id === selectedTopic)?.label || selectedTopic;
 }
 function getDifficultyLabel(){
   const d = document.getElementById('difficulty-select').value;
-  return {gcse:'GCSE', alevel:'A-Level', challenge:'Challenge — Evaluative'}[d] || d;
+  return {gcse:'GCSE', alevel:'A-Level', challenge:'Mixed'}[d] || d;
 }
 
-async function generateCrossword(){
+function getEntries(topic, difficulty){
+  const diffFilter = difficulty === 'challenge' ? null : difficulty;
+  let pool = WORD_BANK.filter(w => w.topic === topic && (diffFilter === null || w.diff === diffFilter));
+  if(pool.length < 8) pool = WORD_BANK.filter(w => w.topic === topic); // fallback: ignore diff
+  return pool.sort(() => Math.random() - 0.5);
+}
+
+function generateCrossword(){
   const btn = document.getElementById('gen-btn');
   const statusEl = document.getElementById('status');
   const difficulty = document.getElementById('difficulty-select').value;
@@ -716,72 +848,36 @@ async function generateCrossword(){
   btn.disabled = true;
   document.getElementById('print-btn').disabled = true;
   statusEl.className = 'status loading';
-  statusEl.textContent = '⟳ Generating clues with AI…';
+  statusEl.textContent = '⟳ Building puzzle…';
 
-  const difficultyInstr = {
-    gcse: 'Write clear, accessible definitions suitable for GCSE students. Avoid jargon in the clue itself.',
-    alevel: 'Write precise, textbook-quality definitions suitable for A-Level Economics students.',
-    challenge: 'Write evaluative or applied clues — describe an effect, a scenario, or ask for a linked concept rather than a direct definition. Challenging but fair.'
-  }[difficulty];
-
-  const prompt = `You are an expert Economics teacher creating a crossword puzzle on the topic: "${topicLabel}".
-
-Generate exactly 18 crossword entries. Each entry must:
-- Be a single word (NO spaces, hyphens, or punctuation) between 4 and 14 letters
-- Be directly relevant to ${topicLabel} in A-Level Economics
-- Have a clue that is one sentence, max 12 words
-
-${difficultyInstr}
-
-Respond ONLY with a JSON array, no markdown, no preamble. Format:
-[{"word":"ELASTICITY","clue":"Responsiveness of demand to a change in price"},...]
-
-Ensure variety in word length (mix of short 4-6 and longer 8-14 letter words). No proper nouns. No repeated words.`;
-
-  try {
-    statusEl.textContent = '⟳ Laying out the grid…';
-    const raw = await callClaude(prompt);
-    let entries;
+  setTimeout(() => {
     try {
-      const clean = raw.replace(/```json|```/g,'').trim();
-      const match = clean.match(/\[[\s\S]*\]/);
-      entries = JSON.parse(match ? match[0] : clean);
-    } catch(e){
-      throw new Error('Could not parse AI response. Please try again.');
+      const entries = getEntries(selectedTopic, difficulty);
+      if(entries.length < 5) throw new Error('Not enough words for this topic/difficulty combination.');
+
+      const {grid, placed} = buildCrossword(entries);
+      if(placed.length < 5) throw new Error('Could not place enough words — try a different topic.');
+
+      const numbered = assignNumbers(placed, GRID_SIZE);
+      currentPuzzle = {grid, placed: numbered, entries};
+
+      renderCrossword(grid, numbered);
+      renderClues(numbered);
+      renderPrintPage(grid, numbered, topicLabel);
+
+      document.getElementById('cw-area').classList.add('visible');
+      document.getElementById('print-btn').disabled = false;
+      statusEl.className = 'status';
+      statusEl.textContent = `✓ ${placed.length} words placed across a ${GRID_SIZE}×${GRID_SIZE} grid.`;
+
+    } catch(err){
+      statusEl.className = 'status error';
+      statusEl.textContent = '✕ ' + err.message;
+    } finally {
+      btn.disabled = false;
+      document.getElementById('gen-btn-text').textContent = 'Regenerate →';
     }
-
-    if(!Array.isArray(entries) || entries.length < 6){
-      throw new Error('Not enough clues returned. Please try again.');
-    }
-
-    statusEl.textContent = '⟳ Fitting crossword…';
-    await new Promise(r => setTimeout(r, 30)); // allow UI repaint
-
-    const {grid, placed} = buildCrossword(entries);
-
-    if(placed.length < 5){
-      throw new Error('Could not fit enough words. Regenerating…');
-    }
-
-    const numbered = assignNumbers(placed, GRID_SIZE);
-    currentPuzzle = {grid, placed: numbered, entries};
-
-    renderCrossword(grid, numbered);
-    renderClues(numbered);
-    renderPrintPage(grid, numbered, topicLabel);
-
-    document.getElementById('cw-area').classList.add('visible');
-    document.getElementById('print-btn').disabled = false;
-    statusEl.className = 'status';
-    statusEl.textContent = `✓ ${placed.length} words placed across a ${GRID_SIZE}×${GRID_SIZE} grid.`;
-
-  } catch(err){
-    statusEl.className = 'status error';
-    statusEl.textContent = '✕ ' + err.message;
-  } finally {
-    btn.disabled = false;
-    document.getElementById('gen-btn-text').textContent = 'Regenerate →';
-  }
+  }, 30);
 }
 
 /* ══════════════════

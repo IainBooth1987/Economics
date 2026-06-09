@@ -258,7 +258,7 @@ footer{text-align:center;padding:2rem;border-top:1px solid var(--border);font-fa
 <header>
   <a class="logo" href="index.html">BIZ-<span>OMICS</span></a>
   <div class="hdr-btns">
-    <a class="back-link" href="index.html">← Hub</a>
+    <a class="back-link" href="Economics_Games.html">← Arcade</a>
     <button class="print-btn-hdr" id="print-btn" onclick="window.print()" disabled>🖨 Print</button>
     <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
   </div>
@@ -381,22 +381,234 @@ function setDiff(d,btn){
 }
 
 /* ══════════════════════════════════
-   CLAUDE API
+   HARDCODED WORD BANK
 ══════════════════════════════════ */
-async function callClaude(prompt){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      messages:[{role:'user',content:prompt}]
-    })
-  });
-  if(!r.ok) throw new Error('API error '+r.status);
-  const d=await r.json();
-  return d.content.map(b=>b.text||'').join('');
-}
+const WS_BANK = {
+  supply_demand:[
+    {word:'DEMAND',def:'Quantity buyers willing to purchase at each price.'},
+    {word:'SUPPLY',def:'Quantity sellers willing to offer at each price.'},
+    {word:'PRICE',def:'The value at which a good is exchanged.'},
+    {word:'EQUILIBRIUM',def:'Where quantity demanded equals quantity supplied.'},
+    {word:'SURPLUS',def:'Excess supply above the equilibrium quantity.'},
+    {word:'SHORTAGE',def:'Excess demand below the equilibrium quantity.'},
+    {word:'SUBSTITUTE',def:'Good that can replace another in consumption.'},
+    {word:'COMPLEMENT',def:'Good consumed jointly with another good.'},
+    {word:'INFERIOR',def:'Good for which demand falls as income rises.'},
+    {word:'NORMAL',def:'Good for which demand rises as income rises.'},
+    {word:'CONTRACTION',def:'Movement up the demand curve as price rises.'},
+    {word:'EXTENSION',def:'Movement down the demand curve as price falls.'},
+    {word:'SHIFT',def:'Movement of the entire demand or supply curve.'},
+    {word:'COBWEB',def:'Model of cyclical price instability.'},
+  ],
+  market_failure:[
+    {word:'EXTERNALITY',def:'Cost or benefit falling on a third party.'},
+    {word:'MERIT',def:'Good under-consumed due to underestimated benefits.'},
+    {word:'DEMERIT',def:'Good over-consumed due to underestimated costs.'},
+    {word:'PUBLIC',def:'Non-rival and non-excludable good.'},
+    {word:'SUBSIDY',def:'Government payment to increase supply.'},
+    {word:'REGULATION',def:'Government rules controlling behaviour.'},
+    {word:'NUDGE',def:'Behavioural policy steering choices without force.'},
+    {word:'POLLUTION',def:'Classic negative externality harming third parties.'},
+    {word:'FREERIDE',def:'Consuming a good without contributing to its cost.'},
+    {word:'ASYMMETRIC',def:'Information failure where one party knows more.'},
+    {word:'PIGOUVIAN',def:'Tax equal to the marginal external cost.'},
+    {word:'DEADWEIGHT',def:'Welfare loss from allocative inefficiency.'},
+    {word:'OVERPROVISION',def:'Output beyond the socially optimal level.'},
+    {word:'UNDERPROVISION',def:'Output below the socially optimal level.'},
+  ],
+  elasticity:[
+    {word:'ELASTICITY',def:'Responsiveness of one variable to another.'},
+    {word:'INELASTIC',def:'Demand barely responds to price changes.'},
+    {word:'ELASTIC',def:'Demand highly responsive to price changes.'},
+    {word:'UNITARY',def:'Elasticity of exactly one.'},
+    {word:'INCOME',def:'Demand responsiveness to income changes.'},
+    {word:'CROSS',def:'Demand response to another goods price change.'},
+    {word:'NECESSITY',def:'Good with inelastic demand consumers must buy.'},
+    {word:'LUXURY',def:'Good with elastic demand consumers can delay.'},
+    {word:'REVENUE',def:'Price times quantity; changes depend on elasticity.'},
+    {word:'PROPORTION',def:'Larger income share raises price elasticity.'},
+    {word:'ADDICTION',def:'Makes demand highly inelastic over time.'},
+    {word:'SUBSTITUTE',def:'Availability raises price elasticity of demand.'},
+    {word:'HABIT',def:'Makes demand less sensitive to price rises.'},
+    {word:'BREADTH',def:'More substitutes means higher elasticity.'},
+  ],
+  fiscal_policy:[
+    {word:'FISCAL',def:'Policy using taxation and government spending.'},
+    {word:'DEFICIT',def:'Government spending exceeds tax revenues.'},
+    {word:'SURPLUS',def:'Tax revenues exceed government spending.'},
+    {word:'AUSTERITY',def:'Cutting spending to reduce the budget deficit.'},
+    {word:'MULTIPLIER',def:'Magnified effect of injection on national income.'},
+    {word:'CROWDING',def:'Government borrowing displaces private investment.'},
+    {word:'AUTOMATIC',def:'Stabilisers that adjust without active decisions.'},
+    {word:'STRUCTURAL',def:'Deficit that persists at full employment.'},
+    {word:'CYCLICAL',def:'Deficit caused by the economic cycle.'},
+    {word:'TRANSFER',def:'Government payment not tied to production.'},
+    {word:'INJECTION',def:'Government spending adding to circular flow.'},
+    {word:'LEAKAGE',def:'Savings, taxes or imports leaving circular flow.'},
+    {word:'STIMULUS',def:'Expansionary fiscal action to boost demand.'},
+    {word:'DEBT',def:'Accumulated government borrowing over time.'},
+  ],
+  monetary_policy:[
+    {word:'INTEREST',def:'Cost of borrowing used as a policy tool.'},
+    {word:'INFLATION',def:'Sustained rise in the general price level.'},
+    {word:'TARGET',def:'Bank of England aims for two percent inflation.'},
+    {word:'QUANTITATIVE',def:'Central bank creates money to buy assets.'},
+    {word:'LIQUIDITY',def:'Ease of converting an asset to cash.'},
+    {word:'TRANSMISSION',def:'How rate changes affect the economy.'},
+    {word:'REPO',def:'Rate at which central bank lends overnight.'},
+    {word:'EASING',def:'Looser monetary policy to stimulate demand.'},
+    {word:'TIGHTENING',def:'Restrictive policy to reduce inflation.'},
+    {word:'DEFLATION',def:'Sustained fall in the general price level.'},
+    {word:'CREDIT',def:'Borrowing; affected by interest rate changes.'},
+    {word:'MORTGAGE',def:'Loan secured on property; sensitive to rates.'},
+    {word:'STERLING',def:'The pound; monetary policy affects its value.'},
+    {word:'RESERVE',def:'Assets held by central bank as backing.'},
+  ],
+  inflation:[
+    {word:'DEFLATION',def:'Sustained fall in the general price level.'},
+    {word:'STAGFLATION',def:'Simultaneous high inflation and unemployment.'},
+    {word:'DEMAND',def:'Inflation caused by excess aggregate demand.'},
+    {word:'COST',def:'Inflation caused by rising production costs.'},
+    {word:'HYPERINFLATION',def:'Extremely rapid price rises.'},
+    {word:'EXPECTATIONS',def:'Beliefs about future inflation that self-fulfil.'},
+    {word:'WAGE',def:'Spiral linking higher pay to higher prices.'},
+    {word:'VELOCITY',def:'Speed at which money circulates.'},
+    {word:'DISINFLATION',def:'Falling rate of inflation not price levels.'},
+    {word:'PRICE',def:'Level measured by CPI or RPI indices.'},
+    {word:'REAL',def:'Value adjusted to remove effects of inflation.'},
+    {word:'NOMINAL',def:'Value measured in current prices.'},
+    {word:'INDEX',def:'Measure tracking price changes over time.'},
+    {word:'BASKET',def:'Collection of goods used to measure CPI.'},
+  ],
+  unemployment:[
+    {word:'FRICTIONAL',def:'Short-term unemployment between jobs.'},
+    {word:'STRUCTURAL',def:'Mismatch between skills and available jobs.'},
+    {word:'CYCLICAL',def:'Unemployment from lack of aggregate demand.'},
+    {word:'SEASONAL',def:'Unemployment rising and falling by season.'},
+    {word:'VOLUNTARY',def:'Workers choosing not to accept available jobs.'},
+    {word:'NATURAL',def:'Rate consistent with stable inflation.'},
+    {word:'HYSTERESIS',def:'Long unemployment causes permanent skill loss.'},
+    {word:'CLAIMANT',def:'Count of those claiming jobseeker benefits.'},
+    {word:'LABOUR',def:'Workforce available for employment.'},
+    {word:'TRAINING',def:'Supply-side policy to reduce structural unemployment.'},
+    {word:'MOBILITY',def:'Ability to move between jobs or regions.'},
+    {word:'RETRAINING',def:'Gaining new skills after job displacement.'},
+    {word:'BENEFITS',def:'Government payments to unemployed workers.'},
+    {word:'VACANCY',def:'Unfilled job; indicator of labour market tightness.'},
+  ],
+  economic_growth:[
+    {word:'GROWTH',def:'Increase in real GDP over time.'},
+    {word:'RECESSION',def:'Two consecutive quarters of negative growth.'},
+    {word:'POTENTIAL',def:'Maximum output at full employment.'},
+    {word:'OUTPUT',def:'Gap between actual and potential GDP.'},
+    {word:'CAPITAL',def:'Investment driving long-run growth.'},
+    {word:'PRODUCTIVITY',def:'Output per unit of input.'},
+    {word:'SUSTAINABLE',def:'Growth not depleting future resources.'},
+    {word:'INNOVATION',def:'New products shifting the production frontier.'},
+    {word:'INVESTMENT',def:'Spending on capital to increase future capacity.'},
+    {word:'TECHNOLOGY',def:'Key driver of productivity and growth.'},
+    {word:'INFRASTRUCTURE',def:'Roads, broadband and utilities supporting output.'},
+    {word:'HUMAN',def:'Capital embodied in knowledge and skills.'},
+    {word:'EDUCATION',def:'Supply-side investment boosting long-run growth.'},
+    {word:'BOOM',def:'Period of rapid economic expansion.'},
+  ],
+  trade:[
+    {word:'COMPARATIVE',def:'Advantage based on lower opportunity cost.'},
+    {word:'TARIFF',def:'Tax on imports protecting domestic industry.'},
+    {word:'QUOTA',def:'Limit on the quantity of imports.'},
+    {word:'PROTECTIONISM',def:'Shielding domestic firms from foreign competition.'},
+    {word:'DUMPING',def:'Selling exports below cost.'},
+    {word:'BALANCE',def:'Record of all international transactions.'},
+    {word:'CURRENT',def:'Account recording trade in goods and services.'},
+    {word:'RETALIATION',def:'Country responds to barriers with its own.'},
+    {word:'EXPORT',def:'Good or service sold to another country.'},
+    {word:'IMPORT',def:'Good or service bought from another country.'},
+    {word:'ABSOLUTE',def:'Advantage producing more with same resources.'},
+    {word:'SURPLUS',def:'Exports exceeding imports on current account.'},
+    {word:'DEFICIT',def:'Imports exceeding exports on current account.'},
+    {word:'TERMS',def:'Ratio of export prices to import prices.'},
+  ],
+  exchange_rates:[
+    {word:'APPRECIATION',def:'Rise in currency value under floating system.'},
+    {word:'DEPRECIATION',def:'Fall in currency value under floating system.'},
+    {word:'DEVALUATION',def:'Deliberate reduction of a fixed exchange rate.'},
+    {word:'FLOATING',def:'Exchange rate set by market forces.'},
+    {word:'MANAGED',def:'Exchange rate with central bank intervention.'},
+    {word:'COMPETITIVENESS',def:'Ability to sell exports at attractive prices.'},
+    {word:'JCURVE',def:'Short-run worsening before long-run improvement.'},
+    {word:'MARSHALL',def:'Condition name: elasticities must sum above one.'},
+    {word:'SPECULATION',def:'Buying currency expecting its value to rise.'},
+    {word:'RESERVE',def:'Foreign currency held to defend the exchange rate.'},
+    {word:'INTERVENTION',def:'Central bank buying or selling currency.'},
+    {word:'PARITY',def:'Rate at which two currencies are exchanged.'},
+    {word:'REVALUATION',def:'Deliberate increase of a fixed exchange rate.'},
+    {word:'VOLATILITY',def:'Fluctuation in currency value over time.'},
+  ],
+  labour_markets:[
+    {word:'WAGE',def:'Payment for labour in the labour market.'},
+    {word:'MINIMUM',def:'Legally enforceable lowest hourly pay rate.'},
+    {word:'MONOPSONY',def:'Single buyer of labour setting wages low.'},
+    {word:'UNION',def:'Workers organisation bargaining collectively.'},
+    {word:'PRODUCTIVITY',def:'Output per worker determining labour demand.'},
+    {word:'MOBILITY',def:'Ability to move between jobs or regions.'},
+    {word:'DISCRIMINATION',def:'Unequal pay based on non-productive factors.'},
+    {word:'DERIVED',def:'Labour demand depends on product demand.'},
+    {word:'ELASTICITY',def:'Responsiveness of labour supply to wages.'},
+    {word:'COLLECTIVE',def:'Bargaining by workers as a group.'},
+    {word:'STRIKE',def:'Workers refusing to work for higher wages.'},
+    {word:'REAL',def:'Wage adjusted for inflation.'},
+    {word:'NOMINAL',def:'Wage measured in current prices.'},
+    {word:'LIVING',def:'Wage set to cover basic cost of living.'},
+  ],
+  competition:[
+    {word:'MONOPOLY',def:'Single firm dominating a market.'},
+    {word:'OLIGOPOLY',def:'Market dominated by a few large firms.'},
+    {word:'DUOPOLY',def:'Market structure with exactly two firms.'},
+    {word:'CARTEL',def:'Firms colluding to fix prices.'},
+    {word:'COLLUSION',def:'Secret cooperation to avoid competition.'},
+    {word:'BARRIER',def:'Obstacle preventing new firms entering.'},
+    {word:'PREDATORY',def:'Pricing below cost to drive out rivals.'},
+    {word:'SUPERNORMAL',def:'Profit above normal; attracts entry.'},
+    {word:'CONTESTABLE',def:'Market threatened by potential entrants.'},
+    {word:'KINKED',def:'Demand curve explaining price rigidity.'},
+    {word:'ALLOCATIVE',def:'Efficiency where price equals marginal cost.'},
+    {word:'PRODUCTIVE',def:'Efficiency at minimum average cost.'},
+    {word:'DYNAMIC',def:'Efficiency from innovation over time.'},
+    {word:'CONCENTRATION',def:'Degree to which market is dominated by few firms.'},
+  ],
+  externalities:[
+    {word:'NEGATIVE',def:'External cost imposed on a third party.'},
+    {word:'POSITIVE',def:'External benefit received by a third party.'},
+    {word:'SOCIAL',def:'Total cost or benefit including external effects.'},
+    {word:'PRIVATE',def:'Cost or benefit to the individual only.'},
+    {word:'MARGINAL',def:'The extra external cost or benefit.'},
+    {word:'OPTIMAL',def:'Output where social marginal cost equals benefit.'},
+    {word:'PIGOUVIAN',def:'Tax correcting a negative externality.'},
+    {word:'SUBSIDY',def:'Payment correcting a positive externality.'},
+    {word:'CARBON',def:'Tax on emissions to reduce pollution externality.'},
+    {word:'POLLUTION',def:'Classic example of a negative externality.'},
+    {word:'VACCINATION',def:'Classic example of a positive externality.'},
+    {word:'OVERPRODUCTION',def:'Result of ignoring negative externalities.'},
+    {word:'REGULATION',def:'Rules limiting externality-causing behaviour.'},
+    {word:'PERMIT',def:'Tradeable right to produce a given level of pollution.'},
+  ],
+  behavioural:[
+    {word:'NUDGE',def:'Steering choices without restricting freedom.'},
+    {word:'HEURISTIC',def:'Mental shortcut used in decision-making.'},
+    {word:'ANCHORING',def:'Over-relying on the first piece of information.'},
+    {word:'FRAMING',def:'How choices are presented affects decisions.'},
+    {word:'LOSS',def:'Aversion: losses hurt more than gains please.'},
+    {word:'PRESENT',def:'Bias: preference for immediate rewards.'},
+    {word:'HERDING',def:'Following what others do rather than reasoning.'},
+    {word:'OVERCONFIDENCE',def:'Overestimating own ability to make good decisions.'},
+    {word:'SALIENCE',def:'More prominent information weighted too heavily.'},
+    {word:'DEFAULT',def:'Option automatically chosen unless changed.'},
+    {word:'COMMITMENT',def:'Device binding future behaviour to a plan.'},
+    {word:'INERTIA',def:'Tendency to stick with the current option.'},
+    {word:'RATIONAL',def:'Standard model: agents maximise utility.'},
+    {word:'IRRATIONAL',def:'Behaviour inconsistent with standard model.'},
+  ],
+};
 
 /* ══════════════════════════════════
    WORD SEARCH ENGINE
@@ -434,10 +646,8 @@ function buildWordSearch(words){
 
   for(const entry of clean){
     const word=entry.word;
-    // Try random positions and directions
     let success=false;
-    const attempts=200;
-    for(let a=0;a<attempts&&!success;a++){
+    for(let a=0;a<300&&!success;a++){
       const [dr,dc]=DIRS[Math.floor(Math.random()*DIRS.length)];
       const r=Math.floor(Math.random()*SIZE);
       const c=Math.floor(Math.random()*SIZE);
@@ -448,7 +658,6 @@ function buildWordSearch(words){
       }
     }
   }
-  // Fill blanks with random letters
   for(let r=0;r<SIZE;r++)
     for(let c=0;c<SIZE;c++)
       if(grid[r][c]==='') grid[r][c]=LETTERS[Math.floor(Math.random()*LETTERS.length)];
@@ -467,77 +676,56 @@ let selStart=null;
 let selCells=[];
 let foundCount=0;
 
-async function generatePuzzle(){
+function generatePuzzle(){
   const btn=document.getElementById('gen-btn');
   const statusEl=document.getElementById('status');
   btn.disabled=true;
   document.getElementById('print-btn').disabled=true;
   statusEl.className='status loading';
-  statusEl.textContent='⟳ Generating words with AI…';
+  statusEl.textContent='⟳ Building puzzle…';
 
-  const topicLabel=TOPICS.find(t=>t.id===selectedTopic)?.label||selectedTopic;
-  const diffLabel=selectedDiff==='gcse'?'GCSE':'A-Level';
+  setTimeout(()=>{
+    try{
+      const topicLabel=TOPICS.find(t=>t.id===selectedTopic)?.label||selectedTopic;
+      const diffLabel=selectedDiff==='gcse'?'GCSE':'A-Level';
+      let pool = (WS_BANK[selectedTopic]||[]);
+      if(selectedDiff==='gcse') pool=pool.filter(w=>w.word.length<=8).concat(pool.filter(w=>w.word.length>8)).slice(0,14);
+      const entries=pool.slice().sort(()=>Math.random()-0.5).slice(0,14);
+      if(entries.length<5) throw new Error('Not enough words for this topic.');
 
-  const diffInstr=selectedDiff==='gcse'
-    ?'Use accessible, commonly known economics terms suitable for GCSE students.'
-    :'Use precise A-Level Economics terminology, including technical terms from the specification.';
+      const {grid,placed}=buildWordSearch(entries);
+      if(placed.length<5) throw new Error('Could not place enough words. Try again.');
 
-  const prompt=`You are an expert Economics teacher. Generate exactly 14 single-word economics terms related to the topic: "${topicLabel}" for a ${diffLabel} word search puzzle.
+      currentPuzzle={grid,placed};
+      foundCount=0;
+      renderGrid(grid,placed);
+      renderWordList(placed);
+      updateProgress(0,placed.length);
 
-Rules:
-- Each term must be a SINGLE word, no spaces or hyphens
-- Between 4 and 12 letters long
-- Directly relevant to ${topicLabel} in Economics
-- Include a short definition (max 10 words) for each term
-${diffInstr}
+      document.getElementById('pm-topic').textContent=topicLabel;
+      document.getElementById('pm-difficulty').textContent=diffLabel;
+      document.getElementById('pm-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+      document.getElementById('pm-sub-left').textContent=`${topicLabel} · ${placed.length} words · All 8 directions`;
 
-Respond ONLY with a JSON array, no markdown or preamble:
-[{"word":"ELASTIC","def":"Demand responds greatly to price changes"},...]`;
+      document.getElementById('game-area').classList.add('visible');
+      document.getElementById('print-btn').disabled=false;
+      document.getElementById('complete-banner').classList.remove('show');
+      statusEl.className='status';
+      statusEl.textContent=`✓ ${placed.length} words hidden in a ${SIZE}×${SIZE} grid.`;
 
-  try{
-    const raw=await callClaude(prompt);
-    const clean=raw.replace(/```json|```/g,'').trim();
-    const match=clean.match(/\[[\s\S]*\]/);
-    const entries=JSON.parse(match?match[0]:clean);
-    if(!Array.isArray(entries)||entries.length<6) throw new Error('Not enough words returned.');
+      clearInterval(timerInterval);
+      timerSecs=0;
+      updateTimer();
+      timerInterval=setInterval(()=>{timerSecs++;updateTimer();},1000);
 
-    statusEl.textContent='⟳ Building puzzle…';
-    await new Promise(r=>setTimeout(r,20));
-
-    const {grid,placed}=buildWordSearch(entries);
-    if(placed.length<5) throw new Error('Could not place enough words. Try again.');
-
-    currentPuzzle={grid,placed};
-    foundCount=0;
-    renderGrid(grid,placed);
-    renderWordList(placed);
-    updateProgress(0,placed.length);
-
-    // Print meta
-    document.getElementById('pm-topic').textContent=topicLabel;
-    document.getElementById('pm-difficulty').textContent=diffLabel;
-    document.getElementById('pm-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-    document.getElementById('pm-sub-left').textContent=`${topicLabel} · ${placed.length} words · All 8 directions`;
-
-    document.getElementById('game-area').classList.add('visible');
-    document.getElementById('print-btn').disabled=false;
-    document.getElementById('complete-banner').classList.remove('show');
-    statusEl.className='status';
-    statusEl.textContent=`✓ ${placed.length} words hidden in a ${SIZE}×${SIZE} grid.`;
-
-    // Start timer
-    clearInterval(timerInterval);
-    timerSecs=0;
-    updateTimer();
-    timerInterval=setInterval(()=>{timerSecs++;updateTimer();},1000);
-
-  }catch(e){
-    statusEl.className='status error';
-    statusEl.textContent='✕ '+e.message;
-  }finally{
-    btn.disabled=false;
-    btn.textContent='New Puzzle →';
-  }
+    }catch(e){
+      statusEl.className='status error';
+      statusEl.textContent='✕ '+e.message;
+    }finally{
+      btn.disabled=false;
+      btn.textContent='New Puzzle →';
+    }
+  },30);
 }
 
 function updateTimer(){
