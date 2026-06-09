@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>True or False Buzzer — BIZ-OMICS</title>
+<style>
+:root{
+  --ff-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --ff-mono:'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#0d1526;
+  --amber:#f59e0b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,0.08);
+  --true:#16a34a;
+  --false:#dc2626;
+  --true-dim:rgba(22,163,74,0.12);
+  --false-dim:rgba(220,38,38,0.12);
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--surface:#fff;--surface2:#f1f5f9;
+  --text:#0f172a;--muted:#64748b;--border:rgba(0,0,0,0.09);
+  --true-dim:rgba(22,163,74,0.09);--false-dim:rgba(220,38,38,0.09);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--ff-sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s;}
+
+/* HEADER */
+header{padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,14,26,.97);backdrop-filter:blur(16px);z-index:200;}
+[data-theme="light"] header{background:rgba(248,250,252,.97);}
+.logo{font-size:1.25rem;font-weight:900;letter-spacing:-.02em;text-decoration:none;color:var(--text);}
+.logo span{color:var(--amber);}
+.back-link{font-family:var(--ff-mono);font-size:.7rem;color:var(--muted);text-decoration:none;padding:.3rem .65rem;border-radius:100px;border:1px solid var(--border);transition:all .18s;margin-left:auto;margin-right:.6rem;}
+.back-link:hover{color:var(--amber);border-color:var(--amber);}
+.theme-toggle{padding:.3rem .5rem;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem;line-height:1;}
+.header-right{display:flex;align-items:center;gap:.5rem;}
+.mode-pill{font-family:var(--ff-mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:.25rem .65rem;border-radius:100px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .18s;}
+.mode-pill.active{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4);color:var(--amber);}
+
+/* SCREENS */
+.screen{display:none;max-width:780px;margin:0 auto;padding:3rem 1.5rem 5rem;}
+.screen.active{display:block;}
+
+/* ── LOBBY ── */
+.lobby-hero{text-align:center;margin-bottom:2.5rem;}
+.eyebrow{font-family:var(--ff-mono);font-size:.62rem;color:var(--amber);letter-spacing:.22em;text-transform:uppercase;margin-bottom:.8rem;}
+.lobby-hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;letter-spacing:-.025em;line-height:1.05;margin-bottom:.7rem;}
+.lobby-hero h1 em{font-style:normal;color:var(--amber);}
+.lobby-hero p{font-size:.9rem;color:var(--muted);line-height:1.7;max-width:460px;margin:0 auto;}
+.lobby-options{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;}
+.option-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:1.4rem;cursor:pointer;transition:all .2s;text-align:left;}
+[data-theme="light"] .option-card{background:#fff;}
+.option-card:hover{border-color:rgba(245,158,11,.35);transform:translateY(-2px);}
+.option-card.selected{border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.07);}
+.option-card::before{content:'';display:block;height:2px;border-radius:2px;margin-bottom:1rem;background:linear-gradient(90deg,var(--amber),rgba(245,158,11,.2));}
+.option-title{font-size:.95rem;font-weight:800;margin-bottom:.35rem;}
+.option-desc{font-size:.75rem;color:var(--muted);line-height:1.55;}
+.option-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--amber);margin-top:.6rem;letter-spacing:.08em;}
+.filter-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.8rem;}
+.seg-group{display:flex;border-radius:9px;overflow:hidden;border:1px solid var(--border);}
+.seg-btn{padding:.38rem .8rem;font-size:.72rem;font-weight:600;font-family:var(--ff-sans);background:transparent;color:var(--muted);border:none;border-right:1px solid var(--border);cursor:pointer;transition:all .15s;}
+.seg-btn:last-child{border-right:none;}
+.seg-btn.active{background:var(--amber);color:#000;}
+.seg-btn:not(.active):hover{background:rgba(255,255,255,.05);color:var(--text);}
+[data-theme="light"] .seg-btn:not(.active):hover{background:rgba(0,0,0,.04);}
+.start-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.8rem;border-radius:10px;border:none;background:var(--amber);color:#000;font-size:.95rem;font-weight:800;font-family:var(--ff-sans);cursor:pointer;transition:opacity .18s;}
+.start-btn:hover{opacity:.85;}
+
+/* ── SOLO GAME ── */
+.solo-wrap{position:relative;}
+.progress-bar-outer{height:4px;background:var(--border);border-radius:2px;margin-bottom:2rem;overflow:hidden;}
+.progress-bar-inner{height:100%;background:var(--amber);border-radius:2px;transition:width .3s;}
+.score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+.score-box{text-align:center;}
+.score-val{font-family:var(--ff-mono);font-size:1.4rem;font-weight:700;color:var(--amber);line-height:1;}
+.score-lbl{font-family:var(--ff-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.2rem;}
+.timer-ring{position:relative;width:56px;height:56px;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring circle{fill:none;stroke-width:4;}
+.timer-ring .bg{stroke:var(--border);}
+.timer-ring .fg{stroke:var(--amber);stroke-dasharray:138;stroke-dashoffset:0;transition:stroke-dashoffset .9s linear,stroke .3s;}
+.timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:.9rem;font-weight:700;color:var(--text);}
+
+/* statement card */
+.statement-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:2rem 2rem 1.6rem;margin-bottom:1.2rem;min-height:140px;display:flex;flex-direction:column;justify-content:center;position:relative;transition:all .25s;}
+[data-theme="light"] .statement-card{background:#fff;}
+.statement-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,var(--amber),rgba(245,158,11,.2));}
+.stmt-topic{font-family:var(--ff-mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem;}
+.stmt-text{font-size:1.15rem;font-weight:700;line-height:1.45;letter-spacing:-.01em;}
+.stmt-hint{font-size:.78rem;color:var(--muted);margin-top:.6rem;line-height:1.5;font-style:italic;}
+
+/* answer buttons */
+.answer-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem;}
+.answer-btn{padding:1.1rem;border-radius:12px;border:2px solid transparent;font-size:1.1rem;font-weight:900;font-family:var(--ff-sans);cursor:pointer;transition:all .18s;letter-spacing:.02em;}
+.answer-btn.true-btn{background:var(--true-dim);color:var(--true);border-color:rgba(22,163,74,.25);}
+.answer-btn.true-btn:hover{background:rgba(22,163,74,.2);transform:translateY(-2px);}
+.answer-btn.false-btn{background:var(--false-dim);color:var(--false);border-color:rgba(220,38,38,.25);}
+.answer-btn.false-btn:hover{background:rgba(220,38,38,.2);transform:translateY(-2px);}
+.answer-btn:disabled{cursor:default;transform:none!important;}
+.answer-btn.selected-correct{background:var(--true);color:#fff;border-color:var(--true);}
+.answer-btn.selected-wrong{background:var(--false);color:#fff;border-color:var(--false);}
+.answer-btn.reveal-correct{background:var(--true);color:#fff;border-color:var(--true);}
+
+/* explanation */
+.explanation-box{display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.3rem;margin-bottom:1rem;animation:slideUp .25s ease;}
+.explanation-box.show{display:block;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.exp-verdict{font-family:var(--ff-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:.4rem;}
+.exp-verdict.correct{color:var(--true);}
+.exp-verdict.wrong{color:var(--false);}
+.exp-text{font-size:.82rem;color:var(--muted);line-height:1.65;}
+.exp-eval{font-size:.78rem;color:var(--text);line-height:1.6;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);}
+.next-q-btn{display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;padding:.65rem;border-radius:9px;border:none;background:var(--amber);color:#000;font-size:.85rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;transition:opacity .18s;}
+.next-q-btn:hover{opacity:.85;}
+
+/* ── RESULTS ── */
+.results-wrap{text-align:center;}
+.results-score{font-size:4rem;font-weight:900;color:var(--amber);line-height:1;margin:1rem 0 .3rem;}
+.results-label{font-size:.85rem;color:var(--muted);margin-bottom:2rem;}
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:2rem;}
+.res-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:.9rem;}
+[data-theme="light"] .res-stat{background:#fff;}
+.res-val{font-family:var(--ff-mono);font-size:1.3rem;font-weight:700;color:var(--amber);}
+.res-lbl{font-family:var(--ff-mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.25rem;}
+.results-btns{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;}
+.btn-primary{padding:.65rem 1.5rem;border-radius:9px;border:none;background:var(--amber);color:#000;font-size:.85rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;transition:opacity .18s;}
+.btn-primary:hover{opacity:.85;}
+.btn-secondary{padding:.65rem 1.5rem;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.85rem;font-weight:600;font-family:var(--ff-sans);cursor:pointer;transition:all .18s;}
+.btn-secondary:hover{border-color:var(--amber);color:var(--amber);}
+
+/* ══════════════════════════════
+   WHITEBOARD MODE
+══════════════════════════════ */
+#screen-whiteboard{background:var(--bg);padding:0;}
+.wb-wrap{min-height:100vh;display:flex;flex-direction:column;}
+.wb-topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);}
+.wb-progress{font-family:var(--ff-mono);font-size:.7rem;color:var(--muted);}
+.wb-score-strip{display:flex;gap:1.5rem;}
+.wb-score-item{text-align:center;}
+.wb-score-val{font-family:var(--ff-mono);font-size:1rem;font-weight:700;color:var(--amber);}
+.wb-score-lbl{font-family:var(--ff-mono);font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.wb-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 4rem;text-align:center;max-width:1000px;margin:0 auto;width:100%;}
+.wb-topic{font-family:var(--ff-mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:1.2rem;}
+.wb-statement{font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:900;letter-spacing:-.02em;line-height:1.25;margin-bottom:2.5rem;max-width:800px;}
+.wb-buzz-row{display:flex;gap:1.5rem;justify-content:center;margin-bottom:2rem;}
+.wb-buzz{width:180px;height:180px;border-radius:50%;border:none;font-size:1.4rem;font-weight:900;font-family:var(--ff-sans);cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.4rem;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.wb-buzz:hover{transform:translateY(-4px);box-shadow:0 16px 50px rgba(0,0,0,.5);}
+.wb-buzz:active{transform:scale(.96);}
+.wb-buzz.true-buzz{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
+.wb-buzz.false-buzz{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;}
+.wb-buzz-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;opacity:.8;}
+.wb-buzz.disabled{opacity:.4;pointer-events:none;}
+.wb-reveal-btn{padding:.75rem 2.5rem;border-radius:10px;border:2px solid rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:var(--amber);font-size:.9rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;transition:all .2s;letter-spacing:.05em;}
+.wb-reveal-btn:hover{background:rgba(245,158,11,.2);}
+.wb-reveal-btn:disabled{opacity:.3;cursor:default;}
+.wb-answer-reveal{display:none;width:100%;max-width:800px;margin:0 auto;}
+.wb-answer-reveal.show{display:block;animation:slideUp .3s ease;}
+.wb-verdict{font-size:2rem;font-weight:900;margin-bottom:.5rem;}
+.wb-verdict.true-v{color:var(--true);}
+.wb-verdict.false-v{color:var(--false);}
+.wb-exp{font-size:1rem;color:var(--muted);line-height:1.7;margin-bottom:.5rem;}
+.wb-eval{font-size:.95rem;color:var(--text);line-height:1.7;padding:.8rem 1.2rem;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.18);border-radius:10px;margin-top:.6rem;}
+.wb-next-row{display:flex;gap:1rem;justify-content:center;margin-top:1.8rem;}
+.wb-next-btn{padding:.7rem 2rem;border-radius:9px;border:none;background:var(--amber);color:#000;font-size:.9rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;transition:opacity .18s;}
+.wb-next-btn:hover{opacity:.85;}
+.wb-end-btn{padding:.7rem 2rem;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.9rem;font-weight:600;font-family:var(--ff-sans);cursor:pointer;transition:all .18s;}
+.wb-end-btn:hover{border-color:var(--amber);color:var(--amber);}
+
+/* flash overlay */
+.flash-overlay{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:999;transition:opacity .15s;}
+.flash-overlay.true-flash{background:rgba(22,163,74,.18);}
+.flash-overlay.false-flash{background:rgba(220,38,38,.18);}
+.flash-overlay.active{opacity:1;}
+
+footer{text-align:center;padding:2rem;border-top:1px solid var(--border);font-family:var(--ff-mono);font-size:.65rem;color:var(--muted);opacity:.35;}
+
+@media(max-width:600px){
+  .lobby-options{grid-template-columns:1fr;}
+  .wb-main{padding:2rem 1.5rem;}
+  .wb-buzz{width:130px;height:130px;font-size:1.1rem;}
+  .wb-statement{font-size:1.4rem;}
+  .answer-row{grid-template-columns:1fr 1fr;}
+}
+@media print{header,footer,.answer-row,.next-q-btn,.wb-buzz-row,.wb-next-row{display:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="flash-overlay" id="flash-overlay"></div>
+
+<header>
+  <a class="logo" href="index.html">BIZ-<span>OMICS</span></a>
+  <div class="header-right">
+    <a class="back-link" href="index.html">← Hub</a>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<!-- ══ LOBBY ══ -->
+<div class="screen active" id="screen-lobby">
+  <div class="lobby-hero">
+    <div class="eyebrow">// Economics Arcade · Buzzer Game</div>
+    <h1>True or <em>False?</em></h1>
+    <p>Rapid-fire evaluative statements — is the economics claim always true, never true, or does it depend? Test your critical thinking.</p>
+  </div>
+
+  <div class="lobby-options">
+    <div class="option-card selected" id="opt-solo" onclick="selectMode('solo')">
+      <div class="option-title">🎯 Solo Mode</div>
+      <div class="option-desc">15 questions, timed, scored. Instant feedback with full explanation after each answer.</div>
+      <div class="option-meta">15 questions · 12 seconds each</div>
+    </div>
+    <div class="option-card" id="opt-wb" onclick="selectMode('whiteboard')">
+      <div class="option-title">📺 Whiteboard Mode</div>
+      <div class="option-desc">Big display for the whole class. Statement shown, students discuss, teacher reveals answer.</div>
+      <div class="option-meta">All questions · teacher-paced</div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <div class="seg-group">
+      <button class="seg-btn active" data-filter="topic" data-val="all" onclick="setFilter('topic','all',this)">All Topics</button>
+      <button class="seg-btn" data-filter="topic" data-val="macro" onclick="setFilter('topic','macro',this)">Macro</button>
+      <button class="seg-btn" data-filter="topic" data-val="micro" onclick="setFilter('topic','micro',this)">Micro</button>
+    </div>
+    <div class="seg-group">
+      <button class="seg-btn active" data-filter="diff" data-val="all" onclick="setFilter('diff','all',this)">All Levels</button>
+      <button class="seg-btn" data-filter="diff" data-val="gcse" onclick="setFilter('diff','gcse',this)">GCSE</button>
+      <button class="seg-btn" data-filter="diff" data-val="alevel" onclick="setFilter('diff','alevel',this)">A-Level</button>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startGame()">Start →</button>
+</div>
+
+<!-- ══ SOLO GAME ══ -->
+<div class="screen" id="screen-solo">
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar"></div></div>
+  <div class="score-row">
+    <div class="score-box"><div class="score-val" id="solo-score">0</div><div class="score-lbl">Score</div></div>
+    <div class="timer-ring">
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle class="bg" cx="28" cy="28" r="22"/>
+        <circle class="fg" id="timer-fg" cx="28" cy="28" r="22"/>
+      </svg>
+      <div class="timer-text" id="timer-text">12</div>
+    </div>
+    <div class="score-box"><div class="score-val" id="solo-q">1/15</div><div class="score-lbl">Question</div></div>
+  </div>
+
+  <div class="statement-card" id="solo-card">
+    <div class="stmt-topic" id="solo-topic"></div>
+    <div class="stmt-text" id="solo-stmt"></div>
+  </div>
+
+  <div class="answer-row">
+    <button class="answer-btn true-btn" id="btn-true" onclick="soloAnswer(true)">✓ TRUE</button>
+    <button class="answer-btn false-btn" id="btn-false" onclick="soloAnswer(false)">✗ FALSE</button>
+  </div>
+
+  <div class="explanation-box" id="explanation-box">
+    <div class="exp-verdict" id="exp-verdict"></div>
+    <div class="exp-text" id="exp-text"></div>
+    <div class="exp-eval" id="exp-eval"></div>
+  </div>
+  <button class="next-q-btn" id="next-q-btn" style="display:none" onclick="nextSoloQ()">Next question →</button>
+</div>
+
+<!-- ══ RESULTS ══ -->
+<div class="screen" id="screen-results">
+  <div class="results-wrap">
+    <div class="eyebrow" style="text-align:center">// Round complete</div>
+    <div class="results-score" id="res-score">0</div>
+    <div class="results-label" id="res-label">out of 15</div>
+    <div class="results-grid">
+      <div class="res-stat"><div class="res-val" id="res-correct">0</div><div class="res-lbl">Correct</div></div>
+      <div class="res-stat"><div class="res-val" id="res-streak">0</div><div class="res-lbl">Best streak</div></div>
+      <div class="res-stat"><div class="res-val" id="res-time">0s</div><div class="res-lbl">Avg time</div></div>
+    </div>
+    <div id="res-missed" style="margin-bottom:1.5rem;"></div>
+    <div class="results-btns">
+      <button class="btn-primary" onclick="startGame()">Play again →</button>
+      <button class="btn-secondary" onclick="showScreen('screen-lobby')">Change settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WHITEBOARD ══ -->
+<div class="screen" id="screen-whiteboard">
+  <div class="wb-wrap">
+    <div class="wb-topbar">
+      <span class="wb-progress" id="wb-progress">Question 1</span>
+      <div class="wb-score-strip">
+        <div class="wb-score-item"><div class="wb-score-val" id="wb-true-ct">0</div><div class="wb-score-lbl">True</div></div>
+        <div class="wb-score-item"><div class="wb-score-val" id="wb-false-ct">0</div><div class="wb-score-lbl">False</div></div>
+      </div>
+      <button class="btn-secondary" style="padding:.4rem .9rem;font-size:.72rem;" onclick="showScreen('screen-lobby')">← Exit</button>
+    </div>
+    <div class="wb-main">
+      <div class="wb-topic" id="wb-topic"></div>
+      <div class="wb-statement" id="wb-stmt"></div>
+      <div class="wb-buzz-row" id="wb-buzz-row">
+        <button class="wb-buzz true-buzz" onclick="wbVote(true)">✓<span class="wb-buzz-label">True</span></button>
+        <button class="wb-buzz false-buzz" onclick="wbVote(false)">✗<span class="wb-buzz-label">False</span></button>
+      </div>
+      <button class="wb-reveal-btn" id="wb-reveal-btn" onclick="wbReveal()">Reveal Answer ↓</button>
+      <div class="wb-answer-reveal" id="wb-answer-reveal">
+        <div class="wb-verdict" id="wb-verdict"></div>
+        <div class="wb-exp" id="wb-exp"></div>
+        <div class="wb-eval" id="wb-eval"></div>
+        <div class="wb-next-row">
+          <button class="wb-next-btn" id="wb-next-btn" onclick="wbNext()">Next question →</button>
+          <button class="wb-end-btn" onclick="showScreen('screen-lobby')">End session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>biz-omics.co.uk · A-Level Economics · © BIZ-OMICS</footer>
+
+<script>
+/* ══════════════════════════════════════════════════
+   STATEMENT BANK
+   {s: statement, a: true|false, topic, diff, exp: explanation, eval: evaluative point}
+══════════════════════════════════════════════════ */
+const STATEMENTS = [
+  /* ── MACRO ── */
+  {s:"A cut in interest rates will always increase consumer spending.",a:false,topic:"Monetary Policy",diff:"gcse",
+   exp:"Not necessarily — if consumer confidence is low or debt levels are high, households may save the extra disposable income rather than spend it.",
+   ev:"The effectiveness depends on the elasticity of demand for credit and consumer expectations about future income."},
+  {s:"A fall in the exchange rate will always increase a country's exports.",a:false,topic:"Exchange Rates",diff:"gcse",
+   exp:"A weaker exchange rate makes exports cheaper in foreign currency, but the Marshall-Lerner condition must hold — the combined price elasticities of demand for exports and imports must exceed one.",
+   ev:"In the short run, the J-curve effect means the current account may initially worsen before improving."},
+  {s:"Higher inflation always means lower unemployment.",a:false,topic:"Inflation & Unemployment",diff:"alevel",
+   exp:"The short-run Phillips curve suggests a trade-off, but in the long run the curve is vertical — there is no lasting trade-off. Stagflation in the 1970s disproved a permanent relationship.",
+   ev:"Expectations-augmented models show that if workers anticipate inflation, real wages and employment return to their natural rates."},
+  {s:"Government borrowing always crowds out private investment.",a:false,topic:"Fiscal Policy",diff:"alevel",
+   exp:"Crowding out depends on the state of the economy. In a recession with spare capacity and low interest rates, the multiplier effect may mean borrowing stimulates rather than displaces private investment.",
+   ev:"Keynesians argue that in a liquidity trap, government spending is the only effective tool — crowding out is minimal when private investment has already collapsed."},
+  {s:"A current account deficit always indicates a weak economy.",a:false,topic:"Balance of Payments",diff:"alevel",
+   exp:"A deficit may reflect strong domestic demand pulling in imports, or foreign investors financing it by buying domestic assets — neither is inherently negative.",
+   ev:"The USA has run a persistent current account deficit while maintaining strong growth, suggesting the deficit can be sustainable if the financial account surplus offsets it."},
+  {s:"Quantitative easing directly causes inflation.",a:false,topic:"Monetary Policy",diff:"alevel",
+   exp:"QE increases bank reserves and asset prices but only causes inflation if money circulates in the real economy. After 2009, banks hoarded reserves and inflation remained low.",
+   ev:"The velocity of money is key — if it falls as fast as the money supply rises, the price level may not change significantly."},
+  {s:"Economic growth always improves living standards.",a:false,topic:"Economic Growth",diff:"gcse",
+   exp:"Growth raises average incomes but may worsen inequality, damage the environment or come at the cost of leisure time — measures like the HDI capture dimensions GDP ignores.",
+   ev:"The Easterlin paradox suggests beyond a threshold income, additional growth does not raise self-reported happiness — distribution matters as much as the total."},
+  {s:"A budget deficit means a government is being irresponsible.",a:false,topic:"Fiscal Policy",diff:"gcse",
+   exp:"Deficit spending can be justified during recessions to support aggregate demand. The key question is whether the deficit is cyclical or structural.",
+   ev:"Golden rule arguments distinguish between borrowing to invest (acceptable) and borrowing to fund current spending (less sustainable in the long run)."},
+  {s:"Deflation is always good for consumers.",a:false,topic:"Inflation",diff:"gcse",
+   exp:"While falling prices increase real purchasing power in the short run, deflation can trigger a debt-deflation spiral — real debt burdens rise, demand collapses and unemployment rises.",
+   ev:"Japan's 'Lost Decade' illustrates how entrenched deflation can be more damaging than moderate inflation."},
+  {s:"Increasing the money supply always causes inflation.",a:false,topic:"Monetary Policy",diff:"alevel",
+   exp:"The quantity theory MV=PT only predicts inflation if velocity (V) is stable and output (T) is at capacity. In a recession with a negative output gap, extra money may just close the gap.",
+   ev:"Post-2008 QE programmes increased the money supply substantially with little inflationary impact, suggesting the relationship is far from mechanical."},
+  {s:"A rise in interest rates will always reduce inflation.",a:false,topic:"Monetary Policy",diff:"alevel",
+   exp:"Higher rates reduce demand-pull inflation but are ineffective against cost-push inflation caused by supply shocks such as rising oil prices.",
+   ev:"Raising rates during a supply-side inflationary shock risks pushing the economy into recession without solving the underlying cause."},
+  {s:"Free trade always benefits all countries equally.",a:false,topic:"International Trade",diff:"gcse",
+   exp:"Comparative advantage theory predicts mutual gains, but distribution depends on terms of trade — developing nations exporting primary commodities may face deteriorating terms of trade over time.",
+   ev:"The Prebisch-Singer hypothesis argues commodity prices fall relative to manufactured goods, locking developing countries into a disadvantageous specialisation."},
+  {s:"A depreciation of the pound always worsens UK inflation.",a:false,topic:"Exchange Rates",diff:"alevel",
+   exp:"Depreciation raises import costs (cost-push inflation) but the size of the effect depends on import-intensity of production, profit margins of importers and the proportion of goods imported.",
+   ev:"If importers absorb the cost in lower margins rather than passing it on, inflationary pressure may be limited in the short run."},
+  {s:"Supply-side policies always take a long time to work.",a:false,topic:"Supply-Side Policy",diff:"alevel",
+   exp:"Some supply-side policies, like cutting income tax, can have a relatively quick effect on labour supply incentives. Others, like education reform, take a generation to filter through.",
+   ev:"Deregulation and privatisation may produce efficiency gains within months, though their full macroeconomic effects may take years to materialise."},
+  {s:"Higher government spending always increases GDP.",a:false,topic:"Fiscal Policy",diff:"alevel",
+   exp:"The multiplier depends on the marginal propensity to consume and withdrawal rates. If leakages (taxes, saving, imports) are high, the multiplier may be close to zero.",
+   ev:"Ricardian equivalence suggests rational consumers anticipate future tax rises and save the extra income, neutralising the fiscal stimulus entirely."},
+  {s:"Unemployment always falls during a period of economic growth.",a:false,topic:"Unemployment",diff:"gcse",
+   exp:"Jobless growth is possible if productivity rises faster than output, meaning fewer workers are needed to produce more. Structural unemployment may persist even as GDP rises.",
+   ev:"Firms may initially respond to rising demand by increasing hours for existing staff (intensive margin) before hiring new workers (extensive margin)."},
+  {s:"A strong pound is always good for the UK economy.",a:false,topic:"Exchange Rates",diff:"gcse",
+   exp:"A strong pound lowers import prices and inflation but makes UK exports less competitive, potentially worsening the current account and reducing output in export sectors.",
+   ev:"The net effect depends on the relative importance of exports and imports in GDP and the elasticities of demand for each."},
+  {s:"Austerity always reduces a government's debt-to-GDP ratio.",a:false,topic:"Fiscal Policy",diff:"alevel",
+   exp:"If spending cuts reduce GDP faster than they reduce the deficit, the debt-to-GDP ratio can rise even as absolute debt falls — the denominator shrinks faster than the numerator.",
+   ev:"The IMF acknowledged underestimating fiscal multipliers during the Eurozone crisis, when austerity deepened recessions in Greece and Spain."},
+
+  /* ── MICRO ── */
+  {s:"A monopoly always charges the highest possible price.",a:false,topic:"Market Structure",diff:"gcse",
+   exp:"A profit-maximising monopolist sets MR=MC, not necessarily at the maximum price consumers would pay. It is constrained by demand — the highest price must still attract buyers.",
+   ev:"A monopolist with very elastic demand may charge a lower price than assumed, and may also engage in price discrimination to capture more consumer surplus."},
+  {s:"Price elasticity of demand is always negative.",a:true,topic:"Elasticity",diff:"gcse",
+   exp:"By the law of demand, price and quantity demanded move in opposite directions — a price rise reduces demand. PED is therefore always negative (though often quoted as an absolute value).",
+   ev:"Giffen goods are a theoretical exception where demand rises with price, but no robust real-world examples exist for normal market conditions."},
+  {s:"Firms in perfect competition always make normal profit in the long run.",a:true,topic:"Market Structure",diff:"alevel",
+   exp:"Free entry and exit ensures supernormal profits attract new firms, increasing supply and lowering price until only normal profit remains. Similarly, losses cause exit until normal profit is restored.",
+   ev:"This assumes perfect knowledge and costless entry — in practice, even competitive markets may sustain some supernormal profit if entry faces frictions."},
+  {s:"A minimum wage always causes unemployment.",a:false,topic:"Labour Markets",diff:"gcse",
+   exp:"Standard theory predicts unemployment if the minimum wage is set above equilibrium, but in a monopsonistic labour market a minimum wage can actually increase both wages and employment.",
+   ev:"Empirical evidence from Card and Krueger's New Jersey study found minimal unemployment effects, suggesting many labour markets have significant monopsony power."},
+  {s:"Public goods will always be under-provided by the free market.",a:true,topic:"Market Failure",diff:"gcse",
+   exp:"Pure public goods are non-rival and non-excludable, creating a free-rider problem. No private firm can charge for their use, so profit-maximising firms will not supply them — market failure is inevitable.",
+   ev:"The extent of under-provision depends on how purely non-excludable the good is — advances in technology (e.g. satellite TV encryption) can sometimes make previously public goods excludable."},
+  {s:"Advertising always leads to higher prices for consumers.",a:false,topic:"Market Structure",diff:"gcse",
+   exp:"Advertising raises costs but can also increase demand and economies of scale, potentially reducing average costs. Informative advertising can also improve market efficiency by reducing search costs.",
+   ev:"Persuasive advertising may create artificial brand loyalty and barriers to entry, entrenching monopoly power — the net effect on consumer welfare is ambiguous."},
+  {s:"A tax on a demerit good always improves social welfare.",a:false,topic:"Market Failure",diff:"alevel",
+   exp:"A tax improves welfare only if set equal to the marginal external cost, correcting the externality precisely. An over-tax or under-tax simply moves the market to a different sub-optimal point.",
+   ev:"Government failure is possible if the tax is set incorrectly — information problems about the true size of the externality make optimal taxation very difficult in practice."},
+  {s:"Consumer surplus always falls when price rises.",a:true,topic:"Consumer Theory",diff:"gcse",
+   exp:"Consumer surplus is the area below the demand curve and above the price line. A price rise reduces this area unambiguously — some consumers are priced out and remaining consumers pay more.",
+   ev:"The size of the reduction depends on PED — elastic demand means a large fall in quantity and a large loss of consumer surplus; inelastic demand limits the quantity effect."},
+  {s:"Monopolies are always productively inefficient.",a:true,topic:"Market Structure",diff:"alevel",
+   exp:"A profit-maximising monopolist sets MR=MC, not at the minimum point of the average cost curve (MC=AC). It therefore produces at higher average cost than the productively efficient output.",
+   ev:"A natural monopoly may have such significant economies of scale that even at its profit-maximising output, average costs are lower than those of multiple competing firms."},
+  {s:"An increase in labour productivity always leads to higher wages.",a:false,topic:"Labour Markets",diff:"alevel",
+   exp:"Wage increases depend on both productivity and the bargaining power of workers. Firms may capture productivity gains as profit rather than passing them on through wages.",
+   ev:"Monopsonistic employers can pay below the marginal revenue product of labour — productivity gains need not translate into wage gains without countervailing worker or union power."},
+  {s:"Price discrimination always harms consumers.",a:false,topic:"Market Structure",diff:"alevel",
+   exp:"Third-degree price discrimination transfers consumer surplus to producers, but some consumers who would have been priced out of the market may now access the good at a lower price.",
+   ev:"Perfect (first-degree) price discrimination eliminates all consumer surplus but achieves allocative efficiency — output equals the competitive level, eliminating deadweight loss."},
+  {s:"A subsidy always increases economic efficiency.",a:false,topic:"Market Failure",diff:"alevel",
+   exp:"A subsidy corrects under-consumption of merit goods or positive externalities — but only if set at the exact marginal external benefit. An over-subsidy causes over-production and new deadweight loss.",
+   ev:"Government failure can arise from imperfect information about the true size of the external benefit — the subsidy may be set at the wrong level, worsening rather than improving efficiency."},
+  {s:"In a competitive market, the long-run supply curve is always perfectly elastic.",a:false,topic:"Market Structure",diff:"alevel",
+   exp:"The long-run supply curve is perfectly elastic only in constant-cost industries. In increasing-cost industries, input prices rise as output expands, giving an upward-sloping long-run supply curve.",
+   ev:"In decreasing-cost industries (rare), the long-run supply curve slopes downward — expansion lowers costs for all firms."},
+  {s:"Negative externalities always result in overproduction.",a:true,topic:"Market Failure",diff:"gcse",
+   exp:"When firms ignore external costs, their private cost understates the true social cost. They therefore produce beyond the socially optimal output — the market over-provides the good.",
+   ev:"The scale of overproduction depends on the size of the external cost relative to private cost — a small externality leads to marginal overproduction; a large one causes significant market failure."},
+  {s:"Rising house prices always make homeowners better off.",a:false,topic:"Housing Market",diff:"gcse",
+   exp:"Owners who plan to trade up lose, since the property they want to buy has also risen. Renters and those unable to buy are made definitively worse off by rising prices.",
+   ev:"Wealth effects benefit existing owners in nominal terms, but intergenerational inequality widens — younger generations face greater barriers to homeownership as prices rise."},
+  {s:"A firm with zero profit should always shut down.",a:false,topic:"Business Economics",diff:"gcse",
+   exp:"Zero profit in economics means normal profit — the minimum required to keep resources in their current use. The firm is covering all opportunity costs and should continue operating.",
+   ev:"Only if a firm makes losses below its average variable costs should it shut down immediately — in the short run, it is rational to keep producing if price exceeds AVC."},
+  {s:"Information asymmetry always leads to market failure.",a:true,topic:"Market Failure",diff:"alevel",
+   exp:"When one party in a transaction has more information, the market cannot allocate resources efficiently. This leads to adverse selection (wrong products bought/sold) and moral hazard (reckless behaviour post-contract).",
+   ev:"The degree of market failure depends on the extent of the information gap — markets with moderate asymmetry may still function reasonably well, but insurance and credit markets are particularly vulnerable."},
+  {s:"A firm maximising revenue will always produce more than a profit-maximising firm.",a:true,topic:"Business Objectives",diff:"alevel",
+   exp:"Revenue maximisation occurs where MR=0, beyond the MR=MC profit-maximising output. The firm sacrifices profit on marginal units to boost total revenue.",
+   ev:"This only holds if MR=MC occurs before MR=0 — i.e. if the profit-maximising output is less than the revenue-maximising output, which is always the case with a downward-sloping demand curve."},
+];
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let gameMode = 'solo';
+let filters  = {topic:'all', diff:'all'};
+let pool     = [];
+let soloIdx  = 0;
+let soloScore = 0;
+let soloCorrect = 0;
+let soloStreak  = 0;
+let soloBest    = 0;
+let soloTimes   = [];
+let timerInterval = null;
+let timeLeft = 12;
+let qStartTime = 0;
+let answered = false;
+
+// Whiteboard
+let wbIdx = 0;
+let wbTrueCt = 0;
+let wbFalseCt = 0;
+
+/* ══════════════════════════════════════════════════
+   SETUP
+══════════════════════════════════════════════════ */
+function selectMode(m){
+  gameMode = m;
+  document.getElementById('opt-solo').classList.toggle('selected', m==='solo');
+  document.getElementById('opt-wb').classList.toggle('selected', m==='whiteboard');
+}
+
+function setFilter(key, val, btn){
+  filters[key] = val;
+  btn.closest('.seg-group').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function buildPool(){
+  return STATEMENTS.filter(s=>{
+    const topicOk = filters.topic==='all' || s.topic.toLowerCase().includes(filters.topic);
+    const diffOk  = filters.diff==='all'  || s.diff===filters.diff;
+    return topicOk && diffOk;
+  });
+}
+
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+function startGame(){
+  pool = shuffle(buildPool());
+  if(pool.length < 5){ alert('Not enough statements match those filters.'); return; }
+  if(gameMode==='solo') startSolo();
+  else startWhiteboard();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════
+   SOLO MODE
+══════════════════════════════════════════════════ */
+const SOLO_COUNT = 15;
+
+function startSolo(){
+  soloIdx=0; soloScore=0; soloCorrect=0; soloStreak=0; soloBest=0; soloTimes=[];
+  pool = pool.slice(0, SOLO_COUNT);
+  showScreen('screen-solo');
+  loadSoloQ();
+}
+
+function loadSoloQ(){
+  if(soloIdx >= pool.length){ endSolo(); return; }
+  const q = pool[soloIdx];
+  answered = false;
+  document.getElementById('solo-topic').textContent = q.topic + ' · ' + q.diff.toUpperCase();
+  document.getElementById('solo-stmt').textContent  = q.s;
+  document.getElementById('btn-true').disabled  = false;
+  document.getElementById('btn-false').disabled = false;
+  document.getElementById('btn-true').className  = 'answer-btn true-btn';
+  document.getElementById('btn-false').className = 'answer-btn false-btn';
+  document.getElementById('explanation-box').classList.remove('show');
+  document.getElementById('next-q-btn').style.display = 'none';
+  document.getElementById('progress-bar').style.width = (soloIdx/pool.length*100)+'%';
+  document.getElementById('solo-score').textContent = soloScore;
+  document.getElementById('solo-q').textContent = (soloIdx+1)+'/'+pool.length;
+  startTimer();
+  qStartTime = Date.now();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft = 12;
+  updateTimerUI(12);
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    updateTimerUI(timeLeft);
+    if(timeLeft<=0){ clearInterval(timerInterval); timeExpired(); }
+  },1000);
+}
+
+function updateTimerUI(t){
+  const circ = 2*Math.PI*22;
+  document.getElementById('timer-fg').style.strokeDashoffset = circ * (1 - t/12);
+  document.getElementById('timer-fg').style.stroke = t<=4?'#ef4444':t<=7?'#f59e0b':'var(--amber)';
+  document.getElementById('timer-text').textContent = t;
+}
+
+function timeExpired(){
+  if(answered) return;
+  answered = true;
+  soloStreak = 0;
+  const q = pool[soloIdx];
+  document.getElementById('btn-true').disabled  = true;
+  document.getElementById('btn-false').disabled = true;
+  const correctBtn = q.a ? 'btn-true' : 'btn-false';
+  document.getElementById(correctBtn).classList.add('reveal-correct');
+  showExplanation(q, false, "Time's up!");
+}
+
+function soloAnswer(ans){
+  if(answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+  const elapsed = (Date.now()-qStartTime)/1000;
+  soloTimes.push(elapsed);
+  const q = pool[soloIdx];
+  const correct = (ans === q.a);
+  if(correct){
+    const bonus = Math.max(1, Math.round(timeLeft/2));
+    soloScore += bonus;
+    soloCorrect++;
+    soloStreak++;
+    if(soloStreak>soloBest) soloBest=soloStreak;
+  } else {
+    soloStreak=0;
+  }
+  document.getElementById('btn-true').disabled  = true;
+  document.getElementById('btn-false').disabled = true;
+  // Style buttons
+  const trueBtn  = document.getElementById('btn-true');
+  const falseBtn = document.getElementById('btn-false');
+  if(ans===true)  trueBtn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(ans===false) falseBtn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){
+    const correctBtn = q.a ? trueBtn : falseBtn;
+    correctBtn.classList.add('reveal-correct');
+  }
+  flash(correct);
+  showExplanation(q, correct, null);
+  document.getElementById('solo-score').textContent = soloScore;
+}
+
+function flash(correct){
+  const el = document.getElementById('flash-overlay');
+  el.className = 'flash-overlay ' + (correct?'true-flash':'false-flash') + ' active';
+  setTimeout(()=>el.classList.remove('active'),300);
+}
+
+function showExplanation(q, correct, override){
+  const box = document.getElementById('explanation-box');
+  const verdict = document.getElementById('exp-verdict');
+  const expText = document.getElementById('exp-text');
+  const expEval = document.getElementById('exp-eval');
+  verdict.className = 'exp-verdict ' + (override ? '' : correct?'correct':'wrong');
+  verdict.textContent = override || (correct ? '✓ Correct' : '✗ Incorrect — the statement is ' + (q.a?'TRUE':'FALSE'));
+  expText.textContent = q.exp;
+  expEval.textContent = '📌 Evaluative point: ' + q.ev;
+  box.classList.add('show');
+  document.getElementById('next-q-btn').style.display = 'flex';
+}
+
+function nextSoloQ(){
+  soloIdx++;
+  loadSoloQ();
+}
+
+function endSolo(){
+  clearInterval(timerInterval);
+  const avgTime = soloTimes.length ? (soloTimes.reduce((a,b)=>a+b,0)/soloTimes.length).toFixed(1) : 0;
+  document.getElementById('res-score').textContent   = soloScore;
+  document.getElementById('res-label').textContent   = 'points from '+pool.length+' questions';
+  document.getElementById('res-correct').textContent = soloCorrect+'/'+pool.length;
+  document.getElementById('res-streak').textContent  = soloBest;
+  document.getElementById('res-time').textContent    = avgTime+'s';
+  // Missed questions summary
+  const missed = pool.filter((_,i)=>i<soloIdx).filter(q=>{
+    // track misses — rebuild from answers stored
+    return false; // simplified
+  });
+  showScreen('screen-results');
+}
+
+/* ══════════════════════════════════════════════════
+   WHITEBOARD MODE
+══════════════════════════════════════════════════ */
+function startWhiteboard(){
+  wbIdx=0; wbTrueCt=0; wbFalseCt=0;
+  pool = shuffle(pool);
+  showScreen('screen-whiteboard');
+  loadWbQ();
+}
+
+function loadWbQ(){
+  if(wbIdx >= pool.length){ wbIdx=0; pool=shuffle(pool); }
+  const q = pool[wbIdx];
+  document.getElementById('wb-topic').textContent  = q.topic + ' · ' + q.diff.toUpperCase();
+  document.getElementById('wb-stmt').textContent   = q.s;
+  document.getElementById('wb-progress').textContent = 'Question '+(wbIdx+1)+' of '+pool.length;
+  document.getElementById('wb-answer-reveal').classList.remove('show');
+  document.getElementById('wb-reveal-btn').disabled = false;
+  document.getElementById('wb-buzz-row').querySelectorAll('.wb-buzz').forEach(b=>b.classList.remove('disabled'));
+  document.getElementById('wb-true-ct').textContent  = wbTrueCt;
+  document.getElementById('wb-false-ct').textContent = wbFalseCt;
+}
+
+function wbVote(ans){
+  // Visual acknowledgement only — teacher sees which side the class leans
+  if(ans) wbTrueCt++; else wbFalseCt++;
+  document.getElementById('wb-true-ct').textContent  = wbTrueCt;
+  document.getElementById('wb-false-ct').textContent = wbFalseCt;
+  flash(ans); // just a colour pulse, not judging right/wrong yet
+  document.getElementById('wb-buzz-row').querySelectorAll('.wb-buzz').forEach(b=>b.classList.add('disabled'));
+}
+
+function wbReveal(){
+  const q = pool[wbIdx];
+  document.getElementById('wb-reveal-btn').disabled = true;
+  const isTrue = q.a;
+  document.getElementById('wb-verdict').textContent = isTrue ? '✓ TRUE' : '✗ FALSE';
+  document.getElementById('wb-verdict').className   = 'wb-verdict '+(isTrue?'true-v':'false-v');
+  document.getElementById('wb-exp').textContent  = q.exp;
+  document.getElementById('wb-eval').textContent = '📌 ' + q.ev;
+  document.getElementById('wb-answer-reveal').classList.add('show');
+  flash(isTrue);
+}
+
+function wbNext(){
+  wbTrueCt=0; wbFalseCt=0;
+  wbIdx++;
+  loadWbQ();
+}
+
+/* ══════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════ */
+(function(){
+  const t=localStorage.getItem('biz-omics-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-theme',next);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=next==='light'?'🌙':'☀';
+}
+</script>
+</body>
+</html>

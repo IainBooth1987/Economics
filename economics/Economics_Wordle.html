@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EconWordle — BIZ-OMICS</title>
+<style>
+/* ─── TOKENS ─── */
+:root{
+  --ff-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --ff-mono:'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#0d1526;
+  --amber:#f59e0b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,0.08);
+  --correct:#16a34a;
+  --present:#d97706;
+  --absent:#334155;
+  --correct-light:#15803d;
+  --present-light:#b45309;
+  --absent-light:#94a3b8;
+  --key-bg:#1e293b;
+  --key-text:#f1f5f9;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;
+  --text:#0f172a;--muted:#64748b;--border:rgba(0,0,0,0.09);
+  --key-bg:#e2e8f0;--key-text:#0f172a;
+  --absent:#cbd5e1;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:var(--ff-sans);
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+  transition:background 0.2s,color 0.2s;
+}
+
+/* ─── HEADER ─── */
+header{
+  padding:1rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;
+  background:rgba(10,14,26,0.97);
+  backdrop-filter:blur(16px);z-index:200;
+}
+[data-theme="light"] header{background:rgba(248,250,252,0.97);}
+.logo{font-size:1.25rem;font-weight:900;letter-spacing:-0.02em;text-decoration:none;color:var(--text);}
+.logo span{color:var(--amber);}
+.back-link{
+  font-family:var(--ff-mono);font-size:0.7rem;color:var(--muted);
+  text-decoration:none;padding:0.3rem 0.65rem;border-radius:100px;
+  border:1px solid var(--border);transition:all 0.18s;
+  margin-left:auto;margin-right:0.6rem;
+}
+.back-link:hover{color:var(--amber);border-color:var(--amber);}
+.theme-toggle{
+  padding:0.3rem 0.5rem;border-radius:100px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;font-size:0.8rem;line-height:1;
+}
+
+/* ─── MAIN ─── */
+main{
+  max-width:600px;margin:0 auto;
+  padding:2.5rem 1.25rem 5rem;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+/* ─── MASTHEAD ─── */
+.masthead{text-align:center;margin-bottom:1.6rem;width:100%;}
+.masthead-eyebrow{
+  font-family:var(--ff-mono);font-size:0.62rem;
+  color:var(--amber);letter-spacing:0.22em;
+  text-transform:uppercase;margin-bottom:0.6rem;
+}
+.masthead h1{
+  font-size:2.4rem;font-weight:900;letter-spacing:-0.03em;
+  line-height:1;margin-bottom:0.4rem;
+}
+.masthead h1 em{font-style:normal;color:var(--amber);}
+.masthead-sub{font-size:0.82rem;color:var(--muted);}
+
+/* ─── SETTINGS BAR ─── */
+.settings-bar{
+  display:flex;gap:0.5rem;flex-wrap:wrap;
+  justify-content:center;
+  margin-bottom:1.4rem;width:100%;
+}
+.seg-group{
+  display:flex;border-radius:9px;overflow:hidden;
+  border:1px solid var(--border);
+}
+.seg-btn{
+  padding:0.38rem 0.75rem;font-size:0.72rem;font-weight:600;
+  font-family:var(--ff-sans);
+  background:transparent;color:var(--muted);
+  border:none;cursor:pointer;transition:all 0.15s;
+  border-right:1px solid var(--border);
+}
+.seg-btn:last-child{border-right:none;}
+.seg-btn.active{background:var(--amber);color:#000;}
+.seg-btn:not(.active):hover{background:rgba(255,255,255,0.05);color:var(--text);}
+[data-theme="light"] .seg-btn:not(.active):hover{background:rgba(0,0,0,0.04);}
+
+/* ─── STREAK / STATS ─── */
+.stats-strip{
+  display:flex;gap:1.4rem;margin-bottom:1.5rem;
+  padding:0.7rem 1.4rem;
+  background:rgba(245,158,11,0.07);
+  border:1px solid rgba(245,158,11,0.15);
+  border-radius:10px;
+}
+.stat-item{text-align:center;}
+.stat-val{
+  font-family:var(--ff-mono);font-size:1.2rem;
+  font-weight:700;color:var(--amber);line-height:1;
+}
+.stat-label{
+  font-family:var(--ff-mono);font-size:0.52rem;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);margin-top:0.25rem;
+}
+
+/* ─── MESSAGE ─── */
+.message-box{
+  min-height:1.6rem;margin-bottom:0.6rem;text-align:center;
+  font-family:var(--ff-mono);font-size:0.78rem;
+  color:var(--muted);transition:opacity 0.3s;
+}
+.message-box.pop{color:var(--text);font-weight:700;}
+.message-box.win{color:#16a34a;}
+.message-box.lose{color:#ef4444;}
+
+/* ─── GRID ─── */
+.grid-wrap{margin-bottom:1.5rem;}
+.game-grid{
+  display:flex;flex-direction:column;gap:5px;
+  align-items:center;
+}
+.grid-row{display:flex;gap:5px;}
+.grid-cell{
+  width:56px;height:56px;
+  border:2px solid var(--border);
+  border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;font-weight:900;
+  font-family:var(--ff-mono);
+  text-transform:uppercase;
+  color:var(--text);
+  transition:border-color 0.1s, background 0.3s, transform 0.1s;
+  position:relative;
+  user-select:none;
+}
+.grid-cell.filled{border-color:var(--muted);}
+.grid-cell.pop{transform:scale(1.08);}
+.grid-cell.flip{animation:flip 0.5s ease forwards;}
+.grid-cell.correct{background:var(--correct);border-color:var(--correct);color:#fff;}
+.grid-cell.present{background:var(--present);border-color:var(--present);color:#fff;}
+.grid-cell.absent{background:var(--absent);border-color:var(--absent);color:#fff;}
+.grid-cell.shake{animation:shake 0.5s ease;}
+@keyframes flip{
+  0%{transform:rotateX(0);}
+  49%{transform:rotateX(-90deg);}
+  50%{transform:rotateX(-90deg);background:var(--flip-color,transparent);}
+  100%{transform:rotateX(0);}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
+@keyframes bounce{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-10px);}
+}
+.grid-cell.bounce{animation:bounce 0.5s ease;}
+
+/* ─── KEYBOARD ─── */
+.keyboard{width:100%;max-width:500px;}
+.kb-row{display:flex;justify-content:center;gap:5px;margin-bottom:5px;}
+.kb-key{
+  height:56px;min-width:36px;padding:0 6px;
+  border-radius:6px;border:none;
+  background:var(--key-bg);color:var(--key-text);
+  font-size:0.8rem;font-weight:700;
+  font-family:var(--ff-sans);
+  cursor:pointer;transition:background 0.2s,color 0.2s;
+  display:flex;align-items:center;justify-content:center;
+  flex:1;max-width:44px;
+}
+.kb-key.wide{max-width:66px;font-size:0.7rem;}
+.kb-key.correct{background:var(--correct);color:#fff;}
+.kb-key.present{background:var(--present);color:#fff;}
+.kb-key.absent{background:var(--absent);color:#fff;}
+[data-theme="light"] .kb-key.absent{color:#64748b;}
+
+/* ─── DEFINITION CARD ─── */
+.def-card{
+  display:none;
+  width:100%;margin-top:1rem;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px;padding:1.2rem 1.4rem;
+  animation:slideUp 0.3s ease;
+}
+.def-card.show{display:block;}
+[data-theme="light"] .def-card{background:#fff;}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.def-word{
+  font-family:var(--ff-mono);font-size:1rem;font-weight:700;
+  color:var(--amber);letter-spacing:0.05em;
+  text-transform:uppercase;margin-bottom:0.35rem;
+}
+.def-text{font-size:0.82rem;color:var(--muted);line-height:1.65;}
+.def-topic{
+  font-family:var(--ff-mono);font-size:0.58rem;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--muted);opacity:0.55;margin-top:0.5rem;
+}
+.next-btn{
+  display:inline-flex;align-items:center;gap:0.4rem;
+  margin-top:1rem;padding:0.55rem 1.2rem;
+  border-radius:8px;border:none;
+  background:var(--amber);color:#000;
+  font-size:0.8rem;font-weight:700;font-family:var(--ff-sans);
+  cursor:pointer;transition:opacity 0.18s;
+}
+.next-btn:hover{opacity:0.85;}
+
+/* ─── FOOTER ─── */
+footer{
+  text-align:center;padding:2rem;border-top:1px solid var(--border);
+  font-family:var(--ff-mono);font-size:0.65rem;
+  color:var(--muted);opacity:0.35;
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:480px){
+  .grid-cell{width:46px;height:46px;font-size:1.2rem;}
+  .kb-key{height:46px;font-size:0.72rem;}
+  .stats-strip{gap:1rem;padding:0.6rem 1rem;}
+}
+@media(max-width:360px){
+  .grid-cell{width:40px;height:40px;font-size:1rem;}
+  .kb-key{min-width:28px;font-size:0.65rem;}
+}
+
+/* ─── PRINT ─── */
+@media print{
+  header,footer,.settings-bar,.keyboard,.stats-strip,.next-btn{display:none!important;}
+  .game-grid,.masthead{display:block;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">BIZ-<span>OMICS</span></a>
+  <a class="back-link" href="index.html">← Back to Hub</a>
+  <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<main>
+
+  <div class="masthead">
+    <div class="masthead-eyebrow">// Economics Arcade · Word Game</div>
+    <h1>Econ<em>Wordle</em></h1>
+    <p class="masthead-sub">Guess the economics term — green means correct position, amber means wrong position.</p>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="settings-bar">
+    <div class="seg-group" id="len-group">
+      <button class="seg-btn" data-len="5" onclick="setSetting('len',5,this)">5</button>
+      <button class="seg-btn active" data-len="6" onclick="setSetting('len',6,this)">6</button>
+      <button class="seg-btn" data-len="7" onclick="setSetting('len',7,this)">7</button>
+    </div>
+    <div class="seg-group" id="topic-group">
+      <button class="seg-btn active" data-topic="all" onclick="setSetting('topic','all',this)">All</button>
+      <button class="seg-btn" data-topic="macro" onclick="setSetting('topic','macro',this)">Macro</button>
+      <button class="seg-btn" data-topic="micro" onclick="setSetting('topic','micro',this)">Micro</button>
+    </div>
+    <div class="seg-group" id="diff-group">
+      <button class="seg-btn active" data-diff="both" onclick="setSetting('diff','both',this)">GCSE+A-Level</button>
+      <button class="seg-btn" data-diff="gcse" onclick="setSetting('diff','gcse',this)">GCSE</button>
+      <button class="seg-btn" data-diff="alevel" onclick="setSetting('diff','alevel',this)">A-Level</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stat-item"><div class="stat-val" id="st-played">0</div><div class="stat-label">Played</div></div>
+    <div class="stat-item"><div class="stat-val" id="st-won">0</div><div class="stat-label">Won</div></div>
+    <div class="stat-item"><div class="stat-val" id="st-streak">0</div><div class="stat-label">Streak</div></div>
+    <div class="stat-item"><div class="stat-val" id="st-best">0</div><div class="stat-label">Best</div></div>
+  </div>
+
+  <!-- MESSAGE -->
+  <div class="message-box" id="message-box"></div>
+
+  <!-- GRID -->
+  <div class="grid-wrap">
+    <div class="game-grid" id="game-grid"></div>
+  </div>
+
+  <!-- KEYBOARD -->
+  <div class="keyboard" id="keyboard"></div>
+
+  <!-- DEFINITION / RESULT CARD -->
+  <div class="def-card" id="def-card">
+    <div class="def-word" id="def-word"></div>
+    <div class="def-text" id="def-text"></div>
+    <div class="def-topic" id="def-topic"></div>
+    <button class="next-btn" onclick="newGame()">Next word →</button>
+  </div>
+
+</main>
+
+<footer>biz-omics.co.uk · A-Level Economics · © BIZ-OMICS</footer>
+
+<script>
+/* ══════════════════════════════════════════════════
+   WORD BANK
+   Each entry: {word, def, topic:'macro'|'micro', level:'gcse'|'alevel'}
+══════════════════════════════════════════════════ */
+const WORDS = [
+  /* ── 5-LETTER ── */
+  /* macro gcse */
+  {w:"TRADE",d:"The exchange of goods and services between countries or individuals.",t:"macro",l:"gcse"},
+  {w:"TAXES",d:"Compulsory payments made to the government by households and firms.",t:"macro",l:"gcse"},
+  {w:"BONDS",d:"Government debt instruments that pay interest to the holder.",t:"macro",l:"gcse"},
+  {w:"GRANT",d:"Money given by the government that does not need to be repaid.",t:"macro",l:"gcse"},
+  {w:"QUOTA",d:"A limit on the quantity of imports or exports allowed.",t:"macro",l:"gcse"},
+  {w:"CYCLE",d:"The pattern of booms and recessions in economic activity over time.",t:"macro",l:"gcse"},
+  {w:"SHOCK",d:"An unexpected event that disrupts the economy, such as a rise in oil prices.",t:"macro",l:"gcse"},
+  {w:"SLUMP",d:"A severe and prolonged fall in economic output.",t:"macro",l:"gcse"},
+  {w:"MONEY",d:"A medium of exchange, store of value and unit of account.",t:"macro",l:"gcse"},
+  {w:"PRICE",d:"The amount of money required to purchase a good or service.",t:"macro",l:"gcse"},
+  /* macro alevel */
+  {w:"LAPSE",d:"A fall in the rate at which money circulates in the economy.",t:"macro",l:"alevel"},
+  {w:"YIELD",d:"The annual return on a financial asset expressed as a percentage of its price.",t:"macro",l:"alevel"},
+  {w:"FLOAT",d:"An exchange rate system where the currency value is determined by market forces.",t:"macro",l:"alevel"},
+  {w:"TRANCHE",d:"A portion of a loan or debt instrument released in stages.",t:"macro",l:"alevel"},
+  /* micro gcse */
+  {w:"COSTS",d:"The expenses incurred by a firm in producing goods or services.",t:"micro",l:"gcse"},
+  {w:"NEEDS",d:"Essential goods and services required for basic human survival.",t:"micro",l:"gcse"},
+  {w:"WANTS",d:"Desires for goods and services beyond basic necessities.",t:"micro",l:"gcse"},
+  {w:"FIRMS",d:"Businesses that combine factors of production to produce output.",t:"micro",l:"gcse"},
+  {w:"GOODS",d:"Physical products that satisfy consumer wants or needs.",t:"micro",l:"gcse"},
+  {w:"SHARE",d:"A unit of ownership in a public limited company.",t:"micro",l:"gcse"},
+  {w:"WAGES",d:"The payment received by workers in return for their labour.",t:"micro",l:"gcse"},
+  {w:"MERIT",d:"A type of good that is under-consumed because individuals underestimate its benefit.",t:"micro",l:"gcse"},
+  {w:"SCALE",d:"The size of operation; economies of this reduce average costs as output rises.",t:"micro",l:"gcse"},
+  /* micro alevel */
+  {w:"MORAL",d:"A term paired with 'hazard' — the risk that insured parties behave recklessly.",t:"micro",l:"alevel"},
+  {w:"CARTEL",d:"A group of firms colluding to fix prices or restrict output.",t:"micro",l:"alevel"},
+  {w:"INERT",d:"Describes consumers who fail to switch despite better options being available.",t:"micro",l:"alevel"},
+
+  /* ── 6-LETTER ── */
+  /* macro gcse */
+  {w:"GROWTH",d:"An increase in the real GDP of an economy over time.",t:"macro",l:"gcse"},
+  {w:"BUDGET",d:"A government statement of planned tax revenues and expenditure.",t:"macro",l:"gcse"},
+  {w:"TARIFF",d:"A tax placed on imported goods to protect domestic industries.",t:"macro",l:"gcse"},
+  {w:"IMPORT",d:"A good or service purchased from another country.",t:"macro",l:"gcse"},
+  {w:"EXPORT",d:"A good or service sold to another country.",t:"macro",l:"gcse"},
+  {w:"SAVING",d:"The portion of income not spent on consumption.",t:"macro",l:"gcse"},
+  {w:"WEALTH",d:"The total stock of assets owned by an individual or country.",t:"macro",l:"gcse"},
+  {w:"SUPPLY",d:"The quantity of a good producers are willing and able to sell at each price.",t:"macro",l:"gcse"},
+  {w:"DEMAND",d:"The quantity of a good consumers are willing and able to buy at each price.",t:"macro",l:"gcse"},
+  {w:"INCOME",d:"The flow of money received by households from supplying factors of production.",t:"macro",l:"gcse"},
+  {w:"OUTPUT",d:"The total quantity of goods and services produced in an economy.",t:"macro",l:"gcse"},
+  {w:"REBATE",d:"A partial refund of tax or payment previously made.",t:"macro",l:"gcse"},
+  /* macro alevel */
+  {w:"FISCAL",d:"Relating to government taxation and spending decisions.",t:"macro",l:"alevel"},
+  {w:"CREDIT",d:"The ability to borrow money with the promise of future repayment.",t:"macro",l:"alevel"},
+  {w:"LIQUIDITY",d:"The ease with which an asset can be converted into cash without loss of value.",t:"macro",l:"alevel"},
+  {w:"SPIRAL",d:"A self-reinforcing process, such as wage-price this, that accelerates inflation.",t:"macro",l:"alevel"},
+  {w:"REFLUX",d:"The automatic return of excess money to the banking system in endogenous money theory.",t:"macro",l:"alevel"},
+  /* micro gcse */
+  {w:"PROFIT",d:"Total revenue minus total costs; the reward for enterprise.",t:"micro",l:"gcse"},
+  {w:"MARKET",d:"Any arrangement that brings buyers and sellers together to exchange.",t:"micro",l:"gcse"},
+  {w:"LABOUR",d:"Human effort — physical or mental — used in production.",t:"micro",l:"gcse"},
+  {w:"CAPITAL",d:"Man-made resources used in the production of goods and services.",t:"micro",l:"gcse"},
+  {w:"MERGER",d:"When two firms combine to form a single new company.",t:"micro",l:"gcse"},
+  {w:"PATENT",d:"A legal right granting an inventor exclusive use of their invention.",t:"micro",l:"gcse"},
+  {w:"BARTER",d:"The direct exchange of goods and services without the use of money.",t:"micro",l:"gcse"},
+  {w:"STRIKE",d:"When workers collectively refuse to work in order to gain higher pay or better conditions.",t:"micro",l:"gcse"},
+  /* micro alevel */
+  {w:"OLIGOPOLY",d:"A market structure dominated by a small number of large interdependent firms.",t:"micro",l:"alevel"},
+  {w:"PARETO",d:"An allocation where no one can be made better off without making someone else worse off.",t:"micro",l:"alevel"},
+  {w:"SIGNAL",d:"The role prices play in transmitting information between buyers and sellers.",t:"micro",l:"alevel"},
+  {w:"COBWEB",d:"A model explaining cyclical price fluctuations in agricultural markets.",t:"micro",l:"alevel"},
+  {w:"NORMAL",d:"A type of good for which demand rises as income rises.",t:"micro",l:"alevel"},
+
+  /* ── 7-LETTER ── */
+  /* macro gcse */
+  {w:"DEFICIT",d:"When government spending exceeds tax revenues in a given year.",t:"macro",l:"gcse"},
+  {w:"SURPLUS",d:"When tax revenues exceed government spending; or when exports exceed imports.",t:"macro",l:"gcse"},
+  {w:"BALANCE",d:"A record of all financial transactions between a country and the rest of the world.",t:"macro",l:"gcse"},
+  {w:"SUBSIDY",d:"A payment by the government to producers to lower costs and increase output.",t:"macro",l:"gcse"},
+  {w:"CENTRAL",d:"The type of bank that controls monetary policy and acts as lender of last resort.",t:"macro",l:"gcse"},
+  {w:"BANKING",d:"The industry that accepts deposits and makes loans, central to money creation.",t:"macro",l:"gcse"},
+  {w:"CYCLICAL",d:"Type of unemployment caused by insufficient aggregate demand in the economy.",t:"macro",l:"gcse"},
+  {w:"NOMINAL",d:"A value expressed in current prices without adjusting for inflation.",t:"macro",l:"gcse"},
+  {w:"RESERVE",d:"Foreign currency or gold held by a central bank to support the exchange rate.",t:"macro",l:"gcse"},
+  /* macro alevel */
+  {w:"CROWDING",d:"When government borrowing raises interest rates and reduces private investment.",t:"macro",l:"alevel"},
+  {w:"NEUTRAL",d:"A fiscal stance where spending and taxation leave aggregate demand unchanged.",t:"macro",l:"alevel"},
+  {w:"TRANSFER",d:"Government payments such as benefits that redistribute income without goods in return.",t:"macro",l:"alevel"},
+  {w:"LIQUIDITY",d:"The ease of converting an asset to cash; central to the liquidity trap concept.",t:"macro",l:"alevel"},
+  {w:"MANAGED",d:"An exchange rate system where the central bank intervenes to smooth fluctuations.",t:"macro",l:"alevel"},
+  /* micro gcse */
+  {w:"REVENUE",d:"The total income received by a firm from selling its goods or services.",t:"micro",l:"gcse"},
+  {w:"BARRIER",d:"An obstacle preventing new firms from entering a market, protecting incumbents.",t:"micro",l:"gcse"},
+  {w:"AVERAGE",d:"A cost calculated by dividing total cost by the quantity produced.",t:"micro",l:"gcse"},
+  {w:"UTILITY",d:"The satisfaction or benefit a consumer derives from consuming a good.",t:"micro",l:"gcse"},
+  {w:"PRIVATE",d:"Costs or benefits experienced only by the individual involved in a transaction.",t:"micro",l:"gcse"},
+  {w:"PRODUCT",d:"The output of production; can be total, average or marginal.",t:"micro",l:"gcse"},
+  {w:"VARIETY",d:"The range of different products offered; a benefit consumers gain from competition.",t:"micro",l:"gcse"},
+  /* micro alevel */
+  {w:"PERFECT",d:"A market structure with many sellers, homogeneous products, and free entry.",t:"micro",l:"alevel"},
+  {w:"WELFARE",d:"The total economic surplus — the sum of consumer and producer surplus.",t:"micro",l:"alevel"},
+  {w:"ELASTIC",d:"Describes demand or supply that is very responsive to a change in price.",t:"micro",l:"alevel"},
+  {w:"MONOPSONIST",d:"A single buyer in a market, with power to drive down the price paid to suppliers.",t:"micro",l:"alevel"},
+  {w:"CONSENT",d:"Informed agreement — its absence is a feature of negative externalities.",t:"micro",l:"alevel"},
+  {w:"NATURAL",d:"A monopoly that arises because a single firm can supply the whole market at lowest cost.",t:"micro",l:"alevel"},
+  {w:"CONDUCT",d:"The behaviour of firms in a market — pricing strategies, advertising, collusion.",t:"micro",l:"alevel"},
+  {w:"AUCTION",d:"A market mechanism where goods are sold to the highest bidder.",t:"micro",l:"alevel"},
+
+  /* extra 5s */
+  {w:"ASSET",d:"Something owned that has economic value, such as property or shares.",t:"micro",l:"gcse"},
+  {w:"PRICE",d:"The monetary value at which a good or service is exchanged.",t:"micro",l:"gcse"},
+  {w:"OLIGOPOLY",d:"Market dominated by few firms with high barriers to entry.",t:"micro",l:"alevel"},
+  {w:"CURVE",d:"A graphical line showing the relationship between two economic variables.",t:"micro",l:"gcse"},
+  {w:"MACRO",d:"The branch of economics studying the economy as a whole.",t:"macro",l:"gcse"},
+  {w:"MICRO",d:"The branch of economics studying individual firms and consumers.",t:"micro",l:"gcse"},
+  {w:"INTER",d:"Between nations; as in trade occurring between different countries.",t:"macro",l:"gcse"},
+  {w:"UNION",d:"A workers' organisation that negotiates pay and conditions collectively.",t:"micro",l:"gcse"},
+  {w:"FLOOR",d:"A minimum price set above the equilibrium, such as a minimum wage.",t:"micro",l:"gcse"},
+  {w:"MIXED",d:"An economy where both the government and private sector allocate resources.",t:"macro",l:"gcse"},
+  {w:"BONDS",d:"Fixed-income securities issued by governments to raise finance.",t:"macro",l:"alevel"},
+  {w:"HEDGE",d:"A financial strategy used to reduce the risk of adverse price movements.",t:"macro",l:"alevel"},
+  {w:"AUDIT",d:"An official inspection of a firm's accounts to ensure accuracy.",t:"micro",l:"gcse"},
+  {w:"INELASTIC",d:"When demand or supply responds little to a change in price.",t:"micro",l:"gcse"},
+  {w:"DEBIT",d:"An outflow of money recorded on the current account of the balance of payments.",t:"macro",l:"alevel"},
+  {w:"PRIME",d:"The base interest rate set by a central bank influencing all borrowing costs.",t:"macro",l:"alevel"},
+  {w:"DUOPOLY",d:"A market structure with only two dominant competing firms.",t:"micro",l:"alevel"},
+
+  /* extra 6s */
+  {w:"HAWKER",d:"An informal street trader operating outside formal market structures.",t:"micro",l:"gcse"},
+  {w:"SECTOR",d:"A division of the economy — primary, secondary or tertiary.",t:"macro",l:"gcse"},
+  {w:"LENDER",d:"An institution or individual that provides funds in exchange for future repayment.",t:"macro",l:"gcse"},
+  {w:"INJECTIONS",d:"Spending flows into the circular flow — investment, government spending and exports.",t:"macro",l:"gcse"},
+  {w:"QUORUM",d:"The minimum number of members needed to make decisions — used in policy committees.",t:"macro",l:"alevel"},
+  {w:"MARGIN",d:"The extra unit; decisions at the margin compare additional benefits and costs.",t:"micro",l:"alevel"},
+  {w:"REBATE",d:"A refund of overpaid tax, often used as a policy tool to redistribute income.",t:"macro",l:"alevel"},
+  {w:"NORMS",d:"Social conventions that influence economic behaviour without legal enforcement.",t:"micro",l:"alevel"},
+  {w:"ANCHOR",d:"A credible inflation target that keeps long-run expectations stable.",t:"macro",l:"alevel"},
+  {w:"BROKER",d:"An intermediary who facilitates transactions between buyers and sellers.",t:"micro",l:"gcse"},
+  {w:"LEAKAGES",d:"Withdrawals from the circular flow — savings, taxes and imports.",t:"macro",l:"gcse"},
+  {w:"RETAIL",d:"The sale of goods directly to consumers, the final stage of the supply chain.",t:"micro",l:"gcse"},
+  {w:"INVEST",d:"To spend on capital goods to increase future productive capacity.",t:"macro",l:"gcse"},
+  {w:"THEORY",d:"A set of principles that explains and predicts economic behaviour.",t:"macro",l:"gcse"},
+  {w:"FACTOR",d:"An input used in production — land, labour, capital or enterprise.",t:"micro",l:"gcse"},
+  {w:"SOCIAL",d:"Costs or benefits experienced by society beyond the private individual.",t:"micro",l:"gcse"},
+  {w:"BUNDLE",d:"A combination of goods consumed together used to measure a consumer's choices.",t:"micro",l:"alevel"},
+  {w:"STICKY",d:"Describes prices or wages that are slow to adjust downwards.",t:"macro",l:"alevel"},
+  {w:"LAFFER",d:"A curve illustrating the relationship between tax rates and tax revenues.",t:"macro",l:"alevel"},
+  {w:"SUNSET",d:"An industry in long-term decline losing competitive advantage to overseas rivals.",t:"macro",l:"alevel"},
+
+  /* extra 7s */
+  {w:"PENSION",d:"A regular payment made to retired workers funded by earlier contributions.",t:"macro",l:"gcse"},
+  {w:"SUBSIDY",d:"A government payment to a producer to lower costs and increase supply.",t:"macro",l:"gcse"},
+  {w:"MINIMUM",d:"The lowest legal price that can be charged; used for wages and some goods.",t:"micro",l:"gcse"},
+  {w:"MAXIMUM",d:"A price ceiling set below equilibrium to keep goods affordable.",t:"micro",l:"gcse"},
+  {w:"OPTIMAL",d:"The best possible outcome, often achieved where marginal benefit equals marginal cost.",t:"micro",l:"alevel"},
+  {w:"IMPUTED",d:"A value assigned to a non-marketed item, such as owner-occupied housing in GDP.",t:"macro",l:"alevel"},
+  {w:"DEVALUE",d:"A deliberate reduction in the fixed exchange rate of a currency.",t:"macro",l:"alevel"},
+  {w:"TAXABLE",d:"Income or profit that is subject to government taxation.",t:"macro",l:"gcse"},
+  {w:"COMMAND",d:"An economic system where the government makes all resource allocation decisions.",t:"macro",l:"gcse"},
+  {w:"NOMINAL",d:"Measured in current prices without adjustment for inflation.",t:"macro",l:"gcse"},
+  {w:"LEAKAGE",d:"A withdrawal from the circular flow — saving, taxation or importing.",t:"macro",l:"gcse"},
+  {w:"COLLUSION",d:"Secret cooperation between firms to fix prices or divide markets.",t:"micro",l:"alevel"},
+  {w:"ADVERSE",d:"A type of selection problem in insurance markets caused by information asymmetry.",t:"micro",l:"alevel"},
+  {w:"LIQUIDITY",d:"The ease with which an asset can be quickly converted to cash.",t:"macro",l:"alevel"},
+  {w:"INELASTIC",d:"Demand that barely responds to price changes — typically for necessities.",t:"micro",l:"gcse"},
+  {w:"VERTICAL",d:"Integration where a firm takes over a supplier or distributor.",t:"micro",l:"alevel"},
+  {w:"RATIONAL",d:"A consumer who maximises utility given their budget constraint.",t:"micro",l:"alevel"},
+  {w:"MARGINAL",d:"Relating to the last unit produced, consumed or employed.",t:"micro",l:"alevel"},
+  {w:"REVENUE",d:"Total income earned by a firm from selling its goods at market price.",t:"micro",l:"gcse"},
+];
+
+/* ══════════════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════════════ */
+let settings = {len:6, topic:'all', diff:'both'};
+let state = {
+  target: null,
+  targetDef: '',
+  targetTopic: '',
+  guesses: [],
+  current: '',
+  gameOver: false,
+  maxGuesses: 6
+};
+let stats = {played:0, won:0, streak:0, best:0};
+
+/* ── Load stats ── */
+(function(){
+  try{ const s=JSON.parse(localStorage.getItem('econwordle-stats')||'{}');
+    if(s.played) stats.played=s.played;
+    if(s.won) stats.won=s.won;
+    if(s.streak) stats.streak=s.streak;
+    if(s.best) stats.best=s.best;
+  }catch(e){}
+  renderStats();
+})();
+
+function saveStats(){ localStorage.setItem('econwordle-stats', JSON.stringify(stats)); }
+function renderStats(){
+  document.getElementById('st-played').textContent = stats.played;
+  document.getElementById('st-won').textContent    = stats.won;
+  document.getElementById('st-streak').textContent = stats.streak;
+  document.getElementById('st-best').textContent   = stats.best;
+}
+
+/* ══════════════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════════════ */
+function setSetting(key, val, btn){
+  settings[key] = val;
+  const group = btn.closest('.seg-group');
+  group.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  newGame();
+}
+
+/* ══════════════════════════════════════════════════
+   WORD SELECTION
+══════════════════════════════════════════════════ */
+function getPool(){
+  return WORDS.filter(w => {
+    const lenOk = w.w.length === settings.len;
+    const topicOk = settings.topic === 'all' || w.t === settings.topic;
+    const diffOk  = settings.diff === 'both'  || w.l === settings.diff;
+    return lenOk && topicOk && diffOk;
+  });
+}
+
+function pickWord(){
+  const pool = getPool();
+  if(pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+/* ══════════════════════════════════════════════════
+   NEW GAME
+══════════════════════════════════════════════════ */
+function newGame(){
+  const entry = pickWord();
+  if(!entry){
+    showMessage("No words match those filters — try different settings.", 4000);
+    return;
+  }
+  state = {
+    target: entry.w,
+    targetDef: entry.d,
+    targetTopic: entry.t + ' · ' + entry.l.toUpperCase(),
+    guesses: [],
+    current: '',
+    gameOver: false,
+    maxGuesses: 6
+  };
+  document.getElementById('def-card').classList.remove('show');
+  showMessage('');
+  buildGrid();
+  buildKeyboard();
+  resetKeyColors();
+}
+
+/* ══════════════════════════════════════════════════
+   GRID
+══════════════════════════════════════════════════ */
+function buildGrid(){
+  const g = document.getElementById('game-grid');
+  g.innerHTML = '';
+  for(let r=0;r<state.maxGuesses;r++){
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    row.id = `row-${r}`;
+    for(let c=0;c<settings.len;c++){
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.id = `cell-${r}-${c}`;
+      row.appendChild(cell);
+    }
+    g.appendChild(row);
+  }
+}
+
+function updateCurrentRow(){
+  const row = state.guesses.length;
+  for(let c=0;c<settings.len;c++){
+    const cell = document.getElementById(`cell-${row}-${c}`);
+    const letter = state.current[c] || '';
+    cell.textContent = letter;
+    cell.className = 'grid-cell' + (letter ? ' filled' : '');
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   KEYBOARD
+══════════════════════════════════════════════════ */
+const KB_ROWS = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫']
+];
+let keyEls = {};
+
+function buildKeyboard(){
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  keyEls = {};
+  KB_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    row.forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'kb-key' + (k.length>1?' wide':'');
+      btn.textContent = k;
+      btn.dataset.key = k;
+      btn.onclick = () => handleKey(k);
+      keyEls[k] = btn;
+      rowEl.appendChild(btn);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+
+function resetKeyColors(){
+  Object.values(keyEls).forEach(el => {
+    el.classList.remove('correct','present','absent');
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   INPUT
+══════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key === 'Enter') handleKey('ENTER');
+  else if(e.key === 'Backspace') handleKey('⌫');
+  else if(/^[a-zA-Z]$/.test(e.key)) handleKey(e.key.toUpperCase());
+});
+
+function handleKey(k){
+  if(state.gameOver) return;
+  if(k === '⌫'){
+    state.current = state.current.slice(0,-1);
+    updateCurrentRow();
+  } else if(k === 'ENTER'){
+    submitGuess();
+  } else if(state.current.length < settings.len){
+    state.current += k;
+    updateCurrentRow();
+    // pop animation on typed cell
+    const cell = document.getElementById(`cell-${state.guesses.length}-${state.current.length-1}`);
+    if(cell){ cell.classList.add('pop'); setTimeout(()=>cell.classList.remove('pop'),100); }
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   SUBMIT GUESS
+══════════════════════════════════════════════════ */
+function submitGuess(){
+  if(state.current.length < settings.len){
+    shakeRow(state.guesses.length);
+    showMessage(`Word must be ${settings.len} letters`, 1500);
+    return;
+  }
+  // Accept any input — we don't validate against a dictionary (economics terms only)
+  const guess = state.current;
+  const result = scoreGuess(guess, state.target);
+  state.guesses.push(guess);
+  state.current = '';
+
+  revealRow(state.guesses.length-1, guess, result);
+
+  const won = result.every(r=>r==='correct');
+  if(won){
+    setTimeout(()=>{
+      showMessage(winMessage(state.guesses.length), 0);
+      bounceRow(state.guesses.length-1);
+      endGame(true);
+    }, settings.len * 350 + 200);
+  } else if(state.guesses.length >= state.maxGuesses){
+    setTimeout(()=>{
+      showMessage(`The word was ${state.target}`, 0, 'lose');
+      endGame(false);
+    }, settings.len * 350 + 200);
+  }
+}
+
+/* ── Score a guess against target ── */
+function scoreGuess(guess, target){
+  const result = Array(target.length).fill('absent');
+  const targetArr = target.split('');
+  const guessArr  = guess.split('');
+  const used = Array(target.length).fill(false);
+
+  // Pass 1: correct
+  for(let i=0;i<target.length;i++){
+    if(guessArr[i]===targetArr[i]){ result[i]='correct'; used[i]=true; guessArr[i]='_'; }
+  }
+  // Pass 2: present
+  for(let i=0;i<target.length;i++){
+    if(result[i]==='correct') continue;
+    const idx = targetArr.findIndex((c,j)=>!used[j]&&c===guessArr[i]);
+    if(idx!==-1){ result[i]='present'; used[idx]=true; }
+  }
+  return result;
+}
+
+/* ── Animate row reveal ── */
+function revealRow(rowIdx, guess, result){
+  for(let c=0;c<settings.len;c++){
+    const cell = document.getElementById(`cell-${rowIdx}-${c}`);
+    const color = result[c]; // correct / present / absent
+    const delay = c * 350;
+    setTimeout(()=>{
+      cell.style.setProperty('--flip-color',
+        color==='correct'?'var(--correct)':
+        color==='present'?'var(--present)':'var(--absent)'
+      );
+      cell.classList.add('flip');
+      setTimeout(()=>{
+        cell.classList.remove('flip');
+        cell.classList.add(color);
+        updateKeyColor(guess[c], color);
+      }, 175);
+    }, delay);
+  }
+}
+
+function updateKeyColor(letter, color){
+  const el = keyEls[letter];
+  if(!el) return;
+  const priority = ['correct','present','absent'];
+  const cur = priority.find(c=>el.classList.contains(c));
+  if(!cur || priority.indexOf(color) < priority.indexOf(cur)){
+    if(cur) el.classList.remove(cur);
+    el.classList.add(color);
+  }
+}
+
+/* ── Row animations ── */
+function shakeRow(rowIdx){
+  const row = document.getElementById(`row-${rowIdx}`);
+  if(!row) return;
+  row.querySelectorAll('.grid-cell').forEach(c=>{
+    c.classList.add('shake');
+    setTimeout(()=>c.classList.remove('shake'),500);
+  });
+}
+function bounceRow(rowIdx){
+  const row = document.getElementById(`row-${rowIdx}`);
+  if(!row) return;
+  row.querySelectorAll('.grid-cell').forEach((c,i)=>{
+    setTimeout(()=>{
+      c.classList.add('bounce');
+      setTimeout(()=>c.classList.remove('bounce'),500);
+    }, i*80);
+  });
+}
+
+/* ── Messages ── */
+function showMessage(msg, timeout=0, type=''){
+  const el = document.getElementById('message-box');
+  el.textContent = msg;
+  el.className = 'message-box' + (msg?' pop':'') + (type?' '+type:'');
+  if(timeout>0) setTimeout(()=>{el.textContent='';el.className='message-box';},timeout);
+}
+const WIN_MSGS = ['Genius!','Magnificent!','Impressive!','Splendid!','Great!','Phew!'];
+function winMessage(n){ return WIN_MSGS[Math.min(n-1,5)]; }
+
+/* ── End game ── */
+function endGame(won){
+  state.gameOver = true;
+  stats.played++;
+  if(won){
+    stats.won++;
+    stats.streak++;
+    if(stats.streak > stats.best) stats.best = stats.streak;
+  } else {
+    stats.streak = 0;
+  }
+  saveStats();
+  renderStats();
+
+  // Show definition card
+  setTimeout(()=>{
+    document.getElementById('def-word').textContent = state.target;
+    document.getElementById('def-text').textContent = state.targetDef;
+    document.getElementById('def-topic').textContent = state.targetTopic;
+    document.getElementById('def-card').classList.add('show');
+  }, settings.len * 350 + 600);
+}
+
+/* ══════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════ */
+(function(){
+  const t=localStorage.getItem('biz-omics-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-theme',next);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=next==='light'?'🌙':'☀';
+}
+
+/* ── Start ── */
+newGame();
+</script>
+</body>
+</html>
