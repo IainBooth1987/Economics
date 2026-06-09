@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Search | Business Arcade · BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,700;9..144,0,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080e0b;--bg-card:#0d1f19;--bg-hover:#122b22;
+  --accent:#10b981;--accent-lt:#34d399;--accent-glow:rgba(16,185,129,0.15);
+  --text:#eef5f2;--text-muted:rgba(238,245,242,0.5);--text-dim:rgba(238,245,242,0.28);
+  --border:rgba(255,255,255,0.07);--border-acc:rgba(16,185,129,0.2);
+  --found:#10b981;--found-bg:rgba(16,185,129,0.18);
+  --select:rgba(245,158,11,0.35);
+  --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--bg-card:#fff;--bg-hover:#ecfdf5;
+  --accent:#059669;--accent-lt:#047857;--accent-glow:rgba(16,185,129,0.10);
+  --text:#0f172a;--text-muted:rgba(15,23,42,0.58);--text-dim:rgba(15,23,42,0.34);
+  --border:rgba(15,23,42,0.10);--border-acc:rgba(5,150,105,0.24);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 0%,rgba(16,185,129,0.07) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+/* Header */
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 48px;height:64px;background:rgba(8,14,11,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);gap:12px;}
+[data-theme="light"] header{background:rgba(248,250,252,0.92);}
+.logo{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.back-link{font-size:12px;color:var(--text-muted);text-decoration:none;padding:5px 12px;border-radius:20px;border:1px solid var(--border);transition:all .18s;margin-left:auto;margin-right:8px;}
+.back-link:hover{color:var(--accent);border-color:var(--border-acc);}
+.theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+
+/* Layout */
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 32px 80px;display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start;}
+@media(max-width:860px){.page{grid-template-columns:1fr;padding:24px 16px 60px;}}
+
+/* Controls */
+.controls{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.ctrl-section{margin-bottom:20px;}
+.ctrl-label{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--text-dim);font-weight:700;margin-bottom:10px;}
+.seg{display:flex;flex-wrap:wrap;gap:6px;}
+.seg-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.seg-btn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.seg-btn:not(.active):hover{border-color:var(--border-acc);color:var(--text);}
+.new-btn{width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .18s;margin-bottom:12px;}
+.new-btn:hover{opacity:.85;}
+.timer-display{font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:var(--accent);text-align:center;margin-bottom:4px;}
+.timer-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);text-align:center;margin-bottom:16px;}
+
+/* Word list */
+.word-list-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px;}
+.word-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;}
+.word-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;font-weight:600;background:rgba(255,255,255,0.03);border:1px solid transparent;transition:all .2s;}
+.word-item.found{background:var(--found-bg);border-color:rgba(16,185,129,0.25);color:var(--found);text-decoration:line-through;opacity:.65;}
+.word-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;}
+.word-item.found .word-check{background:var(--found);border-color:var(--found);}
+.found-count{font-size:13px;color:var(--text-muted);margin-bottom:10px;font-weight:600;}
+
+/* Grid */
+.grid-wrap{position:relative;}
+.grid-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.grid-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+.grid-container{display:inline-block;user-select:none;-webkit-user-select:none;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.grid-row{display:flex;}
+.grid-cell{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:0;cursor:pointer;transition:background .1s,color .1s;background:var(--bg-card);color:var(--text);}
+.grid-cell:hover{background:var(--bg-hover);}
+.grid-cell.selecting{background:var(--select);}
+.grid-cell.found-cell{background:var(--found-bg);color:var(--found);}
+
+/* Win overlay */
+.win-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-box{background:var(--bg-card);border:1px solid var(--border-acc);border-radius:20px;padding:40px;text-align:center;max-width:400px;width:90%;}
+.win-emoji{font-size:56px;margin-bottom:16px;}
+.win-title{font-family:'Fraunces',serif;font-size:28px;font-weight:700;margin-bottom:8px;}
+.win-time{font-size:15px;color:var(--text-muted);margin-bottom:24px;}
+.win-btn{padding:12px 28px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;margin:4px;}
+.win-btn-sec{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.win-btn-sec:hover{border-color:var(--border-acc);color:var(--text);}
+
+@media(max-width:500px){.grid-cell{width:28px;height:28px;font-size:11px;}}
+@media print{header{display:none!important;}}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="logo">BIZ-<span>OMICS</span></a>
+  <a href="arcade.html" class="back-link">← Arcade</a>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<div class="page">
+  <!-- Grid side -->
+  <div>
+    <div class="grid-title">🔍 Word Search</div>
+    <div class="grid-sub" id="grid-sub">Find all the business keywords hidden in the grid</div>
+    <div class="grid-container" id="grid-container"></div>
+  </div>
+
+  <!-- Controls side -->
+  <div>
+    <div class="controls">
+      <div class="ctrl-section">
+        <div class="ctrl-label">Topic</div>
+        <div class="seg" id="topic-seg">
+          <button class="seg-btn active" data-topic="all" onclick="setTopic('all',this)">All</button>
+          <button class="seg-btn" data-topic="finance" onclick="setTopic('finance',this)">Finance</button>
+          <button class="seg-btn" data-topic="marketing" onclick="setTopic('marketing',this)">Marketing</button>
+          <button class="seg-btn" data-topic="operations" onclick="setTopic('operations',this)">Operations</button>
+          <button class="seg-btn" data-topic="people" onclick="setTopic('people',this)">People</button>
+          <button class="seg-btn" data-topic="ownership" onclick="setTopic('ownership',this)">Ownership</button>
+          <button class="seg-btn" data-topic="strategy" onclick="setTopic('strategy',this)">Strategy</button>
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-label">Grid size</div>
+        <div class="seg">
+          <button class="seg-btn active" data-size="14" onclick="setSize(14,this)">14×14</button>
+          <button class="seg-btn" data-size="18" onclick="setSize(18,this)">18×18</button>
+        </div>
+      </div>
+      <div class="timer-display" id="timer-display">0:00</div>
+      <div class="timer-lbl">Time</div>
+      <button class="new-btn" onclick="newGame()">New puzzle →</button>
+    </div>
+
+    <div class="word-list-wrap">
+      <div class="ctrl-label">Words to find</div>
+      <div class="found-count" id="found-count">0 of 0 found</div>
+      <div class="word-list" id="word-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-box">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title">All found!</div>
+    <div class="win-time" id="win-time"></div>
+    <br>
+    <button class="win-btn" onclick="newGame();document.getElementById('win-overlay').classList.remove('show')">New puzzle</button>
+    <button class="win-btn win-btn-sec" onclick="document.getElementById('win-overlay').classList.remove('show')">Review grid</button>
+  </div>
+</div>
+
+<script>
+/* ── WORD BANK ── */
+const WORDS = [
+  // Finance
+  {w:'REVENUE',topic:'finance'},{w:'PROFIT',topic:'finance'},{w:'CASHFLOW',topic:'finance'},
+  {w:'BUDGET',topic:'finance'},{w:'LIABILITY',topic:'finance'},{w:'DIVIDEND',topic:'finance'},
+  {w:'INTEREST',topic:'finance'},{w:'LIQUIDITY',topic:'finance'},{w:'BREAKEVEN',topic:'finance'},
+  {w:'OVERDRAFT',topic:'finance'},{w:'MORTGAGE',topic:'finance'},{w:'EQUITY',topic:'finance'},
+  // Marketing
+  {w:'MARKET',topic:'marketing'},{w:'BRAND',topic:'marketing'},{w:'SEGMENT',topic:'marketing'},
+  {w:'PROMOTION',topic:'marketing'},{w:'PRICING',topic:'marketing'},{w:'ELASTIC',topic:'marketing'},
+  {w:'NICHE',topic:'marketing'},{w:'VIRAL',topic:'marketing'},{w:'LOYALTY',topic:'marketing'},
+  {w:'CONSUMER',topic:'marketing'},{w:'PRODUCT',topic:'marketing'},{w:'DEMAND',topic:'marketing'},
+  // Operations
+  {w:'SUPPLY',topic:'operations'},{w:'QUALITY',topic:'operations'},{w:'CAPACITY',topic:'operations'},
+  {w:'LEAN',topic:'operations'},{w:'STOCK',topic:'operations'},{w:'OUTPUT',topic:'operations'},
+  {w:'LOGISTICS',topic:'operations'},{w:'OUTSOURCE',topic:'operations'},{w:'EFFICIENCY',topic:'operations'},
+  {w:'BATCH',topic:'operations'},{w:'FLOW',topic:'operations'},{w:'PROCESS',topic:'operations'},
+  // People
+  {w:'DELEGATE',topic:'people'},{w:'MOTIVATE',topic:'people'},{w:'RECRUIT',topic:'people'},
+  {w:'APPRAISAL',topic:'people'},{w:'TRAINING',topic:'people'},{w:'WORKFORCE',topic:'people'},
+  {w:'UNION',topic:'people'},{w:'CULTURE',topic:'people'},{w:'HIERARCHY',topic:'people'},
+  {w:'REDUNDANCY',topic:'people'},{w:'CONTRACT',topic:'people'},{w:'SALARY',topic:'people'},
+  // Ownership
+  {w:'SHAREHOLDER',topic:'ownership'},{w:'FRANCHISE',topic:'ownership'},{w:'STARTUP',topic:'ownership'},
+  {w:'MERGER',topic:'ownership'},{w:'TAKEOVER',topic:'ownership'},{w:'SOLE',topic:'ownership'},
+  {w:'PARTNERSHIP',topic:'ownership'},{w:'LIMITED',topic:'ownership'},{w:'STAKEHOLDER',topic:'ownership'},
+  // Strategy
+  {w:'ANSOFF',topic:'strategy'},{w:'SWOT',topic:'strategy'},{w:'MISSION',topic:'strategy'},
+  {w:'OBJECTIVE',topic:'strategy'},{w:'STRATEGY',topic:'strategy'},{w:'COMPETITIVE',topic:'strategy'},
+  {w:'GROWTH',topic:'strategy'},{w:'DIVERSIFY',topic:'strategy'},{w:'INNOVATION',topic:'strategy'},
+];
+
+let currentTopic = 'all';
+let gridSize = 14;
+let grid = [];
+let placedWords = [];
+let foundWords = new Set();
+let selecting = false;
+let selStart = null;
+let selCurrent = null;
+let timerSec = 0;
+let timerInterval = null;
+let gameActive = false;
+
+function setTopic(t, btn) {
+  currentTopic = t;
+  document.querySelectorAll('[data-topic]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setSize(s, btn) {
+  gridSize = s;
+  document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getPool() {
+  let pool = currentTopic === 'all' ? WORDS : WORDS.filter(w => w.topic === currentTopic);
+  // shuffle and take up to 12
+  pool = pool.slice().sort(() => Math.random() - 0.5).slice(0, Math.min(12, pool.length));
+  return pool;
+}
+
+function newGame() {
+  foundWords.clear();
+  clearInterval(timerInterval);
+  timerSec = 0;
+  updateTimerDisplay();
+  const pool = getPool();
+  buildGrid(pool.map(p => p.w));
+  renderGrid();
+  renderWordList(pool);
+  gameActive = true;
+  timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(); }, 1000);
+  document.getElementById('win-overlay').classList.remove('show');
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerSec / 60);
+  const s = timerSec % 60;
+  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2,'0');
+}
+
+function buildGrid(words) {
+  grid = Array.from({length: gridSize}, () => Array(gridSize).fill(''));
+  placedWords = [];
+  const dirs = [[0,1],[1,0],[1,1],[1,-1],[-1,1],[-1,-1],[0,-1],[-1,0]];
+  for (const word of words) {
+    let placed = false;
+    for (let attempt = 0; attempt < 200 && !placed; attempt++) {
+      const dir = dirs[Math.floor(Math.random()*dirs.length)];
+      const r = Math.floor(Math.random()*gridSize);
+      const c = Math.floor(Math.random()*gridSize);
+      if (canPlace(word, r, c, dir)) {
+        placeWord(word, r, c, dir);
+        placed = true;
+      }
+    }
+    if (!placed) {
+      // fallback: place horizontally in first available row
+      for (let r = 0; r < gridSize && !placed; r++) {
+        for (let c = 0; c <= gridSize - word.length && !placed; c++) {
+          if (canPlace(word, r, c, [0,1])) {
+            placeWord(word, r, c, [0,1]);
+            placed = true;
+          }
+        }
+      }
+    }
+  }
+  // fill blanks
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let r = 0; r < gridSize; r++)
+    for (let c = 0; c < gridSize; c++)
+      if (!grid[r][c]) grid[r][c] = letters[Math.floor(Math.random()*26)];
+}
+
+function canPlace(word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    const nr = r + dir[0]*i, nc = c + dir[1]*i;
+    if (nr < 0 || nr >= gridSize || nc < 0 || nc >= gridSize) return false;
+    if (grid[nr][nc] && grid[nr][nc] !== word[i]) return false;
+  }
+  return true;
+}
+
+function placeWord(word, r, c, dir) {
+  const cells = [];
+  for (let i = 0; i < word.length; i++) {
+    const nr = r + dir[0]*i, nc = c + dir[1]*i;
+    grid[nr][nc] = word[i];
+    cells.push([nr, nc]);
+  }
+  placedWords.push({word, cells});
+}
+
+function cellKey(r,c){ return r+','+c; }
+
+function renderGrid() {
+  const container = document.getElementById('grid-container');
+  container.innerHTML = '';
+  for (let r = 0; r < gridSize; r++) {
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    for (let c = 0; c < gridSize; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.textContent = grid[r][c];
+      cell.dataset.r = r; cell.dataset.c = c;
+      cell.addEventListener('mousedown', startSelect);
+      cell.addEventListener('mouseover', moveSelect);
+      cell.addEventListener('mouseup', endSelect);
+      cell.addEventListener('touchstart', touchStart, {passive:true});
+      cell.addEventListener('touchmove', touchMove, {passive:true});
+      cell.addEventListener('touchend', endSelect);
+      row.appendChild(cell);
+    }
+    container.appendChild(row);
+  }
+}
+
+function cellAt(r,c){ return document.querySelector(`.grid-cell[data-r="${r}"][data-c="${c}"]`); }
+
+function clearSelection() {
+  document.querySelectorAll('.grid-cell.selecting').forEach(c => c.classList.remove('selecting'));
+}
+
+function getLineCells(r1,c1,r2,c2) {
+  const cells = [];
+  const dr = Math.sign(r2-r1), dc = Math.sign(c2-c1);
+  if (dr === 0 && dc === 0) return [[r1,c1]];
+  // must be straight line
+  const dRow = r2-r1, dCol = c2-c1;
+  if (dRow !== 0 && dCol !== 0 && Math.abs(dRow) !== Math.abs(dCol)) return [];
+  const steps = Math.max(Math.abs(dRow), Math.abs(dCol));
+  for (let i = 0; i <= steps; i++) cells.push([r1+dr*i, c1+dc*i]);
+  return cells;
+}
+
+function startSelect(e) {
+  selecting = true;
+  selStart = {r: +e.currentTarget.dataset.r, c: +e.currentTarget.dataset.c};
+  selCurrent = selStart;
+  clearSelection();
+  e.currentTarget.classList.add('selecting');
+}
+function moveSelect(e) {
+  if (!selecting) return;
+  selCurrent = {r: +e.currentTarget.dataset.r, c: +e.currentTarget.dataset.c};
+  clearSelection();
+  const line = getLineCells(selStart.r,selStart.c,selCurrent.r,selCurrent.c);
+  line.forEach(([r,c]) => { const el = cellAt(r,c); if(el) el.classList.add('selecting'); });
+}
+function endSelect() {
+  if (!selecting) return;
+  selecting = false;
+  const line = getLineCells(selStart.r,selStart.c,selCurrent.r,selCurrent.c);
+  const selected = line.map(([r,c]) => grid[r][c]).join('');
+  const selectedRev = selected.split('').reverse().join('');
+  clearSelection();
+  // check against placed words
+  for (const pw of placedWords) {
+    if (!foundWords.has(pw.word) && (pw.word === selected || pw.word === selectedRev)) {
+      foundWords.add(pw.word);
+      pw.cells.forEach(([r,c]) => { const el = cellAt(r,c); if(el) el.classList.add('found-cell'); });
+      updateFoundList();
+      if (foundWords.size === placedWords.length) endGame();
+      break;
+    }
+  }
+}
+function touchStart(e){ startSelect({currentTarget:e.currentTarget}); }
+function touchMove(e){
+  const t = e.touches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  if (el && el.classList.contains('grid-cell')) moveSelect({currentTarget:el});
+}
+
+function renderWordList(pool) {
+  const list = document.getElementById('word-list');
+  list.innerHTML = '';
+  pool.forEach(({w}) => {
+    const item = document.createElement('div');
+    item.className = 'word-item';
+    item.id = 'wi-' + w;
+    item.innerHTML = `<div class="word-check"></div><span>${w}</span>`;
+    list.appendChild(item);
+  });
+  updateFoundList();
+}
+
+function updateFoundList() {
+  placedWords.forEach(({word}) => {
+    const el = document.getElementById('wi-' + word);
+    if (el) el.classList.toggle('found', foundWords.has(word));
+  });
+  document.getElementById('found-count').textContent = `${foundWords.size} of ${placedWords.length} found`;
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  gameActive = false;
+  const m = Math.floor(timerSec/60), s = timerSec%60;
+  document.getElementById('win-time').textContent = `Completed in ${m}:${String(s).padStart(2,'0')}`;
+  document.getElementById('win-overlay').classList.add('show');
+}
+
+document.addEventListener('mouseup', () => { if(selecting) endSelect(); });
+
+// Theme
+(function(){
+  var t=localStorage.getItem('biz-omics-business-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  var btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-business-theme',next);
+  document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+
+newGame();
+</script>
+</body>
+</html>

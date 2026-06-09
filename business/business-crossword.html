@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossword | Business Arcade · BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,700;9..144,0,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080e0b;--bg-card:#0d1f19;--bg-hover:#122b22;
+  --accent:#10b981;--accent-lt:#34d399;--accent-glow:rgba(16,185,129,0.15);
+  --text:#eef5f2;--text-muted:rgba(238,245,242,0.5);--text-dim:rgba(238,245,242,0.28);
+  --border:rgba(255,255,255,0.07);--border-acc:rgba(16,185,129,0.2);
+  --cell-bg:#0d1f19;--cell-border:rgba(255,255,255,0.12);
+  --cell-active:rgba(16,185,129,0.18);--cell-word:rgba(16,185,129,0.07);
+  --cell-correct-bg:rgba(16,185,129,0.25);--cell-wrong:rgba(220,38,38,0.2);
+  --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--bg-card:#fff;--bg-hover:#ecfdf5;
+  --accent:#059669;--accent-lt:#047857;--accent-glow:rgba(16,185,129,0.10);
+  --text:#0f172a;--text-muted:rgba(15,23,42,0.58);--text-dim:rgba(15,23,42,0.34);
+  --border:rgba(15,23,42,0.10);--border-acc:rgba(5,150,105,0.24);
+  --cell-bg:#ffffff;--cell-border:rgba(15,23,42,0.15);
+  --cell-active:rgba(5,150,105,0.18);--cell-word:rgba(5,150,105,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 15% 0%,rgba(16,185,129,0.07) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 48px;height:64px;background:rgba(8,14,11,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);gap:12px;}
+[data-theme="light"] header{background:rgba(248,250,252,0.92);}
+.logo{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.back-link{font-size:12px;color:var(--text-muted);text-decoration:none;padding:5px 12px;border-radius:20px;border:1px solid var(--border);transition:all .18s;margin-left:auto;margin-right:8px;}
+.back-link:hover{color:var(--accent);border-color:var(--border-acc);}
+.theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+
+.page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:32px 32px 80px;display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start;}
+@media(max-width:900px){.page{grid-template-columns:1fr;padding:24px 16px 60px;}}
+
+/* Controls panel */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.panel+.panel{margin-top:16px;}
+.panel-label{font-size:10px;text-transform:uppercase;letter-spacing:2.5px;color:var(--text-dim);font-weight:700;margin-bottom:12px;}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.seg-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.seg-btn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.seg-btn:not(.active):hover{border-color:var(--border-acc);color:var(--text);}
+.gen-btn{width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .18s;margin-bottom:8px;}
+.gen-btn:hover{opacity:.85;}
+.check-btn{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border-acc);background:transparent;color:var(--accent);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;margin-bottom:8px;}
+.check-btn:hover{background:var(--accent-glow);}
+.reveal-btn{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;}
+.reveal-btn:hover{border-color:var(--border-acc);color:var(--text);}
+
+/* Score display */
+.score-disp{text-align:center;padding:12px 0 4px;}
+.score-num{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--accent);}
+.score-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);margin-top:2px;}
+
+/* Clue list */
+.clues-wrap{margin-top:16px;}
+.clue-section-title{font-family:'Fraunces',serif;font-size:15px;font-weight:700;margin-bottom:10px;color:var(--text);}
+.clue-item{display:flex;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s;margin-bottom:4px;font-size:13px;border:1px solid transparent;}
+.clue-item:hover{background:var(--bg-hover);}
+.clue-item.active{background:var(--cell-active);border-color:var(--border-acc);}
+.clue-item.solved{opacity:.5;}
+.clue-num{font-family:'Fraunces',serif;font-weight:700;color:var(--accent);min-width:24px;font-size:13px;}
+.clue-text{color:var(--text-muted);line-height:1.45;flex:1;}
+
+/* Crossword grid */
+.cw-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.cw-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+.cw-grid-outer{overflow-x:auto;}
+.cw-grid{display:inline-grid;gap:2px;padding:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;}
+.cw-cell{width:38px;height:38px;position:relative;border-radius:4px;}
+.cw-cell.black{background:transparent;}
+.cw-cell.white{background:var(--cell-bg);border:1.5px solid var(--cell-border);cursor:text;}
+.cw-cell.word-hl{background:var(--cell-word);}
+.cw-cell.active-cell{background:var(--cell-active)!important;border-color:var(--accent)!important;}
+.cw-cell.correct-cell{background:var(--cell-correct-bg)!important;}
+.cw-cell.wrong-cell{background:var(--cell-wrong)!important;}
+.cell-num{position:absolute;top:2px;left:3px;font-size:8px;font-weight:700;color:var(--text-dim);line-height:1;}
+.cell-input{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:none;outline:none;text-align:center;font-size:16px;font-weight:800;font-family:'DM Sans',sans-serif;color:var(--text);text-transform:uppercase;caret-color:transparent;cursor:pointer;border-radius:4px;}
+[data-theme="light"] .cell-input{color:var(--text);}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty-emoji{font-size:48px;margin-bottom:16px;}
+.empty-title{font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text);}
+.empty-sub{font-size:14px;line-height:1.6;}
+
+@media print{
+  header,.panel,#side-panel{display:none!important;}
+  .page{grid-template-columns:1fr!important;padding:0!important;}
+  .cw-cell.white{border:1px solid #000!important;background:#fff!important;}
+  .cw-cell.black{background:#000!important;}
+  .cell-input{color:#000!important;}
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="logo">BIZ-<span>OMICS</span></a>
+  <a href="arcade.html" class="back-link">← Arcade</a>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<div class="page">
+  <!-- Grid side -->
+  <div>
+    <div class="cw-title">✏️ Crossword</div>
+    <div class="cw-sub" id="cw-sub">Select a topic and generate a puzzle to begin</div>
+    <div class="cw-grid-outer">
+      <div id="cw-grid-el">
+        <div class="empty-state">
+          <div class="empty-emoji">✏️</div>
+          <div class="empty-title">No puzzle yet</div>
+          <div class="empty-sub">Choose a topic on the right and click<br><strong>Generate Puzzle</strong> to start.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls side -->
+  <div id="side-panel">
+    <div class="panel">
+      <div class="panel-label">Topic</div>
+      <div class="seg" id="topic-seg">
+        <button class="seg-btn active" data-t="all" onclick="setTopic('all',this)">All topics</button>
+        <button class="seg-btn" data-t="finance" onclick="setTopic('finance',this)">Finance</button>
+        <button class="seg-btn" data-t="marketing" onclick="setTopic('marketing',this)">Marketing</button>
+        <button class="seg-btn" data-t="operations" onclick="setTopic('operations',this)">Operations</button>
+        <button class="seg-btn" data-t="people" onclick="setTopic('people',this)">People &amp; HR</button>
+        <button class="seg-btn" data-t="strategy" onclick="setTopic('strategy',this)">Strategy</button>
+        <button class="seg-btn" data-t="ownership" onclick="setTopic('ownership',this)">Ownership</button>
+      </div>
+      <button class="gen-btn" onclick="generatePuzzle()">Generate puzzle →</button>
+      <button class="check-btn" onclick="checkAnswers()">✓ Check answers</button>
+      <button class="reveal-btn" onclick="revealAll()">Reveal all</button>
+      <div class="score-disp">
+        <div class="score-num" id="score-num">—</div>
+        <div class="score-lbl">Words correct</div>
+      </div>
+    </div>
+
+    <div class="panel" id="clues-panel" style="display:none;">
+      <div id="across-clues"></div>
+      <div style="margin-top:16px;" id="down-clues"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── WORD BANK (word + definition) ── */
+const CW_WORDS = [
+  // Finance
+  {w:'PROFIT',c:'Revenue minus all costs',t:'finance'},
+  {w:'REVENUE',c:'Total income from sales before deductions',t:'finance'},
+  {w:'CASHFLOW',c:'Movement of money into and out of a business',t:'finance'},
+  {w:'BUDGET',c:'A financial plan of expected income and spending',t:'finance'},
+  {w:'ASSET',c:'Something of value owned by a business',t:'finance'},
+  {w:'LIABILITY',c:'A financial debt or obligation of a business',t:'finance'},
+  {w:'DIVIDEND',c:'A share of profits paid to shareholders',t:'finance'},
+  {w:'EQUITY',c:'Ownership interest in a company via shares',t:'finance'},
+  {w:'INTEREST',c:'The cost of borrowing money, expressed as a rate',t:'finance'},
+  {w:'LIQUIDITY',c:'Ability to meet short-term debts with current assets',t:'finance'},
+  {w:'OVERDRAFT',c:'A facility allowing a bank balance to go negative',t:'finance'},
+  {w:'GRANT',c:'Non-repayable government funding for a business',t:'finance'},
+  {w:'LEASE',c:'A contract to use an asset in exchange for payments',t:'finance'},
+  {w:'INVOICE',c:'A document requesting payment for goods or services',t:'finance'},
+  // Marketing
+  {w:'BRAND',c:'The identity and reputation of a product or company',t:'marketing'},
+  {w:'SEGMENT',c:'A distinct group of customers with similar needs',t:'marketing'},
+  {w:'NICHE',c:'A small, specialised part of the market',t:'marketing'},
+  {w:'DEMAND',c:'Willingness and ability to buy at a given price',t:'marketing'},
+  {w:'ELASTIC',c:'Describes demand that is sensitive to price changes',t:'marketing'},
+  {w:'LOYALTY',c:'A tendency to repeatedly choose the same brand',t:'marketing'},
+  {w:'PRODUCT',c:'A good or service a business offers customers',t:'marketing'},
+  {w:'PRICING',c:'The strategy used to set a product\'s selling price',t:'marketing'},
+  {w:'PROMOTION',c:'Methods used to communicate a product to customers',t:'marketing'},
+  {w:'VIRAL',c:'Content that spreads rapidly via social sharing',t:'marketing'},
+  // Operations
+  {w:'QUALITY',c:'Meeting or exceeding customer expectations consistently',t:'operations'},
+  {w:'CAPACITY',c:'The maximum output a business can produce',t:'operations'},
+  {w:'STOCK',c:'Goods held ready for sale or use in production',t:'operations'},
+  {w:'OUTPUT',c:'The total quantity of goods or services produced',t:'operations'},
+  {w:'LEAN',c:'A production approach focused on eliminating waste',t:'operations'},
+  {w:'BATCH',c:'A production method making groups of identical items',t:'operations'},
+  {w:'SUPPLY',c:'The quantity of a product firms are willing to sell',t:'operations'},
+  {w:'OUTSOURCE',c:'Hiring an external firm to do tasks previously done in-house',t:'operations'},
+  {w:'LOGISTICS',c:'The management of the flow of goods and resources',t:'operations'},
+  {w:'EFFICIENCY',c:'Producing output with minimum waste of inputs',t:'operations'},
+  // People
+  {w:'DELEGATE',c:'To assign tasks and authority to subordinates',t:'people'},
+  {w:'MOTIVATE',c:'To inspire employees to perform to their best',t:'people'},
+  {w:'RECRUIT',c:'To find and hire new employees',t:'people'},
+  {w:'TRAINING',c:'Developing employees\' knowledge and skills',t:'people'},
+  {w:'UNION',c:'An organisation representing workers\' interests',t:'people'},
+  {w:'CULTURE',c:'Shared values and behaviours within an organisation',t:'people'},
+  {w:'SALARY',c:'A fixed regular payment made to an employee',t:'people'},
+  {w:'HIERARCHY',c:'Layers of authority and responsibility in an organisation',t:'people'},
+  {w:'CONTRACT',c:'A legally binding agreement between two parties',t:'people'},
+  {w:'APPRAISAL',c:'A formal review of an employee\'s performance',t:'people'},
+  {w:'REDUNDANCY',c:'When a job role is no longer needed by a business',t:'people'},
+  // Strategy
+  {w:'ANSOFF',c:'A matrix framework for growth strategy decisions',t:'strategy'},
+  {w:'SWOT',c:'An analysis of strengths, weaknesses, opportunities, threats',t:'strategy'},
+  {w:'MISSION',c:'A statement of a company\'s overall purpose',t:'strategy'},
+  {w:'OBJECTIVE',c:'A specific, measurable goal a business aims to achieve',t:'strategy'},
+  {w:'GROWTH',c:'An increase in the scale or output of a business',t:'strategy'},
+  {w:'DIVERSIFY',c:'Entering new markets with new products to spread risk',t:'strategy'},
+  {w:'INNOVATION',c:'Developing new products, processes or ideas',t:'strategy'},
+  {w:'COMPETITIVE',c:'Relating to rivalry between businesses in a market',t:'strategy'},
+  // Ownership
+  {w:'SHAREHOLDER',c:'A person who owns shares in a limited company',t:'ownership'},
+  {w:'FRANCHISE',c:'A licence to operate a business using another\'s brand',t:'ownership'},
+  {w:'MERGER',c:'Two companies combining to form one new business',t:'ownership'},
+  {w:'TAKEOVER',c:'One company purchasing a controlling stake in another',t:'ownership'},
+  {w:'STARTUP',c:'A newly established business in early development',t:'ownership'},
+  {w:'PARTNERSHIP',c:'A business owned by two or more people sharing risk',t:'ownership'},
+  {w:'STAKEHOLDER',c:'Anyone with an interest in the activities of a business',t:'ownership'},
+];
+
+let currentTopic = 'all';
+let puzzleWords = [];
+let placedEntries = []; // {word, clue, startRow, startCol, dir, number}
+let gridData = {}; // key: "r,c" -> {letter, entries:[]}
+let gridSize = 0;
+let activeEntry = null;
+let scores = {correct:0, total:0};
+
+function setTopic(t, btn) {
+  currentTopic = t;
+  document.querySelectorAll('[data-t]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function generatePuzzle() {
+  let pool = currentTopic === 'all' ? CW_WORDS : CW_WORDS.filter(w => w.t === currentTopic);
+  pool = pool.slice().sort(() => Math.random() - 0.5);
+  // Try to place up to 12 words
+  const maxWords = Math.min(12, pool.length);
+  const attempt = tryBuild(pool, maxWords);
+  if (!attempt || attempt.length < 3) { alert('Could not place enough words — try All Topics or a different topic.'); return; }
+  placedEntries = attempt;
+  buildGridData();
+  renderCrossword();
+  renderClues();
+  scores = {correct:0, total:placedEntries.length};
+  document.getElementById('score-num').textContent = '—';
+  document.getElementById('clues-panel').style.display = 'block';
+  document.getElementById('cw-sub').textContent = `${placedEntries.length} words · ${currentTopic === 'all' ? 'Mixed topics' : currentTopic.charAt(0).toUpperCase()+currentTopic.slice(1)}`;
+}
+
+function tryBuild(pool, max) {
+  const GRID = 20;
+  let placed = [];
+  // Place first word horizontally in centre
+  const first = pool[0];
+  const r0 = Math.floor(GRID/2), c0 = Math.floor((GRID - first.w.length)/2);
+  placed.push({word:first.w, clue:first.c, startRow:r0, startCol:c0, dir:'across'});
+
+  for (let i = 1; i < pool.length && placed.length < max; i++) {
+    const candidate = pool[i];
+    const best = findBestPlacement(candidate.w, placed, GRID);
+    if (best) placed.push({word:candidate.w, clue:candidate.c, ...best});
+  }
+  return placed;
+}
+
+function findBestPlacement(word, placed, GRID) {
+  const occupied = getOccupied(placed, GRID);
+  // Try to intersect with existing words
+  for (const existing of placed) {
+    for (let ei = 0; ei < existing.word.length; ei++) {
+      const letter = existing.word[ei];
+      // Find matching letters in candidate
+      for (let wi = 0; wi < word.length; wi++) {
+        if (word[wi] !== letter) continue;
+        // Try perpendicular placement
+        const newDir = existing.dir === 'across' ? 'down' : 'across';
+        let sr, sc;
+        if (newDir === 'down') {
+          // place word vertically, intersecting at existing row
+          const existRow = existing.dir === 'across' ? existing.startRow : existing.startRow + ei;
+          sr = existRow - wi;
+          sc = existing.dir === 'across' ? existing.startCol + ei : existing.startCol;
+        } else {
+          const existCol = existing.dir === 'down' ? existing.startCol : existing.startCol + ei;
+          sr = existing.dir === 'down' ? existing.startRow + ei : existing.startRow;
+          sc = existCol - wi;
+        }
+        if (canPlaceCW(word, sr, sc, newDir, occupied, GRID, placed)) {
+          return {startRow:sr, startCol:sc, dir:newDir};
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function getOccupied(placed, GRID) {
+  const occ = {};
+  placed.forEach(e => {
+    for (let i = 0; i < e.word.length; i++) {
+      const r = e.dir === 'across' ? e.startRow : e.startRow + i;
+      const c = e.dir === 'down'   ? e.startCol : e.startCol + i;
+      occ[r+','+c] = e.word[i];
+    }
+  });
+  return occ;
+}
+
+function canPlaceCW(word, sr, sc, dir, occupied, GRID, placed) {
+  for (let i = 0; i < word.length; i++) {
+    const r = dir === 'across' ? sr : sr + i;
+    const c = dir === 'down'   ? sc : sc + i;
+    if (r < 0 || r >= GRID || c < 0 || c >= GRID) return false;
+    const key = r+','+c;
+    if (occupied[key] && occupied[key] !== word[i]) return false;
+    // Check adjacency (don't run parallel to another word)
+    if (!occupied[key]) {
+      const perpR = dir === 'across' ? [r-1,r+1] : [r,r];
+      const perpC = dir === 'down'   ? [c-1,c+1] : [c,c];
+      // Allow adjacency only at intersection
+    }
+  }
+  // Check cells before and after
+  const endR = dir === 'across' ? sr : sr + word.length;
+  const endC = dir === 'down'   ? sc : sc + word.length;
+  const beforeKey = dir==='across' ? (sr+','+(sc-1)) : ((sr-1)+','+sc);
+  const afterKey  = dir==='across' ? (sr+','+(sc+word.length)) : ((sr+word.length)+','+sc);
+  if (occupied[beforeKey]) return false;
+  if (occupied[afterKey])  return false;
+  return true;
+}
+
+function buildGridData() {
+  gridData = {};
+  let minR=99,maxR=0,minC=99,maxC=0;
+  placedEntries.forEach(e => {
+    for (let i = 0; i < e.word.length; i++) {
+      const r = e.dir === 'across' ? e.startRow : e.startRow + i;
+      const c = e.dir === 'down'   ? e.startCol : e.startCol + i;
+      if (!gridData[r+','+c]) gridData[r+','+c] = {letter:e.word[i], entries:[], input:''};
+      gridData[r+','+c].entries.push(e);
+      minR=Math.min(minR,r); maxR=Math.max(maxR,r);
+      minC=Math.min(minC,c); maxC=Math.max(maxC,c);
+    }
+  });
+  // Normalise
+  const norm = {};
+  Object.entries(gridData).forEach(([k,v]) => {
+    const [r,c] = k.split(',').map(Number);
+    norm[(r-minR)+','+(c-minC)] = v;
+  });
+  gridData = norm;
+  gridSize = Math.max(maxR-minR+1, maxC-minC+1) + 1;
+  // Update startRow/Col
+  placedEntries.forEach(e => { e.startRow -= minR; e.startCol -= minC; });
+  // Number entries
+  let num = 1;
+  const numbered = {};
+  for (let r = 0; r < gridSize+2; r++) {
+    for (let c = 0; c < gridSize+2; c++) {
+      const key = r+','+c;
+      if (!gridData[key]) continue;
+      const startsAcross = placedEntries.some(e => e.dir==='across' && e.startRow===r && e.startCol===c);
+      const startsDown   = placedEntries.some(e => e.dir==='down'   && e.startRow===r && e.startCol===c);
+      if (startsAcross || startsDown) {
+        numbered[key] = num;
+        placedEntries.forEach(e => {
+          if (e.startRow===r && e.startCol===c) e.number = num;
+        });
+        num++;
+      }
+    }
+  }
+  gridData._numbered = numbered;
+}
+
+function renderCrossword() {
+  const el = document.getElementById('cw-grid-el');
+  const gs = gridSize + 2;
+  el.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'cw-grid';
+  grid.style.gridTemplateColumns = `repeat(${gs},38px)`;
+  grid.style.gridTemplateRows = `repeat(${gs},38px)`;
+
+  for (let r = 0; r < gs; r++) {
+    for (let c = 0; c < gs; c++) {
+      const cell = document.createElement('div');
+      const key = r+','+c;
+      const num = gridData._numbered && gridData._numbered[key];
+      if (gridData[key]) {
+        cell.className = 'cw-cell white';
+        cell.dataset.r = r; cell.dataset.c = c;
+        if (num) { const n = document.createElement('div'); n.className='cell-num'; n.textContent=num; cell.appendChild(n); }
+        const inp = document.createElement('input');
+        inp.className = 'cell-input';
+        inp.maxLength = 1;
+        inp.dataset.r = r; inp.dataset.c = c;
+        inp.addEventListener('click', () => selectCell(r,c));
+        inp.addEventListener('input', e => handleInput(e,r,c));
+        inp.addEventListener('keydown', e => handleKeydown(e,r,c));
+        cell.appendChild(inp);
+      } else {
+        cell.className = 'cw-cell black';
+      }
+      grid.appendChild(cell);
+    }
+  }
+  el.appendChild(grid);
+}
+
+function cellEl(r,c){ return document.querySelector(`.cell-input[data-r="${r}"][data-c="${c}"]`); }
+function cellWrap(r,c){ return document.querySelector(`.cw-cell[data-r="${r}"][data-c="${c}"]`); }
+
+function selectCell(r,c) {
+  const key = r+','+c;
+  if (!gridData[key]) return;
+  // Find which entry to activate
+  const entries = placedEntries.filter(e => {
+    for (let i = 0; i < e.word.length; i++) {
+      const er = e.dir==='across'?e.startRow:e.startRow+i;
+      const ec = e.dir==='down'?e.startCol:e.startCol+i;
+      if (er===r&&ec===c) return true;
+    }
+    return false;
+  });
+  if (!entries.length) return;
+  // Toggle direction if same cell clicked again
+  if (activeEntry && activeEntry.startRow===entries[0].startRow && activeEntry.startCol===entries[0].startCol && entries.length > 1) {
+    activeEntry = entries[1];
+  } else {
+    activeEntry = entries[0];
+  }
+  highlightActive();
+  highlightClue();
+}
+
+function highlightActive() {
+  // Clear all
+  document.querySelectorAll('.cw-cell.white').forEach(c => { c.classList.remove('active-cell','word-hl'); });
+  if (!activeEntry) return;
+  for (let i = 0; i < activeEntry.word.length; i++) {
+    const r = activeEntry.dir==='across'?activeEntry.startRow:activeEntry.startRow+i;
+    const c = activeEntry.dir==='down'?activeEntry.startCol:activeEntry.startCol+i;
+    const wrap = cellWrap(r,c);
+    if (wrap) wrap.classList.add('word-hl');
+  }
+}
+
+function highlightClue() {
+  document.querySelectorAll('.clue-item').forEach(c => c.classList.remove('active'));
+  if (!activeEntry) return;
+  const id = `clue-${activeEntry.dir}-${activeEntry.number}`;
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); el.scrollIntoView({block:'nearest'}); }
+}
+
+function handleInput(e, r, c) {
+  const val = e.target.value.replace(/[^a-zA-Z]/g,'').toUpperCase();
+  e.target.value = val ? val[val.length-1] : '';
+  if (e.target.value && activeEntry) moveNext(r,c);
+}
+
+function handleKeydown(e, r, c) {
+  if (e.key === 'Backspace') {
+    if (!cellEl(r,c).value) movePrev(r,c);
+  } else if (e.key === 'ArrowRight') { moveDir(r,c,0,1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft')  { moveDir(r,c,0,-1); e.preventDefault(); }
+  else if (e.key === 'ArrowDown')  { moveDir(r,c,1,0); e.preventDefault(); }
+  else if (e.key === 'ArrowUp')    { moveDir(r,c,-1,0); e.preventDefault(); }
+}
+
+function moveNext(r,c) {
+  if (!activeEntry) return;
+  const dr = activeEntry.dir==='down'?1:0, dc = activeEntry.dir==='across'?1:0;
+  const nr = r+dr, nc = c+dc;
+  const inp = cellEl(nr,nc);
+  if (inp) inp.focus();
+}
+function movePrev(r,c) {
+  if (!activeEntry) return;
+  const dr = activeEntry.dir==='down'?-1:0, dc = activeEntry.dir==='across'?-1:0;
+  const inp = cellEl(r+dr,c+dc);
+  if (inp) inp.focus();
+}
+function moveDir(r,c,dr,dc){
+  const inp = cellEl(r+dr,c+dc);
+  if (inp) inp.focus();
+}
+
+function renderClues() {
+  const across = placedEntries.filter(e=>e.dir==='across').sort((a,b)=>a.number-b.number);
+  const down   = placedEntries.filter(e=>e.dir==='down').sort((a,b)=>a.number-b.number);
+
+  function buildSection(list, title, idPrefix) {
+    const wrap = document.createElement('div');
+    wrap.className = 'clues-wrap';
+    const t = document.createElement('div'); t.className='clue-section-title'; t.textContent=title;
+    wrap.appendChild(t);
+    list.forEach(e => {
+      const item = document.createElement('div');
+      item.className = 'clue-item';
+      item.id = `clue-${idPrefix}-${e.number}`;
+      item.innerHTML = `<span class="clue-num">${e.number}</span><span class="clue-text">${e.clue} (${e.word.length})</span>`;
+      item.addEventListener('click', () => { activeEntry = e; highlightActive(); highlightClue(); cellEl(e.startRow,e.startCol)?.focus(); });
+      wrap.appendChild(item);
+    });
+    return wrap;
+  }
+
+  document.getElementById('across-clues').innerHTML = '';
+  document.getElementById('down-clues').innerHTML = '';
+  document.getElementById('across-clues').appendChild(buildSection(across,'Across','across'));
+  document.getElementById('down-clues').appendChild(buildSection(down,'Down','down'));
+}
+
+function checkAnswers() {
+  let correct = 0;
+  placedEntries.forEach(e => {
+    let wordCorrect = true;
+    for (let i = 0; i < e.word.length; i++) {
+      const r = e.dir==='across'?e.startRow:e.startRow+i;
+      const c = e.dir==='down'?e.startCol:e.startCol+i;
+      const inp = cellEl(r,c);
+      const val = inp ? inp.value.toUpperCase() : '';
+      const wrap = cellWrap(r,c);
+      if (val === e.word[i]) {
+        if (wrap) { wrap.classList.remove('wrong-cell'); wrap.classList.add('correct-cell'); }
+      } else {
+        wordCorrect = false;
+        if (wrap) { wrap.classList.remove('correct-cell'); if(val) wrap.classList.add('wrong-cell'); }
+      }
+    }
+    if (wordCorrect) {
+      correct++;
+      const clueEl = document.getElementById(`clue-${e.dir}-${e.number}`);
+      if (clueEl) clueEl.classList.add('solved');
+    }
+  });
+  document.getElementById('score-num').textContent = correct + '/' + placedEntries.length;
+}
+
+function revealAll() {
+  placedEntries.forEach(e => {
+    for (let i = 0; i < e.word.length; i++) {
+      const r = e.dir==='across'?e.startRow:e.startRow+i;
+      const c = e.dir==='down'?e.startCol:e.startCol+i;
+      const inp = cellEl(r,c);
+      const wrap = cellWrap(r,c);
+      if (inp) inp.value = e.word[i];
+      if (wrap) { wrap.classList.add('correct-cell'); wrap.classList.remove('wrong-cell'); }
+    }
+    const clueEl = document.getElementById(`clue-${e.dir}-${e.number}`);
+    if (clueEl) clueEl.classList.add('solved');
+  });
+  document.getElementById('score-num').textContent = placedEntries.length + '/' + placedEntries.length;
+}
+
+(function(){
+  var t=localStorage.getItem('biz-omics-business-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  var btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-business-theme',next);
+  document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+</script>
+</body>
+</html>

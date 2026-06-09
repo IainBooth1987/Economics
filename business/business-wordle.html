@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BizWordle | Business Arcade · BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,700;9..144,0,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080e0b;--bg-card:#0d1f19;--bg-hover:#122b22;
+  --accent:#10b981;--accent-lt:#34d399;--accent-glow:rgba(16,185,129,0.15);
+  --text:#eef5f2;--text-muted:rgba(238,245,242,0.5);--text-dim:rgba(238,245,242,0.28);
+  --border:rgba(255,255,255,0.07);--border-acc:rgba(16,185,129,0.2);
+  --correct:#10b981;--present:#f59e0b;--absent:#1e3329;
+  --correct-bg:rgba(16,185,129,0.2);--present-bg:rgba(245,158,11,0.2);
+  --key-bg:#1a2e25;--key-text:#eef5f2;
+  --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--bg-card:#fff;--bg-hover:#ecfdf5;
+  --accent:#059669;--accent-lt:#047857;--accent-glow:rgba(16,185,129,0.10);
+  --text:#0f172a;--text-muted:rgba(15,23,42,0.58);--text-dim:rgba(15,23,42,0.34);
+  --border:rgba(15,23,42,0.10);--border-acc:rgba(5,150,105,0.24);
+  --absent:#e2e8f0;--key-bg:#e2e8f0;--key-text:#0f172a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.07) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 48px;height:64px;background:rgba(8,14,11,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);gap:12px;}
+[data-theme="light"] header{background:rgba(248,250,252,0.92);}
+.logo{font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--text);text-decoration:none;}
+.logo span{color:var(--accent);}
+.back-link{font-size:12px;color:var(--text-muted);text-decoration:none;padding:5px 12px;border-radius:20px;border:1px solid var(--border);transition:all .18s;margin-left:auto;margin-right:8px;}
+.back-link:hover{color:var(--accent);border-color:var(--border-acc);}
+.theme-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+
+.game-wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:32px 20px 60px;text-align:center;}
+.game-title{font-family:'Fraunces',serif;font-size:32px;font-weight:900;margin-bottom:4px;}
+.game-title span{color:var(--accent);}
+.game-meta{font-size:12px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.hint-box{background:var(--bg-card);border:1px solid var(--border-acc);border-radius:10px;padding:10px 16px;font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
+.hint-box strong{color:var(--accent-lt);}
+
+/* Toast */
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a2e25;color:var(--text);padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;border:1px solid var(--border-acc);}
+.toast.show{opacity:1;}
+
+/* Board */
+.board{display:flex;flex-direction:column;gap:6px;align-items:center;margin-bottom:24px;}
+.board-row{display:flex;gap:6px;}
+.tile{width:56px;height:56px;border-radius:8px;border:2px solid rgba(255,255,255,0.2);background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;letter-spacing:0;text-transform:uppercase;transition:transform .1s;position:relative;}
+[data-theme="light"] .tile{border-color:rgba(15,23,42,0.2);background:#f1f5f9;}
+.tile.filled{border-color:rgba(255,255,255,0.4);}
+[data-theme="light"] .tile.filled{border-color:rgba(15,23,42,0.4);}
+.tile.correct{background:var(--correct);border-color:var(--correct);color:#fff;animation:flipIn .4s ease forwards;}
+.tile.present{background:var(--present);border-color:var(--present);color:#fff;animation:flipIn .4s ease forwards;}
+.tile.absent{background:var(--absent);border-color:var(--absent);color:var(--text-muted);animation:flipIn .4s ease forwards;}
+.tile.pop{animation:pop .1s ease;}
+.tile.shake{animation:shake .4s ease;}
+
+@keyframes flipIn{
+  0%{transform:rotateX(0);}
+  50%{transform:rotateX(-90deg);}
+  100%{transform:rotateX(0);}
+}
+@keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.12);}100%{transform:scale(1);}}
+@keyframes shake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
+
+/* Keyboard */
+.keyboard{display:flex;flex-direction:column;gap:7px;align-items:center;margin-bottom:20px;}
+.kb-row{display:flex;gap:5px;}
+.kb-key{min-width:36px;height:48px;padding:0 4px;border-radius:7px;border:none;background:var(--key-bg);color:var(--key-text);font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.kb-key.wide{min-width:56px;font-size:11px;}
+.kb-key.correct{background:var(--correct);color:#fff;}
+.kb-key.present{background:var(--present);color:#fff;}
+.kb-key.absent{background:var(--absent);color:var(--text-muted);}
+.kb-key:active{transform:scale(.94);}
+
+/* Controls */
+.ctrl-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;}
+.btn-primary{padding:10px 22px;border-radius:10px;border:none;background:var(--accent);color:#000;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.btn-secondary{padding:10px 22px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;}
+.btn-secondary:hover{border-color:var(--border-acc);color:var(--text);}
+.word-length-toggle{display:flex;gap:6px;justify-content:center;margin-bottom:16px;}
+.wl-btn{padding:5px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.wl-btn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+
+/* End overlay */
+.end-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;}
+.end-overlay.show{display:flex;}
+.end-box{background:var(--bg-card);border:1px solid var(--border-acc);border-radius:20px;padding:36px;text-align:center;max-width:380px;width:90%;}
+.end-emoji{font-size:52px;margin-bottom:14px;}
+.end-title{font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin-bottom:8px;}
+.end-word{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:3px;margin-bottom:6px;}
+.end-def{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+.share-text{font-family:monospace;font-size:16px;line-height:1.4;background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;margin-bottom:16px;white-space:pre-wrap;word-break:break-all;}
+
+@media(max-width:480px){
+  header{padding:0 16px;}
+  .tile{width:46px;height:46px;font-size:18px;}
+  .kb-key{min-width:30px;height:42px;font-size:12px;}
+  .kb-key.wide{min-width:46px;}
+}
+@media print{header{display:none!important;}}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="logo">BIZ-<span>OMICS</span></a>
+  <a href="arcade.html" class="back-link">← Arcade</a>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<div class="game-wrap">
+  <div class="game-title">Biz<span>Wordle</span></div>
+  <div class="game-meta" id="game-meta">Daily Business Term</div>
+  <div class="hint-box" id="hint-box">Loading…</div>
+
+  <div class="word-length-toggle" id="wl-toggle">
+    <button class="wl-btn active" data-len="5" onclick="setLen(5,this)">5 letters</button>
+    <button class="wl-btn" data-len="6" onclick="setLen(6,this)">6 letters</button>
+    <button class="wl-btn" data-len="7" onclick="setLen(7,this)">7 letters</button>
+    <button class="wl-btn" data-len="8" onclick="setLen(8,this)">8 letters</button>
+  </div>
+
+  <div class="board" id="board"></div>
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="ctrl-row">
+    <button class="btn-secondary" onclick="toggleHint()">💡 Hint</button>
+    <button class="btn-primary" onclick="newRound()">New word →</button>
+  </div>
+</div>
+
+<div class="end-overlay" id="end-overlay">
+  <div class="end-box">
+    <div class="end-emoji" id="end-emoji">🎉</div>
+    <div class="end-title" id="end-title">Well done!</div>
+    <div class="end-word" id="end-word"></div>
+    <div class="end-def" id="end-def"></div>
+    <div class="share-text" id="share-text"></div>
+    <div class="ctrl-row">
+      <button class="btn-primary" onclick="copyShare()">📋 Copy result</button>
+      <button class="btn-secondary" onclick="newRound();document.getElementById('end-overlay').classList.remove('show')">Play again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORD_BANK = [
+  // 5-letter
+  {w:'BRAND',def:'The identity and reputation of a product or company.',topic:'Marketing'},
+  {w:'AUDIT',def:'A formal examination of a company\'s financial accounts.',topic:'Finance'},
+  {w:'GRANT',def:'Non-repayable government funding given to a business.',topic:'Finance'},
+  {w:'NICHE',def:'A small, specialised segment of the market.',topic:'Marketing'},
+  {w:'PRICE',def:'The amount charged for a good or service.',topic:'Marketing'},
+  {w:'STOCK',def:'Goods held by a business ready for sale or use in production.',topic:'Operations'},
+  {w:'QUOTA',def:'A limit placed on the quantity of imports allowed into a country.',topic:'External'},
+  {w:'UNION',def:'An organisation that represents workers\' interests.',topic:'People'},
+  {w:'LEASE',def:'A contract allowing use of an asset in exchange for regular payments.',topic:'Finance'},
+  {w:'YIELD',def:'The income return on an investment, expressed as a percentage.',topic:'Finance'},
+  {w:'ASSET',def:'Something of value owned by a business.',topic:'Finance'},
+  {w:'STAFF',def:'The employees who work within an organisation.',topic:'People'},
+  {w:'CHAIN',def:'A sequence of activities that add value to a product or service.',topic:'Operations'},
+  {w:'PITCH',def:'A persuasive presentation to potential investors or customers.',topic:'Strategy'},
+  {w:'SWOT',def:'A framework analysing strengths, weaknesses, opportunities and threats.',topic:'Strategy'},
+  // 6-letter
+  {w:'PROFIT',def:'The financial gain after all costs have been subtracted from revenue.',topic:'Finance'},
+  {w:'MERGER',def:'When two companies combine to form a single new business.',topic:'Strategy'},
+  {w:'BUDGET',def:'A financial plan that sets out expected income and expenditure.',topic:'Finance'},
+  {w:'MARKET',def:'The group of buyers and sellers of a particular product.',topic:'Marketing'},
+  {w:'OUTPUT',def:'The total quantity of goods or services produced by a business.',topic:'Operations'},
+  {w:'SALARY',def:'A fixed regular payment made to an employee, typically monthly.',topic:'People'},
+  {w:'DEMAND',def:'The willingness and ability of consumers to buy a product at a price.',topic:'Marketing'},
+  {w:'EQUITY',def:'The ownership interest in a company, usually represented by shares.',topic:'Finance'},
+  {w:'GROWTH',def:'An increase in the size or output of a business over time.',topic:'Strategy'},
+  {w:'RECALL',def:'When a business withdraws a product due to a safety or quality issue.',topic:'Operations'},
+  {w:'TENDER',def:'A formal process where suppliers bid to win a business contract.',topic:'Operations'},
+  {w:'TARGET',def:'The specific group of consumers a business aims its products at.',topic:'Marketing'},
+  // 7-letter
+  {w:'REVENUE',def:'The total income a business receives from its sales before costs.',topic:'Finance'},
+  {w:'ELASTIC',def:'Describes demand that is sensitive to a change in price.',topic:'Marketing'},
+  {w:'STARTUP',def:'A newly established business in its early stages of development.',topic:'Ownership'},
+  {w:'PRODUCT',def:'A good or service offered by a business to meet customer needs.',topic:'Marketing'},
+  {w:'PROCESS',def:'A series of actions or steps to produce a good or deliver a service.',topic:'Operations'},
+  {w:'MISSION',def:'A statement describing a company\'s overall purpose and values.',topic:'Strategy'},
+  {w:'CULTURE',def:'The shared values, beliefs and behaviours within an organisation.',topic:'People'},
+  {w:'LOYALTY',def:'A customer\'s tendency to repeatedly choose the same brand or product.',topic:'Marketing'},
+  {w:'VENTURE',def:'A new business activity that involves financial risk.',topic:'Ownership'},
+  {w:'SEGMENT',def:'A distinct group of customers with similar characteristics or needs.',topic:'Marketing'},
+  {w:'DEFICIT',def:'When expenditure exceeds income over a given period.',topic:'Finance'},
+  {w:'SUBSIDY',def:'Government financial support given to a business to reduce costs.',topic:'External'},
+  {w:'SURPLUS',def:'When income exceeds expenditure, leaving an excess amount.',topic:'Finance'},
+  {w:'INVOICE',def:'A document requesting payment for goods or services provided.',topic:'Finance'},
+  {w:'ACQUIRE',def:'To gain ownership of another business through purchase.',topic:'Strategy'},
+  // 8-letter
+  {w:'DIVIDEND',def:'A share of a company\'s profits paid to its shareholders.',topic:'Finance'},
+  {w:'BREAKEVEN',def:'The level of output where total costs equal total revenue.',topic:'Finance'},
+  {w:'MORTGAGE',def:'A long-term loan secured against a property asset.',topic:'Finance'},
+  {w:'TAKEOVER',def:'When one company buys a controlling share in another.',topic:'Strategy'},
+  {w:'MONOPOLY',def:'A market dominated by a single supplier with no close competitors.',topic:'Strategy'},
+  {w:'CASHFLOW',def:'The movement of money into and out of a business over time.',topic:'Finance'},
+  {w:'OVERDRAFT',def:'A facility allowing a bank account balance to go below zero.',topic:'Finance'},
+  {w:'TRAINING',def:'The process of developing employees\' knowledge and skills.',topic:'People'},
+  {w:'CONTRACT',def:'A legally binding agreement between two or more parties.',topic:'People'},
+  {w:'OUTSOURCE',def:'Hiring an external business to carry out tasks previously done in-house.',topic:'Operations'},
+  {w:'DISCOUNT',def:'A reduction in the original price of a product or service.',topic:'Marketing'},
+  {w:'TURNOVER',def:'Total revenue generated by a business from its sales in a period.',topic:'Finance'},
+];
+
+const MAX_GUESSES = 6;
+const KB_ROWS = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫']
+];
+
+let targetWord = '';
+let targetDef = '';
+let targetTopic = '';
+let wordLen = 5;
+let currentRow = 0;
+let currentCol = 0;
+let board = [];
+let keyStates = {};
+let gameOver = false;
+let hintRevealed = false;
+let shareGrid = [];
+
+function setLen(n, btn) {
+  wordLen = n;
+  document.querySelectorAll('.wl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  newRound();
+}
+
+function newRound() {
+  const pool = WORD_BANK.filter(w => w.w.length === wordLen);
+  if (!pool.length) { showToast('No words of that length!'); return; }
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  targetWord = pick.w;
+  targetDef = pick.def;
+  targetTopic = pick.topic;
+  currentRow = 0; currentCol = 0;
+  board = Array.from({length: MAX_GUESSES}, () => Array(wordLen).fill(''));
+  keyStates = {};
+  gameOver = false;
+  hintRevealed = false;
+  shareGrid = [];
+  renderBoard();
+  renderKeyboard();
+  document.getElementById('hint-box').innerHTML = `<strong>Topic:</strong> ${targetTopic} &nbsp;·&nbsp; <strong>${wordLen} letters</strong> &nbsp;·&nbsp; Click 💡 Hint for a definition clue`;
+  document.getElementById('end-overlay').classList.remove('show');
+}
+
+function renderBoard() {
+  const el = document.getElementById('board');
+  el.innerHTML = '';
+  for (let r = 0; r < MAX_GUESSES; r++) {
+    const row = document.createElement('div');
+    row.className = 'board-row';
+    for (let c = 0; c < wordLen; c++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.id = `tile-${r}-${c}`;
+      row.appendChild(tile);
+    }
+    el.appendChild(row);
+  }
+}
+
+function renderKeyboard() {
+  const el = document.getElementById('keyboard');
+  el.innerHTML = '';
+  KB_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    row.forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'kb-key' + (key.length > 1 ? ' wide' : '');
+      btn.textContent = key;
+      btn.id = 'key-' + key;
+      const state = keyStates[key];
+      if (state) btn.classList.add(state);
+      btn.addEventListener('click', () => handleKey(key));
+      rowEl.appendChild(btn);
+    });
+    el.appendChild(rowEl);
+  });
+}
+
+function handleKey(key) {
+  if (gameOver) return;
+  if (key === '⌫' || key === 'Backspace') {
+    if (currentCol > 0) {
+      currentCol--;
+      board[currentRow][currentCol] = '';
+      updateTile(currentRow, currentCol, '', '');
+    }
+  } else if (key === 'ENTER' || key === 'Enter') {
+    submitGuess();
+  } else if (/^[A-Za-z]$/.test(key)) {
+    if (currentCol < wordLen) {
+      board[currentRow][currentCol] = key.toUpperCase();
+      updateTile(currentRow, currentCol, key.toUpperCase(), 'filled');
+      currentCol++;
+    }
+  }
+}
+
+function updateTile(r, c, letter, state) {
+  const tile = document.getElementById(`tile-${r}-${c}`);
+  if (!tile) return;
+  tile.textContent = letter;
+  tile.className = 'tile' + (state ? ' ' + state : '');
+  if (letter && state === 'filled') {
+    tile.classList.add('pop');
+    setTimeout(() => tile.classList.remove('pop'), 100);
+  }
+}
+
+function submitGuess() {
+  const guess = board[currentRow].join('');
+  if (guess.length < wordLen) { shakeRow(currentRow); showToast('Not enough letters'); return; }
+
+  // Score
+  const result = Array(wordLen).fill('absent');
+  const target = targetWord.split('');
+  const gArr = guess.split('');
+  const used = Array(wordLen).fill(false);
+
+  // Correct pass
+  for (let i = 0; i < wordLen; i++) {
+    if (gArr[i] === target[i]) { result[i] = 'correct'; used[i] = true; }
+  }
+  // Present pass
+  for (let i = 0; i < wordLen; i++) {
+    if (result[i] === 'correct') continue;
+    for (let j = 0; j < wordLen; j++) {
+      if (!used[j] && gArr[i] === target[j]) { result[i] = 'present'; used[j] = true; break; }
+    }
+  }
+
+  // Animate tiles with delay
+  const shareRow = result.map(r => r === 'correct' ? '🟩' : r === 'present' ? '🟨' : '⬛').join('');
+  shareGrid.push(shareRow);
+
+  result.forEach((state, c) => {
+    setTimeout(() => {
+      updateTile(currentRow, c, gArr[c], state);
+      // Update key state (priority: correct > present > absent)
+      const k = gArr[c];
+      const cur = keyStates[k];
+      if (state === 'correct' || (!cur) || (state === 'present' && cur === 'absent')) {
+        keyStates[k] = state;
+      }
+      if (c === wordLen - 1) renderKeyboard();
+    }, c * 80);
+  });
+
+  const row = currentRow;
+  setTimeout(() => {
+    const won = guess === targetWord;
+    currentRow++;
+    currentCol = 0;
+
+    if (won) {
+      gameOver = true;
+      setTimeout(() => endGame(true, row + 1), 300);
+    } else if (currentRow >= MAX_GUESSES) {
+      gameOver = true;
+      setTimeout(() => endGame(false, null), 300);
+    }
+  }, wordLen * 80 + 100);
+}
+
+function shakeRow(r) {
+  for (let c = 0; c < wordLen; c++) {
+    const tile = document.getElementById(`tile-${r}-${c}`);
+    if (tile) { tile.classList.add('shake'); setTimeout(() => tile.classList.remove('shake'), 400); }
+  }
+}
+
+function endGame(won, guesses) {
+  document.getElementById('end-emoji').textContent = won ? ['🎉','🥳','🎯','✨'][Math.floor(Math.random()*4)] : '😬';
+  document.getElementById('end-title').textContent = won ? `Got it in ${guesses}!` : 'Better luck next time';
+  document.getElementById('end-word').textContent = targetWord;
+  document.getElementById('end-def').textContent = targetDef;
+  const shareStr = `BizWordle (${wordLen} letters) — ${won ? guesses+'/'+MAX_GUESSES : 'X/'+MAX_GUESSES}\n${shareGrid.join('\n')}\nbiz-omics.co.uk/arcade.html`;
+  document.getElementById('share-text').textContent = shareStr;
+  document.getElementById('end-overlay').classList.add('show');
+}
+
+function copyShare() {
+  const txt = document.getElementById('share-text').textContent;
+  navigator.clipboard.writeText(txt).then(() => showToast('Copied!')).catch(() => showToast('Copy failed'));
+}
+
+function toggleHint() {
+  hintRevealed = !hintRevealed;
+  document.getElementById('hint-box').innerHTML = hintRevealed
+    ? `<strong>Hint:</strong> ${targetDef}`
+    : `<strong>Topic:</strong> ${targetTopic} &nbsp;·&nbsp; <strong>${wordLen} letters</strong> &nbsp;·&nbsp; Click 💡 Hint for a definition clue`;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  handleKey(e.key);
+});
+
+(function(){
+  var t=localStorage.getItem('biz-omics-business-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  var btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute('data-theme')||'dark';
+  var next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-business-theme',next);
+  document.getElementById('theme-btn').textContent=next==='light'?'🌙':'☀';
+}
+
+newRound();
+</script>
+</body>
+</html>
