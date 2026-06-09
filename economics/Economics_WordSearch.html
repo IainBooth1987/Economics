@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economics Word Search — BIZ-OMICS</title>
+<style>
+:root{
+  --ff-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --ff-mono:'SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;
+  --ff-serif:Georgia,'Times New Roman',Times,serif;
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#0d1526;
+  --amber:#f59e0b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+  --border:rgba(255,255,255,0.08);
+  --cell:38px;
+  --found-1:rgba(245,158,11,0.35);
+  --found-2:rgba(16,185,129,0.35);
+  --found-3:rgba(139,92,246,0.35);
+  --found-4:rgba(59,130,246,0.35);
+  --found-5:rgba(236,72,153,0.35);
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--surface:#fff;--surface2:#f1f5f9;
+  --text:#0f172a;--muted:#64748b;--border:rgba(0,0,0,0.09);
+  --found-1:rgba(245,158,11,0.25);
+  --found-2:rgba(16,185,129,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--ff-sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s;}
+
+/* ── HEADER ── */
+header{padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,14,26,.97);backdrop-filter:blur(16px);z-index:200;}
+[data-theme="light"] header{background:rgba(248,250,252,.97);}
+.logo{font-size:1.25rem;font-weight:900;letter-spacing:-.02em;text-decoration:none;color:var(--text);}
+.logo span{color:var(--amber);}
+.back-link{font-family:var(--ff-mono);font-size:.7rem;color:var(--muted);text-decoration:none;padding:.3rem .65rem;border-radius:100px;border:1px solid var(--border);transition:all .18s;margin-left:auto;margin-right:.5rem;}
+.back-link:hover{color:var(--amber);border-color:var(--amber);}
+.hdr-btns{display:flex;gap:.4rem;align-items:center;}
+.theme-toggle{padding:.3rem .5rem;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem;}
+.print-btn-hdr{padding:.3rem .7rem;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:.72rem;font-family:var(--ff-mono);transition:all .18s;}
+.print-btn-hdr:hover{border-color:var(--amber);color:var(--amber);}
+.print-btn-hdr:disabled{opacity:.3;cursor:default;}
+
+/* ── LAYOUT ── */
+main{max-width:1080px;margin:0 auto;padding:2.5rem 1.5rem 5rem;}
+
+/* ── HERO ── */
+.hero{margin-bottom:2rem;}
+.eyebrow{font-family:var(--ff-mono);font-size:.62rem;color:var(--amber);letter-spacing:.22em;text-transform:uppercase;margin-bottom:.7rem;}
+.hero h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;letter-spacing:-.025em;line-height:1.05;margin-bottom:.5rem;}
+.hero h1 em{font-style:normal;color:var(--amber);}
+.hero p{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:480px;}
+
+/* ── CONTROLS ── */
+.controls{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:1.5rem 1.6rem;margin-bottom:2rem;}
+[data-theme="light"] .controls{background:#fff;}
+.ctrl-label{font-family:var(--ff-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.9rem;}
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:.45rem;margin-bottom:1.3rem;}
+.topic-btn{padding:.48rem .75rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.75rem;font-weight:600;font-family:var(--ff-sans);cursor:pointer;transition:all .15s;text-align:left;}
+.topic-btn:hover{border-color:rgba(245,158,11,.35);color:var(--text);}
+.topic-btn.active{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.5);color:var(--amber);}
+.ctrl-row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+.seg-group{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.seg-btn{padding:.38rem .75rem;font-size:.7rem;font-weight:600;font-family:var(--ff-sans);background:transparent;color:var(--muted);border:none;border-right:1px solid var(--border);cursor:pointer;transition:all .15s;}
+.seg-btn:last-child{border-right:none;}
+.seg-btn.active{background:var(--amber);color:#000;}
+.seg-btn:not(.active):hover{background:rgba(255,255,255,.05);color:var(--text);}
+[data-theme="light"] .seg-btn:not(.active):hover{background:rgba(0,0,0,.04);}
+.gen-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.3rem;border-radius:8px;border:none;background:var(--amber);color:#000;font-size:.82rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;transition:opacity .18s;}
+.gen-btn:hover{opacity:.85;}
+.gen-btn:disabled{opacity:.4;cursor:not-allowed;}
+.status{font-family:var(--ff-mono);font-size:.7rem;color:var(--muted);margin-top:.7rem;min-height:1.2rem;}
+.status.loading{color:var(--amber);}
+.status.error{color:#ef4444;}
+
+/* ── GAME AREA ── */
+.game-area{display:none;gap:2rem;}
+.game-area.visible{display:grid;grid-template-columns:auto 1fr;}
+
+/* ── GRID ── */
+.grid-wrap{overflow-x:auto;}
+.ws-grid{display:inline-grid;grid-template-columns:repeat(15,var(--cell));grid-template-rows:repeat(15,var(--cell));gap:1px;background:var(--border);border:2px solid var(--border);border-radius:6px;overflow:hidden;user-select:none;}
+.ws-cell{
+  width:var(--cell);height:var(--cell);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-mono);font-size:.9rem;font-weight:700;
+  text-transform:uppercase;
+  background:var(--surface);
+  cursor:pointer;
+  transition:background .1s;
+  position:relative;
+}
+[data-theme="light"] .ws-cell{background:#fff;}
+.ws-cell.hover{background:rgba(245,158,11,.18);}
+.ws-cell.selecting{background:rgba(245,158,11,.3);}
+.ws-cell.found-0{background:var(--found-1);}
+.ws-cell.found-1{background:var(--found-2);}
+.ws-cell.found-2{background:var(--found-3);}
+.ws-cell.found-3{background:var(--found-4);}
+.ws-cell.found-4{background:var(--found-5);}
+.ws-cell.found-5{background:rgba(245,158,11,.3);}
+.ws-cell.found-6{background:rgba(16,185,129,.3);}
+.ws-cell.found-7{background:rgba(139,92,246,.3);}
+.ws-cell.found-8{background:rgba(59,130,246,.3);}
+.ws-cell.found-9{background:rgba(236,72,153,.3);}
+
+/* ── WORD LIST ── */
+.word-list-panel{}
+.wl-header{font-family:var(--ff-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+.word-list{display:flex;flex-direction:column;gap:.35rem;}
+.word-item{
+  display:flex;align-items:center;gap:.6rem;
+  font-family:var(--ff-mono);font-size:.82rem;font-weight:700;
+  padding:.3rem .5rem;border-radius:6px;
+  transition:all .2s;
+  letter-spacing:.04em;
+}
+.word-item.found{
+  text-decoration:line-through;
+  opacity:.45;
+}
+.word-item .word-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--muted);flex-shrink:0;
+  transition:background .2s;
+}
+.word-item.found .word-dot{background:var(--amber);}
+.word-def{font-family:var(--ff-sans);font-size:.7rem;color:var(--muted);margin-top:.15rem;line-height:1.4;font-weight:400;display:none;}
+.word-item.found .word-def{display:block;text-decoration:none;opacity:1;}
+
+/* progress */
+.progress-bar-outer{height:4px;background:var(--border);border-radius:2px;margin-bottom:1rem;overflow:hidden;}
+.progress-bar-inner{height:100%;background:var(--amber);border-radius:2px;transition:width .4s ease;}
+
+/* complete banner */
+.complete-banner{
+  display:none;background:rgba(245,158,11,.1);
+  border:1px solid rgba(245,158,11,.3);
+  border-radius:12px;padding:1rem 1.2rem;
+  margin-bottom:1rem;animation:slideUp .3s ease;
+}
+.complete-banner.show{display:block;}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.complete-title{font-size:1rem;font-weight:900;color:var(--amber);margin-bottom:.25rem;}
+.complete-sub{font-size:.78rem;color:var(--muted);}
+.play-again-btn{margin-top:.7rem;display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:7px;border:none;background:var(--amber);color:#000;font-size:.78rem;font-weight:700;font-family:var(--ff-sans);cursor:pointer;}
+
+/* timer */
+.timer-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+.timer-display{font-family:var(--ff-mono);font-size:1rem;font-weight:700;color:var(--amber);}
+.timer-label{font-family:var(--ff-mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+
+footer{text-align:center;padding:2rem;border-top:1px solid var(--border);font-family:var(--ff-mono);font-size:.65rem;color:var(--muted);opacity:.35;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .game-area.visible{grid-template-columns:1fr;}
+  :root{--cell:32px;}
+}
+@media(max-width:560px){
+  :root{--cell:26px;}
+  .ws-cell{font-size:.72rem;}
+  main{padding:1.5rem .85rem 4rem;}
+}
+@media(max-width:420px){
+  :root{--cell:22px;}
+  .ws-cell{font-size:.6rem;}
+}
+
+/* ══════════════════════════════
+   PRINT — newspaper magazine
+══════════════════════════════ */
+/* Hide print-only elements on screen */
+@media screen{
+  .print-only{display:none!important;}
+}
+
+@media print{
+  @page{size:A4 landscape;margin:10mm 12mm 10mm 12mm;}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  :root{--cell:26px;}
+
+  header,footer,.controls,.hero,.complete-banner,.play-again-btn,
+  .print-btn-hdr,.back-link,.theme-toggle,.hdr-btns,
+  .timer-row,.progress-bar-outer{display:none!important;}
+
+  body{background:#fff!important;color:#000!important;margin:0;padding:0;}
+  main{padding:0;max-width:100%;}
+
+  /* Show masthead */
+  .print-only{display:block!important;}
+  #print-masthead{
+    border-bottom:4px solid #000;
+    padding-bottom:.45rem;margin-bottom:.3rem;
+    display:flex!important;align-items:flex-end;justify-content:space-between;
+  }
+  .pm-title{font-family:'Times New Roman',serif;font-size:1.9rem;font-weight:900;letter-spacing:-.02em;line-height:1;}
+  .pm-title em{font-style:italic;}
+  .pm-meta{text-align:right;font-size:.65rem;font-family:Georgia,serif;color:#555;line-height:1.5;}
+  .pm-rule{border:none!important;border-top:2px solid #000!important;margin:.3rem 0;}
+  .pm-sub{font-size:.68rem;font-family:Georgia,serif;font-style:italic;color:#444;margin-bottom:.45rem;
+    display:flex!important;justify-content:space-between;}
+
+  /* Force game area to show and lay out correctly for print */
+  .game-area{display:grid!important;grid-template-columns:auto 1fr;gap:1.4rem;align-items:start;}
+
+  .ws-grid{
+    display:inline-grid!important;
+    border:2px solid #000!important;
+    background:#bbb!important;
+    gap:1px!important;
+    border-radius:0!important;
+  }
+  .ws-cell{
+    width:var(--cell)!important;height:var(--cell)!important;
+    background:#fff!important;color:#000!important;
+    font-size:.65rem!important;font-weight:700!important;
+    border:none!important;
+    display:flex!important;align-items:center!important;justify-content:center!important;
+  }
+  /* Strip all highlight colours for clean print */
+  .ws-cell.found-0,.ws-cell.found-1,.ws-cell.found-2,.ws-cell.found-3,.ws-cell.found-4,
+  .ws-cell.found-5,.ws-cell.found-6,.ws-cell.found-7,.ws-cell.found-8,.ws-cell.found-9,
+  .ws-cell.selecting,.ws-cell.hover{background:#fff!important;}
+
+  .word-list-panel{padding-left:.6rem;}
+  .wl-header{font-family:'Times New Roman',serif;font-size:.6rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.12em;
+    border-bottom:1.5px solid #000;padding-bottom:.15rem;margin-bottom:.55rem;}
+  .word-list{
+    display:grid!important;grid-template-columns:1fr 1fr;
+    gap:.18rem .9rem;
+  }
+  .word-item{
+    font-family:'Times New Roman',serif;
+    font-size:.72rem;font-weight:700;
+    padding:.12rem 0;letter-spacing:.04em;
+    text-decoration:none!important;opacity:1!important;
+  }
+  .word-dot{display:none!important;}
+  .word-def{display:none!important;}
+
+  .print-footer-line{
+    display:flex!important;justify-content:space-between;
+    margin-top:.8rem;border-top:1px solid #999;padding-top:.3rem;
+    font-size:.58rem;font-family:Georgia,serif;color:#666;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">BIZ-<span>OMICS</span></a>
+  <div class="hdr-btns">
+    <a class="back-link" href="index.html">← Hub</a>
+    <button class="print-btn-hdr" id="print-btn" onclick="window.print()" disabled>🖨 Print</button>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<!-- PRINT MASTHEAD (hidden on screen via CSS, not inline style) -->
+<div id="print-masthead" class="print-only">
+  <div class="pm-title">BIZ-<em>OMICS</em><br><span style="font-size:.9rem;font-weight:400;font-style:normal;letter-spacing:.05em;">ECONOMICS WORD SEARCH</span></div>
+  <div class="pm-meta">
+    <div id="pm-topic" style="font-size:.85rem;font-weight:700;"></div>
+    <div id="pm-difficulty"></div>
+    <div id="pm-date"></div>
+  </div>
+</div>
+<div class="pm-rule print-only"></div>
+<div class="pm-sub print-only">
+  <span id="pm-sub-left"></span>
+  <span>biz-omics.co.uk</span>
+</div>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">// Economics Arcade · Word Game</div>
+    <h1>Economics<br><em>Word Search</em></h1>
+    <p>Choose a topic, generate a fresh puzzle. Find all the hidden economics terms — words run in all 8 directions.</p>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="ctrl-label">// Choose a topic</div>
+    <div class="topic-grid" id="topic-grid"></div>
+    <div class="ctrl-row">
+      <div class="seg-group">
+        <button class="seg-btn active" data-diff="gcse" onclick="setDiff('gcse',this)">GCSE</button>
+        <button class="seg-btn" data-diff="alevel" onclick="setDiff('alevel',this)">A-Level</button>
+      </div>
+      <button class="gen-btn" id="gen-btn" onclick="generatePuzzle()">Generate Puzzle →</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div class="game-area" id="game-area">
+    <!-- Grid -->
+    <div class="grid-wrap">
+      <div class="ws-grid" id="ws-grid"></div>
+    </div>
+    <!-- Word list + info -->
+    <div class="word-list-panel">
+      <div class="timer-row">
+        <div>
+          <div class="timer-display" id="timer-display">0:00</div>
+          <div class="timer-label">Time</div>
+        </div>
+        <div>
+          <div class="timer-display" id="found-display" style="color:var(--text)">0/0</div>
+          <div class="timer-label">Found</div>
+        </div>
+      </div>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar" style="width:0%"></div></div>
+      <div class="complete-banner" id="complete-banner">
+        <div class="complete-title">🎉 All words found!</div>
+        <div class="complete-sub" id="complete-sub"></div>
+        <button class="play-again-btn" onclick="generatePuzzle()">New puzzle →</button>
+      </div>
+      <div class="wl-header">// Words to find</div>
+      <div class="word-list" id="word-list"></div>
+      <div class="print-footer-line" style="display:none;">
+        <span>BIZ-OMICS — A-Level Economics © biz-omics.co.uk</span>
+        <span>Name: _________________________ &nbsp; Class: ____________ &nbsp; Date: ____________</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>biz-omics.co.uk · A-Level Economics · © BIZ-OMICS</footer>
+
+<script>
+/* ══════════════════════════════════
+   TOPICS
+══════════════════════════════════ */
+const TOPICS = [
+  {id:'supply_demand',   label:'Supply & Demand'},
+  {id:'market_failure',  label:'Market Failure'},
+  {id:'elasticity',      label:'Elasticity'},
+  {id:'fiscal_policy',   label:'Fiscal Policy'},
+  {id:'monetary_policy', label:'Monetary Policy'},
+  {id:'inflation',       label:'Inflation'},
+  {id:'unemployment',    label:'Unemployment'},
+  {id:'economic_growth', label:'Economic Growth'},
+  {id:'trade',           label:'International Trade'},
+  {id:'exchange_rates',  label:'Exchange Rates'},
+  {id:'labour_markets',  label:'Labour Markets'},
+  {id:'competition',     label:'Competition & Monopoly'},
+  {id:'externalities',   label:'Externalities'},
+  {id:'behavioural',     label:'Behavioural Economics'},
+];
+
+let selectedTopic = 'supply_demand';
+let selectedDiff  = 'gcse';
+
+/* Build topic buttons */
+const tg = document.getElementById('topic-grid');
+TOPICS.forEach(t=>{
+  const b=document.createElement('button');
+  b.className='topic-btn'+(t.id===selectedTopic?' active':'');
+  b.textContent=t.label;
+  b.onclick=()=>{
+    selectedTopic=t.id;
+    document.querySelectorAll('.topic-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  };
+  tg.appendChild(b);
+});
+
+function setDiff(d,btn){
+  selectedDiff=d;
+  btn.closest('.seg-group').querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ══════════════════════════════════
+   CLAUDE API
+══════════════════════════════════ */
+async function callClaude(prompt){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!r.ok) throw new Error('API error '+r.status);
+  const d=await r.json();
+  return d.content.map(b=>b.text||'').join('');
+}
+
+/* ══════════════════════════════════
+   WORD SEARCH ENGINE
+══════════════════════════════════ */
+const SIZE = 15;
+const DIRS = [
+  [0,1],[0,-1],[1,0],[-1,0],
+  [1,1],[1,-1],[-1,1],[-1,-1]
+];
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function emptyGrid(){
+  return Array.from({length:SIZE},()=>Array(SIZE).fill(''));
+}
+
+function canPlace(grid,word,r,c,dr,dc){
+  for(let i=0;i<word.length;i++){
+    const nr=r+dr*i, nc=c+dc*i;
+    if(nr<0||nr>=SIZE||nc<0||nc>=SIZE) return false;
+    if(grid[nr][nc]!==''&&grid[nr][nc]!==word[i]) return false;
+  }
+  return true;
+}
+
+function placeWord(grid,word,r,c,dr,dc){
+  for(let i=0;i<word.length;i++) grid[r+dr*i][c+dc*i]=word[i];
+}
+
+function buildWordSearch(words){
+  const grid=emptyGrid();
+  const placed=[];
+  const clean=words.map(w=>({...w,word:w.word.toUpperCase().replace(/[^A-Z]/g,'')}))
+                   .filter(w=>w.word.length>=3&&w.word.length<=14)
+                   .sort((a,b)=>b.word.length-a.word.length);
+
+  for(const entry of clean){
+    const word=entry.word;
+    // Try random positions and directions
+    let success=false;
+    const attempts=200;
+    for(let a=0;a<attempts&&!success;a++){
+      const [dr,dc]=DIRS[Math.floor(Math.random()*DIRS.length)];
+      const r=Math.floor(Math.random()*SIZE);
+      const c=Math.floor(Math.random()*SIZE);
+      if(canPlace(grid,word,r,c,dr,dc)){
+        placeWord(grid,word,r,c,dr,dc);
+        placed.push({...entry,r,c,dr,dc});
+        success=true;
+      }
+    }
+  }
+  // Fill blanks with random letters
+  for(let r=0;r<SIZE;r++)
+    for(let c=0;c<SIZE;c++)
+      if(grid[r][c]==='') grid[r][c]=LETTERS[Math.floor(Math.random()*LETTERS.length)];
+
+  return {grid,placed};
+}
+
+/* ══════════════════════════════════
+   GENERATE PUZZLE
+══════════════════════════════════ */
+let currentPuzzle=null;
+let timerInterval=null;
+let timerSecs=0;
+let selecting=false;
+let selStart=null;
+let selCells=[];
+let foundCount=0;
+
+async function generatePuzzle(){
+  const btn=document.getElementById('gen-btn');
+  const statusEl=document.getElementById('status');
+  btn.disabled=true;
+  document.getElementById('print-btn').disabled=true;
+  statusEl.className='status loading';
+  statusEl.textContent='⟳ Generating words with AI…';
+
+  const topicLabel=TOPICS.find(t=>t.id===selectedTopic)?.label||selectedTopic;
+  const diffLabel=selectedDiff==='gcse'?'GCSE':'A-Level';
+
+  const diffInstr=selectedDiff==='gcse'
+    ?'Use accessible, commonly known economics terms suitable for GCSE students.'
+    :'Use precise A-Level Economics terminology, including technical terms from the specification.';
+
+  const prompt=`You are an expert Economics teacher. Generate exactly 14 single-word economics terms related to the topic: "${topicLabel}" for a ${diffLabel} word search puzzle.
+
+Rules:
+- Each term must be a SINGLE word, no spaces or hyphens
+- Between 4 and 12 letters long
+- Directly relevant to ${topicLabel} in Economics
+- Include a short definition (max 10 words) for each term
+${diffInstr}
+
+Respond ONLY with a JSON array, no markdown or preamble:
+[{"word":"ELASTIC","def":"Demand responds greatly to price changes"},...]`;
+
+  try{
+    const raw=await callClaude(prompt);
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const match=clean.match(/\[[\s\S]*\]/);
+    const entries=JSON.parse(match?match[0]:clean);
+    if(!Array.isArray(entries)||entries.length<6) throw new Error('Not enough words returned.');
+
+    statusEl.textContent='⟳ Building puzzle…';
+    await new Promise(r=>setTimeout(r,20));
+
+    const {grid,placed}=buildWordSearch(entries);
+    if(placed.length<5) throw new Error('Could not place enough words. Try again.');
+
+    currentPuzzle={grid,placed};
+    foundCount=0;
+    renderGrid(grid,placed);
+    renderWordList(placed);
+    updateProgress(0,placed.length);
+
+    // Print meta
+    document.getElementById('pm-topic').textContent=topicLabel;
+    document.getElementById('pm-difficulty').textContent=diffLabel;
+    document.getElementById('pm-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('pm-sub-left').textContent=`${topicLabel} · ${placed.length} words · All 8 directions`;
+
+    document.getElementById('game-area').classList.add('visible');
+    document.getElementById('print-btn').disabled=false;
+    document.getElementById('complete-banner').classList.remove('show');
+    statusEl.className='status';
+    statusEl.textContent=`✓ ${placed.length} words hidden in a ${SIZE}×${SIZE} grid.`;
+
+    // Start timer
+    clearInterval(timerInterval);
+    timerSecs=0;
+    updateTimer();
+    timerInterval=setInterval(()=>{timerSecs++;updateTimer();},1000);
+
+  }catch(e){
+    statusEl.className='status error';
+    statusEl.textContent='✕ '+e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent='New Puzzle →';
+  }
+}
+
+function updateTimer(){
+  const m=Math.floor(timerSecs/60);
+  const s=timerSecs%60;
+  document.getElementById('timer-display').textContent=m+':'+(s<10?'0':'')+s;
+}
+
+/* ══════════════════════════════════
+   RENDER GRID
+══════════════════════════════════ */
+function renderGrid(grid,placed){
+  const container=document.getElementById('ws-grid');
+  container.innerHTML='';
+
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const cell=document.createElement('div');
+      cell.className='ws-cell';
+      cell.textContent=grid[r][c];
+      cell.dataset.r=r;
+      cell.dataset.c=c;
+
+      cell.addEventListener('mousedown',e=>{e.preventDefault();startSelect(r,c);});
+      cell.addEventListener('mouseover',()=>{ if(selecting) extendSelect(r,c); });
+      cell.addEventListener('touchstart',e=>{e.preventDefault();startSelect(r,c);},{passive:false});
+      cell.addEventListener('touchmove',e=>{
+        e.preventDefault();
+        const t=e.touches[0];
+        const el=document.elementFromPoint(t.clientX,t.clientY);
+        if(el&&el.dataset.r!==undefined) extendSelect(+el.dataset.r,+el.dataset.c);
+      },{passive:false});
+
+      container.appendChild(cell);
+    }
+  }
+
+  document.addEventListener('mouseup',endSelect);
+  document.addEventListener('touchend',endSelect);
+}
+
+/* ══════════════════════════════════
+   SELECTION LOGIC
+══════════════════════════════════ */
+function getCell(r,c){
+  return document.querySelector(`.ws-cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function startSelect(r,c){
+  selecting=true;
+  selStart={r,c};
+  selCells=[];
+  clearHover();
+  markSelecting([{r,c}]);
+}
+
+function extendSelect(r,c){
+  if(!selecting||!selStart) return;
+  clearSelecting();
+  // Only allow straight lines
+  const dr=r-selStart.r, dc=c-selStart.c;
+  const len=Math.max(Math.abs(dr),Math.abs(dc));
+  if(len===0){selCells=[{r:selStart.r,c:selStart.c}];markSelecting(selCells);return;}
+  // Check it's a valid direction (one of 8)
+  let stepR=0,stepC=0;
+  if(dr!==0) stepR=dr/Math.abs(dr);
+  if(dc!==0) stepC=dc/Math.abs(dc);
+  // Must be along exactly one of 8 axes
+  if(dr!==0&&dc!==0&&Math.abs(dr)!==Math.abs(dc)){
+    // Not diagonal — snap to longer axis
+    if(Math.abs(dr)>=Math.abs(dc)) stepC=0; else stepR=0;
+  }
+  const cells=[];
+  const steps=Math.abs(stepR?dr:dc);
+  for(let i=0;i<=steps;i++) cells.push({r:selStart.r+stepR*i,c:selStart.c+stepC*i});
+  selCells=cells;
+  markSelecting(cells);
+}
+
+function endSelect(){
+  if(!selecting) return;
+  selecting=false;
+  clearSelecting();
+  if(selCells.length<2){selCells=[];return;}
+  checkSelection();
+  selCells=[];
+}
+
+function markSelecting(cells){
+  cells.forEach(({r,c})=>getCell(r,c)?.classList.add('selecting'));
+}
+function clearSelecting(){
+  document.querySelectorAll('.ws-cell.selecting').forEach(el=>el.classList.remove('selecting'));
+}
+function clearHover(){
+  document.querySelectorAll('.ws-cell.hover').forEach(el=>el.classList.remove('hover'));
+}
+
+/* ══════════════════════════════════
+   CHECK SELECTION
+══════════════════════════════════ */
+function checkSelection(){
+  const selected=selCells.map(({r,c})=>currentPuzzle.grid[r][c]).join('');
+  const selectedRev=[...selCells].reverse().map(({r,c})=>currentPuzzle.grid[r][c]).join('');
+
+  for(let i=0;i<currentPuzzle.placed.length;i++){
+    const entry=currentPuzzle.placed[i];
+    if(entry.found) continue;
+    if(selected===entry.word||selectedRev===entry.word){
+      entry.found=true;
+      foundCount++;
+      // Colour cells
+      selCells.forEach(({r,c})=>{
+        const cell=getCell(r,c);
+        if(cell){
+          // Remove any existing found class
+          cell.className=cell.className.replace(/found-\d+/,'');
+          cell.classList.add(`found-${i%10}`);
+        }
+      });
+      // Update word list
+      const wordEl=document.getElementById(`word-${i}`);
+      if(wordEl) wordEl.classList.add('found');
+      updateProgress(foundCount,currentPuzzle.placed.length);
+      if(foundCount===currentPuzzle.placed.length) onComplete();
+      return;
+    }
+  }
+}
+
+function updateProgress(found,total){
+  document.getElementById('found-display').textContent=`${found}/${total}`;
+  document.getElementById('progress-bar').style.width=`${total?found/total*100:0}%`;
+}
+
+function onComplete(){
+  clearInterval(timerInterval);
+  const m=Math.floor(timerSecs/60),s=timerSecs%60;
+  const timeStr=m>0?`${m}m ${s}s`:`${s}s`;
+  const banner=document.getElementById('complete-banner');
+  document.getElementById('complete-sub').textContent=`Completed in ${timeStr} — all ${currentPuzzle.placed.length} words found!`;
+  banner.classList.add('show');
+}
+
+/* ══════════════════════════════════
+   WORD LIST
+══════════════════════════════════ */
+function renderWordList(placed){
+  const wl=document.getElementById('word-list');
+  wl.innerHTML='';
+  placed.forEach((entry,i)=>{
+    const item=document.createElement('div');
+    item.className='word-item';
+    item.id=`word-${i}`;
+    item.innerHTML=`<span class="word-dot"></span><span>${entry.word}</span>`;
+    if(entry.def){
+      const def=document.createElement('div');
+      def.className='word-def';
+      def.textContent=entry.def;
+      item.appendChild(def);
+    }
+    wl.appendChild(item);
+  });
+}
+
+/* ══════════════════════════════════
+   THEME
+══════════════════════════════════ */
+(function(){
+  const t=localStorage.getItem('biz-omics-theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=t==='light'?'🌙':'☀';
+})();
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('biz-omics-theme',next);
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent=next==='light'?'🌙':'☀';
+}
+</script>
+</body>
+</html>
