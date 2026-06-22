@@ -658,6 +658,65 @@ body::before {
   color: var(--text-dim);
 }
 
+/* ── Search ── */
+.search-wrap {
+  position: relative; z-index: 2;
+  max-width: 1200px; margin: 0 auto;
+  padding: 0 48px 28px;
+  opacity: 0; animation: fadeUp 0.5s 0.24s forwards;
+}
+.search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 13px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within { border-color: var(--aqa); box-shadow: 0 0 0 3px var(--aqa-glow); }
+.search-box svg { width: 18px; height: 18px; color: var(--text-dim); flex-shrink: 0; }
+.search-input {
+  flex: 1; border: none; background: transparent; outline: none;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+  min-width: 0;
+}
+.search-input::placeholder { color: var(--text-dim); }
+.search-clear-btn {
+  display: none; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--text-dim); width: 22px; height: 22px;
+  border-radius: 50%; font-size: 16px; flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.search-clear-btn:hover { color: var(--text); background: var(--bg-hover); }
+.search-status {
+  font-size: 12px; color: var(--text-dim);
+  margin-top: 10px; min-height: 16px; line-height: 1.6;
+}
+.search-status strong { color: var(--text); }
+.search-suggest {
+  display: inline-flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; vertical-align: middle;
+}
+.search-suggest span {
+  font-size: 11px; padding: 4px 10px; border-radius: 100px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.search-suggest span:hover { border-color: var(--aqa); color: var(--text); }
+.search-no-results {
+  grid-column: 1 / -1; text-align: center;
+  padding: 56px 20px; color: var(--text-muted); font-size: 14px; line-height: 1.7;
+}
+.search-no-results strong { color: var(--text); }
+.match-related { position: relative; }
+.match-related::after {
+  content: 'Related'; position: absolute; top: 12px; right: 12px; z-index: 2;
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 6px;
+  background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3);
+}
+@media (max-width: 660px) {
+  .search-wrap { padding: 0 20px 24px; }
+}
+
 /* ── Full bundle promo banner ── */
 .bundle-promo {
   margin: 0 48px 40px;
@@ -838,6 +897,16 @@ body::before {
   <h1 class="hero-heading">AQA Business<br><em>resources.</em></h1>
   <p class="hero-desc">Revision materials, interactive tools and games tailored to the AQA A-Level Business specification. Choose between the new spec (first assessed 2028) or the current spec (last exam 2026).</p>
 </section>
+
+<!-- Search -->
+<div class="search-wrap">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="resource-search" class="search-input" placeholder="Search resources&hellip; e.g. &ldquo;five forces&rdquo;, &ldquo;motivation&rdquo;, &ldquo;elasticity&rdquo;" autocomplete="off" oninput="handleSearchInput(this.value)">
+    <button type="button" class="search-clear-btn" id="search-clear" onclick="clearSearch()" aria-label="Clear search">&times;</button>
+  </div>
+  <div class="search-status" id="search-status"></div>
+</div>
 
 <!-- Bundle Promo -->
 <div class="bundle-promo">
@@ -3068,6 +3137,248 @@ function switchTab(which) {
   }
 }
 
+
+/* ── Resource Search ─────────────────────────────────────────────────
+   Matches on title/description/topic + a synonym map so related terms
+   ("five forces" → "porter", "lean" → "JIT/kaizen", etc.) also surface,
+   plus light fuzzy matching to tolerate typos. Searches across both
+   the New Spec and Current Spec tabs at once.
+   ─────────────────────────────────────────────────────────────────── */
+var SEARCH_SYNONYMS = [
+  ['five forces','porter','porters','competitive forces','industry analysis'],
+  ['lean production','lean','jit','just in time','kaizen','tqm','total quality management','waste','operational efficiency'],
+  ['boston matrix','bcg','portfolio analysis','stars dogs cash cows'],
+  ['swot','strengths weaknesses opportunities threats'],
+  ['pestle','pestel','external environment','macro environment'],
+  ['motivation','maslow','herzberg','taylor','mayo','hygiene factors','hierarchy of needs'],
+  ['finance','funding','capital','sources of finance','loan','share capital','venture capital'],
+  ['ratio','ratios','liquidity','profitability','balance sheet','financial statements'],
+  ['hr','human resources','workforce planning','recruitment','retention'],
+  ['marketing mix','4ps','7ps','product price place promotion'],
+  ['elasticity','ped','yed','price elasticity','income elasticity'],
+  ['stock market','ipo','flotation','shares','going public','stock exchange'],
+  ['trade union','industrial relations','strikes','collective bargaining'],
+  ['csr','corporate social responsibility','ethics','stakeholders'],
+  ['critical path','network analysis','project management','cpa'],
+  ['organisational structure','organizational structure','hierarchy','span of control','delayering','chain of command'],
+  ['takeover','merger','acquisition'],
+  ['business cycle','boom','recession','slump','recovery'],
+  ['cyber','cyber crisis','cybersecurity','data breach','risk management'],
+  ['market research','sampling','primary research','secondary research'],
+  ['positioning','market positioning','perceptual map','market mapping'],
+  ['inventory','stock control','buffer stock','reorder level'],
+  ['leadership','tannenbaum','schmidt','leadership styles'],
+  ['crm','customer relationship management','customer retention'],
+  ['scheme of work','planning tool','curriculum planning']
+];
+
+function searchNormalize(s){
+  return (s || '').toLowerCase().replace(/[^a-z0-9 &]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function levenshtein(a, b){
+  if (a === b) return 0;
+  var al = a.length, bl = b.length;
+  if (al === 0) return bl;
+  if (bl === 0) return al;
+  var prev = [], cur = [], i, j, cost;
+  for (j = 0; j <= bl; j++) prev[j] = j;
+  for (i = 1; i <= al; i++){
+    cur[0] = i;
+    for (j = 1; j <= bl; j++){
+      cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = cur.slice();
+  }
+  return prev[bl];
+}
+
+var searchIndexBuilt = false;
+var searchCards = [];
+
+function buildSearchIndex(){
+  var cards = document.querySelectorAll('.resource-card');
+  searchCards = [];
+  for (var i = 0; i < cards.length; i++){
+    var card = cards[i];
+    var titleEl = card.querySelector('.resource-title');
+    var descEl = card.querySelector('.resource-desc');
+    var eyebrowEl = card.querySelector('.resource-eyebrow');
+    var badgeEls = card.querySelectorAll('[class*="badge"]');
+    var textParts = [];
+    if (titleEl) textParts.push(titleEl.textContent);
+    if (descEl) textParts.push(descEl.textContent);
+    if (eyebrowEl) textParts.push(eyebrowEl.textContent);
+    for (var b = 0; b < badgeEls.length; b++) textParts.push(badgeEls[b].textContent);
+    var node = card.previousElementSibling;
+    var hops = 0;
+    while (node && hops < 40){
+      if (node.classList && node.classList.contains('spec-section')){
+        var ref = node.querySelector('.spec-section-ref');
+        var ttl = node.querySelector('.spec-section-title');
+        if (ref) textParts.push(ref.textContent);
+        if (ttl) textParts.push(ttl.textContent);
+        break;
+      }
+      node = node.previousElementSibling;
+      hops++;
+    }
+    var norm = searchNormalize(textParts.join(' '));
+    var panelEl = card.closest('.tab-panel');
+    searchCards.push({ el: card, text: norm, words: norm.split(' ').filter(Boolean), panel: panelEl ? panelEl.id : null });
+  }
+  searchIndexBuilt = true;
+}
+
+function expandQueryTokens(tokens){
+  var expanded = tokens.slice();
+  for (var t = 0; t < tokens.length; t++){
+    for (var g = 0; g < SEARCH_SYNONYMS.length; g++){
+      var group = SEARCH_SYNONYMS[g];
+      for (var w = 0; w < group.length; w++){
+        if (group[w].indexOf(tokens[t]) !== -1 || tokens[t].indexOf(group[w]) !== -1){
+          for (var k = 0; k < group.length; k++){
+            if (expanded.indexOf(group[k]) === -1) expanded.push(group[k]);
+          }
+        }
+      }
+    }
+  }
+  return expanded;
+}
+
+function scoreCard(card, fullQuery, queryTokens, expandedTokens){
+  var text = card.text;
+  var score = 0;
+  var directHit = false;
+  if (fullQuery && text.indexOf(fullQuery) !== -1){ score += 100; directHit = true; }
+  for (var i = 0; i < queryTokens.length; i++){
+    var tok = queryTokens[i];
+    if (tok.length < 2) continue;
+    if (text.indexOf(tok) !== -1){ score += 20; directHit = true; }
+    else {
+      for (var w = 0; w < card.words.length; w++){
+        var cw = card.words[w];
+        if (cw.length < 3) continue;
+        if (Math.abs(cw.length - tok.length) <= 2 && levenshtein(tok, cw) <= (tok.length > 5 ? 2 : 1)){
+          score += 8; directHit = true; break;
+        }
+      }
+    }
+  }
+  for (var j = 0; j < expandedTokens.length; j++){
+    var etok = expandedTokens[j];
+    if (queryTokens.indexOf(etok) !== -1 || etok.length < 3) continue;
+    if (text.indexOf(etok) !== -1){ score += 5; }
+  }
+  return { score: score, related: !directHit && score > 0 };
+}
+
+var searchDebounceTimer = null;
+function handleSearchInput(value){
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(function(){ runSearch(value); }, 120);
+  var clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = value ? 'flex' : 'none';
+}
+
+function setSearch(term){
+  var input = document.getElementById('resource-search');
+  if (input) input.value = term;
+  var clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = 'flex';
+  runSearch(term);
+}
+
+function clearSearch(){
+  var input = document.getElementById('resource-search');
+  if (input) input.value = '';
+  var clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  runSearch('');
+  if (input) input.focus();
+}
+
+function insertNoResultsMessage(rawValue){
+  var grids = document.querySelectorAll('.resource-grid');
+  if (grids.length){
+    var msg = document.createElement('div');
+    msg.className = 'search-no-results';
+    msg.innerHTML = 'No resources match &ldquo;' + rawValue + '&rdquo;.<br>Try fewer or different words, or one of the suggestions above.';
+    grids[0].appendChild(msg);
+  }
+}
+
+function runSearch(rawValue){
+  if (!searchIndexBuilt) buildSearchIndex();
+  var statusEl = document.getElementById('search-status');
+  var query = searchNormalize(rawValue);
+  var dividers = document.querySelectorAll('.spec-section');
+  var existingNoResults = document.querySelectorAll('.search-no-results');
+  var i;
+
+  for (i = 0; i < existingNoResults.length; i++) existingNoResults[i].parentNode.removeChild(existingNoResults[i]);
+
+  if (!query){
+    for (i = 0; i < searchCards.length; i++){
+      searchCards[i].el.style.display = '';
+      searchCards[i].el.style.order = '';
+      searchCards[i].el.classList.remove('match-related');
+    }
+    for (i = 0; i < dividers.length; i++) dividers[i].style.display = '';
+    var tabBarReset = document.querySelector('.tab-bar-wrap');
+    if (tabBarReset) tabBarReset.style.display = '';
+    var panelsReset = document.querySelectorAll('.tab-panel');
+    for (i = 0; i < panelsReset.length; i++) panelsReset[i].style.display = '';
+    if (statusEl) statusEl.innerHTML = '';
+    return;
+  }
+
+  for (i = 0; i < dividers.length; i++) dividers[i].style.display = 'none';
+  var tabBarSearch = document.querySelector('.tab-bar-wrap');
+  if (tabBarSearch) tabBarSearch.style.display = 'none';
+  var panelsSearch = document.querySelectorAll('.tab-panel');
+  for (i = 0; i < panelsSearch.length; i++) panelsSearch[i].style.display = 'block';
+
+  var queryTokens = query.split(' ').filter(Boolean);
+  var expandedTokens = expandQueryTokens(queryTokens);
+  var results = [];
+
+  for (i = 0; i < searchCards.length; i++){
+    var c = searchCards[i];
+    var r = scoreCard(c, query, queryTokens, expandedTokens);
+    if (r.score > 0){
+      results.push({ card: c, score: r.score, related: r.related });
+    } else {
+      c.el.style.display = 'none';
+      c.el.classList.remove('match-related');
+    }
+  }
+  results.sort(function(a, b){ return b.score - a.score; });
+  for (i = 0; i < results.length; i++){
+    results[i].card.el.style.display = '';
+    results[i].card.el.style.order = i;
+    if (results[i].related) results[i].card.el.classList.add('match-related');
+    else results[i].card.el.classList.remove('match-related');
+  }
+
+  if (statusEl){
+    if (results.length === 0){
+      statusEl.innerHTML = 'No matches for &ldquo;' + rawValue + '&rdquo;. Try: <span class="search-suggest"><span onclick="setSearch(\'marketing\')">marketing</span><span onclick="setSearch(\'finance\')">finance</span><span onclick="setSearch(\'motivation\')">motivation</span><span onclick="setSearch(\'operations\')">operations</span></span>';
+      insertNoResultsMessage(rawValue);
+    } else {
+      var newCount = 0, curCount = 0;
+      for (i = 0; i < results.length; i++){
+        if (results[i].card.panel === 'panel-new') newCount++;
+        else if (results[i].card.panel === 'panel-cur') curCount++;
+      }
+      var breakdown = '';
+      if (newCount && curCount) breakdown = ' (' + newCount + ' New Spec, ' + curCount + ' Current Spec)';
+      statusEl.innerHTML = 'Showing <strong>' + results.length + '</strong> result' + (results.length === 1 ? '' : 's') + ' for &ldquo;' + rawValue + '&rdquo;' + breakdown;
+    }
+  }
+}
 
 /* ── Resource password data ─────────────────────────────────────────
    BUNDLE passwords accepted by every resource card:
