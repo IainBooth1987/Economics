@@ -136,6 +136,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* ── INTERVIEW SESSION ───────────────────────────────────────── */
 .interview-session{display:none;}
+.ai-feedback-panel{display:none;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-top:1rem;}
+.ai-feedback-panel.show{display:block;}
+.ai-feedback-panel strong{display:block;font-size:0.8rem;color:var(--amber);margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--ff-mono,inherit);font-size:0.7rem;}
+.ai-feedback-loading{display:none;font-size:0.85rem;color:var(--muted);font-style:italic;}
+.ai-feedback-content{font-size:0.88rem;line-height:1.6;}
+.ai-feedback-content .fb-row{margin-bottom:0.7rem;}
+.ai-feedback-content .fb-label{font-weight:700;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text);margin-bottom:0.15rem;}
+.ai-feedback-content .fb-score{display:inline-flex;align-items:center;gap:0.4rem;font-weight:700;background:rgba(245,158,11,0.15);color:var(--amber);padding:0.2rem 0.7rem;border-radius:100px;font-size:0.8rem;margin-bottom:0.6rem;}
+.ai-feedback-error{color:#ef4444;font-size:0.82rem;margin-top:0.4rem;}
+.btn-ai-feedback{background:transparent;border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:0.55rem 1.1rem;font-size:0.85rem;cursor:pointer;transition:all 0.18s;}
+.btn-ai-feedback:hover{background:rgba(245,158,11,0.1);}
+.btn-ai-feedback:disabled{opacity:0.5;cursor:not-allowed;}
+.ai-feedback-limit-note{color:var(--muted);font-size:0.78rem;}
+.ai-feedback-remaining{font-size:0.72rem;color:var(--muted);margin-top:0.5rem;}
 .session-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem;}
 .session-progress{font-size:0.82rem;color:var(--muted);}
 .session-progress strong{color:var(--text);}
@@ -1111,6 +1125,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="setup-checkboxes">
       <label class="setup-check"><input type="checkbox" id="setup-voice" checked> Enable voice input (Chrome/Edge)</label>
       <label class="setup-check"><input type="checkbox" id="setup-model"> Show model answer after each question</label>
+      <label class="setup-check"><input type="checkbox" id="setup-ai-feedback"> Enable Live AI Feedback <span class="ai-feedback-limit-note">(2 requests per day)</span></label>
     </div>
     <button class="btn-start" onclick="startInterview()">Start Mock Interview</button>
 
@@ -1165,8 +1180,15 @@ document.addEventListener('DOMContentLoaded', function(){
         <strong>Model Answer</strong>
         <div id="model-answer-text"></div>
       </div>
+      <div id="ai-feedback-panel" class="ai-feedback-panel">
+        <strong>AI Interviewer Feedback</strong>
+        <div id="ai-feedback-loading" class="ai-feedback-loading">Thinking it over…</div>
+        <div id="ai-feedback-content" class="ai-feedback-content"></div>
+        <div id="ai-feedback-error" class="ai-feedback-error"></div>
+      </div>
       <div class="session-actions">
         <button class="btn-model-ans" onclick="toggleModelAnswer()">View Model Answer</button>
+        <button class="btn-ai-feedback" id="btn-ai-feedback" onclick="getAIFeedback()">Get AI Feedback</button>
         <button class="btn-next-q" id="btn-next" onclick="nextQuestion()">Next Question</button>
       </div>
     </div>
@@ -1295,18 +1317,146 @@ function buildQuestionBank(){
       if(strong) strong.remove();
       modelText = clone.textContent.trim();
     }
+    var interviewerPanel = card.querySelector('.interviewer-panel') || card.querySelector('.reveal-panel.interviewer-panel');
+    var interviewerText = '';
+    if(interviewerPanel){
+      var clone2 = interviewerPanel.cloneNode(true);
+      var strong2 = clone2.querySelector('strong');
+      if(strong2) strong2.remove();
+      interviewerText = clone2.textContent.trim();
+    }
     ALL_QUESTIONS.push({
       id: card.dataset.id,
       tab: card.dataset.tab,
       difficulty: card.dataset.difficulty,
       title: card.querySelector('.q-title').textContent.trim(),
       question: card.querySelector('.q-question').textContent.trim(),
-      model: modelText
+      model: modelText,
+      interviewerNotes: interviewerText
     });
   });
 }
 
-// ── INTERVIEW SESSION STATE ───────────────────────────────────────
+// ── AI FEEDBACK (via Cloudflare Worker proxy — see deployment notes) ──
+// Replace this with your own deployed Worker URL before going live.
+var AI_FEEDBACK_WORKER_URL = 'https://biz-omics-interview-feedback.iain-booth-1987.workers.dev';
+var AI_FEEDBACK_DAILY_LIMIT = 2;
+
+function getTodayKey(){
+  return new Date().toISOString().slice(0,10); // YYYY-MM-DD, local browser clock
+}
+
+function getAIFeedbackUsageToday(){
+  try{
+    var raw = localStorage.getItem('biz_omics_ai_feedback_usage');
+    if(!raw) return 0;
+    var data = JSON.parse(raw);
+    if(data.date !== getTodayKey()) return 0; // new day, usage resets
+    return data.count || 0;
+  } catch(e){ return 0; }
+}
+
+function incrementAIFeedbackUsage(){
+  try{
+    var current = getAIFeedbackUsageToday();
+    localStorage.setItem('biz_omics_ai_feedback_usage', JSON.stringify({
+      date: getTodayKey(),
+      count: current + 1
+    }));
+  } catch(e){ /* localStorage unavailable — fail silently, limit just won't persist */ }
+}
+
+function getAIFeedback(){
+  var q = sessionQueue[sessionIndex];
+  var voiceText = document.getElementById('voice-transcript').value.trim();
+  var typedText = document.getElementById('text-answer').value.trim();
+  var studentAnswer = typedText.length > voiceText.length ? typedText : voiceText;
+
+  if(!studentAnswer || studentAnswer.length < 5){
+    alert('Please write or record an answer first.');
+    return;
+  }
+  if(AI_FEEDBACK_WORKER_URL.indexOf('YOUR-SUBDOMAIN') !== -1){
+    alert('AI Feedback is not yet configured. Set AI_FEEDBACK_WORKER_URL to your deployed Cloudflare Worker URL.');
+    return;
+  }
+
+  var btn = document.getElementById('btn-ai-feedback');
+  var panel = document.getElementById('ai-feedback-panel');
+  var loading = document.getElementById('ai-feedback-loading');
+  var content = document.getElementById('ai-feedback-content');
+  var errorEl = document.getElementById('ai-feedback-error');
+
+  // ── CLIENT-SIDE DAILY LIMIT CHECK (before spending any API cost) ──
+  var usedToday = getAIFeedbackUsageToday();
+  if(usedToday >= AI_FEEDBACK_DAILY_LIMIT){
+    aiFeedbackLimitReached = true;
+    btn.disabled = true;
+    btn.textContent = "Today's AI feedback used up";
+    panel.classList.add('show');
+    content.innerHTML = '<div class="ai-feedback-remaining">' +
+      "You've used today's " + AI_FEEDBACK_DAILY_LIMIT + " AI feedback requests. The Model Answer is still available, and AI Feedback resets tomorrow." +
+      '</div>';
+    return;
+  }
+
+  panel.classList.add('show');
+  loading.style.display = 'block';
+  content.innerHTML = '';
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Thinking…';
+
+  fetch(AI_FEEDBACK_WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      question: q.question,
+      modelAnswer: q.model,
+      interviewerNotes: q.interviewerNotes,
+      studentAnswer: studentAnswer
+    })
+  })
+  .then(function(res){ return res.json().then(function(data){ return {ok: res.ok, status: res.status, data: data}; }); })
+  .then(function(result){
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Get AI Feedback';
+
+    if(!result.ok || result.data.error){
+      errorEl.textContent = 'Could not get feedback right now. Please try again in a moment.';
+      return;
+    }
+
+    // Successful, billed call — count it against today's local limit
+    incrementAIFeedbackUsage();
+    var nowUsed = getAIFeedbackUsageToday();
+    var remaining = Math.max(0, AI_FEEDBACK_DAILY_LIMIT - nowUsed);
+    if(remaining === 0){
+      aiFeedbackLimitReached = true;
+      btn.disabled = true;
+      btn.textContent = "Today's AI feedback used up";
+    }
+
+    var fb = result.data;
+    var scoreLabel = fb.score ? ('Self-assessed depth: ' + fb.score + ' / 5') : '';
+    var remainingNote = '<div class="ai-feedback-remaining">' + remaining + ' of ' + AI_FEEDBACK_DAILY_LIMIT + ' AI feedback requests left today</div>';
+    content.innerHTML =
+      (scoreLabel ? '<div class="fb-score">' + scoreLabel + '</div>' : '') +
+      '<div class="fb-row"><div class="fb-label">What worked</div>' + (fb.strengths || '') + '</div>' +
+      '<div class="fb-row"><div class="fb-label">What to sharpen</div>' + (fb.gaps || '') + '</div>' +
+      '<div class="fb-row"><div class="fb-label">Interviewer follow-up</div>' + (fb.followUp || '') + '</div>' +
+      remainingNote;
+  })
+  .catch(function(err){
+    loading.style.display = 'none';
+    btn.disabled = false;
+    btn.textContent = 'Get AI Feedback';
+    errorEl.textContent = 'Network error — please check your connection and try again.';
+  });
+}
+
+
 var sessionQueue = [];
 var sessionIndex = 0;
 var sessionResults = [];
@@ -1316,6 +1466,8 @@ var currentConfidence = null;
 var recognition = null;
 var isRecording = false;
 var showModelAns = false;
+var aiFeedbackOptedIn = false;
+var aiFeedbackLimitReached = false;
 
 function startInterview(){
   buildQuestionBank();
@@ -1324,6 +1476,7 @@ function startInterview(){
   var topic = document.getElementById('setup-topic').value;
   timerSeconds = parseInt(document.getElementById('setup-time').value);
   showModelAns = document.getElementById('setup-model').checked;
+  aiFeedbackOptedIn = document.getElementById('setup-ai-feedback').checked;
 
   var pool = ALL_QUESTIONS.filter(function(q){
     var diffOk = diff === 'all' || q.difficulty === diff || (diff === 'hard' && (q.difficulty === 'advanced' || q.difficulty === 'expert'));
@@ -1369,6 +1522,24 @@ function loadQuestion(){
   document.getElementById('text-answer').value = '';
   document.getElementById('model-answer-reveal').classList.remove('show');
   document.getElementById('model-answer-text').textContent = q.model;
+  document.getElementById('ai-feedback-panel').classList.remove('show');
+  document.getElementById('ai-feedback-content').innerHTML = '';
+  document.getElementById('ai-feedback-error').textContent = '';
+  document.getElementById('ai-feedback-loading').style.display = 'none';
+
+  var aiBtn = document.getElementById('btn-ai-feedback');
+  if(!aiFeedbackOptedIn){
+    aiBtn.style.display = 'none';
+  } else if(getAIFeedbackUsageToday() >= AI_FEEDBACK_DAILY_LIMIT){
+    aiFeedbackLimitReached = true;
+    aiBtn.style.display = 'inline-block';
+    aiBtn.disabled = true;
+    aiBtn.textContent = "Today's AI feedback used up";
+  } else {
+    aiBtn.style.display = 'inline-block';
+    aiBtn.disabled = false;
+    aiBtn.textContent = 'Get AI Feedback';
+  }
   document.getElementById('btn-next').textContent = sessionIndex < sessionQueue.length - 1 ? 'Next Question' : 'See Results';
   document.querySelectorAll('.conf-btn').forEach(function(b){ b.className = 'conf-btn'; });
   stopMic();
