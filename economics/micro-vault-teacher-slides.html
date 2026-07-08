@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Micro Vault — Teacher Slides — BIZ-OMICS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment:#F6F1E4; --parchment-deep:#EAE0C6; --brass:#A8783A; --brass-dark:#7C5A28;
+    --brass-light:#D9B876; --ink:#1E2A44; --sage:#4F6F52; --rust:#9C4A32; --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--ink);font-family:'DM Sans',sans-serif;}
+  .deck{position:relative;width:100%;height:100vh;overflow:hidden;}
+  .slide{position:absolute;inset:0;display:none;background:var(--parchment);
+    background-image:radial-gradient(circle at 90% 8%, rgba(168,120,58,0.10), transparent 40%),
+      radial-gradient(circle at 6% 92%, rgba(168,120,58,0.08), transparent 45%);
+    padding:4.5vh 6vw;flex-direction:column;justify-content:center;overflow-y:auto;}
+  .slide.active{display:flex;}
+  h1,h2,h3{font-family:'Playfair Display',serif;color:var(--ink);margin:0 0 0.3em 0;}
+  .eyebrow{font-family:'DM Sans',sans-serif;letter-spacing:0.2em;text-transform:uppercase;
+    font-size:0.8rem;color:var(--brass-dark);font-weight:700;margin-bottom:0.5em;}
+  h1{font-size:3rem;font-weight:800;}
+  h2{font-size:2rem;font-weight:700;}
+  p,li{font-size:1.1rem;color:var(--ink);line-height:1.5;}
+  .subtitle{font-size:1.25rem;color:var(--brass-dark);font-weight:500;margin-bottom:1em;}
+  .dial{width:100px;height:100px;border-radius:50%;border:6px solid var(--brass);
+    background:radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass-dark) 75%);
+    position:relative;box-shadow:0 6px 18px rgba(0,0,0,0.25) inset, 0 4px 10px rgba(0,0,0,0.2);flex-shrink:0;}
+  .dial::before{content:'';position:absolute;top:8px;left:50%;width:4px;height:18px;background:var(--ink);
+    transform:translateX(-50%);border-radius:2px;}
+  .dial::after{content:'';position:absolute;top:50%;left:50%;width:12px;height:12px;border-radius:50%;
+    background:var(--ink);transform:translate(-50%,-50%);}
+  .titlebar{display:flex;align-items:center;gap:24px;margin-bottom:0.5em;}
+  .card{background:var(--white);border:1px solid var(--parchment-deep);border-left:6px solid var(--brass);
+    border-radius:10px;padding:1em 1.4em;margin:0.5em 0;box-shadow:0 3px 10px rgba(30,42,68,0.06);}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1em;margin-top:0.6em;}
+  table{width:100%;border-collapse:collapse;background:var(--white);border-radius:8px;overflow:hidden;font-size:0.95rem;}
+  th,td{padding:0.45em 0.6em;text-align:left;border-bottom:1px solid var(--parchment-deep);}
+  th{background:var(--ink);color:var(--parchment);font-weight:700;font-size:0.85rem;letter-spacing:0.02em;}
+  tr:nth-child(even) td{background:#FBF8F1;}
+  .badge{display:inline-block;background:var(--brass);color:var(--white);font-weight:700;
+    padding:0.2em 0.8em;border-radius:100px;font-size:0.9rem;letter-spacing:0.04em;margin-bottom:0.5em;}
+  .nav{position:fixed;bottom:18px;right:24px;display:flex;gap:10px;z-index:50;}
+  .nav button{background:var(--ink);color:var(--parchment);border:none;padding:0.55em 1.1em;
+    border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem;}
+  .nav button:hover{background:var(--brass-dark);}
+  .counter{position:fixed;bottom:22px;left:24px;color:var(--brass-dark);font-weight:700;z-index:50;}
+  #gate{position:fixed;inset:0;background:var(--ink);z-index:200;display:flex;align-items:center;
+    justify-content:center;flex-direction:column;color:var(--parchment);}
+  #gate h2{color:var(--parchment);font-family:'Playfair Display';}
+  #gate input{padding:0.7em 1em;border-radius:8px;border:none;font-size:1.1rem;width:320px;text-align:center;
+    letter-spacing:0.1em;margin:0.8em 0;}
+  #gate button{background:var(--brass);color:var(--white);border:none;padding:0.7em 1.6em;border-radius:8px;
+    font-weight:700;cursor:pointer;font-size:1rem;}
+  #gate .err{color:#E8A2A2;height:1.2em;font-size:0.95rem;}
+  .final-code{display:flex;gap:8px;justify-content:center;margin:1em 0;flex-wrap:wrap;}
+  .final-code span{width:52px;height:66px;background:var(--white);border:3px solid var(--brass);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:1.8rem;
+    font-weight:800;color:var(--ink);}
+  .reveal-btn{background:var(--sage);color:var(--white);border:none;padding:0.7em 1.8em;border-radius:10px;
+    font-weight:700;font-size:1.05rem;cursor:pointer;margin-top:0.5em;}
+  #revealMsg,#round3Table{display:none;margin-top:0.8em;}
+  small.source{color:#8a8060;font-size:0.8rem;}
+  @media print{ .nav,.counter,#gate{display:none !important;} }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="dial" style="margin-bottom:1.2em;"></div>
+  <h2>The Micro Vault</h2>
+  <p style="color:#D9CBA8;">Teacher access — enter product password</p>
+  <input type="password" id="pwInput" placeholder="Enter password" />
+  <div class="err" id="pwErr"></div>
+  <button onclick="checkPw()">Unlock</button>
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1: Title -->
+  <section class="slide">
+    <div class="titlebar"><div class="dial"></div><div><div class="eyebrow">BIZ-OMICS · Boardroom Series</div><h1>The Micro Vault</h1></div></div>
+    <p class="subtitle">An A-Level Microeconomics escape room — four rounds, one combination.</p>
+    <div class="card"><p>Teams work together to clear four rounds of applied micro knowledge and assemble the full vault code — every task in every round contributes a piece, so nothing can be skipped. Everything they need is in the workbook — no other equipment required.</p></div>
+  </section>
+
+  <!-- 2: Briefing -->
+  <section class="slide">
+    <span class="badge">Briefing — 2 minutes</span>
+    <h2>How this works</h2>
+    <div class="grid3">
+      <div class="card"><h3 style="font-size:1.1rem;">Teams</h3><p>Groups of 3–4, one workbook each. Everything is done <strong>as a team</strong> — talk through each answer together before writing it down.</p></div>
+      <div class="card"><h3 style="font-size:1.1rem;">Timing</h3><p>~48 minutes total: 6 / 15 / 10 / 12 minutes per round, plus briefing and reveal. Trim any round if you're short on time.</p></div>
+      <div class="card"><h3 style="font-size:1.1rem;">Code</h3><p>Each round produces one part of an 8-character vault code. Get any part wrong and the vault won't open.</p></div>
+    </div>
+    <p style="margin-top:0.8em;">Hints cost 60 seconds each. First team with the full, correct code shouts <strong>"Vault!"</strong></p>
+  </section>
+
+  <!-- 3: Round 1 instructions -->
+  <section class="slide">
+    <span class="badge">Round 1 — 6 minutes</span>
+    <h2>Real World Economics: Rankings</h2>
+    <div class="card"><p>As a team, rank UK Cigarette interventions and Sugar &amp; Alcohol interventions into chronological order in your workbook.</p></div>
+    <div class="card"><p>Talk it through together: someone in your team probably knows a piece others don't. Vault Key 1 comes from your Cigarettes list.</p></div>
+  </section>
+
+  <!-- 4: Round 2 instructions -->
+  <section class="slide">
+    <span class="badge">Round 2 — 15 minutes</span>
+    <h2>Calculation Round</h2>
+    <div class="card"><p>Six questions in your workbook — PED, YED, XED, opportunity cost, consumer &amp; producer surplus, and tax incidence.</p></div>
+    <div class="card"><p>Work through the tables and questions <strong>as a team</strong> — check each other's working before moving on. Your vault key comes from the final part-answer of each question.</p></div>
+  </section>
+
+  <!-- 5: Round 3 predict -->
+  <section class="slide">
+    <span class="badge">Round 3 — 10 minutes</span>
+    <h2>UK Household Spending &amp; Inequality</h2>
+    <p>Predict as a team in your workbook: spending shares, then poverty by age group and region, then estimate median household income. No data shown yet: use what you already know.</p>
+    <div class="card"><p>Spending: highest/lowest % &amp; fastest/slowest-growing category &nbsp;|&nbsp; Poverty: highest/lowest age group &amp; region &nbsp;|&nbsp; Median household income estimate</p></div>
+    <p style="text-align:center;"><button class="reveal-btn" onclick="document.getElementById('round3Table').style.display='block'">Reveal the data</button></p>
+    <div id="round3Table">
+      <table>
+        <tr><th>Category</th><th>Approx. % of weekly spend</th></tr>
+        <tr><td>Housing (net), fuel &amp; power</td><td>18% — highest</td></tr>
+        <tr><td>Transport</td><td>14% — grew fastest (+12% real terms)</td></tr>
+        <tr><td>Recreation &amp; culture</td><td>~11%</td></tr>
+        <tr><td>Food &amp; non-alcoholic drinks</td><td>~11% — smallest real-terms change</td></tr>
+        <tr><td>Miscellaneous goods &amp; services</td><td>~8%</td></tr>
+        <tr><td>Restaurants &amp; hotels</td><td>7%</td></tr>
+        <tr><td>Clothing &amp; footwear</td><td>~4%</td></tr>
+        <tr><td>Alcohol &amp; tobacco</td><td>~2% — lowest</td></tr>
+      </table>
+      <p style="margin-top:0.6em;"><strong>Poverty (relative, after housing costs, 2024/25):</strong> Children ~30% (highest) · Working-age adults ~20% · Pensioners ~16% (lowest)</p>
+      <p><strong>By English region:</strong> West Midlands 27% (highest) · North West 25% · London 24% · Yorkshire &amp; the Humber 23% · South East, South West and East of England lowest (~15–17%)</p>
+      <p><strong>Median household income (before housing costs, 2024/25):</strong> £37,500</p>
+      <p><small class="source">Sources: ONS Family Spending in the UK / Living Costs and Food Survey (FYE 2024); DWP Households Below Average Income (FYE 2024/25); Joseph Rowntree Foundation, UK Poverty 2025; IFS. Figures rounded for classroom use.</small></p>
+    </div>
+  </section>
+
+  <!-- 6: Round 4 instructions -->
+  <section class="slide">
+    <span class="badge">Round 4 — 12 minutes</span>
+    <h2>Market Failure Policy Decisions</h2>
+    <div class="card"><p>Warm up as a team by matching each market failure term to its definition, then work through three scenarios in your workbook. Same policy menu each time — but the right answer changes with the evidence.</p></div>
+    <div class="card"><p>Discuss the clues in each scenario together before committing to an answer — that's where the marks are.</p></div>
+  </section>
+
+  <!-- 7: Final -->
+  <section class="slide">
+    <span class="badge">The Vault</span>
+    <h2>Enter your full vault code</h2>
+    <div class="final-code">
+      <span>5</span><span>0</span><span>8</span><span>H</span><span>T</span><span>A</span><span>C</span><span>W</span><span>G</span><span>D</span><span>F</span><span>A</span>
+    </div>
+    <p style="text-align:center;">If your code matches, click below to open the vault.</p>
+    <div style="text-align:center;">
+      <button class="reveal-btn" onclick="document.getElementById('revealMsg').style.display='block'">Open the Vault</button>
+    </div>
+    <div id="revealMsg" class="card" style="text-align:center;max-width:720px;margin:1em auto 0;">
+      <h3 style="font-family:'Playfair Display';">🔓 Vault opened!</h3>
+      <p>Well done — from Adam Smith to a sugar tax, from a river of chemical waste to a nation of household budgets, your team has just applied 250 years of economic thinking to real markets and real policy. That's what the discipline is actually for.</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="counter" id="counter"></div>
+<div class="nav"><button onclick="go(-1)">◀ Prev</button><button onclick="go(1)">Next ▶</button></div>
+
+<script>
+  const PASSWORDS = ["MicroVault-Qw4!2026", "BIZOMICS-MICRO-2026", "BIZOMICS-PREMIUM-2026", "GSALEconomics"];
+  function checkPw(){
+    const val = document.getElementById('pwInput').value.trim();
+    if(PASSWORDS.includes(val)){
+      document.getElementById('gate').style.display='none';
+    } else {
+      document.getElementById('pwErr').textContent = 'Incorrect password — check your product confirmation email.';
+    }
+  }
+  document.getElementById('pwInput').addEventListener('keydown', e=>{ if(e.key==='Enter') checkPw(); });
+
+  const slides = document.querySelectorAll('.slide');
+  let idx = 0;
+  function render(){
+    slides.forEach((s,i)=> s.classList.toggle('active', i===idx));
+    document.getElementById('counter').textContent = (idx+1) + ' / ' + slides.length;
+  }
+  function go(delta){ idx = Math.min(Math.max(idx+delta,0), slides.length-1); render(); }
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight' || e.key===' ') go(1);
+    if(e.key==='ArrowLeft') go(-1);
+  });
+  render();
+</script>
+
+</body>
+</html>
