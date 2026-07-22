@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wage Differentials Explorer | BIZ-OMICS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;
+  --bg-panel:#11172a;
+  --bg-card:#161d33;
+  --bg-card-hover:#1c2540;
+  --line:#232c47;
+  --ink:#e8e6e0;
+  --ink-dim:#9aa3bd;
+  --ink-faint:#5d6784;
+  --amber:#f59e0b;
+  --amber-dim:#a8720f;
+  --sky:#38bdf8;
+  --rose:#f4665a;
+  --sage:#5fbf8f;
+  --display: 'Fraunces', serif;
+  --body: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--body);}
+body{padding:0 0 60px 0;}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+
+/* ---------- Header ---------- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  padding:32px 0 0 0;
+  background:
+    radial-gradient(600px 200px at 15% 0%, rgba(245,158,11,0.08), transparent 70%),
+    var(--bg);
+}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:12px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--amber);
+  margin:0 0 10px 0;
+}
+h1.title{
+  font-family:var(--display);
+  font-weight:700;
+  font-size:clamp(28px,4vw,42px);
+  line-height:1.08;
+  margin:0 0 12px 0;
+  color:var(--ink);
+}
+.subtitle{
+  color:var(--ink-dim);
+  font-size:16px;
+  max-width:640px;
+  line-height:1.5;
+  margin:0 0 28px 0;
+}
+
+/* ---------- Tabs ---------- */
+.tabbar{
+  display:flex;
+  gap:4px;
+  border-bottom:1px solid var(--line);
+}
+.tabbtn{
+  font-family:var(--body);
+  font-weight:600;
+  font-size:14.5px;
+  background:none;
+  border:none;
+  color:var(--ink-faint);
+  padding:14px 6px 16px 6px;
+  margin-right:28px;
+  cursor:pointer;
+  position:relative;
+  letter-spacing:0.01em;
+}
+.tabbtn .num{
+  font-family:var(--mono);
+  font-size:11px;
+  color:var(--ink-faint);
+  margin-right:8px;
+}
+.tabbtn.active{color:var(--ink);}
+.tabbtn.active .num{color:var(--amber);}
+.tabbtn.active::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:-1px;
+  height:2px;
+  background:var(--amber);
+}
+.tabbtn:hover{color:var(--ink);}
+
+.panel{padding:36px 0 0 0;display:none;}
+.panel.active{display:block;}
+
+/* ---------- Shared components ---------- */
+.section-head{margin-bottom:22px;}
+.section-head h2{
+  font-family:var(--display);
+  font-weight:600;
+  font-size:24px;
+  margin:0 0 6px 0;
+}
+.section-head p{color:var(--ink-dim);font-size:14.5px;margin:0;max-width:620px;line-height:1.55;}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+.chip{
+  font-family:var(--mono);
+  font-size:12.5px;
+  padding:7px 13px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background:var(--bg-panel);
+  color:var(--ink-dim);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.chip:hover{border-color:var(--amber-dim);color:var(--ink);}
+.chip.active{background:var(--amber);border-color:var(--amber);color:#1a1305;font-weight:700;}
+
+/* differential bar - the signature element */
+.diffbar-wrap{
+  background:var(--bg-card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:18px 20px;
+}
+.diffbar-row{display:flex;align-items:center;gap:14px;margin:10px 0;}
+.diffbar-label{
+  width:170px;flex-shrink:0;
+  font-size:13.5px;color:var(--ink-dim);
+  text-align:right;
+}
+.diffbar-track{flex:1;height:22px;background:var(--line);border-radius:4px;position:relative;overflow:visible;}
+.diffbar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.diffbar-fill.a{background:var(--amber);}
+.diffbar-fill.b{background:var(--sky);}
+.diffbar-val{
+  font-family:var(--mono);font-size:12.5px;font-weight:700;
+  width:80px;flex-shrink:0;color:var(--ink);
+}
+.diffbar-mid{
+  position:absolute;top:-4px;bottom:-4px;left:50%;
+  width:1px;background:var(--ink-faint);opacity:0.4;
+}
+
+/* ---------- Tab 1: occupation cards ---------- */
+.occ-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:28px;}
+.occ-card{
+  background:var(--bg-card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px 16px 14px 16px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.occ-card:hover{background:var(--bg-card-hover);border-color:var(--amber-dim);}
+.occ-card.selected{border-color:var(--amber);background:var(--bg-card-hover);}
+.occ-cat{font-family:var(--mono);font-size:10.5px;color:var(--sky);text-transform:uppercase;letter-spacing:0.08em;}
+.occ-name{font-family:var(--display);font-weight:600;font-size:17px;margin:5px 0 4px 0;}
+.occ-med{font-family:var(--mono);font-size:14px;color:var(--amber);}
+
+.detail-panel{
+  background:var(--bg-panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:26px 28px;
+  margin-bottom:24px;
+}
+.detail-panel h3{font-family:var(--display);font-size:21px;margin:0 0 4px 0;}
+.detail-panel .sub{color:var(--ink-dim);font-size:13.5px;margin-bottom:18px;}
+.driver-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;}
+.driver{
+  border-left:3px solid var(--amber);
+  padding:4px 0 4px 12px;
+}
+.driver .k{font-size:12px;font-family:var(--mono);color:var(--sky);text-transform:uppercase;letter-spacing:0.05em;}
+.driver .v{font-size:13.5px;color:var(--ink-dim);line-height:1.45;margin-top:2px;}
+.placeholder-note{color:var(--ink-faint);font-size:13px;font-style:italic;}
+
+/* trades case study */
+.trades-box{
+  background:var(--bg-panel);
+  border:1px solid var(--amber-dim);
+  border-radius:var(--radius);
+  padding:24px 26px;
+  margin-top:8px;
+}
+.trades-box h3{font-family:var(--display);font-size:20px;margin:0 0 4px 0;color:var(--amber);}
+.toggle-row{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap;}
+.toggle-btn{
+  font-family:var(--mono);font-size:12.5px;padding:6px 12px;border-radius:6px;
+  border:1px solid var(--line);background:var(--bg-card);color:var(--ink-dim);cursor:pointer;
+}
+.toggle-btn.on{background:var(--sky);color:#031621;border-color:var(--sky);font-weight:700;}
+.why-panel{
+  margin-top:16px;padding:14px 16px;background:var(--bg-card);border-radius:8px;
+  font-size:13.5px;color:var(--ink-dim);line-height:1.6;display:none;
+}
+.why-panel.open{display:block;}
+.expand-link{font-family:var(--mono);font-size:12.5px;color:var(--amber);cursor:pointer;display:inline-block;margin-top:8px;}
+
+/* ---------- Tab 2 ---------- */
+.theory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:32px;}
+.theory-card{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;}
+.theory-card .t{font-family:var(--display);font-weight:600;font-size:18px;margin:0 0 12px 0;color:var(--amber);border-bottom:1px solid var(--line);padding-bottom:10px;}
+.theory-card .blk{margin-bottom:11px;}
+.theory-card .blk:last-child{margin-bottom:0;}
+.theory-card .k{font-family:var(--mono);font-size:10.5px;color:var(--sky);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;}
+.theory-card .v{font-size:13.5px;color:var(--ink-dim);line-height:1.55;}
+.theory-card .v em{color:var(--ink);font-style:normal;font-weight:500;}
+.theory-card .evalv{font-size:13.5px;color:var(--ink);line-height:1.55;font-style:italic;}
+
+.timeline-wrap{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;}
+.timeline-slider{width:100%;margin:18px 0 8px 0;accent-color:var(--amber);}
+.timeline-year{font-family:var(--mono);font-size:28px;color:var(--amber);font-weight:700;}
+.timeline-event{font-size:13.5px;color:var(--ink-dim);margin-top:4px;min-height:40px;line-height:1.5;}
+
+/* ---------- Tab 3 ---------- */
+.sim-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:26px;}
+@media (max-width:860px){.sim-layout{grid-template-columns:1fr;}}
+.sliders-box{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;}
+.slider-group{margin-bottom:20px;}
+.slider-group label{font-size:13.5px;color:var(--ink-dim);display:flex;justify-content:space-between;margin-bottom:6px;}
+.slider-group label .val{font-family:var(--mono);color:var(--amber);font-weight:700;}
+.slider-group input[type=range]{width:100%;accent-color:var(--amber);}
+.diagram-box{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+.readout{
+  margin-top:18px;padding:14px 16px;background:var(--bg-card);border-radius:8px;
+  border-left:3px solid var(--sky);font-size:13.5px;color:var(--ink-dim);line-height:1.55;
+}
+.eval-box{
+  margin-top:20px;padding:16px 18px;background:var(--bg-panel);border:1px dashed var(--amber-dim);border-radius:8px;
+}
+.eval-box .k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--amber);margin-bottom:6px;}
+.eval-box .q{font-size:14px;line-height:1.5;font-style:italic;color:var(--ink);}
+
+.outcomes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:8px;}
+.outcome-card{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
+.outcome-card .k{font-family:var(--mono);font-size:10.5px;color:var(--sky);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+.outcome-card .v{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--ink);}
+.outcome-card .v.up{color:var(--sage);}
+.outcome-card .v.down{color:var(--rose);}
+.outcome-card .arrow{font-size:14px;margin-left:4px;}
+.outcome-card .sub{font-size:11.5px;color:var(--ink-faint);margin-top:4px;}
+
+/* reasoning chain: evidence -> explanation -> evaluation */
+.chain{margin:14px 0 18px 0;}
+.chain-step{
+  background:var(--bg-card);border-radius:8px;padding:12px 16px;
+  border-left:3px solid var(--sky);position:relative;margin-bottom:4px;
+}
+.chain-step.explain{border-left-color:var(--amber);}
+.chain-step.eval{border-left-color:var(--sage);}
+.chain-step .lbl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--sky);margin-bottom:4px;}
+.chain-step.explain .lbl{color:var(--amber);}
+.chain-step.eval .lbl{color:var(--sage);}
+.chain-step .txt{font-size:13.5px;color:var(--ink-dim);line-height:1.5;}
+.chain-arrow{text-align:center;color:var(--ink-faint);font-size:13px;margin:2px 0;}
+.src{
+  display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);
+  margin-top:6px;border-top:1px dotted var(--line);padding-top:4px;
+}
+
+/* theory quiz */
+.quiz-box{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px;margin-bottom:32px;}
+.quiz-scenario{font-size:15px;color:var(--ink);line-height:1.55;margin-bottom:16px;padding:14px 16px;background:var(--bg-card);border-radius:8px;}
+.quiz-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.quiz-opt{
+  font-family:var(--body);font-size:13px;padding:9px 14px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg-card);color:var(--ink-dim);cursor:pointer;
+}
+.quiz-opt:hover{border-color:var(--amber-dim);}
+.quiz-opt.correct{background:var(--sage);border-color:var(--sage);color:#07271a;font-weight:600;}
+.quiz-opt.wrong{background:var(--rose);border-color:var(--rose);color:#2b0a08;font-weight:600;}
+.quiz-feedback{font-size:13.5px;color:var(--ink-dim);line-height:1.55;display:none;padding-top:6px;border-top:1px solid var(--line);}
+.quiz-feedback.show{display:block;}
+.quiz-next{font-family:var(--mono);font-size:12px;color:var(--amber);cursor:pointer;margin-top:12px;display:inline-block;}
+
+/* ---------- print ---------- */
+.print-btn{
+  font-family:var(--mono);font-size:12.5px;padding:8px 16px;border-radius:6px;
+  border:1px solid var(--amber);background:transparent;color:var(--amber);cursor:pointer;
+  position:absolute;top:32px;right:24px;
+}
+@media print{
+  .tabbar,.chip-row,.toggle-row,.print-btn,.timeline-slider,input[type=range]{display:none !important;}
+  body{background:#fff;color:#000;}
+  .panel{display:block !important;}
+  .bg-panel,.bg-card,.detail-panel,.trades-box,.timeline-wrap,.sliders-box,.diagram-box{background:#fff;border-color:#000;}
+}
+
+/* ---------- mobile ---------- */
+@media (max-width:600px){
+  .wrap{padding:0 16px;}
+  .masthead{padding-top:20px;}
+  h1.title{font-size:26px;}
+  .print-btn{position:static;display:block;margin:14px 0 4px 0;}
+  .tabbar{flex-wrap:wrap;gap:0;}
+  .tabbtn{margin-right:16px;font-size:13px;padding:10px 4px 12px 4px;}
+  .tabbtn .num{margin-right:5px;}
+
+  .diffbar-row{flex-wrap:wrap;gap:6px;}
+  .diffbar-label{width:100%;text-align:left;font-size:12.5px;}
+  .diffbar-track{flex-basis:70%;}
+  .diffbar-val{width:auto;flex-basis:26%;text-align:right;}
+
+  .occ-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .theory-grid{grid-template-columns:1fr;}
+  .driver-grid{grid-template-columns:1fr;}
+  .outcomes-grid{grid-template-columns:repeat(2,1fr);}
+
+  .detail-panel,.trades-box,.quiz-box,.timeline-wrap,.sliders-box,.diagram-box{padding:16px 16px;}
+  .quiz-options{flex-direction:column;}
+  .quiz-opt{width:100%;text-align:left;}
+
+  .toggle-row{gap:6px;}
+  .toggle-btn{font-size:11.5px;padding:6px 9px;}
+}
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="wrap" style="position:relative;">
+    <p class="eyebrow">BIZ-OMICS &middot; Labour Economics</p>
+    <h1 class="title">Wage Differentials Explorer</h1>
+    <p class="subtitle">Why do some jobs pay so much more than others? Explore real occupations, the theory behind the gap, and what government can (and can't) do about it.</p>
+    <button class="print-btn" onclick="window.print()">Print &darr;</button>
+    <div class="tabbar">
+      <button class="tabbtn active" data-tab="t1"><span class="num">01</span>Occupation Explorer</button>
+      <button class="tabbtn" data-tab="t2"><span class="num">02</span>Theory &amp; Change Over Time</button>
+      <button class="tabbtn" data-tab="t3"><span class="num">03</span>Government Intervention</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ================= TAB 1 ================= -->
+  <div class="panel active" id="t1">
+    <div class="section-head">
+      <h2>Pick a job. See the pay.</h2>
+      <p>Select any two occupations to compare median UK earnings side by side, then see what actually drives the gap between them.</p>
+    </div>
+    <div class="chip-row" id="catChips"></div>
+    <div class="occ-grid" id="occGrid"></div>
+
+    <div class="detail-panel" id="detailPanel" style="display:none;">
+      <h3 id="detailTitle">Select two occupations</h3>
+      <p class="sub" id="detailSub"></p>
+      <div class="diffbar-wrap" id="detailBars"></div>
+      <div class="driver-grid" id="driverGrid"></div>
+    </div>
+
+    <div class="trades-box">
+      <h3>Case study &mdash; the trades reversal</h3>
+      <p class="placeholder-note" style="color:var(--ink-dim);font-style:normal;">Recent labour market data suggests trades wages have grown faster than the wider economy &mdash; a live example of demand and supply shifting at the same time. <span class="src">Source: ONS ASHE 2025; Total Skills UK trade wage analysis, 2026</span></p>
+      <div class="toggle-row">
+        <button class="toggle-btn on" id="empToggle" onclick="toggleEmployment()">Employed</button>
+        <button class="toggle-btn" id="selfToggle" onclick="toggleEmployment()">Self-employed</button>
+        <span style="width:12px;"></span>
+        <button class="toggle-btn" id="londonToggle" onclick="toggleLondon()">London rates</button>
+      </div>
+      <div class="diffbar-wrap" id="tradesBars"></div>
+      <span class="expand-link" onclick="toggleWhy()">Why is this happening? &darr;</span>
+      <div class="why-panel" id="whyPanel">
+
+        <div class="chain">
+          <div class="chain-step"><div class="lbl">Evidence</div><div class="txt">A shortfall of roughly 104,000 electricians is projected by 2032, alongside a reported 227:1 ratio of vacancies to apprenticeship places. <span class="src">Source: UK Trade Skills Index; Total Skills UK, 2026</span></div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step explain"><div class="lbl">Economic explanation</div><div class="txt">Labour supply for electricians is relatively inelastic in the short run because training (apprenticeship + licensing) takes several years. At the same time, demand (and therefore MRP) is rising, partly driven by EV charging and heat-pump installation work. A rightward demand shift meeting an inelastic supply curve produces a larger wage rise than it would in a market where supply could adjust quickly.</div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step eval"><div class="lbl">Evaluation</div><div class="txt">Higher wages should eventually attract more entrants &mdash; and apprenticeship applications in construction do appear to be rising &mdash; but only with a multi-year lag, so the wage premium is likely to persist for some time before supply catches up. This is theory-consistent, but the exact size and duration of the effect isn't something a single data point can confirm.</div></div>
+        </div>
+
+        <div class="chain">
+          <div class="chain-step"><div class="lbl">Evidence</div><div class="txt">Government policy confirms no new gas boiler installations in new-build homes from 2025, with a full ban by 2035. <span class="src">Source: UK Government policy announcements, as reported by Total Skills UK, 2026</span></div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step explain"><div class="lbl">Economic explanation</div><div class="txt">This is a demand shift that moves in <em>opposite</em> directions for two similar trades: it increases demand for electricians (heat pumps, EV infrastructure) while reducing long-run demand for plumbers whose work is tied to gas systems &mdash; illustrating that "trades" isn't a single labour market, but several distinct ones responding to different signals.</div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step eval"><div class="lbl">Evaluation</div><div class="txt">Plumbers able to retrain into heat pump installation would likely offset much of this effect; the wage impact therefore depends heavily on how easily supply can shift <em>between</em> occupations, not just how it responds within one.</div></div>
+        </div>
+
+        <div class="chain">
+          <div class="chain-step"><div class="lbl">Evidence</div><div class="txt">Self-employed tradespeople reportedly out-earn employed tradespeople by £15,000+ a year on average. <span class="src">Source: ProCalculator UK trades earnings analysis, 2026</span></div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step explain"><div class="lbl">Economic explanation</div><div class="txt">This gap is better explained as economic rent for risk-bearing than as extra human capital &mdash; self-employed workers forgo sick pay, employer pension contributions and guaranteed hours, so part of their higher headline pay compensates for that lost security.</div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step eval"><div class="lbl">Evaluation</div><div class="txt">Comparing self-employed and employed pay directly can overstate the "true" premium once these non-wage costs are priced in &mdash; a fuller comparison would need to net off the value of benefits employed workers receive.</div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="trades-box" style="margin-top:18px;">
+      <h3>Case study &mdash; the gender pay gap</h3>
+      <div class="readout" style="border-left-color:var(--rose);margin-top:0;margin-bottom:16px;">
+        <strong style="color:var(--ink);">Equal pay &ne; the gender pay gap.</strong> Paying men and women differently for the <em>same</em> job has been illegal since the Equal Pay Act 1970. The ONS gender pay gap is a different, broader measure: the difference between men's and women's <em>median</em> earnings across <em>all</em> jobs in the economy &mdash; it captures who ends up in which jobs and grades, not whether any individual employer is breaking the law. <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span>
+      </div>
+      <div class="toggle-row">
+        <button class="toggle-btn on" id="ageAllToggle" onclick="setAgeBand('all')">Whole economy</button>
+        <button class="toggle-btn" id="age3039Toggle" onclick="setAgeBand('y3039')">Aged 30&ndash;39</button>
+        <button class="toggle-btn" id="age40Toggle" onclick="setAgeBand('y40')">Aged 40+</button>
+      </div>
+      <div class="diffbar-wrap" id="genderBars"></div>
+      <span class="expand-link" onclick="toggleGenderWhy()">What explains the gap? &darr;</span>
+      <div class="why-panel" id="genderWhyPanel">
+
+        <div class="chain">
+          <div class="chain-step"><div class="lbl">Evidence</div><div class="txt">Skilled trades show the largest occupational gender pay gap reported (13.9%), and the overall gap for full-time employees roughly triples between the 30&ndash;39 and 40+ age bands (3.9% &rarr; 9.1%). <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span></div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step explain"><div class="lbl">Economic explanation</div><div class="txt">Occupational segregation (very few women working in trades at all) and human capital effects (career breaks around childcare interrupting pay progression) are the standard explanations economists reach for before assuming direct pay discrimination &mdash; both can produce a large aggregate gap without any employer ever paying a man and a woman differently for an identical role.</div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step eval"><div class="lbl">Evaluation</div><div class="txt">Current data can't fully separate how much of the gap is segregation versus human capital versus residual discrimination &mdash; that decomposition would need more detailed longitudinal data than a headline occupation-level figure provides. Treat the split as indicative, not precise.</div></div>
+        </div>
+
+        <div class="chain">
+          <div class="chain-step"><div class="lbl">Evidence</div><div class="txt">The UK-wide gender pay gap for full-time employees has fallen by roughly a quarter over the past decade, but progress has reportedly slowed in recent years. <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span></div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step explain"><div class="lbl">Economic explanation</div><div class="txt">Becker's model predicts competitive markets should erode taste-based discrimination over time, which is broadly consistent with the long-run decline &mdash; but a slowing rate of decline suggests either that remaining causes are harder to compete away (structural segregation, human capital effects) or that discrimination was never the dominant cause in the first place.</div></div>
+          <div class="chain-arrow">&darr;</div>
+          <div class="chain-step eval"><div class="lbl">Evaluation</div><div class="txt">This is a genuinely open empirical question rather than a settled one &mdash; a stronger answer would acknowledge that economists disagree on how much of the residual gap reflects discrimination versus unmeasured segregation and human capital factors.</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2 ================= -->
+  <div class="panel" id="t2">
+    <div class="section-head">
+      <h2>The theory behind the gap</h2>
+      <p>Nine ideas that explain almost every wage differential you'll ever be asked about.</p>
+    </div>
+    <div class="theory-grid" id="theoryGrid"></div>
+
+    <div class="section-head">
+      <h2>Which theory best explains this?</h2>
+      <p>A real-world scenario, four candidate theories &mdash; pick the one that explains it best before checking.</p>
+    </div>
+    <div class="quiz-box">
+      <div class="quiz-scenario" id="quizScenario"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <span class="quiz-next" onclick="nextQuiz()">Next scenario &rarr;</span>
+    </div>
+
+    <div class="section-head">
+      <h2>How differentials have changed since 1975</h2>
+      <p>Drag the slider to see how the gap between three anchor occupations has moved over 50 years. <span style="color:var(--ink-faint);font-size:12.5px;">Figures are illustrative estimates built around known events and headline ONS/JIB data points, not a verified year-by-year series &mdash; treat the trend as indicative rather than precise.</span></p>
+    </div>
+    <div class="timeline-wrap">
+      <div class="timeline-year" id="tlYear">2026</div>
+      <div class="timeline-event" id="tlEvent"></div>
+      <input type="range" min="0" max="10" value="10" step="1" class="timeline-slider" id="tlSlider" oninput="updateTimeline()">
+      <div class="diffbar-wrap" id="tlBars" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 3 ================= -->
+  <div class="panel" id="t3">
+    <div class="section-head">
+      <h2>Government intervention simulator</h2>
+      <p>Move the levers. Watch the labour market respond &mdash; and notice when the "obvious" answer isn't the right one.</p>
+    </div>
+    <div class="sim-layout">
+      <div class="sliders-box">
+        <div class="slider-group">
+          <label>National Living Wage <span class="val" id="nlwVal">£12.60/hr</span></label>
+          <input type="range" min="1000" max="1800" value="1260" id="nlwSlider" oninput="updateSim()">
+        </div>
+        <div class="slider-group">
+          <label>Market type</label>
+          <div class="toggle-row">
+            <button class="toggle-btn on" id="compBtn" onclick="setMarket('competitive')">Competitive market</button>
+            <button class="toggle-btn" id="monoBtn" onclick="setMarket('monopsony')">Monopsony employer</button>
+          </div>
+        </div>
+        <div class="slider-group">
+          <label>Trade union bargaining power <span class="val" id="unionVal">Moderate</span></label>
+          <input type="range" min="0" max="2" value="1" step="1" id="unionSlider" oninput="updateSim()">
+        </div>
+        <div class="slider-group">
+          <label>Apprenticeship funding (labour supply) <span class="val" id="appVal">Standard</span></label>
+          <input type="range" min="0" max="2" value="1" step="1" id="appSlider" oninput="updateSim()">
+        </div>
+        <div class="slider-group">
+          <label>Gender pay gap reporting (250+ employee firms)</label>
+          <div class="toggle-row">
+            <button class="toggle-btn" id="gpgBtn" onclick="toggleGPG()">Mandatory reporting: OFF</button>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-box">
+        <svg id="marketSvg" viewBox="0 0 400 300" style="width:100%;height:auto;"></svg>
+        <div class="readout" id="simReadout"></div>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:28px;">
+      <h2>What actually happens</h2>
+      <p>Stylised, simplified relationships for teaching purposes &mdash; not a real forecasting model &mdash; showing the trade-offs a single lever creates elsewhere in the economy.</p>
+    </div>
+    <div class="outcomes-grid" id="outcomesGrid"></div>
+
+    <div class="eval-box">
+      <div class="k">Evaluate</div>
+      <div class="q" id="evalPrompt"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ===================== DATA ===================== */
+const occupations = [
+  {id:'care',cat:'Medicine',name:'Care Assistant',med:25000,drivers:{skill:'Low barrier to entry &mdash; no degree or licence required.',supply:'Abundant labour supply relative to demand.',power:'Weak bargaining power, low union coverage.',comp:'Emotionally demanding but low compensating differential paid.'}},
+  {id:'nurse',cat:'Medicine',name:'Nurse (Band 5&ndash;7)',med:35000,drivers:{skill:'Requires a nursing degree and registration.',supply:'Constrained by training places and retention issues.',power:'Employer is a near-monopsony (NHS) &mdash; pay set by review body, not free bargaining.',comp:'Shift work and emotional demand partly compensated.'}},
+  {id:'gp',cat:'Medicine',name:'GP',med:90000,drivers:{skill:'Very long training (5&ndash;10 years) &mdash; high human capital investment.',supply:'Restricted by medical school places.',power:'Partnership model gives more pay flexibility than salaried NHS roles.',comp:'High responsibility, high autonomy.'}},
+  {id:'consultant',cat:'Medicine',name:'Consultant / Surgeon',med:130000,drivers:{skill:'10+ years training, extremely high human capital investment.',supply:'Very inelastic &mdash; you cannot train a consultant quickly.',power:'NHS basic pay set nationally, but private practice adds a second, unregulated market on top.',comp:'High-risk specialties (surgery) command a further premium.'}},
+  {id:'paralegal',cat:'Law',name:'Paralegal',med:27000,drivers:{skill:'No formal qualification required beyond a degree.',supply:'High supply of law graduates competing for these roles.',power:'Weak individual bargaining power.',comp:'Often a stepping stone role, pay reflects that.'}},
+  {id:'solicitor_reg',cat:'Law',name:'Solicitor (regional firm)',med:38000,drivers:{skill:'Requires qualifying law degree + training contract.',supply:'Regional firms compete on volume, not prestige.',power:'Limited ability of firm to pay more &mdash; client fees are lower outside London.',comp:'Standard hours, standard risk.'}},
+  {id:'solicitor_city',cat:'Law',name:'Solicitor (City firm, NQ)',med:120000,drivers:{skill:'Identical qualification to a regional solicitor.',supply:'Small pool willing/able to work City hours and pass firm-specific recruitment.',power:'Firm has huge ability to pay (high fees to corporate clients) &mdash; economic rent, not just human capital.',comp:'Very long hours are the trade-off.'}},
+  {id:'barrister_j',cat:'Law',name:'Barrister (junior)',med:28000,drivers:{skill:'Bar training + pupillage, highly competitive entry.',supply:'Self-employed &mdash; income entirely dependent on briefs received.',power:'No employer to bargain with; pure market risk.',comp:'High income variance is itself a risk premium waiting to be earned.'}},
+  {id:'barrister_kc',cat:'Law',name:'Barrister / KC (senior)',med:400000,drivers:{skill:'Reputation built over decades &mdash; a scarce, non-replicable asset.',supply:'Essentially zero elasticity of supply at the top.',power:'Client willingness to pay for the very best is extremely high.',comp:'Classic economic rent &mdash; earnings far above what would keep them in the profession.'}},
+  {id:'teacher',cat:'Education',name:'Teacher (main to upper scale)',med:38000,drivers:{skill:'Degree + teacher training required.',supply:'National recruitment target regularly missed in shortage subjects.',power:'National pay scale set via review body &mdash; a form of monopsony wage-setting.',comp:'Strong non-pecuniary motivation (vocation) suppresses wage pressure.'}},
+  {id:'head',cat:'Education',name:'Head Teacher',med:80000,drivers:{skill:'Years of experience + leadership qualification.',supply:'Small pool willing to take on accountability/workload.',power:'School size and type creates large variation.',comp:'High accountability, high stress.'}},
+  {id:'elec_emp',cat:'Trades',name:'Electrician (employed)',med:39000,drivers:{skill:'Apprenticeship (Level 3), no degree needed.',supply:'104,000 shortfall projected by 2032 &mdash; supply well below demand.',power:'JIB wage deal delivering ~13.9% cumulative rise 2026&ndash;28.',comp:'Green transition (EV, solar) is increasing demand for this trade specifically.'}},
+  {id:'elec_self',cat:'Trades',name:'Electrician (self-employed)',med:55000,drivers:{skill:'Same qualification as employed electrician.',supply:'Same shortage, but self-employed can price emergency/specialist work higher.',power:'No employer negotiation &mdash; pure market rate.',comp:'Premium is compensation for no sick pay, no pension, no guaranteed work.'}},
+  {id:'plumb_emp',cat:'Trades',name:'Plumber (employed)',med:35000,drivers:{skill:'Apprenticeship required, Gas Safe registration for gas work.',supply:'Shortage exists but less acute than electricians.',power:'Less unionised than electrical trade.',comp:'Gas boiler phase-out (2025&ndash;2035) is a long-run threat to gas-only plumbers.'}},
+  {id:'plumb_self',cat:'Trades',name:'Plumber (self-employed)',med:48000,drivers:{skill:'Same qualification as employed plumber.',supply:'Emergency call-out work commands scarcity pricing.',power:'Direct-to-customer pricing power.',comp:'Diversifying into heat pumps protects long-run earnings.'}},
+  {id:'gas_eng',cat:'Trades',name:'Gas Engineer',med:38000,drivers:{skill:'Gas Safe registration, ongoing recertification.',supply:'Licensing itself restricts supply &mdash; a legal barrier to entry.',power:'Compliance requirement gives pricing power on safety-critical work.',comp:'Liability risk priced into the rate.'}},
+  {id:'joiner',cat:'Trades',name:'Joiner / Carpenter',med:35000,drivers:{skill:'Apprenticeship route, transferable across construction sites.',supply:'Tied closely to construction sector output.',power:'Less licensing-restricted than gas/electrical work.',comp:'Piece-rate/contract work common, income more variable.'}},
+  {id:'sw_eng',cat:'Tech &amp; Finance',name:'Software Engineer',med:50000,drivers:{skill:'Scarce skillset, often self-taught or degree-level.',supply:'Global demand, but supply constrained by genuine skill difficulty.',power:'Very low union coverage, but high individual mobility gives bargaining leverage.',comp:'Remote work has widened the market both ways &mdash; more competition, more opportunity.'}},
+  {id:'ib',cat:'Tech &amp; Finance',name:'Investment Banking (analyst&rarr;MD)',med:250000,drivers:{skill:'Elite university entry + extreme hours tolerance.',supply:'Deliberately restricted via prestige recruitment.',power:'Firm profitability allows huge bonus pools.',comp:'Bonus culture ties pay directly to output &mdash; MRP theory in its purest form.'}},
+  {id:'accountant',cat:'Tech &amp; Finance',name:'Accountant (trainee&rarr;partner)',med:70000,drivers:{skill:'Professional qualification (ACA/ACCA) required.',supply:'Steady graduate pipeline.',power:'Partnership model creates steep internal differential.',comp:'Predictable career ladder, lower risk than law/banking.'}},
+  {id:'police',cat:'Public Sector',name:'Police Constable&rarr;Inspector',med:40000,drivers:{skill:'Training provided on the job, degree increasingly preferred.',supply:'National recruitment target, some shortage in specialist roles.',power:'National pay scale, review body &mdash; monopsony employer (the state).',comp:'Risk and shift work factored into scale, not individually negotiated.'}},
+  {id:'firefighter',cat:'Public Sector',name:'Firefighter',med:32000,drivers:{skill:'Physical/practical training, not degree-level.',supply:'Highly sought-after role &mdash; oversupply relative to vacancies in some areas.',power:'Strong union (FBU) but capped national scale limits outcomes.',comp:'High risk, but compensating differential is capped by the pay scale itself.'}},
+  {id:'footballer_prem',cat:'Sport &amp; Creative',name:'Premier League Footballer',med:3000000,drivers:{skill:'Extraordinarily scarce talent at the very top.',supply:'Effectively zero elasticity &mdash; cannot manufacture more elite players.',power:'Broadcasting revenue gives clubs enormous ability to pay.',comp:'Superstar economics &mdash; tiny differences in ability produce huge pay gaps (Rosen\'s theory).'}},
+  {id:'footballer_champ',cat:'Sport &amp; Creative',name:'Championship Footballer',med:120000,drivers:{skill:'Still highly skilled &mdash; one tier below Premier League.',supply:'Larger pool than Premier League level.',power:'Far smaller broadcasting revenue than the Premier League.',comp:'Same profession, order-of-magnitude difference in pay from one tier up.'}},
+  {id:'musician',cat:'Sport &amp; Creative',name:'Musician (session/gigging)',med:18000,drivers:{skill:'High skill, but oversupplied relative to paid demand.',supply:'Very high &mdash; many trained musicians chasing few paid slots.',power:'Almost no individual bargaining power.',comp:'Non-monetary reward (creative fulfilment) suppresses wages.'}},
+  {id:'retail',cat:'Retail &amp; Gig',name:'Retail Assistant',med:23500,drivers:{skill:'No formal qualification required.',supply:'Very high &mdash; large pool of available workers.',power:'National Living Wage effectively sets the floor.',comp:'Minimal compensating differential.'}},
+  {id:'delivery',cat:'Retail &amp; Gig',name:'Delivery / Rideshare Driver',med:24000,drivers:{skill:'No formal qualification, own vehicle required.',supply:'Very high, self-employed status increases flexibility of entry.',power:'No minimum wage protection in the same way as employees.',comp:'Precarity itself is a hidden cost not reflected in headline pay.'}},
+];
+
+const categories = [...new Set(occupations.map(o=>o.cat))];
+let selected = [];
+let activeCat = 'All';
+
+/* ===================== TAB 1 RENDER ===================== */
+function renderCatChips(){
+  const el = document.getElementById('catChips');
+  el.innerHTML = '';
+  ['All',...categories].forEach(c=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (activeCat===c?' active':'');
+    chip.textContent = c;
+    chip.onclick = ()=>{activeCat=c; renderCatChips(); renderOccGrid();};
+    el.appendChild(chip);
+  });
+}
+
+function renderOccGrid(){
+  const el = document.getElementById('occGrid');
+  el.innerHTML = '';
+  const list = activeCat==='All' ? occupations : occupations.filter(o=>o.cat===activeCat);
+  list.forEach(o=>{
+    const card = document.createElement('div');
+    card.className = 'occ-card' + (selected.includes(o.id)?' selected':'');
+    card.innerHTML = `<div class="occ-cat">${o.cat}</div><div class="occ-name">${o.name}</div><div class="occ-med">£${o.med.toLocaleString()}</div>`;
+    card.onclick = ()=>{
+      if(selected.includes(o.id)){ selected = selected.filter(s=>s!==o.id); }
+      else { if(selected.length>=2) selected.shift(); selected.push(o.id); }
+      renderOccGrid(); renderDetail();
+    };
+    el.appendChild(card);
+  });
+}
+
+function renderDetail(){
+  const panel = document.getElementById('detailPanel');
+  if(selected.length===0){ panel.style.display='none'; return; }
+  panel.style.display='block';
+  const chosen = selected.map(id=>occupations.find(o=>o.id===id));
+  document.getElementById('detailTitle').textContent = chosen.map(c=>c.name.replace(/&rarr;/g,'→').replace(/&ndash;/g,'–')).join(' vs. ');
+  document.getElementById('detailSub').textContent = chosen.length===1 ? 'Select a second occupation to compare.' : 'Median UK annual earnings compared.';
+
+  const maxVal = Math.max(...chosen.map(c=>c.med));
+  const bars = document.getElementById('detailBars');
+  bars.innerHTML = chosen.map((c,i)=>`
+    <div class="diffbar-row">
+      <div class="diffbar-label">${c.name.replace(/&rarr;/g,'→').replace(/&ndash;/g,'–')}</div>
+      <div class="diffbar-track"><div class="diffbar-fill ${i===0?'a':'b'}" style="width:${(c.med/maxVal*100).toFixed(1)}%"></div></div>
+      <div class="diffbar-val">£${c.med.toLocaleString()}</div>
+    </div>`).join('');
+
+  const dg = document.getElementById('driverGrid');
+  dg.innerHTML = chosen.map(c=>`
+    <div>
+      <div style="font-family:var(--display);font-weight:600;font-size:14.5px;margin-bottom:8px;">${c.name.replace(/&rarr;/g,'→').replace(/&ndash;/g,'–')}</div>
+      <div class="driver"><div class="k">Skill / barrier</div><div class="v">${c.drivers.skill}</div></div>
+      <div class="driver"><div class="k">Supply</div><div class="v">${c.drivers.supply}</div></div>
+      <div class="driver"><div class="k">Bargaining power</div><div class="v">${c.drivers.power}</div></div>
+      <div class="driver"><div class="k">Compensating factors</div><div class="v">${c.drivers.comp}</div></div>
+    </div>`).join('');
+}
+
+/* trades case study toggles */
+let empMode = 'employed';
+let londonMode = false;
+const tradesData = {
+  electrician:{employed:39000,self:55000,london_employed:48500,london_self:70000},
+  plumber:{employed:35000,self:48000,london_employed:44000,london_self:65000},
+};
+function toggleEmployment(){
+  empMode = empMode==='employed' ? 'self' : 'employed';
+  document.getElementById('empToggle').classList.toggle('on');
+  document.getElementById('selfToggle').classList.toggle('on');
+  renderTradesBars();
+}
+function toggleLondon(){
+  londonMode = !londonMode;
+  document.getElementById('londonToggle').classList.toggle('on');
+  renderTradesBars();
+}
+function toggleWhy(){
+  document.getElementById('whyPanel').classList.toggle('open');
+}
+function renderTradesBars(){
+  const key = londonMode ? `london_${empMode}` : empMode;
+  const elec = tradesData.electrician[key];
+  const plumb = tradesData.plumber[key];
+  const max = Math.max(elec,plumb);
+  document.getElementById('tradesBars').innerHTML = `
+    <div class="diffbar-row">
+      <div class="diffbar-label">Electrician</div>
+      <div class="diffbar-track"><div class="diffbar-fill a" style="width:${(elec/max*100).toFixed(1)}%"></div></div>
+      <div class="diffbar-val">£${elec.toLocaleString()}</div>
+    </div>
+    <div class="diffbar-row">
+      <div class="diffbar-label">Plumber</div>
+      <div class="diffbar-track"><div class="diffbar-fill b" style="width:${(plumb/max*100).toFixed(1)}%"></div></div>
+      <div class="diffbar-val">£${plumb.toLocaleString()}</div>
+    </div>`;
+}
+
+/* gender pay gap module */
+const genderData = {
+  all:{fulltime:6.9,alljobs:12.8,parttime:-2.9,trades:13.9},
+  y3039:{fulltime:3.9,alljobs:3.9,parttime:-2.9,trades:13.9},
+  y40:{fulltime:9.1,alljobs:9.1,parttime:-2.9,trades:13.9},
+};
+let ageBand = 'all';
+function setAgeBand(band){
+  ageBand = band;
+  document.getElementById('ageAllToggle').classList.toggle('on', band==='all');
+  document.getElementById('age3039Toggle').classList.toggle('on', band==='y3039');
+  document.getElementById('age40Toggle').classList.toggle('on', band==='y40');
+  renderGenderBars();
+}
+function toggleGenderWhy(){
+  document.getElementById('genderWhyPanel').classList.toggle('open');
+}
+function renderGenderBars(){
+  const d = genderData[ageBand];
+  const rows = [
+    {label:'Full-time employees', val:d.fulltime, isPct:true},
+    {label:'All employees (incl. part-time)', val:d.alljobs, isPct:true},
+    {label:'Part-time employees', val:d.parttime, isPct:true},
+    {label:'Skilled trades (full-time)', val:d.trades, isPct:true},
+  ];
+  const max = Math.max(...rows.map(r=>Math.abs(r.val)));
+  document.getElementById('genderBars').innerHTML = rows.map(r=>{
+    const pct = (Math.abs(r.val)/max*100).toFixed(1);
+    const favoursWomen = r.val < 0;
+    return `<div class="diffbar-row">
+      <div class="diffbar-label">${r.label}</div>
+      <div class="diffbar-track"><div class="diffbar-fill ${favoursWomen?'b':'a'}" style="width:${pct}%"></div></div>
+      <div class="diffbar-val">${r.val>0?'+':''}${r.val}%${favoursWomen?' (favours women)':''}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ===================== TAB 2 ===================== */
+const theory = [
+  {t:'Marginal Revenue Product (MRP) theory',
+   def:'The theory that, in a competitive labour market, a worker is paid the value of the extra output their labour generates for the firm &mdash; their marginal revenue product (MRP = MPP &times; price of output).',
+   mech:'Firms hire workers up to the point where the cost of the next worker (the wage) equals the revenue that worker adds. A worker who adds more value commands a higher wage, all else equal &mdash; the theory links pay directly to productivity rather than effort, hours, or social value.',
+   ex:'A Premier League footballer\'s tiny edge in ability translates into an enormous MRP because it drives ticket sales, shirt sales and broadcasting revenue across a global audience &mdash; a Championship footballer with only slightly less ability has a far smaller MRP because the revenue pool is an order of magnitude smaller.',
+   ev:'Weakness: MRP is very hard to measure for many jobs &mdash; what is a nurse\'s or a teacher\'s "output"? This is exactly why MRP theory explains superstar pay well but explains public-sector and caring-profession pay poorly.'},
+
+  {t:'Transfer earnings vs. economic rent',
+   def:'Transfer earnings are the minimum payment needed to keep a worker in their current occupation (their next-best alternative). Economic rent is any payment above that &mdash; the surplus a worker earns purely because their skill is scarce.',
+   mech:'The more inelastic the supply of a particular skill, the higher the proportion of total pay that is economic rent rather than transfer earnings, because the worker would stay in the job even for much less.',
+   ex:'A senior KC earning £400,000+ would very likely still practise law for a fraction of that &mdash; almost all of their pay above what a solicitor earns is economic rent, a reward for scarce reputation rather than the minimum needed to stop them retraining as something else.',
+   ev:'Useful evaluation tool: ask whether a proposed pay rise or cap is removing rent (little effect on labour supply) or cutting into transfer earnings (workers may actually leave the occupation).'},
+
+  {t:'Elasticity of labour supply',
+   def:'How responsive the quantity of labour supplied to an occupation is to a change in wage. Elastic supply = many potential workers ready to enter quickly; inelastic supply = training time, licensing or scarce talent limit how fast supply can respond.',
+   mech:'When demand rises for an occupation with elastic supply, wages rise only a little before new workers enter and pull the wage back down. When demand rises for an occupation with inelastic supply, the wage has to rise much further before supply can respond &mdash; because it can\'t respond quickly at all.',
+   ex:'Retail assistant supply is highly elastic &mdash; almost anyone can enter with no training, so wages stay close to the National Living Wage even when demand rises. Electrician supply appears highly inelastic in the short run &mdash; a 3&ndash;4 year apprenticeship means a demand surge (green transition, EV) has coincided with a larger wage rise (reportedly 6&ndash;8% a year) than a market with faster supply response would be expected to show. <span class="src">Source: ONS ASHE 2025; Total Skills UK, 2026</span>',
+   ev:'Over a longer time period, even inelastic supply becomes more elastic as training pipelines adjust &mdash; apprenticeship applications in construction have already begun rising in response to higher trades pay, exactly as theory predicts, just with a multi-year lag.'},
+
+  {t:'Monopsony power',
+   def:'A labour market with a single (or dominant) buyer of labour. The monopsonist faces the entire market supply curve, so hiring one more worker requires raising pay for all existing workers too &mdash; making marginal cost of labour rise faster than the wage itself.',
+   mech:'This gives the monopsonist an incentive to hire fewer workers at a lower wage than a competitive market would produce. Crucially, it also means a minimum wage set between the monopsony wage and the competitive wage can raise both pay <em>and</em> employment simultaneously &mdash; the opposite of the standard competitive-market prediction.',
+   ex:'The NHS is close to a monopsony employer of nurses in most local areas &mdash; there is often nowhere else to sell that specific skill locally. This is why nurse pay is set through a national pay review body rather than individual bargaining, and why minimum pay uplifts for nurses haven\'t produced the unemployment a simple supply-and-demand diagram would predict.',
+   ev:'Exam trap: many students automatically apply the competitive-market "minimum wage causes unemployment" diagram to every scenario. Always check first whether the employer has monopsony power &mdash; public sector employers (NHS, schools, local authorities) very often do.'},
+
+  {t:'Trade union / collective bargaining power',
+   def:'The ability of workers, acting collectively through a union, to negotiate pay above what any individual worker could achieve alone &mdash; effectively countering monopsony power on the employer side with monopoly power on the supply side.',
+   mech:'A union can restrict labour supply (via closed shops, strike threats, or simply coordinated refusal to accept low offers) to push the wage above the competitive rate, in the same way a cartel restricts output to raise price.',
+   ex:'The Joint Industry Board (JIB) agreement for electricians is reported to deliver roughly 13.9% cumulative pay growth from 2026&ndash;28 &mdash; a directly negotiated outcome distinct from the market-driven MRP/elasticity effects also raising electrician pay at the same time. <span class="src">Source: Total Skills UK, citing JIB pay agreement, 2026</span>',
+   ev:'Union power has declined sharply since the 1980s (legislation restricting industrial action, falling membership) &mdash; a good explanation for why some historically well-paid unionised trades have seen their relative pay advantage erode even as skill requirements stayed the same.'},
+
+  {t:'Compensating (equalising) differentials',
+   def:'A wage premium (or discount) paid to compensate workers for the non-monetary characteristics of a job &mdash; risk, unsociable hours, unpleasantness, status, or job security.',
+   mech:'In a competitive market, two jobs requiring identical skill should pay similarly on a "total compensation" basis once these non-wage factors are accounted for &mdash; a genuinely worse job needs a higher money wage to attract the same quality of worker.',
+   ex:'Gas engineers charge higher rates partly because of the liability risk of gas work under Gas Safe registration. By contrast, teachers and nurses receive comparatively little wage premium for demanding, unsociable, high-responsibility work &mdash; often explained by high non-pecuniary motivation ("vocation") reducing the wage needed to attract entrants.',
+   ev:'This is a strong source of essay marks: use it to explain why two jobs with similar skill levels (e.g. teacher vs. plumber) can have very different pay &mdash; the theory alone doesn\'t predict pay should equalise, only that <em>total</em> compensation (wage + conditions) should.'},
+
+  {t:'Occupational segregation',
+   def:'The tendency for men and women (or other groups) to be concentrated in different occupations (horizontal segregation) or different grades within the same occupation (vertical segregation).',
+   mech:'Because pay varies enormously by occupation and seniority, segregation alone &mdash; without any employer ever paying a man and woman differently for the identical role &mdash; can produce a large aggregate gender pay gap, since it changes the mix of jobs each group is average across.',
+   ex:'Skilled trades show the largest occupational gender pay gap in the UK (13.9%) &mdash; almost entirely a segregation effect, since so few women work in the trades at all, rather than evidence that female electricians are paid less than male electricians for the same work. <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span>',
+   ev:'This is the single most important distinction for evaluation marks: a large reported gender pay gap in an occupation does not by itself prove unequal pay for equal work, which has been illegal since 1970 &mdash; always ask whether the driver is segregation, human capital, or genuine discrimination.'},
+
+  {t:'Becker\'s discrimination model',
+   def:'Gary Becker\'s theory that discrimination is a "taste" some employers have that they are willing to pay for &mdash; they will accept lower profit in exchange for not hiring or promoting a particular group.',
+   mech:'In a genuinely competitive product market, discriminating firms have higher costs (or a smaller effective talent pool) than non-discriminating rivals. Over time, competition should drive discriminating firms out, or force them to stop discriminating &mdash; the model predicts the gap should shrink as markets become more competitive.',
+   ex:'The UK gender pay gap for full-time employees has fallen by more than a quarter over the last decade (now 6.9%), a pattern broadly consistent with Becker\'s prediction that competitive pressure erodes discrimination over time &mdash; though correlation here is not proof of the mechanism. <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span>',
+   ev:'But the gap hasn\'t disappeared, and progress has slowed recently &mdash; a strong AO3/AO4 discussion is whether the remaining gap is really "taste-based discrimination" at all, or almost entirely explained by segregation and human capital effects that Becker\'s model doesn\'t address.'},
+
+  {t:'Human capital theory & the "motherhood penalty"',
+   def:'Human capital theory holds that pay reflects a worker\'s accumulated education, training, and experience. The "motherhood penalty" describes how career breaks and part-time working around childcare reduce measured human capital and interrupt pay progression.',
+   mech:'Continuous service usually drives promotion and pay progression. A career break resets or slows that progression even where the worker\'s underlying skill hasn\'t changed &mdash; the wage effect comes from lost experience/seniority, not lower productivity.',
+   ex:'The UK gender pay gap is only 3.9% for full-time employees aged 30&ndash;39, but rises to 9.1% for those aged 40+ &mdash; nearly tripling across an age band where career breaks for childcare are concentrated, which is often read as evidence favouring the human capital explanation over direct discrimination. <span class="src">Source: ONS, Gender pay gap in the UK, 2025</span>',
+   ev:'Policy implication: if the gap is mostly human capital/segregation rather than direct discrimination, interventions like equal pay audits (which target same-job discrimination) will do little &mdash; policies supporting return-to-work and shared parental leave may matter more.'},
+];
+document.getElementById('theoryGrid').innerHTML = theory.map(x=>`
+  <div class="theory-card">
+    <div class="t">${x.t}</div>
+    <div class="blk"><div class="k">Definition</div><div class="v">${x.def}</div></div>
+    <div class="blk"><div class="k">Mechanism</div><div class="v">${x.mech}</div></div>
+    <div class="blk"><div class="k">Worked example</div><div class="v">${x.ex}</div></div>
+    <div class="blk"><div class="k">Evaluation angle</div><div class="evalv">${x.ev}</div></div>
+  </div>`).join('');
+
+const timelinePoints = [
+  {year:1975,event:'Equal Pay Act (1970) begins to take effect. Gender pay gap starts a slow, decades-long narrowing from a very wide starting point.',grad:12000,union_trade:9000,nurse:8000},
+  {year:1980,event:'Union membership near its post-war peak &mdash; collective bargaining power at its strongest, compressing many differentials.',grad:13000,union_trade:11000,nurse:8500},
+  {year:1988,event:'Trade union legislation under the Thatcher government begins reducing union bargaining power &mdash; differentials start widening again.',grad:16000,union_trade:12000,nurse:10000},
+  {year:1999,event:'National Minimum Wage introduced &mdash; the first legal wage floor, aimed at compressing the bottom of the distribution.',grad:22000,union_trade:16000,nurse:16000},
+  {year:2008,event:'Financial crisis. Graduate premium stalls as entry-level professional hiring freezes; trades less affected as physical work continues.',grad:26000,union_trade:22000,nurse:24000},
+  {year:2015,event:'Gig economy expands rapidly. Low-end differentials widen again as self-employed/precarious work grows outside minimum wage protection.',grad:28000,union_trade:26000,nurse:28000},
+  {year:2019,event:'National Living Wage introduced, extending a higher minimum wage floor to all workers aged 25+ (later to 23+).',grad:30000,union_trade:29000,nurse:31000},
+  {year:2021,event:'Post-pandemic and post-Brexit labour shortages begin, especially acute in construction and trades.',grad:31000,union_trade:34000,nurse:33000},
+  {year:2023,event:'University applications begin falling as tuition debt concerns grow; apprenticeship applications in construction rise sharply.',grad:32000,union_trade:38000,nurse:34500},
+  {year:2025,event:'Green transition (EV, heat pumps, gas boiler phase-out) sharply increases demand for electricians specifically.',grad:33000,union_trade:44000,nurse:35500},
+  {year:2026,event:'Trades pay growth (6&ndash;8% a year) now outstrips whole-economy earnings growth (~4.3%). The graduate premium has narrowed noticeably against skilled trades.',grad:34000,union_trade:50000,nurse:36000},
+];
+function updateTimeline(){
+  const idx = document.getElementById('tlSlider').value;
+  const p = timelinePoints[idx];
+  document.getElementById('tlYear').textContent = p.year;
+  document.getElementById('tlEvent').textContent = p.event;
+  const max = Math.max(p.grad,p.union_trade,p.nurse);
+  document.getElementById('tlBars').innerHTML = `
+    <div class="diffbar-row"><div class="diffbar-label">Graduate office worker</div><div class="diffbar-track"><div class="diffbar-fill a" style="width:${(p.grad/max*100).toFixed(1)}%"></div></div><div class="diffbar-val">£${p.grad.toLocaleString()}</div></div>
+    <div class="diffbar-row"><div class="diffbar-label">Electrician (trades)</div><div class="diffbar-track"><div class="diffbar-fill b" style="width:${(p.union_trade/max*100).toFixed(1)}%"></div></div><div class="diffbar-val">£${p.union_trade.toLocaleString()}</div></div>
+    <div class="diffbar-row"><div class="diffbar-label">Nurse</div><div class="diffbar-track" ><div class="diffbar-fill" style="width:${(p.nurse/max*100).toFixed(1)}%;background:var(--sage);"></div></div><div class="diffbar-val">£${p.nurse.toLocaleString()}</div></div>
+  `;
+}
+
+/* theory-matching quiz */
+const quizScenarios = [
+  {scenario:'A Championship footballer earns £120,000 a year. A team-mate promoted to the Premier League on marginally better form now earns £3,000,000. What best explains the jump?',
+   options:['Marginal Revenue Product (MRP) theory','Compensating differentials','Occupational segregation','Trade union bargaining power'],
+   correct:0,
+   feedback:'MRP theory: a tiny difference in ability translates into a huge difference in the revenue each player generates once Premier League broadcasting money is added &mdash; the pay gap reflects value generated, not effort or fairness.'},
+  {scenario:'Two solicitors qualify on the same day with identical grades. One joins a City firm on £120,000; the other joins a regional firm on £38,000. Both do broadly similar legal work.',
+   options:['Elasticity of labour supply','Transfer earnings vs. economic rent','Human capital theory','Monopsony power'],
+   correct:1,
+   feedback:'Transfer earnings vs. economic rent: both solicitors would likely stay in law for far less than £120,000, so most of the City solicitor\'s extra pay is economic rent &mdash; a reward for landing a scarce, high-fee-paying position rather than extra qualification.'},
+  {scenario:'Nurse pay is set nationally by a pay review body rather than negotiated individually, and a pay rise for nurses hasn\'t produced the job losses a simple supply-and-demand diagram would predict.',
+   options:['Compensating differentials','Monopsony power','Becker\'s discrimination model','Elasticity of labour supply'],
+   correct:1,
+   feedback:'Monopsony power: with the NHS as a near-sole buyer of nursing labour in most areas, a wage floor set correctly can raise both pay and employment at once &mdash; the opposite of the standard competitive-market prediction.'},
+  {scenario:'Electricians\' pay has risen 6&ndash;8% a year recently &mdash; far faster than the 3&ndash;4 year apprenticeship pipeline can supply new entrants, even though applications are now rising.',
+   options:['Elasticity of labour supply','Transfer earnings vs. economic rent','Occupational segregation','Trade union bargaining power'],
+   correct:0,
+   feedback:'Elasticity of labour supply: because training takes years, supply can\'t expand quickly to meet rising demand, so the wage has to rise much further than it would in a market where new workers could enter immediately.'},
+  {scenario:'Gas engineers charge a premium partly justified by the liability risk of working with gas safely, while nurses doing similarly demanding, safety-critical work receive comparatively little wage premium for it.',
+   options:['Human capital theory','Compensating differentials','Monopsony power','Becker\'s discrimination model'],
+   correct:1,
+   feedback:'Compensating differentials: theory predicts risky/unpleasant work should command a wage premium &mdash; but strong non-pecuniary motivation ("vocation") in nursing appears to suppress the premium needed to attract entrants, compared to gas engineering.'},
+  {scenario:'Skilled trades show the largest occupational gender pay gap in the UK (13.9%), but this is mostly explained by how few women work in the trades at all, not unequal pay for the same job.',
+   options:['Becker\'s discrimination model','Trade union bargaining power','Occupational segregation','Transfer earnings vs. economic rent'],
+   correct:2,
+   feedback:'Occupational segregation: a large aggregate gap can appear purely because of which occupations each group works in (horizontal segregation), without any employer ever paying men and women differently for an identical role.'},
+];
+let quizIdx = 0;
+function renderQuiz(){
+  const q = quizScenarios[quizIdx];
+  document.getElementById('quizScenario').textContent = q.scenario.replace(/&ndash;/g,'–').replace(/&mdash;/g,'—');
+  document.getElementById('quizFeedback').classList.remove('show');
+  document.getElementById('quizFeedback').textContent = '';
+  const opts = document.getElementById('quizOptions');
+  opts.innerHTML = '';
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement('div');
+    btn.className = 'quiz-opt';
+    btn.textContent = opt;
+    btn.onclick = ()=>answerQuiz(i);
+    opts.appendChild(btn);
+  });
+}
+function answerQuiz(i){
+  const q = quizScenarios[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach((btn,idx)=>{
+    btn.onclick = null;
+    if(idx===q.correct) btn.classList.add('correct');
+    else if(idx===i) btn.classList.add('wrong');
+  });
+  const fb = document.getElementById('quizFeedback');
+  fb.textContent = (i===q.correct ? '✓ Correct. ' : '✗ Not quite. ') + q.feedback;
+  fb.classList.add('show');
+}
+function nextQuiz(){
+  quizIdx = (quizIdx+1) % quizScenarios.length;
+  renderQuiz();
+}
+
+/* ===================== TAB 3 ===================== */
+/* ---- Shared labour market model ----
+   Linear supply/demand, solved exactly rather than hand-placed.
+   S (=AC of labour): W = Sa + Sb*Q
+   D (=MRP):          W = Dc - Dd*Q
+   MC (monopsony):    W = Sa + 2*Sb*Q   (derived from total cost = Q*S(Q))
+   Apprenticeship funding shifts the supply curve's intercept (Sa):
+     cut -> less supply (Sa higher), expanded -> more supply (Sa lower)
+*/
+const Sb = 0.2, Dc = 30, Dd = 0.3;
+function SaFor(appLevel){ return [8, 5, 2][appLevel]; }
+
+function competitiveEquilibrium(Sa){
+  const Qe = (Dc - Sa) / (Sb + Dd);
+  const We = Sa + Sb*Qe;
+  return {Q:Qe, W:We};
+}
+function monopsonyEquilibrium(Sa){
+  const Qm = (Dc - Sa) / (Dd + 2*Sb);
+  const Wm = Sa + Sb*Qm;
+  return {Q:Qm, W:Wm};
+}
+// Employment outcome given a binding floor L, for either market type
+function marketOutcome(L, Sa){
+  const eq = competitiveEquilibrium(Sa);
+  const mo = monopsonyEquilibrium(Sa);
+  if(market==='competitive'){
+    if(L <= eq.W) return {Q:eq.Q, W:eq.W, Qs:eq.Q, Qd:eq.Q, regime:'clears', eq, mo};
+    const Qd = (Dc - L) / Dd;
+    const Qs = (L - Sa) / Sb;
+    return {Q:Qd, W:L, Qs, Qd, regime:'excess-supply', eq, mo};
+  } else {
+    if(L <= mo.W) return {Q:mo.Q, W:mo.W, Qs:mo.Q, Qd:mo.Q, regime:'monopsony', eq, mo};
+    if(L <= eq.W){
+      const Q = (L - Sa) / Sb; // floor binds along supply curve, raises employment
+      return {Q, W:L, Qs:Q, Qd:Q, regime:'floor-raises-both', eq, mo};
+    }
+    const Qd = (Dc - L) / Dd;
+    const Qs = (L - Sa) / Sb;
+    return {Q:Qd, W:L, Qs, Qd, regime:'excess-supply', eq, mo};
+  }
+}
+
+let market = 'competitive';
+function setMarket(m){
+  market = m;
+  document.getElementById('compBtn').classList.toggle('on', m==='competitive');
+  document.getElementById('monoBtn').classList.toggle('on', m==='monopsony');
+  updateSim();
+}
+const evalPrompts = {
+  competitive:[
+    "If the National Living Wage rises above the market equilibrium wage in a competitive market, standard theory predicts unemployment. But does that hold if labour demand is inelastic in the short run?",
+    "Retail and hospitality are close to competitive markets. Who bears the cost of a minimum wage rise here &mdash; profits, prices, or hours?"
+  ],
+  monopsony:[
+    "In a monopsony (like the NHS), a minimum wage set between the monopsony wage and the competitive wage can raise both pay AND employment. Why does the 'minimum wage always causes unemployment' argument break down here?",
+    "If care homes have monopsony power over care workers in a local area, would raising the minimum wage help workers, or would providers simply hire fewer staff regardless of theory?"
+  ]
+};
+const gpgPrompts = [
+  "Mandatory gender pay gap reporting only requires disclosure, not a fixed target or penalty for a wide gap. Does transparency alone change firm behaviour, or does it need enforcement to bite?",
+  "Reporting is a firm-level average, not job-by-job. Could a firm have a large reported gap while still paying every man and woman in the same role identically? What would that imply about the real cause of its gap?",
+  "The threshold only applies to employers with 250+ staff. What does this imply about coverage of the labour market, and who might get missed entirely?"
+];
+let gpgOn = false;
+function toggleGPG(){
+  gpgOn = !gpgOn;
+  const btn = document.getElementById('gpgBtn');
+  btn.classList.toggle('on', gpgOn);
+  btn.textContent = 'Mandatory reporting: ' + (gpgOn ? 'ON' : 'OFF');
+  updateSim();
+}
+function updateSim(){
+  const nlw = parseFloat((document.getElementById('nlwSlider').value/100).toFixed(2));
+  document.getElementById('nlwVal').textContent = '£'+nlw.toFixed(2)+'/hr';
+  const unionLevels = ['Weak','Moderate','Strong'];
+  const unionLevel = parseInt(document.getElementById('unionSlider').value);
+  document.getElementById('unionVal').textContent = unionLevels[unionLevel];
+  const appLevels = ['Cut','Standard','Expanded'];
+  const appLevel = parseInt(document.getElementById('appSlider').value);
+  document.getElementById('appVal').textContent = appLevels[appLevel];
+
+  const Sa = SaFor(appLevel);
+  // union bargaining acts as its own floor stacking with the NLW
+  const unionFloor = [0, 12.5, 15][unionLevel];
+  const L = Math.max(nlw, unionFloor);
+
+  const outcome = marketOutcome(L, Sa);
+  drawDiagram(outcome, Sa, L);
+
+  const readout = document.getElementById('simReadout');
+  const round1 = n => Math.round(n*10)/10;
+  if(market==='competitive'){
+    if(outcome.regime==='clears'){
+      readout.innerHTML = `<strong style="color:var(--ink);">No effect:</strong> the floor (£${L.toFixed(2)}) sits at or below the competitive equilibrium wage (£${round1(outcome.eq.W)}), so it doesn't bind. Employment stays at ${round1(outcome.eq.Q)} units, the market-clearing level.`;
+    } else {
+      readout.innerHTML = `<strong style="color:var(--ink);">Excess supply:</strong> at a floor of £${L.toFixed(2)}, ${round1(outcome.Qs)} units of labour want to work but only ${round1(outcome.Qd)} are demanded &mdash; unemployment of ${round1(outcome.Qs-outcome.Qd)} units, exactly as the classic diagram predicts.`;
+    }
+  } else {
+    if(outcome.regime==='monopsony'){
+      readout.innerHTML = `<strong style="color:var(--ink);">Unconstrained monopsony:</strong> with no binding floor, the employer hires only ${round1(outcome.mo.Q)} units at £${round1(outcome.mo.W)} &mdash; below both the competitive wage (£${round1(outcome.eq.W)}) and competitive quantity (${round1(outcome.eq.Q)}), because a single buyer restricts hiring to keep costs down.`;
+    } else if(outcome.regime==='floor-raises-both'){
+      readout.innerHTML = `<strong style="color:var(--ink);">Floor raises wage AND employment:</strong> setting the floor at £${L.toFixed(2)} (between the monopsony wage £${round1(outcome.mo.W)} and competitive wage £${round1(outcome.eq.W)}) removes the employer's incentive to under-hire. Employment rises to ${round1(outcome.Q)} units &mdash; higher than the unconstrained monopsony level (${round1(outcome.mo.Q)}) &mdash; with no unemployment created.`;
+    } else {
+      readout.innerHTML = `<strong style="color:var(--ink);">Floor now too high:</strong> above the competitive wage (£${round1(outcome.eq.W)}), the market now behaves like the standard competitive case &mdash; ${round1(outcome.Qs)} units want to work but only ${round1(outcome.Qd)} are hired, unemployment of ${round1(outcome.Qs-outcome.Qd)} units.`;
+    }
+  }
+  if(gpgOn){
+    readout.innerHTML += `<br><br><strong style="color:var(--ink);">Gender pay gap reporting is active:</strong> firms with 250+ staff must publish their mean/median gap annually. This is a transparency mechanism, not a wage floor &mdash; it doesn't move the diagram above, but it changes the information available to workers and regulators.`;
+  }
+  const pool = gpgOn ? evalPrompts[market].concat(gpgPrompts) : evalPrompts[market];
+  document.getElementById('evalPrompt').textContent = pool[Math.floor(Math.random()*pool.length)];
+
+  computeOutcomes(outcome, unionLevel);
+}
+
+/* ---- stylised outcomes dashboard (illustrative, not a forecasting tool) ---- */
+function computeOutcomes(outcome, unionLevel){
+  const baselineQe = 50; // reference: competitive equilibrium at standard apprenticeship funding
+  const employment = Math.round(Math.max(10, Math.min(100, (outcome.Q / baselineQe) * 100)));
+  const unemployment = Math.round(Math.max(0, (outcome.Qs||outcome.Q) - (outcome.Qd||outcome.Q)));
+
+  let inequality = 45;
+  inequality -= unionLevel*5;
+  inequality -= Math.max(0, outcome.W - outcome.mo.W) * 1.4;
+  if(gpgOn) inequality -= 3;
+  inequality = Math.round(Math.max(10, Math.min(70, inequality)));
+
+  const taxRevenue = Math.round((outcome.Q/baselineQe) * (outcome.W/outcome.eq.W) * 100);
+
+  const cards = [
+    {k:'Employment', v:employment, suffix:'/100', sub:'index vs. standard-conditions competitive equilibrium'},
+    {k:'Wage level', v:'£'+outcome.W.toFixed(2), suffix:'/hr', sub:'wage actually paid, from the model above'},
+    {k:'Inequality', v:inequality, suffix:'/100', sub:'index, higher = more unequal'},
+    {k:'Unemployment', v:unemployment, suffix:' units', sub: unemployment>0 ? 'excess supply at this wage' : 'market clears, no unemployment'},
+    {k:'Tax revenue', v:taxRevenue, suffix:'/100', sub:'index, 100 = baseline'},
+  ];
+  document.getElementById('outcomesGrid').innerHTML = cards.map(c=>`
+    <div class="outcome-card">
+      <div class="k">${c.k}</div>
+      <div class="v">${c.v}<span style="font-size:13px;color:var(--ink-faint);">${c.suffix}</span></div>
+      <div class="sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+/* ---- diagram: real coordinates from the model, not hand-placed lines ---- */
+function drawDiagram(outcome, Sa, L){
+  const svg = document.getElementById('marketSvg');
+  const QMAX = 100, WMAX = 30;
+  const padL=48, padR=14, padT=16, padB=34;
+  const plotW = 400-padL-padR, plotH = 300-padT-padB;
+  const xOf = Q => padL + (Q/QMAX)*plotW;
+  const yOf = W => padT + plotH - (W/WMAX)*plotH;
+  const round1 = n => Math.round(n*10)/10;
+
+  const Sline = [[0, Sa],[QMAX, Sa+Sb*QMAX]];
+  const Dline = [[0, Dc],[Dc/Dd, 0]];
+  const MCline = [[0, Sa],[Math.min(QMAX,(WMAX-Sa)/(2*Sb)), Sa+2*Sb*Math.min(QMAX,(WMAX-Sa)/(2*Sb))]];
+
+  let c = '';
+  // gridlines
+  for(let w=5; w<WMAX; w+=5){ c += `<line x1="${padL}" y1="${yOf(w)}" x2="${400-padR}" y2="${yOf(w)}" stroke="#1c2540" stroke-width="1"/>`; }
+  // axes
+  c += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#5d6784" stroke-width="1.2"/>`;
+  c += `<line x1="${padL}" y1="${padT+plotH}" x2="${400-padR}" y2="${padT+plotH}" stroke="#5d6784" stroke-width="1.2"/>`;
+  c += `<text x="4" y="${padT+8}" fill="#9aa3bd" font-size="9.5" font-family="JetBrains Mono">Wage (£/hr)</text>`;
+  c += `<text x="${400-padR-56}" y="${padT+plotH+16}" fill="#9aa3bd" font-size="9.5" font-family="JetBrains Mono">Qty of labour</text>`;
+
+  // Supply / MC / Demand curves
+  c += `<line x1="${xOf(Sline[0][0])}" y1="${yOf(Sline[0][1])}" x2="${xOf(Sline[1][0])}" y2="${yOf(Sline[1][1])}" stroke="#f59e0b" stroke-width="2"/>`;
+  c += `<text x="${xOf(QMAX)-14}" y="${yOf(Sline[1][1])-4}" fill="#f59e0b" font-size="10" font-family="JetBrains Mono">S${market==='monopsony'?'=AC':''}</text>`;
+  c += `<line x1="${xOf(Dline[0][0])}" y1="${yOf(Dline[0][1])}" x2="${xOf(Dline[1][0])}" y2="${yOf(Dline[1][1])}" stroke="#38bdf8" stroke-width="2"/>`;
+  c += `<text x="${xOf(Dline[1][0])-30}" y="${yOf(0)+14}" fill="#38bdf8" font-size="10" font-family="JetBrains Mono">D${market==='monopsony'?'=MRP':''}</text>`;
+
+  if(market==='monopsony'){
+    c += `<line x1="${xOf(MCline[0][0])}" y1="${yOf(MCline[0][1])}" x2="${xOf(MCline[1][0])}" y2="${yOf(MCline[1][1])}" stroke="#a8720f" stroke-width="2" stroke-dasharray="4,3"/>`;
+    c += `<text x="${xOf(MCline[1][0])-30}" y="${yOf(MCline[1][1])+12}" fill="#a8720f" font-size="10" font-family="JetBrains Mono">MC</text>`;
+    // monopsony equilibrium point (no floor)
+    const mo = outcome.mo;
+    c += `<circle cx="${xOf(mo.Q)}" cy="${yOf(mo.W)}" r="3" fill="#5d6784"/>`;
+    c += `<line x1="${xOf(mo.Q)}" y1="${yOf(mo.W)}" x2="${xOf(mo.Q)}" y2="${padT+plotH}" stroke="#5d6784" stroke-width="1" stroke-dasharray="2,2"/>`;
+  }
+  // competitive equilibrium point (always shown as reference)
+  const eq = outcome.eq;
+  c += `<circle cx="${xOf(eq.Q)}" cy="${yOf(eq.W)}" r="3" fill="#e8e6e0"/>`;
+  c += `<text x="${xOf(eq.Q)+5}" y="${yOf(eq.W)-6}" fill="#e8e6e0" font-size="9" font-family="JetBrains Mono">We=£${round1(eq.W)}</text>`;
+
+  // wage floor line
+  const floorY = yOf(Math.min(L,WMAX));
+  c += `<line x1="${padL}" y1="${floorY}" x2="${400-padR}" y2="${floorY}" stroke="#f4665a" stroke-width="2" stroke-dasharray="5,3"/>`;
+  c += `<text x="${padL+4}" y="${floorY-5}" fill="#f4665a" font-size="9.5" font-family="JetBrains Mono">Wage floor £${L.toFixed(2)}</text>`;
+
+  // shaded unemployment region (Qd to Qs at floor height)
+  if(outcome.Qs && outcome.Qd && outcome.Qs>outcome.Qd+0.3){
+    const x1=xOf(outcome.Qd), x2=xOf(outcome.Qs), y=floorY;
+    c += `<rect x="${x1}" y="${y-5}" width="${x2-x1}" height="10" fill="#f4665a" opacity="0.25"/>`;
+    c += `<text x="${x1}" y="${y+20}" fill="#f4665a" font-size="9" font-family="JetBrains Mono">unemployment</text>`;
+  }
+  // shaded employment-gain region for monopsony floor-raises-both regime
+  if(market==='monopsony' && outcome.regime==='floor-raises-both'){
+    const x1=xOf(outcome.mo.Q), x2=xOf(outcome.Q), y=floorY;
+    c += `<rect x="${x1}" y="${y-5}" width="${x2-x1}" height="10" fill="#5fbf8f" opacity="0.3"/>`;
+    c += `<text x="${x1}" y="${y+20}" fill="#5fbf8f" font-size="9" font-family="JetBrains Mono">extra jobs vs. monopsony</text>`;
+  }
+  // current outcome point
+  c += `<circle cx="${xOf(outcome.Q)}" cy="${yOf(outcome.W)}" r="4" fill="#e8e6e0" stroke="#0a0e1a" stroke-width="1.5"/>`;
+
+  svg.innerHTML = c;
+}
+
+/* ===================== INIT ===================== */
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+renderCatChips();
+renderOccGrid();
+renderTradesBars();
+renderGenderBars();
+updateTimeline();
+renderQuiz();
+updateSim();
+</script>
+</body>
+</html>
