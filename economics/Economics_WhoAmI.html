@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Am I? — BIZ-OMICS Economics Arcade</title>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --panel:#111629;
+    --panel-2:#161c33;
+    --line:#232a47;
+    --amber:#f59e0b;
+    --amber-dim:#f59e0b33;
+    --text:#e7e9f3;
+    --text-dim:#9aa1c2;
+    --green:#22c55e;
+    --red:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 15% -10%, #1a2140 0%, var(--bg) 45%), var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height:100vh;
+  }
+  a{color:var(--amber); text-decoration:none;}
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px; border-bottom:1px solid var(--line);
+    flex-wrap:wrap; gap:10px;
+  }
+  .brand{font-weight:700; letter-spacing:.5px;}
+  .brand span{color:var(--amber);}
+  nav a{font-size:14px; color:var(--text-dim);}
+  nav a:hover{color:var(--amber);}
+
+  .wrap{max-width:840px; margin:0 auto; padding:28px 20px 60px;}
+  .titleblock{text-align:center; margin-bottom:22px;}
+  .titleblock .eyebrow{
+    color:var(--amber); font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:600;
+  }
+  h1{font-size:clamp(28px,5vw,40px); margin:6px 0 8px; letter-spacing:-0.5px;}
+  h1 em{color:var(--amber); font-style:normal;}
+  .sub{color:var(--text-dim); font-size:15px; max-width:560px; margin:0 auto;}
+
+  .statbar{
+    display:flex; justify-content:center; gap:36px; margin:26px 0 30px;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:16px 10px;
+  }
+  .stat{text-align:center;}
+  .stat b{display:block; font-size:22px; color:var(--amber);}
+  .stat span{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;}
+
+  .filters{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:22px;}
+  .chip{
+    border:1px solid var(--line); background:var(--panel);
+    color:var(--text-dim); font-size:13px; padding:7px 14px; border-radius:999px;
+    cursor:pointer; transition:.15s;
+  }
+  .chip.active{background:var(--amber-dim); border-color:var(--amber); color:var(--amber); font-weight:600;}
+  .chip:hover{border-color:var(--amber);}
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:28px; position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; top:-60px; right:-60px; width:180px; height:180px;
+    background:radial-gradient(circle, var(--amber-dim), transparent 70%);
+  }
+  .rowtop{display:flex; align-items:center; gap:16px; margin-bottom:18px; position:relative;}
+  .avatar{
+    width:64px; height:64px; border-radius:50%;
+    background:var(--panel-2); border:2px solid var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; font-weight:700; color:var(--amber); flex-shrink:0;
+    transition:.3s;
+  }
+  .avatar.solved{background:var(--amber); color:var(--bg);}
+  .tagrow{display:flex; gap:8px; flex-wrap:wrap;}
+  .tag{
+    font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700;
+    padding:3px 9px; border-radius:6px; background:var(--panel-2); color:var(--text-dim); border:1px solid var(--line);
+  }
+  .cluecount{margin-left:auto; font-size:13px; color:var(--text-dim);}
+
+  .clues{list-style:none; margin:0 0 20px; padding:0; display:flex; flex-direction:column; gap:10px;}
+  .clue{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; font-size:15px; line-height:1.5;
+    opacity:0; transform:translateY(6px);
+    animation:reveal .35s forwards;
+  }
+  @keyframes reveal{ to{opacity:1; transform:translateY(0);} }
+  .clue .num{
+    flex-shrink:0; width:24px; height:24px; border-radius:50%;
+    background:var(--amber-dim); color:var(--amber); font-size:12px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .guessrow{display:flex; gap:10px; flex-wrap:wrap;}
+  input[type=text]{
+    flex:1 1 220px; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    padding:13px 16px; color:var(--text); font-size:15px;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--amber);}
+  button{
+    border:none; border-radius:10px; padding:13px 20px; font-size:14px; font-weight:700;
+    cursor:pointer; transition:.15s; letter-spacing:.3px;
+  }
+  .btn-primary{background:var(--amber); color:#1a1200;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--amber); color:var(--amber);}
+  .btn-primary:disabled, .btn-ghost:disabled{opacity:.4; cursor:not-allowed;}
+
+  .feedback{
+    margin-top:16px; padding:14px 16px; border-radius:10px; font-size:14px; line-height:1.5;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.correct{background:#22c55e1a; border:1px solid var(--green); color:#bbf7d0;}
+  .feedback.wrong{background:#ef44441a; border:1px solid var(--red); color:#fecaca;}
+  .feedback.reveal{background:var(--amber-dim); border:1px solid var(--amber); color:#fde9c2;}
+  .feedback b{color:var(--amber);}
+
+  .actionsafter{display:flex; justify-content:flex-end; margin-top:14px;}
+
+  .shake{animation:shakeAnim .35s;}
+  @keyframes shakeAnim{
+    10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);}
+    30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);}
+  }
+
+  footer{text-align:center; color:var(--text-dim); font-size:12px; padding:30px 20px 40px;}
+
+  @media (max-width:480px){
+    .statbar{gap:20px;}
+    .guessrow{flex-direction:column;}
+    .guessrow button{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">BIZ-OMICS <span>· Economics Arcade</span></div>
+  <nav><a href="https://biz-omics.co.uk/economics/Economics_Games.html">← Back to Arcade</a></nav>
+</header>
+
+<div class="wrap">
+  <div class="titleblock">
+    <div class="eyebrow">👤 Who Am I? · Solo · Spec-wide</div>
+    <h1>Guess the <em>economist</em></h1>
+    <p class="sub">Five clues, hardest first. Buzz in as early as you can — the fewer clues you need, the higher your score. Covers classical, Keynesian, monetarist, behavioural, development and institutional economists across Macro and Micro.</p>
+  </div>
+
+  <div class="statbar">
+    <div class="stat"><b id="stat-played">0</b><span>Played</span></div>
+    <div class="stat"><b id="stat-streak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="stat-best">0</b><span>High score</span></div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="card">
+    <div class="rowtop">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div class="tagrow" id="tagrow"></div>
+      </div>
+      <div class="cluecount" id="cluecount">Clue 1 of 5</div>
+    </div>
+
+    <ul class="clues" id="clues"></ul>
+
+    <div class="guessrow">
+      <input type="text" id="guessInput" placeholder="Type your guess…" autocomplete="off">
+      <button class="btn-primary" id="submitBtn">Submit</button>
+      <button class="btn-ghost" id="nextClueBtn">Next clue</button>
+      <button class="btn-ghost" id="giveUpBtn">Reveal answer</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="actionsafter">
+      <button class="btn-primary" id="continueBtn" style="display:none;">Next economist →</button>
+    </div>
+  </div>
+
+  <p class="sub" style="text-align:center; margin-top:24px;">🖥 No API · Instant · Progress and high score saved on this device</p>
+</div>
+
+<footer>biz-omics.co.uk · A-Level Economics · © BIZ-OMICS</footer>
+
+<script>
+const ECONOMISTS = [
+  {name:"Adam Smith", cat:"Classical", tags:["Micro"], clues:[
+    "I taught moral philosophy at Glasgow before turning to political economy.",
+    "I argued that self-interested individuals, pursuing their own gain, unintentionally benefit society.",
+    "My most famous metaphor describes markets being guided as if by an unseen hand.",
+    "I championed the division of labour, using a pin factory to show productivity gains from specialisation.",
+    "My 1776 book, An Inquiry into the Nature and Causes of the Wealth of Nations, founded classical economics."
+  ], fact:"Smith is widely regarded as the father of modern economics."},
+
+  {name:"David Ricardo", cat:"Classical", tags:["Macro"], clues:[
+    "I was a wealthy stockbroker before becoming a Member of Parliament and economist.",
+    "I developed a theory explaining why countries still gain from trade even if one is better at producing everything.",
+    "My theory rests on countries specialising according to relative, not absolute, cost.",
+    "I'm central to A-Level trade theory topics on specialisation and comparative advantage.",
+    "I'm best known today for the principle of comparative advantage."
+  ], fact:"Ricardo's theory of comparative advantage still underpins the case for free trade in modern textbooks."},
+
+  {name:"Thomas Malthus", cat:"Classical", tags:["Macro"], clues:[
+    "I was a clergyman as well as an economist, writing in the late 18th century.",
+    "I warned that population tends to grow faster than the food supply.",
+    "I believed population growth would eventually be checked by famine, disease or war.",
+    "My gloomy predictions earned economics the nickname 'the dismal science'.",
+    "I wrote An Essay on the Principle of Population."
+  ], fact:"Malthus's predictions didn't account for the huge productivity gains of the agricultural and industrial revolutions."},
+
+  {name:"John Stuart Mill", cat:"Classical", tags:["Micro"], clues:[
+    "I was a child prodigy, reading Greek by age three.",
+    "I refined classical economic theory and wrote extensively on liberty and utilitarianism.",
+    "I distinguished between the laws of production and the laws of distribution of wealth.",
+    "I'm known as much for political philosophy — On Liberty — as for economics.",
+    "My Principles of Political Economy was the leading economics textbook for decades."
+  ], fact:"Mill was also an early advocate for women's suffrage."},
+
+  {name:"Karl Marx", cat:"Classical", tags:["Macro","Micro"], clues:[
+    "I trained in philosophy in Germany before turning to political economy in exile.",
+    "I argued capitalism contains internal contradictions that would eventually cause its collapse.",
+    "My labour theory of value holds that the value of a good reflects the labour used to produce it.",
+    "I wrote alongside Friedrich Engels, co-authoring a famous political pamphlet in 1848.",
+    "My major economic work, published in three volumes, is called Das Kapital."
+  ], fact:"Marx's critique of capitalism remains a key contrast point in A-Level discussions of economic systems."},
+
+  {name:"Alfred Marshall", cat:"Neoclassical", tags:["Micro"], clues:[
+    "I was a Cambridge professor writing at the end of the 19th century.",
+    "I'm credited with popularising the supply and demand diagram as the core tool of price theory.",
+    "I introduced the concept of price elasticity to measure responsiveness to price changes.",
+    "I coined the phrase 'the short run' and 'the long run' in economic analysis.",
+    "My 1890 textbook, Principles of Economics, shaped how the subject is taught to this day."
+  ], fact:"Marshall's diagrams of supply and demand are still the first thing taught in any economics course."},
+
+  {name:"John Maynard Keynes", cat:"Keynesian", tags:["Macro"], clues:[
+    "I was a British economist who advised the Treasury during both World Wars.",
+    "I argued that in a depression, government spending could restore full employment.",
+    "My theory challenged the classical view that markets always self-correct to full employment.",
+    "I introduced the idea of the multiplier effect and the paradox of thrift.",
+    "My 1936 book, The General Theory of Employment, Interest and Money, founded a whole school of macroeconomics named after me."
+  ], fact:"Keynesian demand-management policy dominated Western economic policy from the 1940s to the 1970s."},
+
+  {name:"Milton Friedman", cat:"Monetarist", tags:["Macro"], clues:[
+    "I was a leading figure at the University of Chicago in the mid-20th century.",
+    "I argued that inflation is 'always and everywhere a monetary phenomenon'.",
+    "I believed controlling the money supply, not fiscal policy, was the key to stable prices.",
+    "I championed free markets and a reduced role for government intervention.",
+    "I founded monetarism and won the Nobel Prize in 1976."
+  ], fact:"Friedman's ideas heavily influenced Thatcher and Reagan-era economic policy in the 1980s."},
+
+  {name:"Friedrich Hayek", cat:"Austrian", tags:["Macro","Micro"], clues:[
+    "I was an Austrian-born economist who later worked at the LSE and Chicago.",
+    "I argued that central planning cannot process the information that free prices reveal.",
+    "I warned that state control of the economy risks sliding into totalitarianism.",
+    "I co-founded the Mont Pelerin Society to promote free-market liberalism.",
+    "My best-known book, written in 1944, is The Road to Serfdom."
+  ], fact:"Hayek shared the 1974 Nobel Prize in Economics with Gunnar Myrdal, despite their opposing views."},
+
+  {name:"Irving Fisher", cat:"Monetarist", tags:["Macro"], clues:[
+    "I was an American economist and mathematician active in the early 20th century.",
+    "I developed an equation linking money supply, velocity, prices and output.",
+    "My name is attached to the equation MV = PT.",
+    "I also distinguished between nominal and real interest rates.",
+    "Economists still call it the Fisher equation."
+  ], fact:"Fisher famously (and wrongly) declared stock prices had reached a 'permanently high plateau' days before the 1929 crash."},
+
+  {name:"William Phillips", cat:"Keynesian", tags:["Macro"], clues:[
+    "I was a New Zealand-born economist who taught at the LSE.",
+    "Before economics, I built a hydraulic machine that modelled the flow of money through an economy.",
+    "I studied nearly a century of UK wage and unemployment data.",
+    "I found an inverse relationship between unemployment and wage inflation.",
+    "That relationship is now taught worldwide as the Phillips curve."
+  ], fact:"The original Phillips curve broke down in the 1970s when stagflation produced high inflation and high unemployment together."},
+
+  {name:"Arthur Laffer", cat:"Supply-side", tags:["Macro"], clues:[
+    "I was an American economist who advised the Reagan administration.",
+    "Legend has it I sketched my most famous idea on a restaurant napkin.",
+    "I argued that tax revenue can actually fall if tax rates rise too high.",
+    "My curve shows the relationship between tax rates and government tax revenue.",
+    "It's known simply as the Laffer curve."
+  ], fact:"The Laffer curve became a cornerstone of 1980s 'supply-side' tax-cutting policy."},
+
+  {name:"Simon Kuznets", cat:"Development", tags:["Macro"], clues:[
+    "I was a Russian-born American economist working in the mid-20th century.",
+    "I helped develop the system of national accounts used to measure a country's output.",
+    "I'm credited with pioneering the modern concept of Gross Domestic Product.",
+    "I also proposed a curve showing inequality first rising then falling as a country develops.",
+    "That inverted-U relationship is called the Kuznets curve."
+  ], fact:"Kuznets himself warned against using GDP alone as a measure of a nation's wellbeing."},
+
+  {name:"Joseph Schumpeter", cat:"Institutional", tags:["Micro"], clues:[
+    "I was an Austrian-born economist who later taught at Harvard.",
+    "I argued that innovation is the true engine of capitalist growth, not equilibrium.",
+    "I described entrepreneurs as the disruptive force driving economic change.",
+    "I coined a phrase describing how new innovations constantly destroy old industries.",
+    "That phrase is 'creative destruction'."
+  ], fact:"Schumpeter's ideas underpin modern thinking on innovation, entrepreneurship and dynamic markets."},
+
+  {name:"Ronald Coase", cat:"Institutional", tags:["Micro"], clues:[
+    "I was a British-born economist who spent most of my career in the United States.",
+    "I asked why firms exist at all, instead of everyone contracting individually in the market.",
+    "My answer pointed to the costs of using the market itself.",
+    "I showed that, without these costs, parties could bargain to an efficient outcome regardless of who holds the legal right.",
+    "That bargaining result is known as the Coase theorem, and the costs are 'transaction costs'."
+  ], fact:"Coase's transaction cost theory reshaped how economists think about the boundaries of the firm."},
+
+  {name:"John Nash", cat:"Game theory", tags:["Micro"], clues:[
+    "I was an American mathematician, not primarily an economist.",
+    "My personal struggles with schizophrenia were the subject of a Hollywood film.",
+    "I proved that games have stable outcomes where no player benefits from changing strategy alone.",
+    "This concept is central to oligopoly and interdependence in A-Level game theory.",
+    "It's named after me: the Nash equilibrium."
+  ], fact:"Nash's story was dramatised in the 2001 film A Beautiful Mind."},
+
+  {name:"Thorstein Veblen", cat:"Institutional", tags:["Micro"], clues:[
+    "I was an American economist and sociologist writing around 1900.",
+    "I studied how the wealthy classes signalled status through spending.",
+    "I coined the term 'conspicuous consumption' to describe this behaviour.",
+    "Goods that break the normal demand curve — where higher price increases desirability — are named after me.",
+    "Economists still call them Veblen goods."
+  ], fact:"Veblen goods are a key exception to the law of demand covered in A-Level microeconomics."},
+
+  {name:"Robert Solow", cat:"Growth theory", tags:["Macro"], clues:[
+    "I was an American economist at MIT working from the 1950s onward.",
+    "I built a model explaining long-run economic growth using capital, labour and technology.",
+    "My model showed that simply adding more capital eventually runs into diminishing returns.",
+    "I argued that sustained growth ultimately depends on technological progress.",
+    "My growth model, and its 'residual', carry my name — the Solow growth model."
+  ], fact:"Solow won the Nobel Prize in 1987 for his contribution to growth theory."},
+
+  {name:"Paul Krugman", cat:"Trade theory", tags:["Macro"], clues:[
+    "I'm an American economist and a prominent newspaper columnist.",
+    "I helped explain why similar countries trade huge volumes of similar goods with each other.",
+    "My models introduced economies of scale and product variety into trade theory.",
+    "I write a widely-read column for the New York Times alongside my academic work.",
+    "I won the Nobel Prize in 2008 for my work on trade patterns and economic geography."
+  ], fact:"Krugman's 'new trade theory' helped explain intra-industry trade between similar developed economies."},
+
+  {name:"Joseph Stiglitz", cat:"Market failure", tags:["Micro"], clues:[
+    "I'm an American economist who served as chief economist at the World Bank.",
+    "I studied what happens when one side of a transaction knows more than the other.",
+    "My work on this imbalance helps explain problems like adverse selection.",
+    "I shared a Nobel Prize for research into the economics of information.",
+    "I'm closely associated with the concept of information asymmetry, and moral hazard."
+  ], fact:"Stiglitz's work on asymmetric information is essential to the A-Level market failure topic."},
+
+  {name:"Amartya Sen", cat:"Development", tags:["Macro"], clues:[
+    "I was born in Bengal and later taught at Harvard and Cambridge.",
+    "I argued that famines are rarely just about food shortages, but about access and entitlement.",
+    "I reframed development as expanding people's real freedoms, not just raising income.",
+    "My ideas underpin the Human Development Index used by the UN.",
+    "I won the Nobel Prize in 1998 for my work on welfare economics and development."
+  ], fact:"Sen's 'capability approach' shifted development economics away from GDP alone."},
+
+  {name:"Muhammad Yunus", cat:"Development", tags:["Macro"], clues:[
+    "I'm an economist and banker from Bangladesh.",
+    "I began by lending small sums of my own money to poor villagers who lacked collateral.",
+    "I pioneered lending tiny amounts to people excluded from formal banking.",
+    "I founded a bank built entirely around this model.",
+    "That institution is the Grameen Bank, and I'm known as the father of microfinance."
+  ], fact:"Yunus and the Grameen Bank jointly won the Nobel Peace Prize in 2006."},
+
+  {name:"W. Arthur Lewis", cat:"Development", tags:["Macro"], clues:[
+    "I was born in Saint Lucia and became the first Black Nobel laureate in a science.",
+    "I modelled developing economies as having two distinct sectors.",
+    "My model shows surplus rural labour moving into a growing urban industrial sector.",
+    "This process, I argued, drives economic development.",
+    "It's known as the Lewis dual-sector model."
+  ], fact:"Lewis won the Nobel Prize in Economics in 1979 for his pioneering research into economic development."},
+
+  {name:"Esther Duflo", cat:"Development", tags:["Macro"], clues:[
+    "I'm a French-American economist, and the youngest person ever to win my Nobel field.",
+    "I use methods borrowed from medical trials to test anti-poverty policies.",
+    "I run field experiments where some people receive a policy and others act as a control group.",
+    "This method is known as randomised controlled trials, applied to development economics.",
+    "I won the Nobel Prize in 2019, jointly with Abhijit Banerjee and Michael Kremer."
+  ], fact:"Duflo is the youngest-ever Nobel Economics laureate, winning at age 46."},
+
+  {name:"Abhijit Banerjee", cat:"Development", tags:["Macro"], clues:[
+    "I'm an Indian-American economist based at MIT.",
+    "I co-founded a lab dedicated to fighting poverty using rigorous field experiments.",
+    "I co-authored Poor Economics, rethinking how we tackle global poverty.",
+    "I shared the 2019 Nobel Prize for experimental approaches to alleviating poverty.",
+    "My frequent research partner and co-laureate is Esther Duflo."
+  ], fact:"Banerjee and Duflo's experimental approach transformed development economics research methods."},
+
+  {name:"Richard Thaler", cat:"Behavioural", tags:["Micro"], clues:[
+    "I'm an American economist who bridged psychology and economics.",
+    "I studied how people don't always behave like the perfectly rational agents of theory.",
+    "I showed how small changes to how choices are presented can change behaviour.",
+    "I co-authored a bestselling book about gently steering decisions without banning options.",
+    "That book, and the policy approach it inspired, is called Nudge."
+  ], fact:"Thaler's work led to the creation of 'nudge units' in governments worldwide, including the UK's own."},
+
+  {name:"Daniel Kahneman", cat:"Behavioural", tags:["Micro"], clues:[
+    "I was a psychologist, not an economist by training, born in Tel Aviv.",
+    "I worked closely with Amos Tversky studying how people actually make decisions under uncertainty.",
+    "We found people weigh losses more heavily than equivalent gains.",
+    "This forms the basis of a theory that replaced the traditional rational utility model.",
+    "It's called prospect theory, and I won the Nobel Prize in Economics in 2002 despite never taking an economics degree."
+  ], fact:"Kahneman's book Thinking, Fast and Slow popularised behavioural economics for a general audience."},
+
+  {name:"Elinor Ostrom", cat:"Institutional", tags:["Micro"], clues:[
+    "I was an American political economist, the first woman to win my Nobel field.",
+    "I studied how communities manage shared resources like fisheries and forests.",
+    "I challenged the idea that shared resources are always doomed to overuse.",
+    "I showed local communities can often govern shared resources sustainably without state or private control.",
+    "I won the Nobel Prize in 2009 for my analysis of economic governance, especially the commons."
+  ], fact:"Ostrom's work directly challenges the 'tragedy of the commons' argument taught in market failure topics."},
+
+  {name:"Douglass North", cat:"Institutional", tags:["Macro"], clues:[
+    "I was an American economic historian active in the second half of the 20th century.",
+    "I argued that a country's institutions — laws, property rights, enforcement — shape its economic performance.",
+    "I studied why some nations grow rich while others with similar resources stay poor.",
+    "My work founded a field examining institutions as the real drivers of long-run growth.",
+    "I won the Nobel Prize in 1993 for this institutional approach to economic history."
+  ], fact:"North's institutional economics is central to modern explanations of why some countries develop and others don't."},
+
+  {name:"Thomas Piketty", cat:"Inequality", tags:["Macro"], clues:[
+    "I'm a French economist working on long-run historical data.",
+    "I compiled centuries of tax records across many countries to track wealth over time.",
+    "I argued that when the return on capital exceeds economic growth, inequality tends to rise.",
+    "My argument is often summarised by the formula r > g.",
+    "My 2013 book, Capital in the Twenty-First Century, became an unlikely global bestseller."
+  ], fact:"Piketty's r > g argument reignited global debate on wealth inequality and taxation."},
+
+  {name:"Gary Becker", cat:"Neoclassical", tags:["Micro"], clues:[
+    "I was an American economist at the University of Chicago.",
+    "I applied economic reasoning to areas traditionally left to sociology, like crime and family.",
+    "I modelled education and training as an investment individuals make in themselves.",
+    "This concept is now central to labour economics.",
+    "It's known as human capital theory, and I won the Nobel Prize in 1992."
+  ], fact:"Becker's human capital theory underpins modern explanations of wage differences by education level."},
+
+  {name:"Mariana Mazzucato", cat:"Modern", tags:["Macro"], clues:[
+    "I'm an Italian-American economist based at University College London.",
+    "I challenge the idea that innovation comes mainly from the private sector alone.",
+    "I point to state funding behind technologies later commercialised by private firms, like smartphone components.",
+    "I argue government should act as an active investor, not just a market fixer.",
+    "My influential book on this theme is The Entrepreneurial State."
+  ], fact:"Mazzucato's work has directly influenced UK and EU industrial strategy in recent years."},
+
+  {name:"John von Neumann", cat:"Game theory", tags:["Micro"], clues:[
+    "I was a Hungarian-American mathematician working across many fields, including early computing.",
+    "I co-wrote the founding text of a mathematical approach to strategic decision-making.",
+    "My co-author was the economist Oskar Morgenstern.",
+    "Our 1944 book formally launched a field central to oligopoly analysis.",
+    "That field is game theory."
+  ], fact:"Von Neumann and Morgenstern's Theory of Games and Economic Behavior laid the mathematical foundations that Nash later built on."}
+];
+
+const CATS = ["All", ...Array.from(new Set(ECONOMISTS.map(e => e.tags).flat())).sort()];
+
+const STORAGE_KEY = "whoami_economics_stats_v1";
+function loadStats(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {played:0, streak:0, best:0};
+}
+function saveStats(s){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){}
+}
+let stats = loadStats();
+
+let activeFilter = "All";
+let deck = [];
+let deckIndex = 0;
+let current = null;
+let clueIndex = 0;
+let solved = false;
+let score = 0;
+
+const els = {
+  filters: document.getElementById('filters'),
+  avatar: document.getElementById('avatar'),
+  tagrow: document.getElementById('tagrow'),
+  cluecount: document.getElementById('cluecount'),
+  clues: document.getElementById('clues'),
+  guessInput: document.getElementById('guessInput'),
+  submitBtn: document.getElementById('submitBtn'),
+  nextClueBtn: document.getElementById('nextClueBtn'),
+  giveUpBtn: document.getElementById('giveUpBtn'),
+  feedback: document.getElementById('feedback'),
+  continueBtn: document.getElementById('continueBtn'),
+  card: document.querySelector('.card'),
+  statPlayed: document.getElementById('stat-played'),
+  statStreak: document.getElementById('stat-streak'),
+  statBest: document.getElementById('stat-best'),
+};
+
+function renderFilters(){
+  els.filters.innerHTML = "";
+  CATS.forEach(cat => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (cat === activeFilter ? ' active' : '');
+    chip.textContent = cat;
+    chip.onclick = () => { activeFilter = cat; renderFilters(); buildDeck(); loadEconomist(); };
+    els.filters.appendChild(chip);
+  });
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildDeck(){
+  const pool = activeFilter === "All" ? ECONOMISTS : ECONOMISTS.filter(e => e.tags.includes(activeFilter));
+  deck = shuffle(pool);
+  deckIndex = 0;
+}
+
+function normalize(str){
+  return str.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+}
+
+function isCorrectGuess(guess, economist){
+  const g = normalize(guess);
+  if(!g) return false;
+  const full = normalize(economist.name);
+  const surname = normalize(economist.name.split(' ').slice(-1)[0]);
+  if(g === full || g === surname) return true;
+  if(g.length > 3 && (full.includes(g) || surname.includes(g))) return true;
+  return false;
+}
+
+function updateStatBar(){
+  els.statPlayed.textContent = stats.played;
+  els.statStreak.textContent = stats.streak;
+  els.statBest.textContent = stats.best;
+}
+
+function loadEconomist(){
+  if(deck.length === 0) buildDeck();
+  if(deckIndex >= deck.length){ deck = shuffle(deck); deckIndex = 0; }
+  current = deck[deckIndex];
+  deckIndex++;
+  clueIndex = 1;
+  solved = false;
+
+  els.avatar.textContent = "?";
+  els.avatar.classList.remove('solved');
+  els.tagrow.innerHTML = `<span class="tag">${current.cat}</span>` + current.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  els.clues.innerHTML = "";
+  addClue();
+  els.guessInput.value = "";
+  els.guessInput.disabled = false;
+  els.submitBtn.disabled = false;
+  els.nextClueBtn.disabled = false;
+  els.giveUpBtn.disabled = false;
+  els.feedback.className = "feedback";
+  els.feedback.textContent = "";
+  els.continueBtn.style.display = "none";
+  updateClueCount();
+  els.guessInput.focus();
+}
+
+function addClue(){
+  const li = document.createElement('li');
+  li.className = 'clue';
+  li.style.animationDelay = '0s';
+  li.innerHTML = `<span class="num">${clueIndex}</span><span>${current.clues[clueIndex - 1]}</span>`;
+  els.clues.appendChild(li);
+}
+
+function updateClueCount(){
+  els.cluecount.textContent = `Clue ${clueIndex} of 5`;
+}
+
+function endRound(wasCorrect){
+  solved = true;
+  els.guessInput.disabled = true;
+  els.submitBtn.disabled = true;
+  els.nextClueBtn.disabled = true;
+  els.giveUpBtn.disabled = true;
+  els.avatar.textContent = wasCorrect ? "✓" : current.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  els.avatar.classList.add('solved');
+  els.continueBtn.style.display = "inline-block";
+
+  stats.played++;
+  if(wasCorrect){
+    stats.streak++;
+    const points = Math.max(20, (6 - clueIndex) * 20);
+    score += points;
+    if(score > stats.best) stats.best = score;
+  } else {
+    stats.streak = 0;
+  }
+  saveStats(stats);
+  updateStatBar();
+}
+
+els.submitBtn.onclick = () => {
+  if(solved) return;
+  const guess = els.guessInput.value;
+  if(isCorrectGuess(guess, current)){
+    const points = Math.max(20, (6 - clueIndex) * 20);
+    els.feedback.className = "feedback show correct";
+    els.feedback.innerHTML = `✅ Correct — it's <b>${current.name}</b>. +${points} points. ${current.fact}`;
+    // reveal remaining clues for context
+    for(let i = clueIndex + 1; i <= 5; i++){ clueIndex = i; addClue(); }
+    endRound(true);
+  } else {
+    els.card.classList.remove('shake'); void els.card.offsetWidth; els.card.classList.add('shake');
+    els.feedback.className = "feedback show wrong";
+    els.feedback.textContent = "❌ Not quite — try another clue, or take a guess again.";
+    els.guessInput.value = "";
+    els.guessInput.focus();
+  }
+};
+
+els.guessInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') els.submitBtn.click();
+});
+
+els.nextClueBtn.onclick = () => {
+  if(solved || clueIndex >= 5) return;
+  clueIndex++;
+  addClue();
+  updateClueCount();
+  els.feedback.className = "feedback";
+  if(clueIndex === 5) els.nextClueBtn.disabled = true;
+};
+
+els.giveUpBtn.onclick = () => {
+  if(solved) return;
+  for(let i = clueIndex + 1; i <= 5; i++){ clueIndex = i; addClue(); }
+  els.feedback.className = "feedback show reveal";
+  els.feedback.innerHTML = `🎓 It was <b>${current.name}</b>. ${current.fact}`;
+  endRound(false);
+};
+
+els.continueBtn.onclick = () => { loadEconomist(); };
+
+renderFilters();
+buildDeck();
+updateStatBar();
+loadEconomist();
+</script>
+</body>
+</html>

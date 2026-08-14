@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Econ Anagrams — BIZ-OMICS</title>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --panel:#111629;
+    --panel-2:#161c33;
+    --line:#232a47;
+    --amber:#f59e0b;
+    --amber-dim:#f59e0b33;
+    --text:#e7e9f3;
+    --text-dim:#9aa1c2;
+    --green:#22c55e;
+    --red:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:radial-gradient(circle at 15% -10%, #1a2140 0%, var(--bg) 45%), var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height:100vh;
+  }
+  a{color:var(--amber); text-decoration:none;}
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px; border-bottom:1px solid var(--line);
+    flex-wrap:wrap; gap:10px;
+  }
+  .brand{font-weight:700; letter-spacing:.5px;}
+  .brand span{color:var(--amber);}
+  nav a{font-size:14px; color:var(--text-dim);}
+  nav a:hover{color:var(--amber);}
+
+  .wrap{max-width:840px; margin:0 auto; padding:28px 20px 60px;}
+  .titleblock{text-align:center; margin-bottom:22px;}
+  .titleblock .eyebrow{
+    color:var(--amber); font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:600;
+  }
+  h1{font-size:clamp(28px,5vw,40px); margin:6px 0 8px; letter-spacing:-0.5px;}
+  h1 em{color:var(--amber); font-style:normal;}
+  .sub{color:var(--text-dim); font-size:15px; max-width:560px; margin:0 auto;}
+
+  .statbar{
+    display:flex; justify-content:center; gap:36px; margin:26px 0 30px;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:16px 10px;
+  }
+  .stat{text-align:center;}
+  .stat b{display:block; font-size:22px; color:var(--amber);}
+  .stat span{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;}
+
+  .filters{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:22px;}
+  .chip{
+    border:1px solid var(--line); background:var(--panel);
+    color:var(--text-dim); font-size:13px; padding:7px 14px; border-radius:999px;
+    cursor:pointer; transition:.15s;
+  }
+  .chip.active{background:var(--amber-dim); border-color:var(--amber); color:var(--amber); font-weight:600;}
+  .chip:hover{border-color:var(--amber);}
+  .chiprow{margin-bottom:8px;}
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:28px; position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; top:-60px; right:-60px; width:180px; height:180px;
+    background:radial-gradient(circle, var(--amber-dim), transparent 70%);
+  }
+  .rowtop{display:flex; align-items:center; gap:16px; margin-bottom:20px; position:relative;}
+  .tagrow{display:flex; gap:8px; flex-wrap:wrap;}
+  .tag{
+    font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700;
+    padding:3px 9px; border-radius:6px; background:var(--panel-2); color:var(--text-dim); border:1px solid var(--line);
+  }
+  .hintcount{margin-left:auto; font-size:13px; color:var(--text-dim);}
+
+  .scrambleBox{
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+    margin:10px 0 24px; position:relative;
+  }
+  .wordgroup{display:flex; gap:6px; flex-wrap:wrap; justify-content:center;}
+  .letter{
+    width:42px; height:48px; border-radius:10px; background:var(--panel-2);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:700; color:var(--amber); text-transform:uppercase;
+    animation:pop .3s;
+  }
+  @keyframes pop{ from{transform:scale(.7); opacity:0;} to{transform:scale(1); opacity:1;} }
+
+  .guessrow{display:flex; gap:10px; flex-wrap:wrap;}
+  input[type=text]{
+    flex:1 1 220px; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+    padding:13px 16px; color:var(--text); font-size:15px;
+  }
+  input[type=text]:focus{outline:none; border-color:var(--amber);}
+  button{
+    border:none; border-radius:10px; padding:13px 20px; font-size:14px; font-weight:700;
+    cursor:pointer; transition:.15s; letter-spacing:.3px;
+  }
+  .btn-primary{background:var(--amber); color:#1a1200;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--amber); color:var(--amber);}
+  .btn-primary:disabled, .btn-ghost:disabled{opacity:.4; cursor:not-allowed;}
+
+  .feedback{
+    margin-top:16px; padding:14px 16px; border-radius:10px; font-size:14px; line-height:1.5;
+    display:none;
+  }
+  .feedback.show{display:block;}
+  .feedback.correct{background:#22c55e1a; border:1px solid var(--green); color:#bbf7d0;}
+  .feedback.wrong{background:#ef44441a; border:1px solid var(--red); color:#fecaca;}
+  .feedback.reveal{background:var(--amber-dim); border:1px solid var(--amber); color:#fde9c2;}
+  .feedback.hintbox{background:var(--panel-2); border:1px solid var(--line); color:var(--text-dim);}
+  .feedback b{color:var(--amber);}
+
+  .actionsafter{display:flex; justify-content:flex-end; margin-top:14px;}
+
+  .shake{animation:shakeAnim .35s;}
+  @keyframes shakeAnim{
+    10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);}
+    30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);}
+  }
+
+  footer{text-align:center; color:var(--text-dim); font-size:12px; padding:30px 20px 40px;}
+
+  @media (max-width:480px){
+    .statbar{gap:20px;}
+    .guessrow{flex-direction:column;}
+    .guessrow button{width:100%;}
+    .letter{width:34px; height:40px; font-size:16px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">BIZ-OMICS <span>· Economics Arcade</span></div>
+  <nav><a href="https://biz-omics.co.uk/economics/Economics_Games.html">← Back to Arcade</a></nav>
+</header>
+
+<div class="wrap">
+  <div class="titleblock">
+    <div class="eyebrow">🔤 Econ Anagrams · Solo</div>
+    <h1>Unscramble the <em>term</em></h1>
+    <p class="sub">The letters are scrambled — work out the economics term before you run out of hints. Multi-word terms are scrambled word by word. GCSE and A-Level, Macro and Micro.</p>
+  </div>
+
+  <div class="statbar">
+    <div class="stat"><b id="stat-played">0</b><span>Played</span></div>
+    <div class="stat"><b id="stat-streak">0</b><span>Streak</span></div>
+    <div class="stat"><b id="stat-best">0</b><span>High score</span></div>
+  </div>
+
+  <div class="filters chiprow" id="filtersTopic"></div>
+  <div class="filters" id="filtersLevel"></div>
+
+  <div class="card">
+    <div class="rowtop">
+      <div class="tagrow" id="tagrow"></div>
+      <div class="hintcount" id="hintcount">0 hints used</div>
+    </div>
+
+    <div class="scrambleBox" id="scrambleBox"></div>
+
+    <div class="guessrow">
+      <input type="text" id="guessInput" placeholder="Type the unscrambled term…" autocomplete="off">
+      <button class="btn-primary" id="submitBtn">Submit</button>
+      <button class="btn-ghost" id="hintDefBtn">Hint: definition</button>
+      <button class="btn-ghost" id="hintLetterBtn">Hint: first letters</button>
+      <button class="btn-ghost" id="giveUpBtn">Reveal answer</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="actionsafter">
+      <button class="btn-primary" id="continueBtn" style="display:none;">Next term →</button>
+    </div>
+  </div>
+
+  <p class="sub" style="text-align:center; margin-top:24px;">🖥 No API · Instant · Progress and high score saved on this device</p>
+</div>
+
+<footer>biz-omics.co.uk · A-Level Economics · © BIZ-OMICS</footer>
+
+<script>
+const TERMS = [
+  // GCSE Micro
+  {term:"scarcity", topic:"Micro", level:"GCSE", def:"The basic economic problem of unlimited wants but limited resources."},
+  {term:"opportunity cost", topic:"Micro", level:"GCSE", def:"The value of the next best alternative given up when a choice is made."},
+  {term:"demand", topic:"Micro", level:"GCSE", def:"The quantity of a good consumers are willing and able to buy at a given price."},
+  {term:"supply", topic:"Micro", level:"GCSE", def:"The quantity of a good producers are willing and able to sell at a given price."},
+  {term:"elasticity", topic:"Micro", level:"GCSE", def:"A measure of how responsive quantity is to a change in price or income."},
+  {term:"market failure", topic:"Micro", level:"GCSE", def:"When the free market fails to allocate resources efficiently."},
+  {term:"externality", topic:"Micro", level:"GCSE", def:"A cost or benefit affecting a third party not involved in a transaction."},
+  {term:"subsidy", topic:"Micro", level:"GCSE", def:"A payment from government to a producer to lower costs or encourage output."},
+  {term:"monopoly", topic:"Micro", level:"GCSE", def:"A market dominated by a single seller with significant market power."},
+  {term:"competition", topic:"Micro", level:"GCSE", def:"Rivalry among sellers trying to attract the same buyers."},
+  {term:"profit", topic:"Micro", level:"GCSE", def:"The financial surplus left after total costs are subtracted from total revenue."},
+  {term:"entrepreneur", topic:"Micro", level:"GCSE", def:"A person who organises resources and takes on risk to start a business."},
+  {term:"division of labour", topic:"Micro", level:"GCSE", def:"Splitting a production process into separate specialised tasks."},
+  {term:"economies of scale", topic:"Micro", level:"GCSE", def:"Falling average costs as a firm increases its scale of production."},
+  {term:"equilibrium", topic:"Micro", level:"GCSE", def:"The price and quantity where demand equals supply."},
+  {term:"substitute goods", topic:"Micro", level:"GCSE", def:"Goods that can be used in place of one another, like tea and coffee."},
+  {term:"public good", topic:"Micro", level:"GCSE", def:"A good that is non-excludable and non-rivalrous, like street lighting."},
+
+  // GCSE Macro
+  {term:"inflation", topic:"Macro", level:"GCSE", def:"A sustained rise in the general price level over time."},
+  {term:"unemployment", topic:"Macro", level:"GCSE", def:"The state of being without work while actively seeking a job."},
+  {term:"recession", topic:"Macro", level:"GCSE", def:"A period of at least two consecutive quarters of falling GDP."},
+  {term:"fiscal policy", topic:"Macro", level:"GCSE", def:"Government use of spending and taxation to influence the economy."},
+  {term:"monetary policy", topic:"Macro", level:"GCSE", def:"Central bank use of interest rates and money supply to manage the economy."},
+  {term:"interest rate", topic:"Macro", level:"GCSE", def:"The cost of borrowing or the reward for saving money."},
+  {term:"exchange rate", topic:"Macro", level:"GCSE", def:"The price of one currency expressed in terms of another."},
+  {term:"trade deficit", topic:"Macro", level:"GCSE", def:"When a country's imports of goods and services exceed its exports."},
+  {term:"economic growth", topic:"Macro", level:"GCSE", def:"An increase in the value of goods and services produced over time."},
+  {term:"government spending", topic:"Macro", level:"GCSE", def:"Money spent by the state on public services, benefits and investment."},
+  {term:"national debt", topic:"Macro", level:"GCSE", def:"The total amount of money a government owes, built up over years of borrowing."},
+  {term:"aggregate demand", topic:"Macro", level:"GCSE", def:"Total planned spending on goods and services in an economy."},
+
+  // A-Level Micro
+  {term:"price elasticity of demand", topic:"Micro", level:"A-Level", def:"A measure of how responsive quantity demanded is to a change in price."},
+  {term:"income elasticity of demand", topic:"Micro", level:"A-Level", def:"A measure of how responsive demand is to a change in consumer income."},
+  {term:"indifference curve", topic:"Micro", level:"A-Level", def:"A curve showing combinations of two goods giving a consumer equal utility."},
+  {term:"marginal utility", topic:"Micro", level:"A-Level", def:"The extra satisfaction gained from consuming one more unit of a good."},
+  {term:"allocative efficiency", topic:"Micro", level:"A-Level", def:"When resources are distributed to match what consumers actually want, where price equals marginal cost."},
+  {term:"productive efficiency", topic:"Micro", level:"A-Level", def:"Producing at the lowest possible average cost, on the production possibility frontier."},
+  {term:"asymmetric information", topic:"Micro", level:"A-Level", def:"When one party in a transaction has more or better information than the other."},
+  {term:"moral hazard", topic:"Micro", level:"A-Level", def:"When one party takes on more risk because another party bears the cost of that risk."},
+  {term:"adverse selection", topic:"Micro", level:"A-Level", def:"When asymmetric information leads to a poor mix of buyers or sellers in a market."},
+  {term:"free rider problem", topic:"Micro", level:"A-Level", def:"When people benefit from a good without paying, discouraging its provision."},
+  {term:"tragedy of the commons", topic:"Micro", level:"A-Level", def:"Overuse of a shared resource because no individual bears the full cost of using it."},
+  {term:"price discrimination", topic:"Micro", level:"A-Level", def:"Charging different consumers different prices for the same good, based on willingness to pay."},
+  {term:"contestable market", topic:"Micro", level:"A-Level", def:"A market with low barriers to entry and exit, keeping incumbent firms competitive."},
+  {term:"kinked demand curve", topic:"Micro", level:"A-Level", def:"A model of oligopoly showing why prices tend to stay stable once set."},
+  {term:"nash equilibrium", topic:"Micro", level:"A-Level", def:"An outcome in game theory where no player can benefit by changing strategy alone."},
+  {term:"natural monopoly", topic:"Micro", level:"A-Level", def:"A market where high fixed costs mean one firm can supply the whole market most efficiently."},
+  {term:"x inefficiency", topic:"Micro", level:"A-Level", def:"Waste and higher-than-necessary costs that occur when a firm lacks competitive pressure."},
+  {term:"principal agent problem", topic:"Micro", level:"A-Level", def:"A conflict of interest between an owner and the manager acting on their behalf."},
+  {term:"bounded rationality", topic:"Micro", level:"A-Level", def:"The idea that decision-making is limited by the information, time and mental capacity available."},
+
+  // A-Level Macro
+  {term:"circular flow of income", topic:"Macro", level:"A-Level", def:"A model showing the flow of money between households and firms in an economy."},
+  {term:"multiplier effect", topic:"Macro", level:"A-Level", def:"The process by which an initial change in spending leads to a larger final change in national income."},
+  {term:"output gap", topic:"Macro", level:"A-Level", def:"The difference between actual and potential GDP in an economy."},
+  {term:"demand pull inflation", topic:"Macro", level:"A-Level", def:"Inflation caused by aggregate demand growing faster than aggregate supply."},
+  {term:"cost push inflation", topic:"Macro", level:"A-Level", def:"Inflation caused by rising costs of production, such as wages or raw materials."},
+  {term:"phillips curve", topic:"Macro", level:"A-Level", def:"A model showing the historical trade-off between unemployment and inflation."},
+  {term:"quantitative easing", topic:"Macro", level:"A-Level", def:"A central bank policy of creating money to buy assets and boost the money supply."},
+  {term:"automatic stabiliser", topic:"Macro", level:"A-Level", def:"Fiscal mechanisms like benefits and taxes that reduce fluctuations without new government action."},
+  {term:"comparative advantage", topic:"Macro", level:"A-Level", def:"The ability of a country to produce a good at a lower opportunity cost than another country."},
+  {term:"absolute advantage", topic:"Macro", level:"A-Level", def:"The ability of a country to produce more of a good using the same resources than another country."},
+  {term:"protectionism", topic:"Macro", level:"A-Level", def:"Government policies that restrict international trade to protect domestic industries."},
+  {term:"trade bloc", topic:"Macro", level:"A-Level", def:"A group of countries that agree to reduce trade barriers between themselves."},
+  {term:"purchasing power parity", topic:"Macro", level:"A-Level", def:"A theory that exchange rates adjust so identical goods cost the same across countries."},
+  {term:"marshall lerner condition", topic:"Macro", level:"A-Level", def:"The rule that a devaluation improves the trade balance only if demand elasticities are elastic enough."},
+  {term:"j curve effect", topic:"Macro", level:"A-Level", def:"The pattern where a trade balance worsens before improving after a currency devaluation."},
+  {term:"laffer curve", topic:"Macro", level:"A-Level", def:"A curve showing how tax revenue can fall if tax rates rise too high."},
+  {term:"supply side policy", topic:"Macro", level:"A-Level", def:"Government measures aimed at increasing an economy's productive capacity."},
+  {term:"structural unemployment", topic:"Macro", level:"A-Level", def:"Unemployment caused by a mismatch between workers' skills and available jobs."},
+  {term:"frictional unemployment", topic:"Macro", level:"A-Level", def:"Short-term unemployment while workers move between jobs."},
+  {term:"natural rate of unemployment", topic:"Macro", level:"A-Level", def:"The rate of unemployment that exists when the labour market is in equilibrium."}
+];
+
+const TOPICS = ["All", "Macro", "Micro"];
+const LEVELS = ["All", "GCSE", "A-Level"];
+
+const STORAGE_KEY = "anagrams_economics_stats_v1";
+function loadStats(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {played:0, streak:0, best:0};
+}
+function saveStats(s){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){} }
+let stats = loadStats();
+
+let topicFilter = "All";
+let levelFilter = "All";
+let deck = [];
+let deckIndex = 0;
+let current = null;
+let hintsUsed = 0;
+let solved = false;
+let score = 0;
+let revealedPrefixLen = 0;
+
+const els = {
+  filtersTopic: document.getElementById('filtersTopic'),
+  filtersLevel: document.getElementById('filtersLevel'),
+  tagrow: document.getElementById('tagrow'),
+  hintcount: document.getElementById('hintcount'),
+  scrambleBox: document.getElementById('scrambleBox'),
+  guessInput: document.getElementById('guessInput'),
+  submitBtn: document.getElementById('submitBtn'),
+  hintDefBtn: document.getElementById('hintDefBtn'),
+  hintLetterBtn: document.getElementById('hintLetterBtn'),
+  giveUpBtn: document.getElementById('giveUpBtn'),
+  feedback: document.getElementById('feedback'),
+  continueBtn: document.getElementById('continueBtn'),
+  card: document.querySelector('.card'),
+  statPlayed: document.getElementById('stat-played'),
+  statStreak: document.getElementById('stat-streak'),
+  statBest: document.getElementById('stat-best'),
+};
+
+function renderFilters(){
+  els.filtersTopic.innerHTML = "";
+  TOPICS.forEach(t => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (t === topicFilter ? ' active' : '');
+    chip.textContent = t;
+    chip.onclick = () => { topicFilter = t; renderFilters(); buildDeck(); loadTerm(); };
+    els.filtersTopic.appendChild(chip);
+  });
+  els.filtersLevel.innerHTML = "";
+  LEVELS.forEach(l => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (l === levelFilter ? ' active' : '');
+    chip.textContent = l;
+    chip.onclick = () => { levelFilter = l; renderFilters(); buildDeck(); loadTerm(); };
+    els.filtersLevel.appendChild(chip);
+  });
+}
+
+function shuffleArr(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function scrambleWord(word){
+  let letters = word.split('');
+  let attempts = 0;
+  let scrambled = letters.slice();
+  do{
+    scrambled = shuffleArr(letters);
+    attempts++;
+  } while(scrambled.join('') === word && letters.length > 1 && attempts < 20);
+  return scrambled;
+}
+
+function buildDeck(){
+  let pool = TERMS;
+  if(topicFilter !== "All") pool = pool.filter(t => t.topic === topicFilter);
+  if(levelFilter !== "All") pool = pool.filter(t => t.level === levelFilter);
+  if(pool.length === 0) pool = TERMS;
+  deck = shuffleArr(pool);
+  deckIndex = 0;
+}
+
+function normalize(str){
+  return str.toLowerCase().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function updateStatBar(){
+  els.statPlayed.textContent = stats.played;
+  els.statStreak.textContent = stats.streak;
+  els.statBest.textContent = stats.best;
+}
+
+function loadTerm(){
+  if(deck.length === 0) buildDeck();
+  if(deckIndex >= deck.length){ deck = shuffleArr(deck); deckIndex = 0; }
+  current = deck[deckIndex];
+  deckIndex++;
+  hintsUsed = 0;
+  solved = false;
+  revealedPrefixLen = 0;
+
+  els.tagrow.innerHTML = `<span class="tag">${current.topic}</span><span class="tag">${current.level}</span>`;
+  renderScramble();
+  els.guessInput.value = "";
+  els.guessInput.disabled = false;
+  els.submitBtn.disabled = false;
+  els.hintDefBtn.disabled = false;
+  els.hintLetterBtn.disabled = false;
+  els.giveUpBtn.disabled = false;
+  els.feedback.className = "feedback";
+  els.feedback.textContent = "";
+  els.continueBtn.style.display = "none";
+  updateHintCount();
+  els.guessInput.focus();
+}
+
+function renderScramble(){
+  els.scrambleBox.innerHTML = "";
+  const words = current.term.split(' ');
+  words.forEach(word => {
+    const group = document.createElement('div');
+    group.className = 'wordgroup';
+    const scrambled = scrambleWord(word);
+    scrambled.forEach(ch => {
+      const box = document.createElement('div');
+      box.className = 'letter';
+      box.textContent = ch;
+      group.appendChild(box);
+    });
+    els.scrambleBox.appendChild(group);
+  });
+}
+
+function updateHintCount(){
+  els.hintcount.textContent = `${hintsUsed} hint${hintsUsed === 1 ? '' : 's'} used`;
+}
+
+function endRound(wasCorrect){
+  solved = true;
+  els.guessInput.disabled = true;
+  els.submitBtn.disabled = true;
+  els.hintDefBtn.disabled = true;
+  els.hintLetterBtn.disabled = true;
+  els.giveUpBtn.disabled = true;
+  els.continueBtn.style.display = "inline-block";
+
+  stats.played++;
+  if(wasCorrect){
+    stats.streak++;
+    const points = Math.max(20, 100 - hintsUsed * 40);
+    score += points;
+    if(score > stats.best) stats.best = score;
+  } else {
+    stats.streak = 0;
+  }
+  saveStats(stats);
+  updateStatBar();
+}
+
+els.submitBtn.onclick = () => {
+  if(solved) return;
+  const guess = normalize(els.guessInput.value);
+  const answer = normalize(current.term);
+  if(guess === answer){
+    const points = Math.max(20, 100 - hintsUsed * 40);
+    els.feedback.className = "feedback show correct";
+    els.feedback.innerHTML = `✅ Correct — <b>${current.term}</b>. +${points} points. ${current.def}`;
+    endRound(true);
+  } else {
+    els.card.classList.remove('shake'); void els.card.offsetWidth; els.card.classList.add('shake');
+    els.feedback.className = "feedback show wrong";
+    els.feedback.textContent = "❌ Not quite — try a hint, or take another guess.";
+    els.guessInput.value = "";
+    els.guessInput.focus();
+  }
+};
+
+els.guessInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') els.submitBtn.click();
+});
+
+els.hintDefBtn.onclick = () => {
+  if(solved) return;
+  hintsUsed++;
+  updateHintCount();
+  els.feedback.className = "feedback show hintbox";
+  els.feedback.innerHTML = `💡 Definition: ${current.def}`;
+  els.hintDefBtn.disabled = true;
+};
+
+els.hintLetterBtn.onclick = () => {
+  if(solved) return;
+  hintsUsed++;
+  updateHintCount();
+  const words = current.term.split(' ');
+  const prefix = words.map(w => w[0].toUpperCase() + '_'.repeat(w.length - 1)).join(' ');
+  els.feedback.className = "feedback show hintbox";
+  els.feedback.innerHTML = `🔡 Starts with: <b>${prefix}</b> (${words.length} word${words.length > 1 ? 's' : ''}, ${current.term.replace(/\s/g,'').length} letters)`;
+  els.hintLetterBtn.disabled = true;
+};
+
+els.giveUpBtn.onclick = () => {
+  if(solved) return;
+  els.feedback.className = "feedback show reveal";
+  els.feedback.innerHTML = `🎓 It was <b>${current.term}</b>. ${current.def}`;
+  endRound(false);
+};
+
+els.continueBtn.onclick = () => { loadTerm(); };
+
+renderFilters();
+buildDeck();
+updateStatBar();
+loadTerm();
+</script>
+</body>
+</html>
