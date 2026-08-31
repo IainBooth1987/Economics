@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starter Bank (New Spec 7138) | BIZ-OMICS</title>
+<style>
+  :root{
+    --ink:#14161a;
+    --ink-soft:#3a3f47;
+    --paper:#ffffff;
+    --panel:#f2f3f5;
+    --line:#e2e4e8;
+    --red:#c81e3a;
+    --red-dark:#8f1226;
+    --purple:#6b3fa0;
+    --tf:#1f9e8b;
+    --def:#e2a63b;
+    --fit:#5b6472;
+    --calc:#2f6fb0;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    --sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--panel);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+
+  /* ---------- Header ---------- */
+  .tower{
+    background:var(--ink);color:#fff;display:flex;align-items:center;gap:1rem;
+    padding:0.9rem 1.25rem;flex-wrap:wrap;border-bottom:4px solid var(--red);
+  }
+  .tower-brand{
+    font-family:var(--mono);font-weight:700;letter-spacing:0.08em;font-size:0.78rem;
+    background:var(--red);color:#fff;padding:0.3rem 0.55rem;border-radius:3px;flex-shrink:0;
+  }
+  .tower-title{flex:1;min-width:220px;}
+  .tower-title h1{margin:0;font-size:1.15rem;letter-spacing:0.03em;font-weight:800;}
+  .tower-title p{margin:0.15rem 0 0;font-size:0.8rem;color:#c7c9cf;font-family:var(--mono);}
+  .btn-print,.btn-about,.btn-present{
+    font-family:var(--mono);font-size:0.75rem;letter-spacing:0.04em;
+    padding:0.5rem 0.8rem;border-radius:4px;cursor:pointer;
+  }
+  .btn-print{background:transparent;color:#fff;border:1px solid #565a63;transition:background 0.15s,border-color 0.15s;}
+  .btn-print:hover{background:#22252b;border-color:#7a7f89;}
+  .btn-about{background:transparent;color:#c7c9cf;border:1px solid transparent;text-decoration:underline;}
+  .btn-about:hover{background:#22252b;border-color:#565a63;text-decoration:none;}
+  .btn-present{background:var(--red);color:#fff;border:1px solid var(--red);font-weight:700;}
+  .btn-present:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .btn-print:focus-visible,.btn-about:focus-visible,.btn-present:focus-visible{outline:2px solid var(--def);outline-offset:2px;}
+
+  .answer-toggle{
+    display:flex;align-items:center;gap:0.4rem;font-family:var(--mono);font-size:0.75rem;
+    color:#c7c9cf;cursor:pointer;letter-spacing:0.02em;user-select:none;
+  }
+  .answer-toggle input{accent-color:var(--red);width:15px;height:15px;cursor:pointer;}
+
+  /* ---------- Spec banner ---------- */
+  .spec-banner{
+    display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap;padding:0.55rem 1.25rem;
+    background-image:repeating-linear-gradient(45deg,#3a2c00 0 10px,#2c2200 10px 20px);
+    background-color:#2c2200;border-bottom:2px solid var(--def);
+  }
+  .spec-banner-badge{
+    flex-shrink:0;font-family:var(--mono);font-size:0.7rem;font-weight:800;letter-spacing:0.06em;
+    color:#14161a;background:var(--def);padding:0.25rem 0.6rem;border-radius:4px;
+  }
+  .spec-banner-text{font-size:0.82rem;color:#ffe9b3;line-height:1.4;}
+  .spec-banner-text b{color:#fff;}
+
+  /* ---------- About panel ---------- */
+  .about-panel{background:#fbfbfc;border-bottom:1px solid var(--line);}
+  .about-inner{max-width:760px;margin:0 auto;padding:1.4rem 1.25rem 1.7rem;}
+  .about-inner h2{font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--red);margin:1.1rem 0 0.35rem;}
+  .about-inner h2:first-child{margin-top:0;}
+  .about-inner p{font-size:0.92rem;line-height:1.55;color:var(--ink-soft);margin:0 0 0.6rem;}
+  .about-inner b{color:var(--ink);}
+
+  /* ---------- Filter bar ---------- */
+  .filters{background:var(--paper);border-top:1px solid var(--line);padding:1rem 1.25rem;}
+  .filter-row{display:flex;flex-wrap:wrap;gap:0.45rem;align-items:center;margin-bottom:0.7rem;}
+  .filter-row:last-child{margin-bottom:0;}
+  .filter-label{
+    font-family:var(--mono);font-size:0.7rem;letter-spacing:0.04em;color:#8a8f99;
+    text-transform:uppercase;margin-right:0.3rem;flex-shrink:0;width:100%;
+  }
+  @media(min-width:640px){.filter-label{width:auto;}}
+  .chip-btn{
+    font-family:var(--mono);font-size:0.75rem;letter-spacing:0.02em;padding:0.4rem 0.75rem;
+    border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);
+    cursor:pointer;transition:background 0.12s,border-color 0.12s,color 0.12s;
+  }
+  .chip-btn:hover{border-color:#b8bcc4;}
+  .chip-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700;}
+  .chip-btn.type-active{color:#fff;font-weight:700;}
+  .chip-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+
+  .gen-row{display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;margin-top:0.9rem;padding-top:0.9rem;border-top:1px dashed var(--line);}
+  .btn-generate{
+    font-family:var(--sans);font-size:0.92rem;font-weight:700;padding:0.65rem 1.3rem;
+    border-radius:6px;border:1px solid var(--red);background:var(--red);color:#fff;cursor:pointer;
+  }
+  .btn-generate:hover{background:var(--red-dark);border-color:var(--red-dark);}
+  .btn-generate:focus-visible{outline:2px solid var(--def);outline-offset:2px;}
+  .btn-generate-secondary{background:var(--paper);color:var(--red);}
+  .btn-generate-secondary:hover{background:#fdecef;border-color:var(--red-dark);color:var(--red-dark);}
+  .pool-count{font-family:var(--mono);font-size:0.78rem;color:#8a8f99;}
+
+  /* ---------- Deck ---------- */
+  .deck{background:var(--paper);border-top:1px solid var(--line);padding:1.1rem 1.25rem 2.5rem;}
+  .empty-state{
+    padding:3rem 1rem;text-align:center;color:#8a8f99;font-family:var(--mono);font-size:0.9rem;
+    border:2px dashed var(--line);border-radius:8px;
+  }
+  .build-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;flex-wrap:wrap;gap:0.5rem;}
+  .build-toolbar:empty{display:none;}
+  .set-note{font-family:var(--mono);font-size:0.78rem;color:#8a8f99;}
+  .btn-clear{font-family:var(--mono);font-size:0.72rem;color:#8a8f99;background:none;border:none;cursor:pointer;text-decoration:underline;}
+
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.8rem;}
+  @media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.grid{grid-template-columns:1fr;}}
+
+  .card{perspective:1400px;min-height:180px;}
+  .card-inner{position:relative;width:100%;height:100%;min-height:180px;transition:transform 0.5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .card.flipped .card-inner{transform:rotateY(180deg);}
+  @media(prefers-reduced-motion:reduce){.card-inner{transition:none;}}
+  .face{
+    position:absolute;inset:0;border-radius:8px;padding:0.85rem 0.9rem;backface-visibility:hidden;
+    display:flex;flex-direction:column;cursor:pointer;border:1px solid var(--line);
+  }
+  .face:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .face-q{background:var(--ink);color:#fff;}
+  .face-a{background:#faf8fd;color:var(--ink);transform:rotateY(180deg);border-color:#dcd0ef;}
+  .face-tag{
+    align-self:flex-start;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.03em;
+    padding:0.18rem 0.45rem;border-radius:999px;color:#fff;margin-bottom:0.5rem;
+  }
+  .face-a .face-tag{color:var(--purple);background:#ece3f7;}
+  .type-hint{font-family:var(--sans);font-style:italic;font-size:0.66rem;color:#8a8f99;margin:-0.25rem 0 0.4rem;line-height:1.3;}
+  .face-body{font-size:0.82rem;line-height:1.4;flex:1;overflow-y:auto;}
+  .face-a .face-body{color:var(--purple);font-weight:600;}
+  .face-topic{font-family:var(--mono);font-size:0.6rem;color:#9aa0aa;margin-top:0.4rem;}
+  .face-a .face-topic{color:#a692c4;}
+
+  .card-tools{position:absolute;top:0.5rem;right:0.5rem;z-index:2;display:flex;gap:0.3rem;}
+  .card-tool-btn{
+    font-family:var(--mono);font-size:0.6rem;letter-spacing:0.02em;padding:0.15rem 0.4rem;
+    border-radius:4px;border:1px solid #565a63;background:rgba(255,255,255,0.06);color:#c7c9cf;cursor:pointer;
+  }
+  .card-tool-btn:hover{background:rgba(255,255,255,0.15);}
+  .face-a .card-tools .card-tool-btn{border-color:#c9b8e6;color:var(--purple);background:rgba(107,63,160,0.06);}
+
+  /* ---------- Picker modal ---------- */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(20,22,26,0.55);display:flex;align-items:flex-start;justify-content:center;padding:4vh 1rem;z-index:50;}
+  .modal{background:#fff;border-radius:10px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.35);}
+  .modal-head{flex-shrink:0;padding:1rem 1.1rem 0.8rem;border-bottom:1px solid var(--line);}
+  .modal-head h2{margin:0 0 0.6rem;font-size:0.95rem;font-family:var(--mono);letter-spacing:0.02em;}
+  .modal-search{width:100%;padding:0.55rem 0.7rem;border:1px solid var(--line);border-radius:6px;font-size:0.9rem;font-family:var(--sans);}
+  .modal-search:focus-visible{outline:2px solid var(--red);outline-offset:1px;}
+  .modal-list{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0.4rem;}
+  .modal-item{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:0.65rem 0.7rem;cursor:pointer;font-family:var(--sans);font-size:0.85rem;color:var(--ink);}
+  .modal-item .modal-item-tag{display:block;font-family:var(--mono);font-size:0.65rem;color:#8a8f99;margin-bottom:0.2rem;}
+  .modal-item:hover{background:var(--panel);}
+  .modal-item:focus-visible{outline:2px solid var(--red);outline-offset:-2px;}
+  .modal-empty{padding:1.5rem;text-align:center;color:#8a8f99;font-size:0.85rem;}
+  .modal-close{background:none;border:none;font-size:1.3rem;line-height:1;color:#8a8f99;cursor:pointer;padding:0.2rem;}
+  .modal-head-row{display:flex;justify-content:space-between;align-items:center;}
+
+  /* ---------- Present mode ---------- */
+  .present-overlay{position:fixed;inset:0;background:var(--ink);z-index:100;display:flex;flex-direction:column;padding:2.2vh 2.5vw;}
+  .present-top{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;flex-wrap:wrap;gap:0.8vh 1.2vw;margin-bottom:1.4vh;padding-bottom:1.2vh;position:relative;}
+  .present-top::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:5px;
+    background-image:linear-gradient(45deg,#33373f 25%,transparent 25%,transparent 75%,#33373f 75%),linear-gradient(45deg,#33373f 25%,transparent 25%,transparent 75%,#33373f 75%);
+    background-size:10px 10px;background-position:0 0,5px 5px;background-color:#0b0c0f;
+  }
+  .present-brand{font-family:var(--mono);color:#c7c9cf;font-size:1rem;letter-spacing:0.04em;}
+  .present-instructions{font-family:var(--sans);color:#fff;font-size:1.2rem;font-weight:700;text-align:center;flex:1;}
+  .present-instructions .pen{color:var(--def);}
+  .btn-exit{font-family:var(--mono);font-size:0.85rem;letter-spacing:0.03em;background:transparent;color:#c7c9cf;border:1px solid #565a63;padding:0.5rem 0.9rem;border-radius:4px;cursor:pointer;}
+  .btn-exit:hover{background:#22252b;border-color:#8a8f99;}
+  .present-page-nav{display:flex;align-items:center;gap:0.6rem;}
+  .present-size-control{display:flex;align-items:center;gap:0.5rem;}
+  .present-size-control label{font-family:var(--mono);color:#c7c9cf;font-size:0.78rem;letter-spacing:0.02em;white-space:nowrap;}
+  .present-size-control select{
+    font-family:var(--mono);font-size:0.85rem;background:#1b1e24;color:#fff;
+    border:1px solid #565a63;border-radius:4px;padding:0.35rem 0.5rem;cursor:pointer;
+  }
+  .present-size-control select:focus-visible{outline:2px solid var(--def);outline-offset:1px;}
+  .present-page-btn{
+    font-family:var(--mono);font-size:1.1rem;line-height:1;background:transparent;color:#fff;
+    border:1px solid #565a63;padding:0.4rem 0.85rem;border-radius:4px;cursor:pointer;
+  }
+  .present-page-btn:hover:not(:disabled){background:#22252b;border-color:#8a8f99;}
+  .present-page-btn:disabled{opacity:0.3;cursor:default;}
+  .present-page-label{font-family:var(--mono);color:#c7c9cf;font-size:0.85rem;letter-spacing:0.02em;white-space:nowrap;}
+  .present-grid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(1,1fr);gap:1.6vh 1.6vw;min-height:0;}
+  @media(max-width:900px){.present-grid{grid-template-columns:repeat(2,1fr);}.present-instructions{font-size:0.95rem;}}
+  .present-card{perspective:2000px;min-height:0;}
+  .present-card-inner{position:relative;width:100%;height:100%;transition:transform 0.5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .present-card.flipped .present-card-inner{transform:rotateY(180deg);}
+  @media(prefers-reduced-motion:reduce){.present-card-inner{transition:none;}}
+  .present-face{position:absolute;inset:0;border-radius:12px;padding:1.1rem 1.2rem;backface-visibility:hidden;display:flex;flex-direction:column;cursor:pointer;overflow-y:auto;}
+  .present-face-q{background:#1b1e24;border:1px solid #33373f;}
+  .present-face-a{background:#faf6ff;transform:rotateY(180deg);}
+  .present-tag{align-self:flex-start;font-family:var(--mono);font-size:0.72rem;font-weight:700;letter-spacing:0.02em;padding:0.24rem 0.6rem;border-radius:999px;color:#fff;margin-bottom:0.6rem;}
+  .present-face-a .present-tag{color:var(--purple);background:#ece3f7;}
+  .present-type-hint{font-family:var(--sans);font-style:italic;font-size:0.78rem;color:#9aa0aa;margin:-0.3rem 0 0.5rem;}
+  .present-body{line-height:1.32;color:#fff;font-weight:700;flex:1;font-size:clamp(1.05rem,1.9vw,1.6rem);}
+  .present-body.len-s{font-size:clamp(1.5rem,2.9vw,2.5rem);}
+  .present-body.len-m{font-size:clamp(1.2rem,2.3vw,2rem);}
+  .present-body.len-l{font-size:clamp(1.0rem,1.8vw,1.55rem);}
+  .present-body.len-xl{font-size:clamp(0.88rem,1.45vw,1.25rem);}
+  .present-face-a .present-body{color:var(--purple);}
+  .present-num{position:absolute;bottom:0.5rem;right:0.7rem;font-family:var(--mono);font-size:0.65rem;color:#565a63;}
+  .present-zoom-btn{
+    position:absolute;top:0.5rem;right:0.5rem;z-index:3;font-family:var(--mono);font-size:0.68rem;
+    padding:0.25rem 0.55rem;border-radius:4px;border:1px solid rgba(255,255,255,0.28);
+    background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;
+  }
+  .present-zoom-btn:hover{background:rgba(255,255,255,0.2);}
+  .present-face-a .present-zoom-btn{border-color:rgba(107,63,160,0.35);color:var(--purple);background:rgba(107,63,160,0.06);}
+
+  /* ---------- Present zoom overlay ---------- */
+  .present-zoom-backdrop{position:fixed;inset:0;background:rgba(11,12,15,0.94);z-index:200;display:flex;align-items:center;justify-content:center;padding:4vh 4vw;}
+  .present-zoom-card{width:min(1100px,92vw);height:min(640px,80vh);perspective:2200px;cursor:pointer;}
+  .present-zoom-inner{position:relative;width:100%;height:100%;transition:transform 0.5s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;}
+  .present-zoom-card.flipped .present-zoom-inner{transform:rotateY(180deg);}
+  @media(prefers-reduced-motion:reduce){.present-zoom-inner{transition:none;}}
+  .present-zoom-face{position:absolute;inset:0;border-radius:16px;padding:clamp(1.6rem,4vw,3.2rem);backface-visibility:hidden;display:flex;flex-direction:column;overflow-y:auto;box-shadow:0 30px 90px rgba(0,0,0,0.5);}
+  .present-zoom-face-q{background:#1b1e24;border:1px solid #33373f;}
+  .present-zoom-face-a{background:#faf6ff;transform:rotateY(180deg);}
+  .present-zoom-tag{align-self:flex-start;font-family:var(--mono);font-size:1rem;font-weight:700;padding:0.35rem 0.9rem;border-radius:999px;color:#fff;margin-bottom:1.2rem;}
+  .present-zoom-face-a .present-zoom-tag{color:var(--purple);background:#ece3f7;}
+  .present-zoom-type-hint{font-family:var(--sans);font-style:italic;font-size:1rem;color:#9aa0aa;margin:-0.6rem 0 1rem;}
+  .present-zoom-body{font-size:clamp(1.6rem,3.6vw,2.7rem);line-height:1.4;color:#fff;font-weight:700;flex:1;}
+  .present-zoom-face-a .present-zoom-body{color:var(--purple);}
+  .present-zoom-hint{font-family:var(--mono);font-size:0.85rem;color:#8a8f99;margin-top:1.2rem;}
+  .present-zoom-close{position:absolute;top:2vh;right:2vw;z-index:201;font-family:var(--mono);font-size:0.85rem;background:transparent;color:#c7c9cf;border:1px solid #565a63;padding:0.5rem 0.9rem;border-radius:4px;cursor:pointer;}
+  .present-zoom-close:hover{background:#22252b;border-color:#8a8f99;}
+
+  footer{padding:1.5rem 1.25rem 2.5rem;text-align:center;font-size:0.78rem;color:#8a8f99;font-family:var(--mono);}
+
+  .print-sheet{display:none;}
+  @media print{
+    body{background:#fff;}
+    .tower,.spec-banner,.filters,footer,.about-panel,.present-overlay{display:none !important;}
+    .deck .build-toolbar,.deck .grid{display:none !important;}
+    .print-sheet{display:block;font-family:Georgia,"Times New Roman",serif;color:#000;background:#fff;}
+    .print-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:0.4rem;margin-bottom:1rem;}
+    .print-header .brand{font-weight:700;letter-spacing:0.05em;}
+    .print-header .title{font-size:1.2rem;font-weight:700;}
+    .print-q-block{page-break-inside:avoid;margin-bottom:1.5rem;}
+    .print-tag{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;color:#000 !important;font-weight:700;}
+    .print-type-hint{font-size:0.75rem;font-style:italic;color:#555 !important;margin:0.1rem 0 0.15rem;}
+    .print-topic{font-size:0.7rem;color:#444 !important;margin-bottom:0.2rem;}
+    .print-q{font-size:1rem;margin:0.2rem 0 0.3rem;}
+    .print-answer{font-size:0.92rem;color:#333 !important;}
+    .print-lines{border-bottom:1px solid #999;height:1.4rem;margin-top:0.3rem;}
+  }
+</style>
+</head>
+<body>
+
+<header class="tower">
+  <span class="tower-brand">BIZ-OMICS</span>
+  <div class="tower-title">
+    <h1>Starter Bank</h1>
+    <p>A-level Business &middot; New Spec (7137/7138)</p>
+  </div>
+  <label class="answer-toggle"><input type="checkbox" id="answerToggle"> Print with answers</label>
+  <button type="button" class="btn-print" id="printBtn">Print</button>
+  <button type="button" class="btn-about" id="aboutBtn">About this resource</button>
+  <button type="button" class="btn-present" id="presentBtn">Present</button>
+</header>
+
+<div class="spec-banner">
+  <span class="spec-banner-badge">New Spec</span>
+  <span class="spec-banner-text">Built for <b>AQA AS/A-level Business 7137/7138</b> (teaching from September 2026, first A-level exams 2028) &mdash; not the current 7131/7132 specification.</span>
+</div>
+
+<div class="about-panel" id="aboutPanel" hidden>
+  <div class="about-inner">
+    <h2>What this is</h2>
+    <p>A bank of <b>quick, low-stakes starter questions</b> for the new AQA Business spec, sorted by unit and sub-topic. Six question types, each testing a genuinely different move: <b>True/False</b> (verify a claim), <b>Spot the Mistake</b> (find and correct an error), <b>Quick Fire Definition</b> (precise recall), <b>Correct the Calculation</b> (find and fix a numerical error), and two that are easy to confuse but deliberately different &mdash; see below.</p>
+    <h2>Odd One Out vs Which Doesn't Fit</h2>
+    <p><b>Odd One Out</b> is deliberately contestable: students pick which of four items doesn't belong and have to justify the classification &mdash; a defensible case can sometimes be made for more than one answer, and that's the point. It's a reasoning/argument exercise, not a lookup.</p>
+    <p><b>Which Doesn't Fit</b> has exactly one diagnostically correct answer, turning on a precise conceptual or spec distinction. It's not up for debate &mdash; it tests whether a student has nailed a specific boundary (e.g. what's actually in a named model, or what a term does and doesn't include).</p>
+    <h2>How to use it</h2>
+    <p>Filter by unit, sub-topic and/or question type, then hit <b>Generate 10</b>, <b>Generate 5</b>, or <b>Generate 3</b> to pull a random set onto the grid &mdash; the same way you'd fill boxes on a starter slide. Don't like one? Use <b>&#8635;</b> to reroll it, or <b>Pick</b> to search the bank for something specific. Hit <b>Present</b> to go fullscreen for the board, or <b>Print</b> for a paper starter sheet (tick the answers box first if you want a marking key). If a narrow filter combination (e.g. one sub-topic and one question type) doesn't have enough matches, the set widens out to fill the rest &mdash; a note above the grid tells you when and how far it had to widen, and it prioritises keeping your chosen question type over your chosen sub-topic when it does.</p>
+    <h2>Companion tool</h2>
+    <p>This sits alongside <b>Pit Stop Starters</b> (interleaved lesson/week/month/year retrieval). Use Pit Stop for spaced recall of specific content you've chosen in advance; use the Starter Bank for a quick randomised set or focused single-topic drilling.</p>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="filter-row">
+    <span class="filter-label">Unit</span>
+    <button type="button" class="chip-btn active" data-unit="all">All units</button>
+    <button type="button" class="chip-btn" data-unit="u1">Unit 1 &middot; What is business?</button>
+    <button type="button" class="chip-btn" data-unit="u2">Unit 2 &middot; People &amp; operations</button>
+    <button type="button" class="chip-btn" data-unit="u3">Unit 3 &middot; Society, environment &amp; strategy</button>
+    <button type="button" class="chip-btn" data-unit="synoptic">Synoptic</button>
+  </div>
+  <div class="filter-row" id="subtopicRow">
+    <span class="filter-label">Sub-topic</span>
+  </div>
+  <div class="filter-row" id="typeRow">
+    <span class="filter-label">Type</span>
+  </div>
+  <div class="gen-row">
+    <button type="button" class="btn-generate" id="generateBtn10">Generate 10</button>
+    <button type="button" class="btn-generate btn-generate-secondary" id="generateBtn5">Generate 5</button>
+    <button type="button" class="btn-generate btn-generate-secondary" id="generateBtn3">Generate 3</button>
+    <span class="pool-count" id="poolCount"></span>
+  </div>
+  <div class="gen-row" id="widenRow" style="display:none;">
+    <span class="pool-count" id="widenNote"></span>
+  </div>
+</div>
+
+<div class="deck">
+  <div class="build-toolbar" id="buildToolbar"></div>
+  <div id="deckArea"><div class="empty-state">Choose your filters above, then hit <b>Generate 10</b>, <b>Generate 5</b>, or <b>Generate 3</b> to build a starter set.</div></div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="presentRoot"></div>
+<div class="print-sheet" id="printSheet"></div>
+
+<footer>BIZ-OMICS &middot; Starter Bank &middot; AQA A-level Business (7137/7138)</footer>
+
+<script>
+/* ============ DATA ============ */
+/* type keys: tf | mistake | odd | def | fit | calc */
+/* odd vs fit are deliberately different cognitive tasks, not two labels for the
+   same "3 fit a category, 1 doesn't" format:
+   - odd:  deliberately contestable. Students justify a classification, and a
+           defensible case can sometimes be made for more than one answer.
+   - fit:  one diagnostically correct answer, turning on a precise
+           conceptual/spec distinction — not up for debate. */
+const TYPE_LABELS = {
+  tf:      { text: "True / False",           color: "var(--tf)",   hint: "Decide true or false, then explain why" },
+  mistake: { text: "Spot the Mistake",       color: "var(--red)",  hint: "Find the error and correct it" },
+  odd:     { text: "Odd One Out",            color: "var(--purple)", hint: "Justify your choice \u2014 more than one answer may be defensible" },
+  def:     { text: "Quick Fire Definition",  color: "var(--def)",  hint: "State the precise definition" },
+  fit:     { text: "Which Doesn't Fit",      color: "var(--fit)",  hint: "Exactly one is wrong \u2014 pin down the precise distinction" },
+  calc:    { text: "Correct the Calculation",color: "var(--calc)", hint: "Find the numerical error and correct it" }
+};
+
+const DATA = {
+  "3.1.1": { unit:"u1", name:"3.1.1 Business and objectives", qs:[
+    { type:"tf", q:"A sole trader has unlimited liability for their business's debts.", a:"True \u2014 as a sole trader there's no legal separation between the owner and the business, so personal assets can be used to cover business debts." },
+    { type:"tf", q:"SMART objectives stand for Specific, Measurable, Achievable, Realistic, Time-specific.", a:"False (on this spec) \u2014 AQA's version is Specific, Measurable, Accountable, Realistic, Time-specific. Watch for the swap from 'Achievable' to 'Accountable'." },
+    { type:"mistake", q:"\u201CA business plan's only purpose is to secure a bank loan, so it doesn't need updating once trading has started.\u201D Spot the mistake.", a:"A business plan has wider purpose and value than just raising finance \u2014 it clarifies objectives, direction and resource needs \u2014 and should be treated as a living document, reviewed and updated as circumstances change." },
+    { type:"odd", q:"Odd one out (justify your answer): Risk taker &middot; Resilient &middot; Cautious &middot; Innovative", a:"Cautious. The other three are entrepreneurial characteristics named in the spec (risk taker, resilient, focused, passionate, innovative, adaptable) \u2014 caution runs against the risk-taking trait typically associated with entrepreneurship. There's little genuine room for a defensible alternative here \u2014 a good one to check students can both spot AND explain the mismatch, not just guess." },
+    { type:"def", q:"Define: Opportunity cost", a:"The value of the next best alternative given up when a decision is made." },
+    { type:"fit", q:"Which of these is NOT one of the spec's listed influences on business decisions? Objectives &middot; Risk &middot; Market conditions &middot; Weather", a:"Weather. The spec lists objectives, risk, reward, resources, market conditions, ethics and opportunity costs as influences on business decisions." },
+    { type:"tf", q:"Financial and non-financial objectives can both be reasons why someone sets up in business.", a:"True." },
+    { type:"tf", q:"Ethical dilemmas in business decision-making can involve a trade-off between profit and doing what's ethically right.", a:"True." },
+    { type:"tf", q:"A business plan typically sets out a business's objectives, target market and financial forecasts.", a:"True." },
+    { type:"mistake", q:"\u201CRisk and reward are unrelated to each other when a business makes a decision.\u201D Spot the mistake.", a:"Risk and reward are closely linked in business decision-making \u2014 generally, higher potential rewards come with higher risk, and businesses must weigh this trade-off, not treat the two as unconnected." },
+    { type:"mistake", q:"\u201COpportunity cost only applies to financial decisions, such as spending money.\u201D Spot the mistake.", a:"Opportunity cost applies to ANY decision involving scarce resources \u2014 including time and effort \u2014 not just financial spending decisions." },
+    { type:"mistake", q:"\u201CAll entrepreneurs are motivated purely by financial reasons for setting up in business.\u201D Spot the mistake.", a:"The spec recognises both financial AND non-financial reasons for setting up in business (e.g. independence, passion, filling a gap in the market) \u2014 not purely financial motives." },
+    { type:"mistake", q:"\u201CBusiness objectives don't need to be reviewed once they are set; they should remain fixed for the life of the business.\u201D Spot the mistake.", a:"Objectives should be reviewed and can change as circumstances, market conditions or the stage of business growth change \u2014 effective objective-setting is an ongoing process, not a one-off fixed decision." },
+    { type:"odd", q:"Odd one out (justify your answer): Sole trader &middot; Partnership &middot; Private limited company &middot; Franchise", a:"Most defensible answer: Franchise \u2014 a method/model of operating and growing a business, not itself a legal form of ownership the way the other three are. But a student could instead argue Sole trader is the odd one, since it's the only option with no separate legal identity or shared ownership at all \u2014 unlike a partnership (shared ownership), a private limited company (separate legal entity) or a franchise (operates under another company's brand/systems). Credit either if well justified." },
+    { type:"odd", q:"Odd one out (justify your answer): Business plan &middot; Objectives &middot; Opportunity cost &middot; Franchise agreement", a:"Most defensible answer: Franchise agreement \u2014 a specific contractual arrangement, not a general planning/decision-making concept like the other three. A student could instead argue Opportunity cost is the odd one, since it's an economic concept used IN decision-making, whereas the other three are documents/structures a business creates or enters into." },
+    { type:"odd", q:"Odd one out (justify your answer): Financial reward &middot; Independence &middot; Passion for an idea &middot; Market share", a:"Market share \u2014 a business performance metric, not a personal reason for setting up in business. Little room for a defensible alternative: the other three are precisely the spec's named financial/non-financial motives." },
+    { type:"odd", q:"Odd one out (justify your answer): SMART objectives &middot; Ethical dilemmas &middot; Business plan &middot; Dividend yield", a:"Dividend yield \u2014 a financial ratio relating to shareholder returns, not a concept related to setting business direction. Little room for a defensible alternative: the other three all relate to how and why a business plans its direction." },
+    { type:"def", q:"Define: Business objectives", a:"The specific, measurable goals a business sets to achieve its overall purpose, providing direction and a means of measuring performance." },
+    { type:"def", q:"Define: Ethical dilemma (in a business context)", a:"A situation where a business must choose between courses of action, where doing what is profitable may conflict with doing what is considered morally right." },
+    { type:"def", q:"Define: Risk (in business decision-making)", a:"The possibility that the outcome of a business decision will differ from what was expected, potentially resulting in a loss as well as a gain." },
+    { type:"def", q:"Define: Entrepreneur", a:"An individual who identifies a business opportunity, takes on the risk of setting up and running a business, and organises resources to pursue it." },
+    { type:"fit", q:"Which of these is a NON-FINANCIAL reason for setting up in business, according to the spec? Maximising profit &middot; Achieving independence &middot; Increasing market share &middot; Increasing dividend payments", a:"Achieving independence." },
+    { type:"fit", q:"Which of these is NOT one of the spec's named characteristics of an entrepreneur? Risk taker &middot; Resilient &middot; Passionate &middot; Cautious", a:"Cautious." },
+    { type:"fit", q:"Which of these is the purpose of a business plan, according to the spec? To guarantee business success &middot; To help clarify objectives, direction and resource needs &middot; To replace the need for setting objectives &middot; To avoid all business risk", a:"To help clarify objectives, direction and resource needs." },
+    { type:"fit", q:"Which of these best completes the SMART framework as defined on this spec: Specific, Measurable, ___, Realistic, Time-specific? Achievable &middot; Accountable &middot; Ambitious &middot; Actionable", a:"Accountable \u2014 this spec uses 'Accountable', not the more commonly seen 'Achievable'." },
+    { type:"calc", q:"An entrepreneur gives up a \u00a335,000-a-year salaried job to start a business. A student says the opportunity cost of this decision is \u00a30, since the entrepreneur will earn money from the new business instead. Correct it.", a:"The opportunity cost is the value of the best alternative given up \u2014 here, the \u00a335,000 salary foregone \u2014 not \u00a30. Even if the new business earns money, the opportunity cost is still measured by what was given up, not eliminated by starting a new income stream." }
+  ]},
+  "3.1.2": { unit:"u1", name:"3.1.2 Forms of business and stakeholders", qs:[
+    { type:"tf", q:"Shareholders in a private limited company (Ltd) have unlimited liability.", a:"False \u2014 Ltd and plc shareholders have limited liability; they can only lose what they invested, not their personal assets." },
+    { type:"mistake", q:"\u201CA private limited company (Ltd) can sell its shares to the general public on the stock exchange.\u201D Spot the mistake.", a:"Only a public limited company (plc) can offer shares for sale to the general public on a stock exchange \u2014 an Ltd's shares are privately held and can't be freely traded that way." },
+    { type:"odd", q:"Odd one out (justify your answer): Sole trader &middot; Partnership &middot; plc &middot; Employee", a:"Most defensible answer: Employee \u2014 an internal stakeholder, not a form of business ownership like the other three. A student could instead argue Sole trader is the odd one, since it's the only form with no separate legal identity or shared ownership at all, unlike a partnership (shared ownership), a plc (separate legal entity with public shareholders), or, arguably, an employee's relationship to any of these structures." },
+    { type:"def", q:"Define: Dividend yield", a:"Dividend per share \u00f7 Share price, expressed as a percentage \u2014 it measures the return to a shareholder relative to the current share price." },
+    { type:"calc", q:"A company has 500,000 issued shares and a share price of \u00a34. A student calculates market capitalisation as \u00a34 \u00f7 500,000 = \u00a30.000008. Correct it.", a:"Market capitalisation = Number of issued shares \u00d7 Current share price = 500,000 \u00d7 \u00a34 = \u00a32,000,000. The student divided instead of multiplied." },
+    { type:"fit", q:"Which of these is an EXTERNAL stakeholder rather than an internal one? Employee &middot; Shareholder &middot; Supplier &middot; Owner", a:"Supplier. Internal stakeholders are employees and owners/shareholders; external stakeholders include customers, suppliers, other creditors, the community and government." },
+    { type:"tf", q:"A plc's shares can be bought and sold freely by members of the public on a stock exchange.", a:"True." },
+    { type:"mistake", q:"\u201COwners of an ordinary partnership always have limited liability for the business's debts.\u201D Spot the mistake.", a:"In an ordinary partnership, partners generally have UNLIMITED liability (unless it's specifically a limited liability partnership), meaning personal assets can be used to cover business debts." },
+    { type:"odd", q:"Odd one out (justify your answer): Ltd &middot; plc &middot; Co-operative &middot; Dividend", a:"Most defensible answer: Dividend \u2014 a payment made to shareholders, not itself a form of business ownership like the other three. A student could instead argue Co-operative is the odd one, since unlike Ltd and plc it isn't primarily structured around external shareholders seeking profit, but around member ownership and shared benefit." },
+    { type:"def", q:"Define: Unlimited liability", a:"When a business owner is personally responsible for all the debts of the business, meaning personal assets (beyond what was invested) can be used to pay off business debts." },
+    { type:"fit", q:"Which of these business forms would typically have the MOST difficulty raising large amounts of finance by selling shares? Sole trader &middot; Private limited company &middot; Public limited company &middot; A large multinational plc", a:"Sole trader \u2014 a sole trader cannot issue or sell shares at all." }
+  ]},
+  "3.1.3": { unit:"u1", name:"3.1.3 Marketing management", qs:[
+    { type:"tf", q:"Primary market research involves collecting data that already exists, such as government reports.", a:"False \u2014 that describes secondary research. Primary research involves collecting new, first-hand data, e.g. surveys or interviews." },
+    { type:"tf", q:"A niche market strategy targets a small, specific segment of a larger market.", a:"True." },
+    { type:"mistake", q:"\u201CIf demand for a product is price inelastic, a small percentage rise in price will cause a larger percentage fall in demand, reducing revenue.\u201D Spot the mistake.", a:"With inelastic demand, a percentage change in price causes a SMALLER percentage change in quantity demanded \u2014 so a price rise would actually increase total revenue, not reduce it." },
+    { type:"odd", q:"Odd one out (justify your answer): Penetration pricing &middot; Price skimming &middot; Dynamic pricing &middot; Break-even pricing", a:"Most defensible answer: Break-even pricing \u2014 not one of the spec's named pricing methods; it's a separate financial concept. A student could instead argue Dynamic pricing is the odd one, since penetration and skimming are strategic, longer-term positioning choices made in advance, while dynamic pricing is a real-time, often algorithm-driven method \u2014 a genuinely different kind of decision." },
+    { type:"def", q:"Define: Market share", a:"(Sales of one product, brand or business \u00f7 Total sales in the market) \u00d7 100." },
+    { type:"calc", q:"A product's sales were \u00a3120,000 last year and \u00a3150,000 this year. A student calculates market growth as \u00a3150,000 \u2212 \u00a3120,000 = \u00a330,000. Correct it.", a:"Market growth is a percentage: (Change in market size \u00f7 Original size) \u00d7 100 = (\u00a330,000 \u00f7 \u00a3120,000) \u00d7 100 = 25%. The student left it as a raw \u00a3 change instead of converting to %." },
+    { type:"fit", q:"Which of these is NOT one of the spec's four bases for market segmentation? Demographic &middot; Geographic &middot; Psychographic &middot; Financial", a:"Financial. The spec's four bases are demographic, geographic, psychographic and behavioural." },
+    { type:"mistake", q:"\u201CQuantitative market research data includes things like customer opinions and feelings about a brand, expressed in their own words.\u201D Spot the mistake.", a:"That describes QUALITATIVE data. Quantitative data is numerical, measurable data (e.g. sales figures, survey ratings) \u2014 not opinions expressed in words." },
+    { type:"odd", q:"Odd one out (justify your answer): Primary research &middot; Secondary research &middot; Market segmentation &middot; Qualitative data", a:"Most defensible answer: Market segmentation \u2014 a way of dividing up a market, not a research method or data type like the other three. A student could instead argue Qualitative data is the odd one, since primary/secondary research and segmentation are all about HOW information is gathered or a market is divided, while qualitative data describes the NATURE of the information itself." },
+    { type:"def", q:"Define: Market mapping", a:"A visual tool used to position competing products or brands against two key characteristics (e.g. price and quality), helping identify gaps in a market." },
+    { type:"fit", q:"Which of these describes 'price skimming'? Setting a high initial price and lowering it over time &middot; Setting a low initial price to gain market share quickly &middot; Charging different prices to different customer groups &middot; Setting price based on what competitors charge", a:"Setting a high initial price and lowering it over time." }
+  ]},
+  "3.1.4": { unit:"u1", name:"3.1.4 Financial management", qs:[
+    { type:"tf", q:"Contribution per unit = Selling price \u2212 Variable cost per unit.", a:"True." },
+    { type:"tf", q:"Retained profit is an example of an external source of finance.", a:"False \u2014 retained profit is generated by the business itself, so it's an internal source of finance." },
+    { type:"mistake", q:"\u201CBreak-even output is calculated as Fixed costs \u00d7 Contribution per unit.\u201D Spot the mistake.", a:"Break-even output = Fixed costs \u00f7 Contribution per unit \u2014 the operation should be division, not multiplication." },
+    { type:"odd", q:"Odd one out (justify your answer): Trade credit &middot; Overdraft &middot; Retained profits &middot; Business angels", a:"Retained profits \u2014 it's an internal source of finance; the other three are external sources. Little room for a defensible alternative: this is a clean internal-vs-external split." },
+    { type:"def", q:"Define: Margin of safety", a:"Actual level of output minus break-even level of output \u2014 it shows how far sales can fall before the business starts making a loss." },
+    { type:"calc", q:"A product sells for \u00a350 with variable costs of \u00a330 per unit. Fixed costs are \u00a340,000. A student calculates break-even output as \u00a340,000 \u00f7 \u00a350 = 800 units. Correct it.", a:"Break-even output = Fixed costs \u00f7 Contribution per unit. Contribution per unit = \u00a350 \u2212 \u00a330 = \u00a320. Break-even = \u00a340,000 \u00f7 \u00a320 = 2,000 units. The student divided by selling price instead of contribution per unit." },
+    { type:"fit", q:"Which of these is NOT a current asset used in the current ratio calculation? Inventory &middot; Receivables &middot; Cash &middot; Non-current liabilities", a:"Non-current liabilities \u2014 that's a liability, not a current asset." },
+    { type:"mistake", q:"\u201CGross profit and operating profit are the same thing.\u201D Spot the mistake.", a:"Gross profit = Revenue \u2212 Cost of sales. Operating profit = Gross profit \u2212 Operating expenses. They're different stages of the income statement, not the same figure." },
+    { type:"odd", q:"Odd one out (justify your answer): Gross profit margin &middot; Operating profit margin &middot; Current ratio &middot; ROCE", a:"Most defensible answer: Current ratio \u2014 a measure of liquidity, whereas the other three measure profitability. A student could instead argue ROCE is the odd one, since gross/operating profit margin only use income statement figures, while ROCE also draws on the statement of financial position (capital employed) \u2014 a genuinely different calculation basis." },
+    { type:"def", q:"Define: Liquidity", a:"A business's ability to meet its short-term debts as they fall due, typically assessed using measures like the current ratio and acid test ratio." },
+    { type:"fit", q:"Which of these would improve a business's cash flow position? Shortening the time customers take to pay &middot; Increasing the time customers take to pay &middot; Reducing the overdraft facility available &middot; Paying suppliers earlier than necessary", a:"Shortening the time customers take to pay." }
+  ]},
+  "3.2.1": { unit:"u2", name:"3.2.1 People management", qs:[
+    { type:"tf", q:"An autocratic leader makes decisions unilaterally with little employee input.", a:"True." },
+    { type:"tf", q:"A flat organisational structure typically has a wide span of control and few levels of hierarchy.", a:"True." },
+    { type:"mistake", q:"\u201CAccording to Herzberg, pay is a strong motivator that directly increases job satisfaction.\u201D Spot the mistake.", a:"Herzberg classed pay as a hygiene factor \u2014 inadequate pay can cause dissatisfaction, but more pay doesn't itself act as a motivator/increase satisfaction. True motivators are things like achievement, recognition and responsibility." },
+    { type:"odd", q:"Odd one out (justify your answer): Wages &middot; Salaries &middot; Commission &middot; Empowerment", a:"Empowerment \u2014 a non-financial method of reward; the other three are financial. Little room for a defensible alternative: this is a clean financial-vs-non-financial split." },
+    { type:"def", q:"Define: Span of control", a:"The number of subordinates directly managed by one manager or supervisor." },
+    { type:"fit", q:"Which of these is NOT part of Maslow's hierarchy of needs? Physiological &middot; Safety &middot; Belonging &middot; Competition", a:"Competition. Maslow's hierarchy runs physiological, safety, belonging/social, esteem, self-actualisation." },
+    { type:"mistake", q:"\u201CA tall organisational structure has few levels of hierarchy and a wide span of control.\u201D Spot the mistake.", a:"A tall structure has MANY levels of hierarchy and a NARROW span of control. The description given actually matches a flat structure." },
+    { type:"odd", q:"Odd one out (justify your answer): Recruitment &middot; Training &middot; Redundancy &middot; Span of control", a:"Most defensible answer: Span of control \u2014 a feature of organisational structure, not a human resource planning activity like the other three. A student could instead argue Redundancy is the odd one, since recruitment and training are about GROWING/developing the workforce, while redundancy is about REDUCING it \u2014 genuinely opposite purposes." },
+    { type:"def", q:"Define: Employee engagement", a:"The level of enthusiasm, commitment and emotional connection an employee feels towards their work and the organisation they work for." },
+    { type:"fit", q:"Which leadership style involves making decisions with significant input and consultation from employees? Autocratic &middot; Democratic &middot; Transformational &middot; Laissez-faire", a:"Democratic." }
+  ]},
+  "3.2.2": { unit:"u2", name:"3.2.2 Operations management", qs:[
+    { type:"tf", q:"Just in time (JIT) inventory management involves holding large stocks of inventory as a buffer.", a:"False \u2014 that describes just in case. JIT holds minimal inventory, with materials arriving as needed." },
+    { type:"mistake", q:"\u201CCapacity utilisation is calculated as Maximum possible output \u00f7 Actual output \u00d7 100.\u201D Spot the mistake.", a:"Capacity utilisation = (Actual output \u00f7 Maximum possible output) \u00d7 100 \u2014 the student has the fraction upside down." },
+    { type:"odd", q:"Odd one out (justify your answer): Quality control &middot; Quality assurance &middot; Total Quality Management &middot; Market mapping", a:"Most defensible answer: Market mapping \u2014 a marketing research tool, not a quality method. A student could instead argue Total Quality Management is the odd one, since quality control and quality assurance are narrowly about checking for and preventing defects, while TQM is a broader organisation-wide philosophy \u2014 a different scope." },
+    { type:"def", q:"Define: Lean production", a:"An approach focused on minimising waste of time, materials and effort throughout production \u2014 e.g. through JIT, kaizen and standardised processes \u2014 while maintaining quality." },
+    { type:"calc", q:"A factory's maximum output is 10,000 units/month; it produces 7,500. A student calculates capacity utilisation as 7,500 \u2212 10,000 = \u22122,500%. Correct it.", a:"Capacity utilisation = (Actual output \u00f7 Maximum possible output) \u00d7 100 = (7,500 \u00f7 10,000) \u00d7 100 = 75%." },
+    { type:"fit", q:"Which of these is NOT one of the spec's three types of economies of scale? Technical &middot; Purchasing &middot; Financial &middot; Geographic", a:"Geographic. The spec names technical, purchasing and financial economies of scale." },
+    { type:"tf", q:"Improving employee productivity is one way a business can increase its efficiency.", a:"True." },
+    { type:"mistake", q:"\u201CJust in case (JIC) inventory management means holding minimal inventory, with materials arriving only when needed.\u201D Spot the mistake.", a:"That describes JUST IN TIME. Just in case involves holding LARGER buffer stocks of inventory in case of unexpected demand or supply disruption." },
+    { type:"odd", q:"Odd one out (justify your answer): Kaizen &middot; Just in time &middot; Quality circles &middot; Supply chain", a:"Most defensible answer: Supply chain \u2014 a broader network/system, not a specific lean production technique like the other three. A student could instead argue Quality circles is the odd one, since Kaizen and JIT are primarily about efficiency/waste reduction, while quality circles are specifically about employee-led problem solving \u2014 a different underlying purpose." },
+    { type:"def", q:"Define: Capacity utilisation", a:"The extent to which a business is using its maximum possible output, calculated as (Actual output \u00f7 Maximum possible output) \u00d7 100." },
+    { type:"fit", q:"Which of these would be classed as a diseconomy of scale rather than an economy of scale? Communication difficulties as a business grows larger &middot; Bulk-buying discounts from suppliers &middot; Access to cheaper finance &middot; Specialisation of labour reducing unit costs", a:"Communication difficulties as a business grows larger." }
+  ]},
+  "3.2.3": { unit:"u2", name:"3.2.3 Managing business culture (A-level)", qs:[
+    { type:"tf", q:"Business culture can be influenced by leadership style and reward systems.", a:"True \u2014 the spec also lists leadership/employee values, mission, organisational structure and customer expectations as influences." },
+    { type:"def", q:"Define: Business culture", a:"The shared values, attitudes and ways of working that characterise a business's employees and shape how things get done." },
+    { type:"mistake", q:"\u201CChanging an established business culture is quick and straightforward, with no resistance from employees.\u201D Spot the mistake.", a:"Changing culture is typically difficult \u2014 it's deeply embedded in employee attitudes and behaviours, so it usually faces challenges and resistance and takes time." },
+    { type:"odd", q:"Odd one out (justify your answer): Mission &middot; Leadership style &middot; Reward systems &middot; Exchange rates", a:"Exchange rates \u2014 an external economic factor, not one of the spec's listed influences on business culture. Little room for a defensible alternative: the other three are all internal, spec-named influences." },
+    { type:"tf", q:"Organisational structure can be one of the factors influencing a business's culture, according to the spec.", a:"True." },
+    { type:"mistake", q:"\u201CA positive business culture has no real impact on a business's competitiveness.\u201D Spot the mistake.", a:"The spec explicitly recognises that business culture affects competitiveness \u2014 a positive culture can improve staff motivation, retention and performance, giving a business a real competitive advantage." },
+    { type:"odd", q:"Odd one out (justify your answer): Mission &middot; Customer expectations &middot; Organisational structure &middot; Break-even output", a:"Most defensible answer: Break-even output \u2014 a financial/quantitative concept, unrelated to the spec's listed influences on business culture. A student could instead argue Customer expectations is the odd one, since mission and structure are INTERNAL to the business, whereas customer expectations is an EXTERNAL influence on culture." },
+    { type:"def", q:"Define: Organisational structure", a:"The way a business is organised in terms of levels of hierarchy, spans of control and lines of authority and communication." },
+    { type:"fit", q:"Which of these is an INTERNAL influence on business culture, according to the spec? Customer expectations &middot; Leadership style &middot; Government regulation &middot; Exchange rates", a:"Leadership style." },
+    { type:"fit", q:"Which of these would be a likely CHALLENGE of changing an established business culture? Immediate acceptance by all employees &middot; Resistance from employees used to the existing culture &middot; No need for strong leadership &middot; Guaranteed short-term success", a:"Resistance from employees used to the existing culture." }
+  ]},
+  "3.3.1": { unit:"u3", name:"3.3.1 Business and society", qs:[
+    { type:"tf", q:"The Triple Bottom Line framework considers People, Planet and Profit.", a:"True." },
+    { type:"mistake", q:"\u201CGreenwashing means genuinely improving a business's environmental performance and communicating this honestly.\u201D Spot the mistake.", a:"Greenwashing means falsely presenting a business as more environmentally friendly than it really is \u2014 it's PR/spin, not genuine CSR." },
+    { type:"odd", q:"Odd one out (justify your answer): Environmental sustainability &middot; Social sustainability &middot; Economic sustainability &middot; Competitive sustainability", a:"Competitive sustainability \u2014 not one of the spec's three types (environmental, social, economic). Little room for a defensible alternative: the other three form a complete, precisely named set." },
+    { type:"def", q:"Define: Corporate Social Responsibility (CSR)", a:"A business's voluntary commitment to operate ethically and contribute positively to society and the environment, beyond what's legally required." },
+    { type:"fit", q:"Which of these is NOT a level of Carroll's CSR pyramid? Economic &middot; Legal &middot; Ethical &middot; Promotional", a:"Promotional. Carroll's pyramid runs economic, legal, ethical, philanthropic." },
+    { type:"tf", q:"A shareholder approach to business prioritises maximising returns for shareholders, while a stakeholder approach considers the interests of a wider range of groups.", a:"True." },
+    { type:"mistake", q:"\u201CEconomic sustainability means a business focuses only on protecting the environment.\u201D Spot the mistake.", a:"Economic sustainability is about long-term profitability without exploiting resources or people. Protecting the environment specifically is ENVIRONMENTAL sustainability \u2014 a related but different element of the Triple Bottom Line." },
+    { type:"odd", q:"Odd one out (justify your answer): CSR &middot; ESG reporting &middot; Triple Bottom Line &middot; Market capitalisation", a:"Most defensible answer: Market capitalisation \u2014 a measure of a company's stock market value, unrelated to social/environmental responsibility frameworks. A student could instead argue ESG reporting is the odd one, since CSR and the Triple Bottom Line are broader philosophies a business can adopt, while ESG reporting is specifically a measurement and disclosure practice." },
+    { type:"def", q:"Define: Greenwashing", a:"When a business falsely presents itself as more environmentally friendly than it actually is, often as a PR exercise rather than genuine environmental action." },
+    { type:"fit", q:"Which level of Carroll's CSR pyramid is typically considered the base/most fundamental? Economic &middot; Legal &middot; Ethical &middot; Philanthropic", a:"Economic." }
+  ]},
+  "3.3.2": { unit:"u3", name:"3.3.2 Business and the external environment", qs:[
+    { type:"tf", q:"Porter's Five Forces includes the threat of new entrants and the threat of substitutes.", a:"True \u2014 alongside rivalry, buyer power and supplier power." },
+    { type:"mistake", q:"\u201CIf a currency appreciates, this makes a country's exports cheaper for foreign buyers.\u201D Spot the mistake.", a:"Appreciation makes exports MORE expensive for foreign buyers (and imports cheaper). It's depreciation that makes exports cheaper." },
+    { type:"odd", q:"Odd one out (justify your answer): Buyer power &middot; Supplier power &middot; Rivalry &middot; Market capitalisation", a:"Market capitalisation \u2014 a financial measure, not one of Porter's five forces. Little room for a defensible alternative: the other three are precisely three of the five named forces." },
+    { type:"def", q:"Define: Protectionism", a:"Policies used by a government to restrict imports and protect domestic industry, e.g. tariffs, quotas and trade regulations." },
+    { type:"fit", q:"Which of these is NOT one of Porter's five forces? Rivalry &middot; Buyer power &middot; Entry threat &middot; Employee turnover", a:"Employee turnover \u2014 that's an HR measure, not one of the five forces." },
+    { type:"tf", q:"A rise in interest rates would generally be expected to reduce consumer spending, all else equal.", a:"True." },
+    { type:"mistake", q:"\u201CA tariff is a limit on the physical quantity of a good that can be imported.\u201D Spot the mistake.", a:"A tariff is a TAX on imports, raising their price. A limit on the physical quantity that can be imported is a QUOTA \u2014 a different protectionist measure." },
+    { type:"odd", q:"Odd one out (justify your answer): Economic growth &middot; Inflation &middot; Unemployment rate &middot; Entry threat", a:"Most defensible answer: Entry threat \u2014 one of Porter's Five Forces (competitive environment), not an economic indicator like the other three. A student could instead argue Inflation is the odd one, since economic growth and unemployment both measure the real economy/output, while inflation measures the price level specifically." },
+    { type:"def", q:"Define: Exchange rate", a:"The price of one currency expressed in terms of another currency." },
+    { type:"fit", q:"Which of these describes a depreciation of a currency? The currency becomes worth MORE relative to other currencies &middot; The currency becomes worth LESS relative to other currencies &middot; The currency's value stays exactly the same &middot; The currency is replaced by a new currency", a:"The currency becomes worth LESS relative to other currencies." }
+  ]},
+  "3.3.3": { unit:"u3", name:"3.3.3 Strategy", qs:[
+    { type:"tf", q:"Market penetration on the Ansoff Matrix involves selling existing products into new markets.", a:"False \u2014 that describes market development. Market penetration is existing products in existing markets." },
+    { type:"mistake", q:"\u201CThe average rate of return (ARR) accounts for the time value of money.\u201D Spot the mistake.", a:"ARR does NOT account for the time value of money \u2014 that's what net present value (NPV) is for, using discount factors." },
+    { type:"odd", q:"Odd one out (justify your answer): Market penetration &middot; Market development &middot; Product development &middot; SWOT analysis", a:"SWOT analysis \u2014 a strategic planning tool, not one of the four Ansoff Matrix strategies. Little room for a defensible alternative: the other three are precisely three of the named four." },
+    { type:"def", q:"Define: Strategic drift", a:"When a business's strategy gradually fails to keep pace with a changing external environment, eroding its competitiveness over time." },
+    { type:"calc", q:"A project costs \u00a350,000 and returns \u00a315,000 a year. A student calculates payback as \u00a350,000 \u00f7 \u00a315,000 = 0.3 years. Correct it.", a:"\u00a350,000 \u00f7 \u00a315,000 = 3.33 years \u2014 the student inverted the division." },
+    { type:"fit", q:"Which of these is NOT a form of integration named in the spec? Vertical &middot; Horizontal &middot; Conglomerate &middot; Lateral", a:"Lateral. The spec names vertical (backward/forward), horizontal and conglomerate integration." },
+    { type:"tf", q:"SWOT analysis considers a business's internal Strengths and Weaknesses alongside external Opportunities and Threats.", a:"True." },
+    { type:"mistake", q:"\u201CMarket penetration on the Ansoff Matrix involves developing a new product for an existing market.\u201D Spot the mistake.", a:"That describes PRODUCT DEVELOPMENT. Market penetration involves selling EXISTING products into EXISTING markets, typically to increase market share." },
+    { type:"odd", q:"Odd one out (justify your answer): Payback period &middot; Average rate of return &middot; Net present value &middot; Stakeholder mapping", a:"Most defensible answer: Stakeholder mapping \u2014 a tool for understanding stakeholder power/interest, not an investment appraisal technique like the other three. A student could instead argue Net present value is the odd one, since payback and ARR don't account for the time value of money, while NPV specifically does \u2014 a genuinely different calculation basis from the other two." },
+    { type:"def", q:"Define: Positioning (in a strategic context)", a:"How a business's product or brand is perceived by customers relative to competitors, typically in terms of price and quality/benefits offered." },
+    { type:"fit", q:"Which of these is an example of external (inorganic) growth, rather than internal (organic) growth? A business acquiring a competitor &middot; A business opening a new store using its own funds &middot; A business increasing output at an existing factory &middot; A business investing retained profit in R&D", a:"A business acquiring a competitor." }
+  ]},
+  "3.3.4": { unit:"u3", name:"3.3.4 Change", qs:[
+    { type:"tf", q:"Lewin's Force Field Analysis considers driving forces and restraining forces for change.", a:"True." },
+    { type:"mistake", q:"\u201CCybersecurity risk is just a subcategory of financial risk, not a separate risk type, according to the spec.\u201D Spot the mistake.", a:"The spec lists cybersecurity risk as its own distinct category, alongside financial, strategic, operational, compliance and reputational risk." },
+    { type:"odd", q:"Odd one out (justify your answer): Scenario planning &middot; Agile business development &middot; Force Field Analysis &middot; Dividend yield", a:"Most defensible answer: Dividend yield \u2014 a financial ratio, not a way of managing change or uncertainty. A student could instead argue Force Field Analysis is the odd one, since scenario planning and agile business development are broader strategic approaches/philosophies, while Force Field Analysis is a specific analytical technique \u2014 a different level of generality." },
+    { type:"def", q:"Define: Contingency planning", a:"Preparing plans in advance for how a business would respond to potential future risks or crises." },
+    { type:"fit", q:"Which of these is NOT one of Kotter and Schlesinger's reasons for resistance to change? Misunderstanding &middot; Parochial self-interest &middot; Low tolerance to change &middot; High staff morale", a:"High staff morale \u2014 that would reduce resistance, not cause it." },
+    { type:"tf", q:"Reputational risk is one of the specific types of risk named in the spec, alongside financial, strategic, operational, compliance and cybersecurity risk.", a:"True." },
+    { type:"mistake", q:"\u201CScenario planning is a way of managing risk, not uncertainty.\u201D Spot the mistake.", a:"The spec categorises scenario planning as a way of managing UNCERTAINTY, distinct from ways of managing RISK (like insurance or contingency planning), where outcomes can be assessed with reasonable probability." },
+    { type:"odd", q:"Odd one out (justify your answer): Cybersecurity risk &middot; Reputational risk &middot; Compliance risk &middot; Agile business", a:"Most defensible answer: Agile business \u2014 an organisational approach to managing uncertainty, not itself a type of risk like the other three. A student could instead argue Compliance risk is the odd one, since cybersecurity and reputational risk both relate to threats that can emerge unpredictably from outside the business, while compliance risk specifically relates to the business's own adherence to laws and regulations." },
+    { type:"def", q:"Define: Force Field Analysis", a:"A tool developed by Lewin used to identify and weigh up the driving forces for change against the restraining forces against it, to assess the likelihood of successful change." },
+    { type:"fit", q:"Which of these is a typical benefit of successfully managing organisational change? Improved competitiveness &middot; Guaranteed employee satisfaction &middot; Elimination of all business risk &middot; No need for future change", a:"Improved competitiveness." }
+  ]},
+  "synoptic": { unit:"synoptic", name:"Synoptic", qs:[
+    { type:"tf", q:"A rise in employee turnover could increase a business's unit costs, due to more time spent recruiting and training.", a:"True \u2014 a good example of an HR issue feeding through into an operations/finance measure." },
+    { type:"mistake", q:"\u201CBreak-even analysis is only relevant to finance and has no link to marketing or operations decisions.\u201D Spot the mistake.", a:"Break-even links to marketing (pricing affects contribution per unit) and operations (output/capacity decisions) \u2014 a good example of the interrelated nature of business activities." },
+    { type:"odd", q:"Odd one out (justify your answer): ROCE &middot; Employee productivity &middot; Gearing &middot; Dividend yield", a:"Employee productivity \u2014 an HR/operations measure; the other three are financial ratios. Little room for a defensible alternative: this is a clean financial-vs-non-financial split." },
+    { type:"calc", q:"Fixed costs are \u00a380,000, contribution per unit is \u00a320, and the business sells 5,000 units. A student calculates margin of safety as 5,000 \u2212 80,000 = \u221275,000 units. Correct it.", a:"First find break-even output: \u00a380,000 \u00f7 \u00a320 = 4,000 units. Margin of safety = Actual output \u2212 Break-even output = 5,000 \u2212 4,000 = 1,000 units. The student subtracted the fixed cost figure directly instead of the break-even output." },
+    { type:"tf", q:"Increasing capacity utilisation by taking on more orders will typically reduce a business's unit costs, since fixed costs are spread over a greater output.", a:"True \u2014 an operations decision with a direct financial effect on average cost." },
+    { type:"mistake", q:"\u201CA business considering vertical backward integration with a key supplier is purely an operations decision, with no link to its financial risk.\u201D Spot the mistake.", a:"Integrating with a supplier requires investment (a finance decision affecting cash flow and gearing) and changes the business's risk exposure \u2014 it links finance, operations and strategic risk, not operations alone." },
+    { type:"odd", q:"Odd one out (justify your answer): Ansoff Matrix &middot; Porter's Five Forces &middot; SWOT analysis &middot; Break-even analysis", a:"Most defensible answer: Break-even analysis \u2014 a financial/quantitative technique; the other three are strategic analysis frameworks. A student could instead argue SWOT analysis is the odd one, since Ansoff and Porter's Five Forces are both structured MODELS with fixed named categories, while SWOT is a more open FRAMEWORK the user populates freely \u2014 a weaker but arguable distinction." },
+    { type:"def", q:"Define: Stakeholder mapping", a:"A tool used to plot stakeholders according to their power and interest, helping a business decide how to manage and prioritise their differing expectations." },
+    { type:"calc", q:"A business's operating profit is \u00a3120,000 and its capital employed is \u00a3600,000. A student calculates ROCE as \u00a3600,000 \u00f7 \u00a3120,000 \u00d7 100 = 500%. Correct it.", a:"ROCE = Operating profit \u00f7 Capital employed \u00d7 100 = \u00a3120,000 \u00f7 \u00a3600,000 \u00d7 100 = 20%. The student inverted the fraction." },
+    { type:"fit", q:"Which of these would NOT directly change a business's break-even output? Cutting variable cost per unit &middot; Raising the selling price &middot; Reducing fixed costs &middot; Improving employee morale, with nothing else changing", a:"Improving employee morale on its own \u2014 unless it also changes costs, price or productivity, morale alone doesn't shift any term in the break-even formula." },
+    { type:"def", q:"Define: Diseconomies of scale", a:"The disadvantages a business can experience as it grows too large, causing average (unit) costs to rise, e.g. due to communication or coordination difficulties." },
+    { type:"fit", q:"Which of these decisions would draw together knowledge from BOTH marketing and finance? Setting a price based on cost, demand and competitor prices, then evaluating its effect on revenue and profit margin &middot; Deciding on a leadership style &middot; Setting a span of control &middot; Reviewing health and safety compliance", a:"Setting a price based on cost, demand and competitor prices, then evaluating its effect on revenue and profit margin." }
+  ]}
+};
+
+
+const SUBTOPIC_CODES = Object.keys(DATA);
+
+/* Flatten with stable ids */
+const BANK = [];
+SUBTOPIC_CODES.forEach(code=>{
+  const topic = DATA[code];
+  topic.qs.forEach((item, i)=>{
+    BANK.push({ id: code+"-"+i, code, unit: topic.unit, topicName: topic.name, type: item.type, q: item.q, a: item.a });
+  });
+});
+
+/* ============ STATE ============ */
+const state = {
+  unit: "all",
+  subtopic: "all",
+  types: new Set(Object.keys(TYPE_LABELS)),
+  currentSet: [],   // array of BANK item ids, length up to 10
+  pickerSlot: null,
+  presenting: false,
+  presentZoomIdx: null,
+  presentPage: 0,
+  presentPageSize: 5
+};
+
+/* ============ FILTER POOL ============ */
+function matchesUnit(item, unitF){ return unitF==="all" || item.unit===unitF; }
+function matchesSubtopic(item, subtopicF){ return subtopicF==="all" || item.code===subtopicF; }
+
+function getPool(){
+  return BANK.filter(item=>{
+    if(!matchesUnit(item, state.unit)) return false;
+    if(!matchesSubtopic(item, state.subtopic)) return false;
+    if(!state.types.has(item.type)) return false;
+    return true;
+  });
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* Always returns up to `target` questions, widening the filters in stages
+   if the exact match is too small, so the board is never short. Returns
+   { items, widenedAt } where widenedAt is null (exact match was enough)
+   or a short label describing how far it had to widen.
+
+   When a specific sub-topic is selected, the "widen to the rest of the unit"
+   stage is curriculum-order aware: SUBTOPIC_CODES preserves the teaching
+   order the topics were written in (3.1.1..3.1.4, 3.2.1..3.2.3, 3.3.1..3.3.4),
+   so widening fills from EARLIER-taught sub-topics first (safe retrieval
+   practice) and only reaches into LATER, not-yet-taught sub-topics as an
+   absolute last resort within that stage \u2014 e.g. a starter on 3.1.1 won't
+   quietly pull in strategy or change-management questions from Unit 3.
+
+   The unit boundary used for those "same unit" stages is the SUB-TOPIC's
+   own subject, not literally the Unit filter chip. That matters because the
+   Unit chip defaults to "All units" \u2014 picking a specific sub-topic without
+   also clicking a unit chip is the normal path, and matchesUnit(item,"all")
+   always returns true, so without this the "stay in the same unit" stages
+   would silently do nothing and a reroll could jump from Unit 1 to Unit 3. */
+function getFilledSet(target, excludeIds){
+  const exclude = excludeIds || new Set();
+  const unitF = state.unit, subtopicF = state.subtopic, typesF = state.types;
+  const selectedIdx = subtopicF !== "all" ? SUBTOPIC_CODES.indexOf(subtopicF) : -1;
+  const sameUnitF = unitF !== "all" ? unitF : (selectedIdx >= 0 ? DATA[subtopicF].unit : "all");
+  const stages = [
+    { label: null,
+      test: item => matchesUnit(item,unitF) && matchesSubtopic(item,subtopicF) && typesF.has(item.type) },
+    { label: "widened to earlier-taught sub-topics in the same unit (same type kept)",
+      test: item => matchesUnit(item,sameUnitF) && typesF.has(item.type) && selectedIdx>=0 && SUBTOPIC_CODES.indexOf(item.code) < selectedIdx },
+    { label: "widened to other sub-topics in the same unit (same type kept)",
+      test: item => matchesUnit(item,sameUnitF) && typesF.has(item.type) },
+    { label: "widened across the whole spec (same type kept)",
+      test: item => typesF.has(item.type) },
+    { label: "widened to other question types on this sub-topic",
+      test: item => matchesUnit(item,unitF) && matchesSubtopic(item,subtopicF) },
+    { label: "widened across the whole bank to fill the set",
+      test: () => true }
+  ];
+  const selected = [];
+  const used = new Set(exclude);
+  let deepestStage = 0;
+  for(let s=0; s<stages.length; s++){
+    if(selected.length >= target) break;
+    const candidates = shuffle(BANK.filter(item => !used.has(item.id) && stages[s].test(item)));
+    let addedHere = false;
+    for(const item of candidates){
+      if(selected.length >= target) break;
+      selected.push(item);
+      used.add(item.id);
+      addedHere = true;
+    }
+    if(addedHere) deepestStage = s;
+  }
+  const exactCount = BANK.filter(item => !exclude.has(item.id) && stages[0].test(item)).length;
+  const widenedAt = deepestStage > 0 ? stages[deepestStage].label : null;
+  return { items: selected, widenedAt, exactCount, target };
+}
+
+/* ============ RENDER: FILTER CHIPS ============ */
+function renderSubtopicRow(){
+  const row = document.getElementById("subtopicRow");
+  let html = '<span class="filter-label">Sub-topic</span>';
+  html += '<button type="button" class="chip-btn'+(state.subtopic==="all"?" active":"")+'" data-subtopic="all">All</button>';
+  SUBTOPIC_CODES.filter(code=> state.unit==="all" || DATA[code].unit===state.unit).forEach(code=>{
+    html += '<button type="button" class="chip-btn'+(state.subtopic===code?" active":"")+'" data-subtopic="'+code+'">'+DATA[code].name+'</button>';
+  });
+  row.innerHTML = html;
+  row.querySelectorAll(".chip-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      state.subtopic = btn.dataset.subtopic;
+      renderSubtopicRow();
+      updatePoolCount();
+    });
+  });
+}
+
+function renderTypeRow(){
+  const row = document.getElementById("typeRow");
+  let html = '<span class="filter-label">Type</span>';
+  Object.keys(TYPE_LABELS).forEach(key=>{
+    const active = state.types.has(key);
+    html += '<button type="button" class="chip-btn'+(active?" type-active":"")+'" data-type="'+key+'" style="'+(active?('background:'+TYPE_LABELS[key].color+';border-color:'+TYPE_LABELS[key].color):'')+'">'+TYPE_LABELS[key].text+'</button>';
+  });
+  row.innerHTML = html;
+  row.querySelectorAll(".chip-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const t = btn.dataset.type;
+      if(state.types.has(t)){
+        if(state.types.size > 1) state.types.delete(t);
+      } else {
+        state.types.add(t);
+      }
+      renderTypeRow();
+      updatePoolCount();
+    });
+  });
+}
+
+function updatePoolCount(){
+  const n = getPool().length;
+  document.getElementById("poolCount").textContent = n + " question" + (n===1?"":"s") + " match your filters";
+}
+
+document.querySelectorAll('[data-unit]').forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll('.filter-row .chip-btn[data-unit]').forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    state.unit = btn.dataset.unit;
+    state.subtopic = "all";
+    renderSubtopicRow();
+    updatePoolCount();
+  });
+});
+
+/* ============ GENERATE / DECK ============ */
+function generateSet(target){
+  const result = getFilledSet(target);
+  state.currentSet = result.items.map(p=>p.id);
+  showWidenNote(result);
+  renderDeck();
+}
+
+function showWidenNote(result){
+  const row = document.getElementById("widenRow");
+  const note = document.getElementById("widenNote");
+  if(result.widenedAt){
+    row.style.display = "flex";
+    note.textContent = "Only " + result.exactCount + " question" + (result.exactCount===1?"":"s") + " matched your exact filters \u2014 " + result.widenedAt + " to make up the full " + result.target + ".";
+  } else {
+    row.style.display = "none";
+  }
+}
+
+function findById(id){ return BANK.find(x=>x.id===id); }
+
+function renderDeck(){
+  const area = document.getElementById("deckArea");
+  const toolbar = document.getElementById("buildToolbar");
+  if(state.currentSet.length === 0){
+    area.innerHTML = '<div class="empty-state">Choose your filters above, then hit <b>Generate 10</b>, <b>Generate 5</b>, or <b>Generate 3</b> to build a starter set.</div>';
+    toolbar.innerHTML = "";
+    return;
+  }
+  toolbar.innerHTML = '<span class="set-note">'+state.currentSet.length+' questions on the board</span><button type="button" class="btn-clear" id="clearSetBtn">Clear set</button>';
+  document.getElementById("clearSetBtn").addEventListener("click", ()=>{ state.currentSet=[]; renderDeck(); });
+
+  let html = '<div class="grid">';
+  state.currentSet.forEach((id, idx)=>{
+    const item = findById(id);
+    const label = TYPE_LABELS[item.type];
+    html += '<div class="card" data-idx="'+idx+'">' +
+      '<div class="card-inner">' +
+        '<div class="face face-q" tabindex="0" data-idx="'+idx+'">' +
+          '<div class="card-tools"><button type="button" class="card-tool-btn" data-action="reroll" data-idx="'+idx+'" title="Swap for a random question">&#8635;</button><button type="button" class="card-tool-btn" data-action="pick" data-idx="'+idx+'" title="Search for a specific question">Pick</button></div>' +
+          '<span class="face-tag" style="background:'+label.color+'">'+label.text+'</span>' +
+          '<div class="type-hint">'+label.hint+'</div>' +
+          '<div class="face-body">'+item.q+'</div>' +
+          '<div class="face-topic">'+item.topicName+'</div>' +
+        '</div>' +
+        '<div class="face face-a" tabindex="0" data-idx="'+idx+'">' +
+          '<div class="card-tools"><button type="button" class="card-tool-btn" data-action="reroll" data-idx="'+idx+'" title="Swap for a random question">&#8635;</button><button type="button" class="card-tool-btn" data-action="pick" data-idx="'+idx+'" title="Search for a specific question">Pick</button></div>' +
+          '<span class="face-tag">Answer</span>' +
+          '<div class="face-body">'+item.a+'</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  area.innerHTML = html;
+  requestAnimationFrame(()=> autoFitAll(".deck .face-body", 11));
+
+  area.querySelectorAll(".face").forEach(face=>{
+    face.addEventListener("click", (e)=>{
+      if(e.target.closest(".card-tool-btn")) return;
+      const idx = face.dataset.idx;
+      area.querySelector('.card[data-idx="'+idx+'"]').classList.toggle("flipped");
+    });
+    face.addEventListener("keydown", e=>{
+      if((e.key==="Enter"||e.key===" ") && !e.target.closest(".card-tool-btn")){
+        e.preventDefault();
+        const idx = face.dataset.idx;
+        area.querySelector('.card[data-idx="'+idx+'"]').classList.toggle("flipped");
+      }
+    });
+  });
+  area.querySelectorAll('.card-tool-btn[data-action="reroll"]').forEach(btn=>{
+    btn.addEventListener("click", (e)=>{ e.stopPropagation(); rerollSlot(Number(btn.dataset.idx)); });
+  });
+  area.querySelectorAll('.card-tool-btn[data-action="pick"]').forEach(btn=>{
+    btn.addEventListener("click", (e)=>{ e.stopPropagation(); openPicker(Number(btn.dataset.idx)); });
+  });
+}
+
+function rerollSlot(idx){
+  const exclude = new Set(state.currentSet);
+  const result = getFilledSet(1, exclude);
+  if(result.items.length === 0) return; // whole bank already on the board
+  state.currentSet[idx] = result.items[0].id;
+  renderDeck();
+}
+
+/* ============ PICKER MODAL ============ */
+function openPicker(idx){
+  state.pickerSlot = idx;
+  renderPicker("");
+}
+function closePicker(){
+  state.pickerSlot = null;
+  document.getElementById("modalRoot").innerHTML = "";
+}
+function renderPicker(searchText){
+  const root = document.getElementById("modalRoot");
+  const query = searchText.trim().toLowerCase();
+  const used = state.currentSet.filter((id,i)=> i!==state.pickerSlot);
+  let results = BANK.filter(item=>{
+    if(used.includes(item.id)) return false;
+    if(!query) return true;
+    return (item.q + " " + item.a + " " + item.topicName).toLowerCase().indexOf(query) !== -1;
+  });
+  const listHtml = results.length
+    ? results.slice(0,120).map(item=>
+        '<button type="button" class="modal-item" data-id="'+item.id+'"><span class="modal-item-tag">'+TYPE_LABELS[item.type].text+' &middot; '+item.topicName+'</span>'+item.q+'</button>'
+      ).join("")
+    : '<div class="modal-empty">No questions match. Try a different search.</div>';
+
+  root.innerHTML =
+    '<div class="modal-backdrop" id="modalBackdrop">' +
+      '<div class="modal">' +
+        '<div class="modal-head">' +
+          '<div class="modal-head-row"><h2>Choose a question</h2><button type="button" class="modal-close" id="modalClose" aria-label="Close">&times;</button></div>' +
+          '<input type="text" class="modal-search" id="modalSearch" placeholder="Search questions&hellip;" value="'+searchText.replace(/"/g,'&quot;')+'">' +
+        '</div>' +
+        '<div class="modal-list">'+listHtml+'</div>' +
+      '</div>' +
+    '</div>';
+  document.getElementById("modalBackdrop").addEventListener("click", e=>{ if(e.target.id==="modalBackdrop") closePicker(); });
+  document.getElementById("modalClose").addEventListener("click", closePicker);
+  document.getElementById("modalSearch").addEventListener("input", e=> renderPicker(e.target.value));
+  const inp = document.getElementById("modalSearch");
+  inp.focus(); inp.selectionStart = inp.value.length;
+  root.querySelectorAll(".modal-item").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.currentSet[state.pickerSlot] = el.dataset.id;
+      closePicker();
+      renderDeck();
+    });
+  });
+}
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && state.pickerSlot!==null) closePicker(); });
+
+/* ============ PRESENT MODE ============ */
+const PRESENT_PAGE_SIZE_OPTIONS = [2,3,5,10];
+
+function openPresent(){
+  if(state.currentSet.length === 0){
+    const result = getFilledSet(10);
+    state.currentSet = result.items.map(p=>p.id);
+    showWidenNote(result);
+    renderDeck();
+  }
+  state.presenting = true;
+  state.presentPage = 0;
+  const root = document.getElementById("presentRoot");
+  root.style.display = "block";
+  if(root.requestFullscreen){
+    root.requestFullscreen().catch(()=>{ /* fullscreen blocked \u2014 overlay still covers the viewport via position:fixed */ });
+  }
+  renderPresentGrid();
+}
+function textLenClass(text){
+  const len = text.length;
+  if(len <= 55) return "len-s";
+  if(len <= 110) return "len-m";
+  if(len <= 190) return "len-l";
+  return "len-xl";
+}
+
+/* True shrink-to-fit: the len-* CSS classes give each card a sensible starting
+   size, then this measures the actual rendered box and steps the font down
+   (in px) until the text stops overflowing \u2014 catches cases the length
+   buckets alone get wrong, e.g. a short "Define: X" term next to a long
+   definition on the flip side. */
+function autoFitText(el, minPx){
+  if(!el) return;
+  el.style.fontSize = "";
+  const min = minPx || 12;
+  let size = parseFloat(window.getComputedStyle(el).fontSize);
+  let guard = 0;
+  while((el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) && size > min && guard < 40){
+    size -= 1;
+    el.style.fontSize = size + "px";
+    guard++;
+  }
+}
+function autoFitAll(selector, minPx){
+  document.querySelectorAll(selector).forEach(el=> autoFitText(el, minPx));
+}
+
+function goToPresentPage(delta){
+  const totalPages = Math.max(1, Math.ceil(state.currentSet.length / state.presentPageSize));
+  state.presentPage = Math.min(totalPages - 1, Math.max(0, state.presentPage + delta));
+  renderPresentGrid();
+}
+
+function changePresentPageSize(newSize){
+  // Keep roughly the same card in view rather than always snapping back to page 1.
+  const oldPageSize = state.presentPageSize;
+  const firstVisibleIdx = state.presentPage * oldPageSize;
+  state.presentPageSize = newSize;
+  state.presentPage = Math.floor(firstVisibleIdx / newSize);
+  renderPresentGrid();
+}
+
+function renderPresentGrid(){
+  const root = document.getElementById("presentRoot");
+  const totalCount = state.currentSet.length;
+  const pageSize = state.presentPageSize;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  state.presentPage = Math.min(totalPages - 1, Math.max(0, state.presentPage));
+  const pageStart = state.presentPage * pageSize;
+  const pageIds = state.currentSet.slice(pageStart, pageStart + pageSize);
+
+  let cardsHtml = "";
+  pageIds.forEach((id, localIdx)=>{
+    const idx = pageStart + localIdx; // global index into state.currentSet \u2014 keeps zoom/numbering consistent across pages
+    const item = findById(id);
+    const label = TYPE_LABELS[item.type];
+    cardsHtml +=
+      '<div class="present-card" data-idx="'+idx+'">' +
+        '<div class="present-card-inner">' +
+          '<div class="present-face present-face-q">' +
+            '<button type="button" class="present-zoom-btn" data-action="zoom" data-idx="'+idx+'" title="Enlarge for reading">&#128269; Zoom</button>' +
+            '<span class="present-tag" style="background:'+label.color+'">'+label.text+'</span>' +
+            '<div class="present-type-hint">'+label.hint+'</div>' +
+            '<div class="present-body '+textLenClass(item.q)+'">'+item.q+'</div>' +
+            '<span class="present-num">'+(idx+1)+'</span>' +
+          '</div>' +
+          '<div class="present-face present-face-a">' +
+            '<button type="button" class="present-zoom-btn" data-action="zoom" data-idx="'+idx+'" title="Enlarge for reading">&#128269; Zoom</button>' +
+            '<span class="present-tag">Answer</span>' +
+            '<div class="present-body '+textLenClass(item.a)+'">'+item.a+'</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  });
+
+  const sizeControlHtml =
+    '<div class="present-size-control">' +
+      '<label for="presentPageSizeSelect">Cards per page</label>' +
+      '<select id="presentPageSizeSelect">' +
+        PRESENT_PAGE_SIZE_OPTIONS.map(n=> '<option value="'+n+'"'+(n===pageSize?" selected":"")+'>'+n+'</option>').join("") +
+      '</select>' +
+    '</div>';
+
+  const pageNavHtml = totalPages > 1
+    ? '<div class="present-page-nav">' +
+        '<button type="button" class="present-page-btn" id="presentPrevBtn" '+(state.presentPage===0?"disabled":"")+' aria-label="Previous page">&#8249;</button>' +
+        '<span class="present-page-label">Page '+(state.presentPage+1)+' of '+totalPages+'</span>' +
+        '<button type="button" class="present-page-btn" id="presentNextBtn" '+(state.presentPage===totalPages-1?"disabled":"")+' aria-label="Next page">&#8250;</button>' +
+      '</div>'
+    : '';
+
+  root.innerHTML =
+    '<div class="present-overlay" id="presentOverlay">' +
+      '<div class="present-top">' +
+        '<span class="present-brand">BIZ-OMICS &middot; Starter Bank &middot; New Spec (7138)</span>' +
+        '<span class="present-instructions">Answer in <span class="pen">black pen</span> &mdash; tap a card to check, or Zoom to enlarge</span>' +
+        sizeControlHtml +
+        pageNavHtml +
+        '<button type="button" class="btn-exit" id="exitPresentBtn">Exit &#10005;</button>' +
+      '</div>' +
+      '<div class="present-grid" id="presentGrid">'+cardsHtml+'</div>' +
+    '</div>';
+
+  const cols = pageIds.length || 1;
+  const presentGrid = document.getElementById("presentGrid");
+  presentGrid.style.gridTemplateColumns = "repeat("+cols+",1fr)";
+  presentGrid.style.gridTemplateRows = "repeat(1,1fr)";
+  document.getElementById("presentPageSizeSelect").addEventListener("change", (e)=>{
+    changePresentPageSize(Number(e.target.value));
+  });
+  root.querySelectorAll(".present-card").forEach(card=>{
+    card.addEventListener("click", (e)=>{
+      if(e.target.closest(".present-zoom-btn")) return;
+      card.classList.toggle("flipped");
+    });
+  });
+  root.querySelectorAll('.present-zoom-btn[data-action="zoom"]').forEach(btn=>{
+    btn.addEventListener("click", (e)=>{ e.stopPropagation(); openZoom(Number(btn.dataset.idx)); });
+  });
+  document.getElementById("exitPresentBtn").addEventListener("click", closePresent);
+  if(totalPages > 1){
+    document.getElementById("presentPrevBtn").addEventListener("click", ()=> goToPresentPage(-1));
+    document.getElementById("presentNextBtn").addEventListener("click", ()=> goToPresentPage(1));
+  }
+  requestAnimationFrame(()=> autoFitAll("#presentGrid .present-body", 13));
+}
+
+/* ---------- Present zoom ---------- */
+function openZoom(idx){
+  state.presentZoomIdx = idx;
+  const gridCard = document.querySelector('.present-card[data-idx="'+idx+'"]');
+  const isFlipped = !!(gridCard && gridCard.classList.contains("flipped"));
+  const item = findById(state.currentSet[idx]);
+  const label = TYPE_LABELS[item.type];
+  const root = document.getElementById("presentRoot");
+  let zoomRoot = document.getElementById("presentZoomRoot");
+  if(!zoomRoot){
+    zoomRoot = document.createElement("div");
+    zoomRoot.id = "presentZoomRoot";
+    root.appendChild(zoomRoot);
+  }
+  zoomRoot.innerHTML =
+    '<div class="present-zoom-backdrop" id="presentZoomBackdrop">' +
+      '<button type="button" class="present-zoom-close" id="presentZoomClose">Close &#10005;</button>' +
+      '<div class="present-zoom-card'+(isFlipped?" flipped":"")+'" id="presentZoomCard">' +
+        '<div class="present-zoom-inner">' +
+          '<div class="present-zoom-face present-zoom-face-q">' +
+            '<span class="present-zoom-tag" style="background:'+label.color+'">'+label.text+'</span>' +
+            '<div class="present-zoom-type-hint">'+label.hint+'</div>' +
+            '<div class="present-zoom-body">'+item.q+'</div>' +
+            '<span class="present-zoom-hint">Tap to flip &middot; Esc to close</span>' +
+          '</div>' +
+          '<div class="present-zoom-face present-zoom-face-a">' +
+            '<span class="present-zoom-tag">Answer</span>' +
+            '<div class="present-zoom-body">'+item.a+'</div>' +
+            '<span class="present-zoom-hint">Tap to flip &middot; Esc to close</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.getElementById("presentZoomCard").addEventListener("click", ()=>{
+    const zoomCard = document.getElementById("presentZoomCard");
+    zoomCard.classList.toggle("flipped");
+    if(gridCard) gridCard.classList.toggle("flipped");
+  });
+  document.getElementById("presentZoomClose").addEventListener("click", closeZoom);
+  document.getElementById("presentZoomBackdrop").addEventListener("click", e=>{ if(e.target.id==="presentZoomBackdrop") closeZoom(); });
+  requestAnimationFrame(()=> autoFitAll("#presentZoomRoot .present-zoom-body", 18));
+}
+function closeZoom(){
+  state.presentZoomIdx = null;
+  const zoomRoot = document.getElementById("presentZoomRoot");
+  if(zoomRoot) zoomRoot.innerHTML = "";
+}
+
+function closePresent(){
+  if(document.fullscreenElement){ document.exitFullscreen().catch(()=>{}); }
+  document.getElementById("presentRoot").innerHTML = "";
+  state.presenting = false;
+  state.presentZoomIdx = null;
+}
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape"){
+    if(state.presentZoomIdx !== null){ closeZoom(); return; }
+    if(state.presenting) closePresent();
+  }
+  if(state.presenting && state.presentZoomIdx === null){
+    if(e.key==="ArrowRight"){ goToPresentPage(1); return; }
+    if(e.key==="ArrowLeft"){ goToPresentPage(-1); return; }
+    // Number keys flip the card in that position on the CURRENT page (page-relative,
+    // 1-9 then 0 for a 10th), not a fixed global index \u2014 so they stay meaningful
+    // however many cards per page are currently showing.
+    const localKeyMap = {"1":0,"2":1,"3":2,"4":3,"5":4,"6":5,"7":6,"8":7,"9":8,"0":9};
+    if(localKeyMap.hasOwnProperty(e.key) && localKeyMap[e.key] < state.presentPageSize){
+      const pageStart = state.presentPage * state.presentPageSize;
+      const globalIdx = pageStart + localKeyMap[e.key];
+      const card = document.querySelector('.present-card[data-idx="'+globalIdx+'"]');
+      if(card) card.classList.toggle("flipped");
+    }
+  }
+});
+document.addEventListener("fullscreenchange", ()=>{
+  if(!document.fullscreenElement && state.presenting){ closePresent(); return; }
+  // Viewport size changes once fullscreen actually engages \u2014 re-measure
+  // so the shrink-to-fit pass reflects the real, final on-screen size.
+  if(document.fullscreenElement && state.presenting){
+    document.querySelectorAll("#presentGrid .present-body").forEach(el=>{ el.style.fontSize = ""; });
+    requestAnimationFrame(()=> autoFitAll("#presentGrid .present-body", 13));
+  }
+});
+
+/* ============ PRINT ============ */
+function buildPrintSheet(){
+  const includeAnswers = document.getElementById("answerToggle").checked;
+  const heading = "Starter Bank" + (includeAnswers ? " \u2014 Answer Key" : "");
+  let html = '<div class="print-header"><span class="brand">BIZ-OMICS</span><span class="title">'+heading+' &middot; A-level Business (New Spec 7138)</span></div>';
+  const items = state.currentSet.length ? state.currentSet.map(findById) : getFilledSet(10).items;
+  items.forEach((item, idx)=>{
+    html += '<div class="print-q-block">' +
+      '<div class="print-tag">'+TYPE_LABELS[item.type].text+'</div>' +
+      '<div class="print-type-hint">'+TYPE_LABELS[item.type].hint+'</div>' +
+      '<div class="print-topic">'+item.topicName+'</div>' +
+      '<div class="print-q">'+(idx+1)+'. '+item.q+'</div>' +
+      (includeAnswers
+        ? '<div class="print-answer"><b>Answer:</b> '+item.a+'</div>'
+        : '<div class="print-lines"></div>'
+      ) +
+      '</div>';
+  });
+  document.getElementById("printSheet").innerHTML = html;
+}
+
+/* ============ TOP-LEVEL CONTROLS ============ */
+document.getElementById("generateBtn10").addEventListener("click", ()=> generateSet(10));
+document.getElementById("generateBtn5").addEventListener("click", ()=> generateSet(5));
+document.getElementById("generateBtn3").addEventListener("click", ()=> generateSet(3));
+document.getElementById("presentBtn").addEventListener("click", openPresent);
+document.getElementById("printBtn").addEventListener("click", ()=>{ buildPrintSheet(); window.print(); });
+document.getElementById("aboutBtn").addEventListener("click", ()=>{
+  const panel = document.getElementById("aboutPanel");
+  const isHidden = panel.hasAttribute("hidden");
+  if(isHidden){ panel.removeAttribute("hidden"); document.getElementById("aboutBtn").textContent = "Hide about"; }
+  else{ panel.setAttribute("hidden",""); document.getElementById("aboutBtn").textContent = "About this resource"; }
+});
+
+/* ============ INIT ============ */
+renderSubtopicRow();
+renderTypeRow();
+updatePoolCount();
+</script>
+</body>
+</html>
