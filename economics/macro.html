@@ -242,6 +242,8 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
 .btn-print:hover{color:var(--text);border-color:rgba(255,255,255,0.3);}
 .btn-teacher{padding:0.33rem 0.9rem;border-radius:100px;border:none;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:var(--ff-sans);background:#d97706;color:#000;}
 .btn-teacher:hover{opacity:0.88;}
+.btn-board{padding:0.33rem 0.9rem;border-radius:100px;border:none;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:var(--ff-sans);background:var(--purple);color:#fff;}
+.btn-board:hover{opacity:0.88;}
 /* PTM modal */
 .ptm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;}
 .ptm-overlay.hidden{display:none!important;}
@@ -284,6 +286,28 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
 .ptm-diag-chip:hover{color:var(--text);border-color:rgba(255,255,255,0.28);}
 .ptm-diag-chip.sel{background:var(--ptm-acc);color:var(--ptm-acc-t);border-color:var(--ptm-acc);}
 .ptm-diag-chip .chip-dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0.6;flex-shrink:0;}
+.ptm-diag-chip.shake{animation:chipshake 0.32s;}
+@keyframes chipshake{0%,100%{transform:translateX(0);}25%{transform:translateX(-3px);}75%{transform:translateX(3px);}}
+.ptm-board-mode .ptm-topic-check{display:none;}
+.ptm-board-mode #ptmSelAllWrap{display:none;}
+/* Board Mode */
+.board-overlay{position:fixed;inset:0;background:#05070d;z-index:9500;display:flex;flex-direction:column;color:#f1f5f9;}
+.board-overlay.hidden{display:none!important;}
+.board-top{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;flex-shrink:0;}
+.board-progress{font-family:var(--ff-mono);font-size:0.8rem;color:#94a3b8;letter-spacing:0.06em;min-width:60px;}
+.board-cat{font-family:var(--ff-mono);font-size:0.72rem;color:var(--purple);letter-spacing:0.14em;text-transform:uppercase;text-align:center;flex:1;}
+.board-exit{padding:0.4rem 0.9rem;border-radius:100px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#94a3b8;font-size:0.78rem;cursor:pointer;font-family:var(--ff-sans);}
+.board-exit:hover{color:#fff;border-color:rgba(255,255,255,0.4);}
+.board-stage{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:2rem;user-select:none;}
+.board-name{font-size:clamp(2.2rem,6vw,4.8rem);font-weight:900;letter-spacing:-0.02em;line-height:1.15;max-width:900px;}
+.board-diagram-wrap{background:#f8fafc;border-radius:20px;padding:2.2rem;max-width:min(90vw,760px);}
+.board-diagram-wrap svg{width:100%;height:auto;max-height:60vh;}
+.board-caption{margin-top:1.4rem;font-size:clamp(1.3rem,3vw,2.1rem);font-weight:800;}
+.board-bottom{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.3rem 1.8rem;flex-shrink:0;border-top:1px solid rgba(255,255,255,0.08);}
+.board-hint{font-family:var(--ff-mono);font-size:0.72rem;color:#94a3b8;letter-spacing:0.08em;text-transform:uppercase;flex:1;text-align:center;}
+.board-nav-btn{padding:0.6rem 1.3rem;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);color:#f1f5f9;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:var(--ff-sans);}
+.board-nav-btn:hover{border-color:rgba(255,255,255,0.4);}
+.board-nav-btn.board-nav-primary{background:var(--purple);border-color:var(--purple);}
 /* Print */
 @media print {
   body > *:not(#print-zone) { display:none !important; }
@@ -297,7 +321,7 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
 <header>
   <div class="logo">BIZ-<span>OMICS</span></div>
   <div class="header-nav">
-    <a class="nav-btn" href="index.html">← Hub</a>
+    <a class="nav-btn" href="home.html">← Hub</a>
     <a class="nav-btn" href="diagrams.html">Diagrams</a>
     <span class="nav-btn active">&#x25B8; Macro</span>
     <a class="nav-btn" href="micro.html">&#x25B8; Micro</a>
@@ -335,6 +359,7 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
       <button class="btn-p" onclick="maShuffle()">&#x21BA; Shuffle</button>
       <button class="btn-print" onclick="openPTM('print')">&#x2399; Print</button>
       <button class="btn-teacher" onclick="openPTM('teacher')">🎓 Teacher</button>
+      <button class="btn-board" onclick="openPTM('board')">🖥️ Board</button>
     </div>
     <div id="maGrid" class="card-grid"></div>
   </div>
@@ -342,23 +367,25 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
 
 <!-- PTM MODAL -->
 <div class="ptm-overlay hidden" id="ptmOverlay">
-  <div class="ptm-box">
+  <div class="ptm-box" id="ptmBox">
     <div class="ptm-head">
       <span class="ptm-title" id="ptmTitle">Print Diagrams</span>
       <button class="ptm-close" onclick="closePTM()">&#x2715;</button>
     </div>
     <div class="ptm-section">
       <div class="ptm-section-label">
-        Select Diagrams
-        <button class="ptm-sel-all" onclick="ptmToggleAll(true)">All</button>
-        <button class="ptm-sel-all" onclick="ptmToggleAll(false)">None</button>
+        <span id="ptmSelectLabel">Select Diagrams</span>
+        <span id="ptmSelAllWrap"><button class="ptm-sel-all" onclick="ptmToggleAll(true)">All</button>
+        <button class="ptm-sel-all" onclick="ptmToggleAll(false)">None</button></span>
       </div>
       <div id="ptmTopicList"></div>
     </div>
-    <div class="ptm-divider"></div>
-    <div class="ptm-section">
-      <div class="ptm-section-label">Mode</div>
-      <div class="ptm-mode-row" id="ptmModes"></div>
+    <div id="ptmModeSection">
+      <div class="ptm-divider"></div>
+      <div class="ptm-section">
+        <div class="ptm-section-label">Mode</div>
+        <div class="ptm-mode-row" id="ptmModes"></div>
+      </div>
     </div>
     <div class="ptm-actions">
       <span class="ptm-count" id="ptmCount">0 diagrams</span>
@@ -367,6 +394,21 @@ header{padding:1.1rem 2.5rem;display:flex;align-items:center;justify-content:spa
   </div>
 </div>
 <div id="print-zone"></div>
+
+<!-- BOARD MODE -->
+<div class="board-overlay hidden" id="boardOverlay">
+  <div class="board-top">
+    <span class="board-progress" id="boardProgress">1 / 1</span>
+    <span class="board-cat" id="boardCat"></span>
+    <button class="board-exit" onclick="boardExit()">&#x2715; Exit</button>
+  </div>
+  <div class="board-stage" id="boardStage" onclick="boardToggleReveal()"></div>
+  <div class="board-bottom">
+    <button class="board-nav-btn" id="boardPrevBtn" onclick="boardPrev(event)">&#8592; Prev</button>
+    <span class="board-hint" id="boardHint">Tap to reveal</span>
+    <button class="board-nav-btn board-nav-primary" id="boardNextBtn" onclick="boardNext(event)">Next &#8594;</button>
+  </div>
+</div>
 
 <script>
 
@@ -2975,7 +3017,11 @@ var _ptmTopics=[
 function openPTM(mode){
   _ptmMode=mode;
   _ptmSelIds=new Set();
-  document.getElementById('ptmTitle').textContent=mode==='print'?'⎙ Print':'🎓 Teacher Mode';
+  document.getElementById('ptmTitle').textContent=mode==='print'?'⎙ Print':mode==='board'?'🖥️ Board Mode':'🎓 Teacher Mode';
+  document.getElementById('ptmSelectLabel').textContent=mode==='board'?'Pick up to 10 Diagrams':'Select Diagrams';
+  document.getElementById('ptmBox').classList.toggle('ptm-board-mode',mode==='board');
+  document.getElementById('ptmModeSection').style.display=mode==='board'?'none':'';
+  document.getElementById('ptmGo').textContent=mode==='board'?'Start Board \u2192':'Generate \u2192';
   var tList=document.getElementById('ptmTopicList');
   tList.innerHTML='';
   _ptmTopics.forEach(function(t){
@@ -2996,7 +3042,13 @@ function openPTM(mode){
       chip.onclick=(function(cd){
         return function(){
           if(_ptmSelIds.has(cd.id)){_ptmSelIds.delete(cd.id);chip.classList.remove('sel');}
-          else{_ptmSelIds.add(cd.id);chip.classList.add('sel');}
+          else{
+            if(_ptmMode==='board' && _ptmSelIds.size>=10){
+              chip.classList.add('shake');setTimeout(function(){chip.classList.remove('shake');},320);
+              return;
+            }
+            _ptmSelIds.add(cd.id);chip.classList.add('sel');
+          }
           _ptmUpdateTopicCheck(t.key,topicCards,chk);
           _ptmCount();
         };
@@ -3011,7 +3063,9 @@ function openPTM(mode){
     tList.appendChild(row);
   });
   var mDiv=document.getElementById('ptmModes');mDiv.innerHTML='';
-  if(mode==='print'){
+  if(mode==='board'){
+    // no sub-modes for board
+  }else if(mode==='print'){
     _ptmPrintSub='diagrams';
     [{key:'diagrams',label:'Diagrams Only',desc:'Diagram + title — 3 per row'},
      {key:'full',label:'Full Cards',desc:'Adds explanation + key point'}].forEach(function(m){
@@ -3070,12 +3124,68 @@ function _ptmCount(){
 function ptmGenerate(){
   var cards=maCards.filter(function(c){return _ptmSelIds.has(c.id);});
   if(!cards.length)return;
+  if(_ptmMode==='board'){
+    closePTM();
+    openBoardMode(cards);
+    return;
+  }
   var zone=document.getElementById('print-zone');
   zone.style.display='block';
   if(_ptmMode==='print'){_ptmBuildPrint(cards,zone);}else{_ptmBuildTeacher(cards,zone);}
   closePTM();
   setTimeout(function(){window.print();setTimeout(function(){zone.style.display='none';zone.innerHTML='';},600);},150);
 }
+
+// ═══ BOARD MODE ═══
+var _boardCards=[],_boardIdx=0,_boardRevealed=false;
+function openBoardMode(cards){
+  _boardCards=cards.slice(0,10);
+  _boardIdx=0;_boardRevealed=false;
+  document.getElementById('boardOverlay').classList.remove('hidden');
+  boardRenderCurrent();
+}
+function boardRenderCurrent(){
+  var card=_boardCards[_boardIdx];
+  document.getElementById('boardProgress').textContent=(_boardIdx+1)+' / '+_boardCards.length;
+  document.getElementById('boardCat').textContent=card.catLabel;
+  var stage=document.getElementById('boardStage');
+  if(_boardRevealed){
+    var svg='';try{svg=buildDiagram(card);}catch(e){svg='';}
+    stage.innerHTML='<div class="board-diagram-wrap">'+svg+'</div><div class="board-caption">'+card.concept+'</div>';
+  }else{
+    stage.innerHTML='<div class="board-name">'+card.concept+'</div>';
+  }
+  document.getElementById('boardHint').textContent=_boardRevealed?'Diagram revealed \u2014 tap to hide':'Tap anywhere to reveal';
+  document.getElementById('boardPrevBtn').style.visibility=_boardIdx===0?'hidden':'visible';
+  document.getElementById('boardNextBtn').textContent=(_boardIdx===_boardCards.length-1)?'Finish':'Next \u2192';
+}
+function boardToggleReveal(){
+  _boardRevealed=!_boardRevealed;
+  boardRenderCurrent();
+}
+function boardNext(e){
+  if(e)e.stopPropagation();
+  if(_boardIdx===_boardCards.length-1){boardExit();return;}
+  _boardIdx++;_boardRevealed=false;
+  boardRenderCurrent();
+}
+function boardPrev(e){
+  if(e)e.stopPropagation();
+  if(_boardIdx===0)return;
+  _boardIdx--;_boardRevealed=false;
+  boardRenderCurrent();
+}
+function boardExit(){
+  document.getElementById('boardOverlay').classList.add('hidden');
+}
+document.addEventListener('keydown',function(e){
+  var ov=document.getElementById('boardOverlay');
+  if(!ov||ov.classList.contains('hidden'))return;
+  if(e.key==='Escape'){boardExit();}
+  else if(e.key===' '||e.key==='Enter'){e.preventDefault();boardToggleReveal();}
+  else if(e.key==='ArrowRight'){boardNext();}
+  else if(e.key==='ArrowLeft'){boardPrev();}
+});
 function _ptmBuildPrint(cards,zone){
   var full=(_ptmPrintSub==='full');
   var cols=full?2:3,gap=full?'14px':'10px',mh=full?'130px':'155px',tfs=full?'8.5px':'10px';
