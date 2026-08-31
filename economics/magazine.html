@@ -499,13 +499,14 @@ Return ONLY valid JSON (no markdown fences, no preamble) matching exactly this s
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
+        max_tokens: 2200,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     if (!response.ok) throw new Error('Worker returned ' + response.status);
     const data = await response.json();
+    if (data.stop_reason === 'max_tokens') throw new Error('response was cut off \u2014 try Regenerate');
 
     // Handles the standard Anthropic /v1/messages response shape
     const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
