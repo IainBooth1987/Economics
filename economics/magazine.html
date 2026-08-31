@@ -381,16 +381,21 @@ function renderLessonPlan(plan){
     .map(q => `<li>${escapeHtml(q)}</li>`).join('');
 
   const extHtml = plan.extension ? `<p>${escapeHtml(plan.extension)}</p>` : '';
+  const examCommand = plan.exam_question && plan.exam_question.command_term ? plan.exam_question.command_term + ' \u2014 ' : '';
 
   body.innerHTML = `
     ${printHeader}
     <div class="lesson-section">
-      <h4>Starter Hook</h4>
-      <p>${escapeHtml(plan.starter_hook || '')}</p>
+      <h4>Starter</h4>
+      <p>${escapeHtml(plan.starter || '')}</p>
     </div>
     <div class="lesson-section">
       <h4>Spec Links</h4>
       <ul>${(plan.spec_links || []).map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+    </div>
+    <div class="lesson-section">
+      <h4>Mini-Whiteboard / Low-Stakes Check</h4>
+      <p>${escapeHtml(plan.mini_whiteboard_task || '')}</p>
     </div>
     <div class="lesson-section">
       <h4>Discussion Questions</h4>
@@ -399,9 +404,12 @@ function renderLessonPlan(plan){
     <div class="lesson-section">
       <h4>Exam-Style Question</h4>
       <div class="lesson-exam-box">
-        <p>${escapeHtml(plan.exam_question && plan.exam_question.text)}</p>
-        <div class="lesson-exam-marks">[${escapeHtml(String(plan.exam_question && plan.exam_question.marks || ''))} marks]</div>
+        <p>${escapeHtml(examCommand)}${escapeHtml(plan.exam_question && plan.exam_question.text)}</p>
       </div>
+    </div>
+    <div class="lesson-section">
+      <h4>Plenary</h4>
+      <p>${escapeHtml(plan.plenary || '')}</p>
     </div>
     <div class="lesson-section">
       <h4>Extension / Homework</h4>
@@ -426,14 +434,34 @@ async function generateLesson(regenerate){
     </div>
   `;
 
-  const prompt = `You are helping a UK Business/Economics teacher plan a lesson enrichment starter built around a BIZ-OMICS comic-strip magazine issue about ${issue.context}.
+  const activityPool = [
+    'a prediction task where students guess the outcome before you reveal it',
+    'an odd-one-out or card sort using key terms from the topic',
+    'a mystery image or headline reveal, gradually uncovered',
+    'a quick-fire true/false or multiple-choice quiz',
+    'a would-you-rather framed around a real decision from the period',
+    'a timeline ordering task using events from the issue',
+    'a role-play or hot-seating task where students argue a stakeholder\u2019s position',
+    'a "spot the error" task using a deliberately flawed explanation',
+    'a think-pair-share on a provocative one-line claim',
+    'a diagram or graph sketching task before the concept is explained'
+  ];
+  const pick = () => activityPool[Math.floor(Math.random() * activityPool.length)];
+
+  const prompt = `You are helping a UK Business/Economics teacher plan a lesson enrichment activity built around a BIZ-OMICS comic-strip magazine issue about ${issue.context}.
+
+Be genuinely creative and varied \u2014 do NOT default to generic instructions like "display the magazine on the board" or "read the comic strip as a class". Vary the activity format every time. For inspiration (do not copy verbatim, invent your own specific version tied to this topic), consider approaches like: ${pick()}, or ${pick()}, or ${pick()}.
+
+The exam-style question must use a command term common across exam boards (e.g. Analyse, Explain, Evaluate, Discuss, Assess, "To what extent") \u2014 do NOT include a mark allocation, since teachers here use different exam boards (AQA, Edexcel, OCR) with different mark schemes.
 
 Return ONLY valid JSON (no markdown fences, no preamble) matching exactly this schema:
 {
-  "starter_hook": "1-2 sentences suggesting how to use the comic strip as a lesson hook",
-  "spec_links": ["2-4 short AQA/Edexcel A-level Economics or Business spec concepts this issue illustrates"],
+  "starter": "a specific, creative starter activity (2-3 sentences) tied to this topic \u2014 not a generic 'show the comic' instruction",
+  "spec_links": ["2-4 short spec concepts this issue illustrates, phrased generically enough to suit AQA, Edexcel or OCR"],
+  "mini_whiteboard_task": "one quick, low-stakes mini-whiteboard or show-me task for checking understanding mid-lesson",
   "discussion_questions": ["3-4 discussion questions of increasing difficulty, suitable for A-level students"],
-  "exam_question": {"text": "one exam-style question tied to the topic", "marks": 12},
+  "exam_question": {"command_term": "one command term, e.g. Analyse", "text": "one exam-style question tied to the topic, phrased to start with or clearly use that command term"},
+  "plenary": "a distinct plenary or exit-ticket activity (different in style from the starter)",
   "extension": "one sentence suggesting an extension task or homework"
 }`;
 
@@ -443,7 +471,7 @@ Return ONLY valid JSON (no markdown fences, no preamble) matching exactly this s
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 1200,
         messages: [{ role: 'user', content: prompt }]
       })
     });
