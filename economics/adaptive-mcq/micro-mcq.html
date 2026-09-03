@@ -4910,6 +4910,17 @@ function targetDifficulty() {
   return mean < 950 ? 1 : mean < 1050 ? 2 : 3;
 }
 
+// Per-topic difficulty target: each topic is judged on its own Elo, not a
+// single blended average across all topics. This is what question selection
+// actually uses — targetDifficulty() above remains for the single overall
+// "level" label shown in session summaries, where one aggregate figure is
+// what the UI needs.
+function targetDifficultyForTopic(topic) {
+  const d = masteryData[topic];
+  if (!d || !d.total) return 1;
+  return d.elo < 950 ? 1 : d.elo < 1050 ? 2 : 3;
+}
+
 function topicWeight(topic) {
   const elo   = masteryData[topic].elo;
   const total = masteryData[topic].total;
@@ -4927,12 +4938,11 @@ function pickNextQuestion() {
     const idx = Math.floor(Math.random() * wrongPool.length);
     return wrongPool.splice(idx, 1)[0];
   }
-  const target = targetDifficulty();
   const useDiffFilter = Math.random() < 0.70;
   let pool = [];
   ALL_QUESTIONS.forEach(q => {
     if (recentIds.includes(q.id)) return;
-    if (useDiffFilter && q.difficulty !== target) return;
+    if (useDiffFilter && q.difficulty !== targetDifficultyForTopic(q.topic)) return;
     const slots = Math.ceil(topicWeight(q.topic));
     for (let i = 0; i < slots; i++) pool.push(q);
   });
@@ -5050,10 +5060,10 @@ function renderQuestion(q) {
   const letters = ['A','B','C','D'];
   const dots = [1,2,3].map(i => `<span class="dot${i<=q.difficulty?' on':''}"></span>`).join('');
   const topicLabel = TOPICS[q.topic] || q.topic;
-  const td = targetDifficulty();
+  const td = targetDifficultyForTopic(q.topic);
   const tdLabel = ['','Foundation','Standard','Stretch'][td];
   document.getElementById('queue-label').textContent =
-    `Adaptive · targeting ${tdLabel} questions · weak areas prioritised`;
+    `Adaptive · targeting ${tdLabel} in ${topicLabel} · weak areas prioritised`;
   const opts = q.options.map((o,i) =>
     `<button class="opt" id="opt${i}" onclick="selectAnswer(${i})"><span class="ltr">${letters[i]}</span><span>${o}</span></button>`
   ).join('');
