@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Resilience Kit — Teacher Console | BIZ-OMICS</title>
+<style>
+  :root{
+    --canvas: #cfc7a1; --canvas-deep: #b9ae82;
+    --paper: #f4efdc; --paper-line: #a99a63;
+    --ink: #2a2a1e; --ink-soft: #665c3d;
+    --amber: #b4741f; --amber-light: #d99a3f;
+    --brick: #8a2f1f; --olive: #4f6b3a;
+    --gold: #c79a3d;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background: linear-gradient(180deg, var(--canvas) 0%, var(--canvas-deep) 100%); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height:1.5; }
+  h1,h2,h3,.headline { font-family: Georgia, "Iowan Old Style", serif; font-weight:700; margin:0; }
+  .wrap { max-width: 1100px; margin:0 auto; padding: 0 20px 60px; }
+
+  .bulletin { background: var(--ink); color: var(--paper); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; position: sticky; top:0; z-index: 5;}
+  .bulletin .brand { font-family: Georgia, serif; font-weight:700; font-size:15px; }
+  .bulletin .brand span { color: var(--amber-light); }
+  .bulletin .right { display:flex; gap:10px; align-items:center; }
+  .bulletin .score-pill { background: rgba(255,255,255,0.1); border:1px solid var(--gold); color:var(--gold); font-size:12.5px; padding:4px 10px; border-radius: 20px; }
+  .bulletin .print-btn { background: transparent; border:1px solid var(--paper); color: var(--paper); padding:6px 14px; border-radius:3px; cursor:pointer; font-size:13px; }
+  .bulletin .print-btn:hover { background: var(--paper); color: var(--ink); }
+
+  .masthead { text-align:center; padding: 28px 20px 16px; border-bottom: 3px double var(--paper-line); }
+  .masthead .kicker { color: var(--ink-soft); font-size:13px; margin-bottom:6px; letter-spacing:0.02em;}
+  .masthead h1 { font-size: 28px; }
+  .masthead .sub { color: var(--ink-soft); font-size:14px; margin-top:8px; max-width:640px; margin-left:auto; margin-right:auto; }
+  .stamp { display:inline-block; border:3px solid var(--brick); color:var(--brick); padding:5px 14px; font-family: Georgia, serif; font-weight:700; font-size:12.5px; transform: rotate(-4deg); border-radius:4px; margin-top:10px; background: rgba(138,47,31,0.06); }
+
+  .screen { display:none; padding-top: 22px; }
+  .screen.active { display:block; }
+
+  .card { background: var(--paper); border:1px solid var(--paper-line); border-radius:4px; padding:18px 20px; margin-bottom:16px; }
+  .card h2 { font-size:18px; margin-bottom:8px; }
+  .card p { margin:0 0 8px; } .card p:last-child{margin-bottom:0;}
+  .round-tag { display:inline-block; font-family: Georgia, serif; font-size:12px; color:var(--amber); border:1px solid var(--amber); border-radius:12px; padding:2px 10px; margin-bottom:8px; }
+
+  button.primary { background: var(--amber); color:#fff; border:none; padding:11px 22px; font-size:14.5px; font-family:inherit; border-radius:3px; cursor:pointer; }
+  button.primary:hover { background: var(--amber-light); }
+  button.ghost { background:transparent; border:1px solid var(--paper-line); color:var(--ink); padding:9px 18px; font-size:13.5px; font-family:inherit; border-radius:3px; cursor:pointer; }
+  button.ghost:hover { background:#fff; }
+
+  .team-list { display:flex; flex-direction:column; gap:8px; margin:12px 0; }
+  .team-row { display:flex; gap:8px; align-items:center; }
+  .team-row input[type=text] { flex:1; padding:8px 10px; border:1px solid var(--paper-line); border-radius:3px; font-size:14px; font-family:inherit; background:#fff; }
+  .team-row button { background:transparent; border:1px solid var(--brick); color:var(--brick); border-radius:3px; padding:6px 10px; cursor:pointer; font-size:12px; }
+
+  table.grid-table { width:100%; border-collapse:collapse; font-size:13px; }
+  table.grid-table th, table.grid-table td { border:1px solid var(--paper-line); padding:7px 8px; text-align:center; vertical-align: middle; }
+  table.grid-table th { background:#e7dcb8; font-size:11px; text-transform:uppercase; letter-spacing:0.02em; color:var(--ink-soft); }
+  table.grid-table td:first-child, table.grid-table th:first-child { text-align:left; font-weight:600; }
+  table.grid-table select { padding:5px; border:1px solid var(--paper-line); border-radius:3px; font-family:inherit; font-size:12.5px; width: 100%; }
+  table.grid-table .item-price { display:block; font-size:10px; color:var(--ink-soft); font-weight:normal; }
+  table.grid-table input[type=checkbox] { width:17px; height:17px; }
+  table.grid-table .owned { font-size:10.5px; color:var(--ink-soft); font-style:italic; }
+  table.grid-table .cost-cell { font-weight:700; }
+  table.grid-table .cost-cell.ok { color: var(--olive); }
+  table.grid-table .cost-cell.bad { color: var(--brick); }
+
+  .event-box { background:#fdf6e3; border:1px solid #d8b96a; border-left:4px solid var(--brick); padding:12px 16px; font-size:14px; margin-bottom:14px; border-radius:3px; }
+  .event-box b { color: var(--brick); }
+
+  .leaderboard { display:flex; flex-direction:column; gap:8px; }
+  .lb-row { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--paper-line); border-radius:3px; padding:9px 14px; }
+  .lb-row .rank { font-family: Georgia, serif; font-size:17px; width:24px; color:var(--ink-soft); }
+  .lb-row.first .rank { color: var(--brick); }
+  .lb-row .lb-name { flex:1; font-weight:600; }
+  .lb-row .lb-score { font-family: Georgia, serif; font-size:16px; color: var(--amber); }
+  .lb-row .lb-detail { font-size:11.5px; color: var(--ink-soft); }
+
+  .podium { display:flex; align-items:flex-end; justify-content:center; gap:14px; margin: 18px 0 6px; }
+  .pod-block { text-align:center; }
+  .pod-bar { background: linear-gradient(180deg, var(--gold), var(--amber)); border-radius:4px 4px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; color:#fff; font-family:Georgia,serif; font-size:20px; font-weight:700; }
+  .pod-1 .pod-bar { height:120px; width:120px; }
+  .pod-2 .pod-bar { height:90px; width:110px; background: linear-gradient(180deg,#c9c1a0,#9c9270); }
+  .pod-3 .pod-bar { height:66px; width:110px; background: linear-gradient(180deg,#c99a6a,#a4713f); }
+  .pod-name { font-weight:700; margin-top:8px; font-size:14px; }
+  .pod-score { font-size:12.5px; color: var(--ink-soft); }
+
+  .toggle-link { color: var(--amber); cursor:pointer; text-decoration:underline; font-size:14px; }
+  .concept-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  .concept { border-left:3px solid var(--amber); padding:4px 0 4px 12px; }
+  .concept b { display:block; font-size:13px; color:var(--amber); }
+  .concept span { font-size:13px; color:var(--ink-soft); }
+  @media (max-width:640px){ .concept-row { grid-template-columns:1fr; } }
+  .reflection { padding-left:20px; } .reflection li { margin-bottom:10px; }
+  .source-line { font-size:12px; color:var(--ink-soft); margin-top:16px; }
+
+  @media print {
+    body { background:#fff; color:#000; }
+    .no-print, .bulletin, button, input, select { display:none !important; }
+    .card { border:1px solid #999; page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bulletin no-print">
+  <div class="brand">BIZ<span>-OMICS</span> &nbsp;|&nbsp; The Resilience Kit — Teacher Console</div>
+  <div class="right">
+    <span class="score-pill" id="progressPill">Setup</span>
+    <button class="print-btn" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ SETUP ============ -->
+  <div class="screen active" id="setupScreen">
+    <div class="masthead">
+      <div class="kicker">A-LEVEL ECONOMICS &nbsp;·&nbsp; BOARDROOM SERIES &nbsp;·&nbsp; 50-MINUTE COMPETITION</div>
+      <h1>The Resilience Kit</h1>
+      <div class="sub">An introduction to the basic economic problem for students new to economics. Four rounds plus a bonus round — teams compete live, scores are entered by dropdown, and a league table and podium build as you go.</div>
+      <div class="stamp">NATIONAL RESILIENCE BULLETIN</div>
+    </div>
+
+    <div class="card">
+      <h2>The scenario</h2>
+      <p>In August 2026, the UK government's Cabinet Office announced a new campaign urging households to stock up on tinned food, bottled water and other basic supplies, in case of extreme weather or disruption caused by hostile states — part of an update to the country's civil resilience planning.</p>
+      <p style="font-size:13px;"><a href="https://www.theguardian.com/politics/2026/aug/25/uk-to-warn-citizens-to-stock-up-on-food-amid-threat-from-climate-crisis-and-hostile-states" target="_blank" rel="noopener" style="color:var(--amber);">Read the real story on The Guardian &rarr;</a></p>
+      <p>Teams play households racing to build the best resilience kit while learning three big ideas that sit underneath almost everything in economics.</p>
+    </div>
+
+    <div class="card">
+      <h2>Before you start: three key words</h2>
+      <p><b>Scarcity</b> — there is never enough of something to give everyone as much as they want. In this game, the money and the shop's stock are both limited.</p>
+      <p><b>Choice</b> — because of scarcity, every person and every household has to choose what to have and what to go without.</p>
+      <p><b>Opportunity cost</b> — the opportunity cost of a choice is the next-best thing you gave up to make it. If a team buys a torch instead of a first aid kit, the opportunity cost of the torch is the first aid kit.</p>
+      <p style="margin-top:8px; font-size:13px; color:var(--ink-soft);">It's worth putting these three words on the board before Round 1 — the whole game is designed to make students use them, not just define them.</p>
+    </div>
+
+    <div class="card">
+      <h2>Round map</h2>
+      <p>Round 1 &middot; Know the Threat (20) — Round 2 &middot; Build the Kit (20) — Round 3 &middot; Panic at the Shelves (20) — Round 4 &middot; The COBRA Briefing (20) — Bonus &middot; Real World Recall (20). 100 points total.</p>
+    </div>
+
+    <div class="card">
+      <h2>Set up your teams</h2>
+      <div class="team-list" id="teamList"></div>
+      <button class="ghost" onclick="addTeam()">+ Add team</button>
+    </div>
+
+    <button class="primary" onclick="goToRound(1)">Start Round 1 &rarr;</button>
+  </div>
+
+  <!-- ============ ROUND 1 ============ -->
+  <div class="screen" id="round1Screen">
+    <div class="round-tag">ROUND 1 · 20 POINTS</div>
+    <h1 style="font-size:22px; margin-bottom:10px;">Know the Threat</h1>
+    <div class="event-box"><b>Warm-up round.</b> Each team matches four real situations from the crisis to one of the three key words: Scarcity, Choice, or Opportunity cost. 5 points per correct match. Keep the definitions on the board — this round is about using the words, not memorising them.</div>
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table class="grid-table" id="r1Table"></table>
+      </div>
+    </div>
+    <button class="primary" onclick="revealRound(1)">Reveal Round 1</button>
+  </div>
+  <div class="screen" id="round1Results"></div>
+
+  <!-- ============ ROUND 2 ============ -->
+  <div class="screen" id="round2Screen">
+    <div class="round-tag">ROUND 2 · 20 POINTS</div>
+    <h1 style="font-size:22px; margin-bottom:10px;">Build the Kit</h1>
+    <div class="event-box" id="r2Event"></div>
+    <div class="card">
+      <div style="overflow-x:auto;"><table class="grid-table" id="r2Table"></table></div>
+    </div>
+    <button class="primary" onclick="revealRound(2)">Reveal Round 2</button>
+  </div>
+  <div class="screen" id="round2Results"></div>
+
+  <!-- ============ ROUND 3 ============ -->
+  <div class="screen" id="round3Screen">
+    <div class="round-tag">ROUND 3 · 20 POINTS</div>
+    <h1 style="font-size:22px; margin-bottom:10px;">Panic at the Shelves</h1>
+    <div class="event-box" id="r3Event"></div>
+    <div class="card">
+      <div style="overflow-x:auto;"><table class="grid-table" id="r3Table"></table></div>
+    </div>
+    <button class="primary" onclick="revealRound(3)">Reveal Round 3</button>
+  </div>
+  <div class="screen" id="round3Results"></div>
+
+  <!-- ============ ROUND 4 ============ -->
+  <div class="screen" id="round4Screen">
+    <div class="round-tag">ROUND 4 · 20 POINTS</div>
+    <h1 style="font-size:22px; margin-bottom:10px;">The COBRA Briefing</h1>
+    <div class="event-box"><b>Speaking round.</b> Each team picks a policy position, then a spokesperson explains why in front of the class. There's no single correct answer here — mark on whether they give a real reason, ideally using one of today's key words, not on which option they tick.</div>
+    <div class="card">
+      <div style="overflow-x:auto;"><table class="grid-table" id="r4Table"></table></div>
+    </div>
+    <button class="primary" onclick="revealRound(4)">Reveal Round 4</button>
+  </div>
+  <div class="screen" id="round4Results"></div>
+
+  <!-- ============ BONUS ============ -->
+  <div class="screen" id="bonusScreen">
+    <div class="round-tag">BONUS · 20 POINTS</div>
+    <h1 style="font-size:22px; margin-bottom:10px;">Real World Recall</h1>
+    <div class="event-box"><b>Quickfire.</b> Four questions on the real story behind this game. 5 points each.</div>
+    <div class="card">
+      <div style="overflow-x:auto;"><table class="grid-table" id="bonusTable"></table></div>
+    </div>
+    <button class="primary" onclick="revealRound('bonus')">Reveal Bonus Round</button>
+  </div>
+  <div class="screen" id="bonusResults"></div>
+
+  <!-- ============ FINAL ============ -->
+  <div class="screen" id="finalScreen">
+    <div class="masthead" style="border-bottom:none; padding-bottom:0;">
+      <div class="kicker">COMPETITION COMPLETE</div>
+      <h1 style="font-size:27px;">Final Results</h1>
+    </div>
+    <div class="card">
+      <h2>Podium</h2>
+      <div class="podium" id="podium"></div>
+    </div>
+    <div class="card">
+      <h2>Full league table</h2>
+      <div class="leaderboard" id="finalLeaderboard"></div>
+    </div>
+    <div class="card">
+      <h2>Concepts in this competition <span class="toggle-link no-print" onclick="toggleDebrief()" id="debriefToggle" style="float:right;">show</span></h2>
+      <div id="debriefBody" style="margin-top:10px;">
+        <div class="concept-row">
+          <div class="concept"><b>Scarcity</b><span>No team's budget could cover all eight items — there was never enough money to get everything everyone wanted.</span></div>
+          <div class="concept"><b>Choice &amp; opportunity cost</b><span>Every item bought was an item not bought. Round 1 named this idea; Rounds 2 and 3 made teams actually do it.</span></div>
+          <div class="concept"><b>Why prices went up</b><span>The simple version: everyone tried to buy the same things at once, so the price rose. The fuller version, worth giving A-level students: a sudden rise in demand — with supply unchanged — creates excess demand at the old price; the price rises until quantity demanded falls back in line with quantity supplied. "High demand = shops just put prices up" is the simplified rule the game teaches by feel; the debrief is where you upgrade it.</span></div>
+          <div class="concept"><b>Who decides who gets what</b><span>In this game, price and household choice decided who got supplies — nobody was in charge of sharing them out fairly. Round 4 asked teams whether that's the best way, or whether government should step in and ration supplies directly.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Reflection questions</h2>
+      <ol class="reflection">
+        <li><b>Define</b> scarcity, using an example from today's game.</li>
+        <li><b>Describe</b> one choice your team made in Round 2, and what its opportunity cost was.</li>
+        <li><b>Explain</b>, using the words "supply" and "demand", why the prices of tinned food, bottled water and torches rose in Round 3.</li>
+        <li><b>Predict</b> what would happen to the price of bottled water if a heatwave made everyone want to buy it, but supermarkets couldn't get any more delivered. Think about what that would signal to water producers, what incentive it would give them, and what happens to price when demand suddenly outstrips supply.</li>
+        <li><b>Discuss</b> whether you think it's better for households to buy their own supplies, or for the government to hand supplies out directly.</li>
+        <li><b>Explain</b> why some retailers have warned people not to bulk-buy during stockpiling campaigns like this one — think about herd behaviour, and who ends up losing out.</li>
+      </ol>
+      <div class="source-line">Scenario based on the UK Cabinet Office's August 2026 national resilience campaign, reported by <a href="https://www.theguardian.com/politics/2026/aug/25/uk-to-warn-citizens-to-stock-up-on-food-amid-threat-from-climate-crisis-and-hostile-states" target="_blank" rel="noopener" style="color:var(--amber);">The Guardian, 25 August 2026</a>.</div>
+    </div>
+    <button class="ghost no-print" onclick="location.reload()">Run a new session</button>
+  </div>
+
+</div>
+
+<script>
+/* ================= shared state ================= */
+let teams = [];
+let scores = {}; // scores.r1[i], r2[i], r3[i], r4[i], bonus[i]
+let purchased = []; // per team Set of item ids owned (rounds 2-3)
+let r2Coverage = []; // coverage % after round 2, per team
+
+function renderTeamList(){
+  const wrap = document.getElementById('teamList');
+  wrap.innerHTML = '';
+  teams.forEach((t,i)=>{
+    const row = document.createElement('div');
+    row.className = 'team-row';
+    row.innerHTML = `<input type="text" value="${t.name}" oninput="teams[${i}].name=this.value">
+      <button onclick="removeTeam(${i})">Remove</button>`;
+    wrap.appendChild(row);
+  });
+}
+function addTeam(){ teams.push({name:'Team '+(teams.length+1)}); renderTeamList(); }
+function removeTeam(i){ if(teams.length<=2){ alert('You need at least two teams.'); return; } teams.splice(i,1); renderTeamList(); }
+for(let i=0;i<4;i++) teams.push({name:'Team '+(i+1)});
+renderTeamList();
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function setProgress(text){ document.getElementById('progressPill').textContent = text; }
+
+function cumulativeScore(i){
+  let t = 0;
+  ['r1','r2','r3','r4','bonus'].forEach(k=>{ if(scores[k]) t += scores[k][i]||0; });
+  return t;
+}
+function renderLeaderboard(targetId){
+  const wrap = document.getElementById(targetId);
+  wrap.innerHTML = '';
+  const ranked = teams.map((t,i)=>({name:t.name, score:cumulativeScore(i)})).sort((a,b)=>b.score-a.score);
+  ranked.forEach((t,i)=>{
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (i===0?' first':'');
+    row.innerHTML = `<div class="rank">${i+1}</div><div class="lb-name">${t.name}</div><div class="lb-score">${t.score}</div>`;
+    wrap.appendChild(row);
+  });
+}
+function renderPodium(){
+  const ranked = teams.map((t,i)=>({name:t.name, score:cumulativeScore(i)})).sort((a,b)=>b.score-a.score);
+  const wrap = document.getElementById('podium');
+  const order = [1,0,2].filter(idx => ranked[idx]); // 2nd, 1st, 3rd left-to-right
+  wrap.innerHTML = order.map(idx=>{
+    const rank = idx+1;
+    const t = ranked[idx];
+    return `<div class="pod-block pod-${rank}">
+      <div class="pod-bar">${rank}</div>
+      <div class="pod-name">${t.name}</div>
+      <div class="pod-score">${t.score} pts</div>
+    </div>`;
+  }).join('');
+}
+
+function goToRound(n){
+  if(n===1){ setProgress('Round 1 of 4'); loadRound1(); showScreen('round1Screen'); }
+  if(n===2){ setProgress('Round 2 of 4'); loadRound2(); showScreen('round2Screen'); }
+  if(n===3){ setProgress('Round 3 of 4'); loadRound3(); showScreen('round3Screen'); }
+  if(n===4){ setProgress('Round 4 of 4'); loadRound4(); showScreen('round4Screen'); }
+  if(n==='bonus'){ setProgress('Bonus round'); loadBonus(); showScreen('bonusScreen'); }
+  if(n==='final'){ setProgress('Complete'); showScreen('finalScreen'); renderPodium(); renderLeaderboard('finalLeaderboard'); }
+}
+
+/* ================= ROUND 1 — Know the Threat ================= */
+const R1_TERMS = ['Scarcity','Choice','Opportunity cost'];
+const R1_QUESTIONS = [
+  {text:"Supermarkets don't have enough tinned food for every household to buy as much as they'd like.", answer:'Scarcity'},
+  {text:"A household decides to buy a first aid kit instead of a portable power bank.", answer:'Choice'},
+  {text:"Because they bought the power bank, the household can't also afford extra bottled water.", answer:'Opportunity cost'},
+  {text:"There isn't enough money in the household budget to buy everything on the list.", answer:'Scarcity'}
+];
+
+function loadRound1(){
+  scores.r1 = teams.map(()=>0);
+  const table = document.getElementById('r1Table');
+  let head = '<thead><tr><th>Team</th>' + R1_QUESTIONS.map((q,qi)=>`<th>Q${qi+1}</th>`).join('') + '</tr></thead>';
+  let body = '<tbody>' + teams.map((t,ti)=>{
+    let cells = R1_QUESTIONS.map((q,qi)=>{
+      const opts = R1_TERMS.map(term=>`<option value="${term}">${term}</option>`).join('');
+      return `<td><select id="r1-${ti}-${qi}"><option value="">—</option>${opts}</select></td>`;
+    }).join('');
+    return `<tr><td>${t.name}</td>${cells}</tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = head + body;
+}
+
+function revealRound(n){
+  if(n===1) return revealRound1();
+  if(n===2) return revealRound2();
+  if(n===3) return revealRound3();
+  if(n===4) return revealRound4();
+  if(n==='bonus') return revealBonus();
+}
+
+function revealRound1(){
+  teams.forEach((t,ti)=>{
+    let pts = 0;
+    R1_QUESTIONS.forEach((q,qi)=>{
+      const sel = document.getElementById(`r1-${ti}-${qi}`);
+      if(sel && sel.value === q.answer) pts += 5;
+    });
+    scores.r1[ti] = pts;
+  });
+  const wrap = document.getElementById('round1Results');
+  wrap.innerHTML = `<div class="card"><h2>Round 1 answers</h2>
+    <ol class="reflection">${R1_QUESTIONS.map(q=>`<li>${q.text} <b>— ${q.answer}</b></li>`).join('')}</ol></div>
+    <div class="card"><h2>League table after Round 1</h2><div class="leaderboard" id="r1Leaderboard"></div></div>
+    <button class="primary" onclick="goToRound(2)">Continue to Round 2 &rarr;</button>`;
+  renderLeaderboard('r1Leaderboard');
+  showScreen('round1Results');
+}
+
+/* ================= shared item data (Rounds 2 & 3) ================= */
+const NEEDS = [
+  {id:'food', name:'Food'}, {id:'water', name:'Water'}, {id:'power', name:'Power & Light'},
+  {id:'info', name:'Information'}, {id:'health', name:'Health & Safety'}
+];
+const ITEMS = [
+  {id:'tinned',    name:'Tinned food (10-day supply)', costs:[11,16], needs:{food:0.9} },
+  {id:'water',     name:'Bottled water (multi-pack)',  costs:[7,10],  needs:{water:0.9} },
+  {id:'torch',     name:'Torch & spare batteries',     costs:[6,8],   needs:{power:0.6} },
+  {id:'radio',     name:'Wind-up / battery radio',     costs:[10,10], needs:{info:0.8} },
+  {id:'firstaid',  name:'First aid kit',               costs:[13,13], needs:{health:0.7} },
+  {id:'meds',      name:'7-day medication buffer',     costs:[5,5],   needs:{health:0.5} },
+  {id:'powerbank', name:'Portable power bank',         costs:[16,16], needs:{power:0.5, info:0.3} },
+  {id:'cash',      name:'Reserve of banknotes at home',costs:[9,9],   needs:{food:0.2, water:0.2, health:0.2} }
+];
+const BUDGETS = [40, 20];
+
+function coverageFor(ti){
+  const cov = {}; NEEDS.forEach(n=>cov[n.id]=0);
+  purchased[ti].forEach(id=>{
+    const it = ITEMS.find(i=>i.id===id);
+    Object.keys(it.needs).forEach(n=>cov[n]=Math.min(1, cov[n]+it.needs[n]));
+  });
+  return cov;
+}
+function coveragePct(ti){
+  const cov = coverageFor(ti);
+  return 100 * NEEDS.reduce((s,n)=>s+cov[n.id],0)/NEEDS.length;
+}
+function coverageScoreForSet(idList){
+  const cov = {}; NEEDS.forEach(n=>cov[n.id]=0);
+  idList.forEach(id=>{
+    const it = ITEMS.find(i=>i.id===id);
+    Object.keys(it.needs).forEach(n=>cov[n]=Math.min(1, cov[n]+it.needs[n]));
+  });
+  return 100 * NEEDS.reduce((s,n)=>s+cov[n.id],0)/NEEDS.length;
+}
+// Best possible coverage gain achievable in Round 3, given a team's own starting
+// point (base) and their own remaining budget — independent of how well they did
+// in Round 2, so Round 3 rewards "best use of this round's money", not leftover headroom.
+function bestRound3Gain(baseIds){
+  const available = ITEMS.filter(it=>!baseIds.has(it.id));
+  const budget = BUDGETS[1];
+  const baseScore = coverageScoreForSet(Array.from(baseIds));
+  let best = 0;
+  const n = available.length;
+  for(let mask=0; mask < (1<<n); mask++){
+    let cost=0; const chosen=[];
+    for(let b=0;b<n;b++){
+      if(mask & (1<<b)){ cost += available[b].costs[1]; chosen.push(available[b].id); }
+    }
+    if(cost<=budget){
+      const gain = coverageScoreForSet(Array.from(baseIds).concat(chosen)) - baseScore;
+      if(gain>best) best = gain;
+    }
+  }
+  return best;
+}
+
+/* ================= ROUND 2 — Build the Kit ================= */
+function loadRound2(){
+  purchased = teams.map(()=>new Set());
+  scores.r2 = teams.map(()=>0);
+  document.getElementById('r2Event').innerHTML = "<b>The Cabinet Office has launched a resilience campaign.</b> Each team has £40 to spend on any of the eight items below. You can't afford everything — choose what matters most. The better prepared your kit, the more of the 20 points you score.";
+  renderItemTable('r2Table', 0);
+}
+function renderItemTable(tableId, roundIdx){
+  const table = document.getElementById(tableId);
+  let head = '<thead><tr><th>Team</th>' + ITEMS.map(it=>`<th>${it.name}<span class="item-price">£${it.costs[roundIdx]}</span></th>`).join('') + '<th>Spent</th></tr></thead>';
+  let body = '<tbody>' + teams.map((t,ti)=>{
+    let cells = ITEMS.map(it=>{
+      if(purchased[ti].has(it.id)) return `<td><span class="owned">Owned</span></td>`;
+      return `<td><input type="checkbox" id="${tableId}-${ti}-${it.id}" onchange="onItemEntry('${tableId}',${ti},${roundIdx})"></td>`;
+    }).join('');
+    return `<tr><td>${t.name}</td>${cells}<td class="cost-cell" id="${tableId}-tot-${ti}">£0</td></tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = head + body;
+}
+function onItemEntry(tableId, ti, roundIdx){
+  const budget = BUDGETS[roundIdx];
+  let total = 0;
+  ITEMS.forEach(it=>{
+    if(purchased[ti].has(it.id)) return;
+    const box = document.getElementById(`${tableId}-${ti}-${it.id}`);
+    if(box && box.checked) total += it.costs[roundIdx];
+  });
+  const cell = document.getElementById(`${tableId}-tot-${ti}`);
+  cell.textContent = '£'+total;
+  cell.className = 'cost-cell ' + (total<=budget ? 'ok':'bad');
+}
+function commitPurchases(tableId, roundIdx){
+  teams.forEach((t,ti)=>{
+    let total = 0; const chosen = [];
+    ITEMS.forEach(it=>{
+      if(purchased[ti].has(it.id)) return;
+      const box = document.getElementById(`${tableId}-${ti}-${it.id}`);
+      if(box && box.checked){ total += it.costs[roundIdx]; chosen.push(it.id); }
+    });
+    if(total <= BUDGETS[roundIdx]) chosen.forEach(id=>purchased[ti].add(id));
+  });
+}
+
+function revealRound2(){
+  commitPurchases('r2Table', 0);
+  teams.forEach((t,ti)=>{
+    const pct = coveragePct(ti);
+    r2Coverage[ti] = pct;
+    scores.r2[ti] = Math.round(20 * pct/100);
+  });
+  const wrap = document.getElementById('round2Results');
+  wrap.innerHTML = `<div class="card"><h2>Round 2 outcome</h2><div id="r2Cards"></div></div>
+    <div class="card"><h2>League table after Round 2</h2><div class="leaderboard" id="r2Leaderboard"></div></div>
+    <button class="primary" onclick="goToRound(3)">Continue to Round 3 &rarr;</button>`;
+  document.getElementById('r2Cards').innerHTML = teams.map((t,ti)=>`<p><b>${t.name}</b> — kit coverage ${Math.round(r2Coverage[ti])}% &rarr; ${scores.r2[ti]}/20 points</p>`).join('');
+  renderLeaderboard('r2Leaderboard');
+  showScreen('round2Results');
+}
+
+/* ================= ROUND 3 — Panic at the Shelves ================= */
+let ownedAfterRound2 = []; // snapshot of each team's kit before Round 3 purchases
+function loadRound3(){
+  scores.r3 = teams.map(()=>0);
+  ownedAfterRound2 = teams.map((t,ti)=> new Set(purchased[ti]));
+  document.getElementById('r3Event').innerHTML = "<b>A heatwave warning has triggered a COBRA meeting and wildfire alerts nationwide.</b> Everyone else is panic buying too, so shops have put their prices up on the most popular items — tinned food, water and torches now cost more. Each team has £20 left for one final shop. This round scores on how well you use that final £20 — not on how much you already had.";
+  renderItemTable('r3Table', 1);
+}
+function revealRound3(){
+  const optimalGain = teams.map((t,ti)=> bestRound3Gain(ownedAfterRound2[ti]));
+  commitPurchases('r3Table', 1);
+  teams.forEach((t,ti)=>{
+    const actualGain = Math.max(0, coveragePct(ti) - r2Coverage[ti]);
+    const best = optimalGain[ti];
+    scores.r3[ti] = best > 0 ? Math.round(20 * Math.min(1, actualGain/best)) : 20;
+  });
+  const wrap = document.getElementById('round3Results');
+  wrap.innerHTML = `<div class="card"><h2>Round 3 outcome</h2><div id="r3Cards"></div></div>
+    <div class="card"><h2>League table after Round 3</h2><div class="leaderboard" id="r3Leaderboard"></div></div>
+    <button class="primary" onclick="goToRound(4)">Continue to Round 4 &rarr;</button>`;
+  document.getElementById('r3Cards').innerHTML = teams.map((t,ti)=>{
+    return `<p><b>${t.name}</b> — final kit coverage ${Math.round(coveragePct(ti))}% &rarr; ${scores.r3[ti]}/20 points for this round's spending</p>`;
+  }).join('');
+  renderLeaderboard('r3Leaderboard');
+  showScreen('round3Results');
+}
+
+/* ================= ROUND 4 — The COBRA Briefing ================= */
+const POLICY_OPTIONS = ['A: Central state stockpile & rationing','B: Household advice + price mechanism (the real policy)','C: Subsidised stockpiling for low-income households','D: No government involvement'];
+const JUSTIFICATION_OPTIONS = [
+  {label:'Strong — gives a clear reason and uses one of today\'s key words correctly', pts:20},
+  {label:'Adequate — gives a sensible reason, but doesn\'t use the key words', pts:12},
+  {label:'Weak — just states an opinion with no real reason', pts:5},
+  {label:'Blank / off-topic', pts:0}
+];
+function loadRound4(){
+  scores.r4 = teams.map(()=>0);
+  const table = document.getElementById('r4Table');
+  const policyOpts = POLICY_OPTIONS.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const justOpts = JUSTIFICATION_OPTIONS.map(j=>`<option value="${j.pts}">${j.label}</option>`).join('');
+  let head = '<thead><tr><th>Team</th><th>Policy stance</th><th>Justification quality</th></tr></thead>';
+  let body = '<tbody>' + teams.map((t,ti)=>`<tr><td>${t.name}</td>
+      <td><select id="r4pol-${ti}"><option value="">—</option>${policyOpts}</select></td>
+      <td><select id="r4jus-${ti}"><option value="">—</option>${justOpts}</select></td></tr>`).join('') + '</tbody>';
+  table.innerHTML = head + body;
+}
+function revealRound4(){
+  teams.forEach((t,ti)=>{
+    const sel = document.getElementById(`r4jus-${ti}`);
+    scores.r4[ti] = sel && sel.value ? parseInt(sel.value,10) : 0;
+  });
+  const wrap = document.getElementById('round4Results');
+  wrap.innerHTML = `<div class="card"><h2>Round 4 outcome</h2><div id="r4Cards"></div></div>
+    <div class="card"><h2>League table after Round 4</h2><div class="leaderboard" id="r4Leaderboard"></div></div>
+    <button class="primary" onclick="goToRound('bonus')">Continue to Bonus Round &rarr;</button>`;
+  document.getElementById('r4Cards').innerHTML = teams.map((t,ti)=>{
+    const pol = document.getElementById(`r4pol-${ti}`).value || 'No stance recorded';
+    return `<p><b>${t.name}</b> — ${pol} &rarr; ${scores.r4[ti]}/20 points</p>`;
+  }).join('');
+  renderLeaderboard('r4Leaderboard');
+  showScreen('round4Results');
+}
+
+/* ================= BONUS — Real World Recall ================= */
+const BONUS_QUESTIONS = [
+  {text:'Which government department announced the campaign?', options:['Cabinet Office','Home Office','DEFRA','HM Treasury'], answer:'Cabinet Office'},
+  {text:"Classic UK emergency advice recommends keeping supplies for how long?", options:['24 hours','3 days','1 week','1 month'], answer:'3 days'},
+  {text:'Which extreme weather triggered the COBRA meeting in the real coverage?', options:['Flooding','Heatwave & wildfires','Snowstorm','Drought only'], answer:'Heatwave & wildfires'},
+  {text:"What does the government call its plan for a large-scale conflict?", options:['Doomsday Book','War Book','Resilience Plan','Continuity Book'], answer:'War Book'}
+];
+function loadBonus(){
+  scores.bonus = teams.map(()=>0);
+  const table = document.getElementById('bonusTable');
+  let head = '<thead><tr><th>Team</th>' + BONUS_QUESTIONS.map((q,qi)=>`<th>Q${qi+1}</th>`).join('') + '</tr></thead>';
+  let body = '<tbody>' + teams.map((t,ti)=>{
+    let cells = BONUS_QUESTIONS.map((q,qi)=>{
+      const opts = q.options.map(o=>`<option value="${o}">${o}</option>`).join('');
+      return `<td><select id="bonus-${ti}-${qi}"><option value="">—</option>${opts}</select></td>`;
+    }).join('');
+    return `<tr><td>${t.name}</td>${cells}</tr>`;
+  }).join('') + '</tbody>';
+  table.innerHTML = head + body;
+}
+function revealBonus(){
+  teams.forEach((t,ti)=>{
+    let pts = 0;
+    BONUS_QUESTIONS.forEach((q,qi)=>{
+      const sel = document.getElementById(`bonus-${ti}-${qi}`);
+      if(sel && sel.value === q.answer) pts += 5;
+    });
+    scores.bonus[ti] = pts;
+  });
+  const wrap = document.getElementById('bonusResults');
+  wrap.innerHTML = `<div class="card"><h2>Bonus round answers</h2>
+    <ol class="reflection">${BONUS_QUESTIONS.map(q=>`<li>${q.text} <b>— ${q.answer}</b></li>`).join('')}</ol></div>
+    <div class="card"><h2>Final league table</h2><div class="leaderboard" id="bonusLeaderboard"></div></div>
+    <button class="primary" onclick="goToRound('final')">See Final Results &rarr;</button>`;
+  renderLeaderboard('bonusLeaderboard');
+  showScreen('bonusResults');
+}
+
+function toggleDebrief(){
+  const body = document.getElementById('debriefBody');
+  const link = document.getElementById('debriefToggle');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  link.textContent = open ? 'show' : 'hide';
+}
+</script>
+
+</body>
+</html>
