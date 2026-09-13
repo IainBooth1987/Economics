@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own Ownership Matrix | BIZ-OMICS</title>
+<style>
+  :root{
+    --ink: #16212C;
+    --ink-soft: #2B3A47;
+    --parchment: #ECE1C6;
+    --parchment-dark: #DCCEA6;
+    --line: #C7B98C;
+    --sole: #A1332B;
+    --ltd: #3B6B44;
+    --plc: #2E5477;
+    --coop: #B8862E;
+    --socent: #1F6E64;
+    --ok: #3B6B44;
+    --bad: #A1332B;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--ink);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  /* ---------- header ---------- */
+  .top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 22px;
+  }
+  .brand{
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    color: var(--parchment);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .brand:hover{ border-bottom-color: var(--parchment); }
+
+  .btn-ghost{
+    background: transparent;
+    border: 1px solid var(--parchment-dark);
+    color: var(--parchment);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .btn-ghost:hover{ background: rgba(236,225,198,0.08); }
+  .topBtns{ display:flex; gap: 10px; }
+
+  .intro{
+    background: var(--parchment);
+    border-radius: 4px;
+    padding: 28px 32px 24px;
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+  }
+  .intro h1{
+    font-family: var(--serif);
+    font-size: 1.7rem;
+    line-height: 1.25;
+    margin: 0 0 10px;
+    color: var(--ink);
+    max-width: 34ch;
+  }
+  .intro p{
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    max-width: 62ch;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:flex;
+    gap: 6px;
+    margin: 20px 0 18px;
+  }
+  .step{
+    flex: 1;
+    padding: 10px 10px;
+    border-radius: 3px;
+    background: rgba(236,225,198,0.08);
+    border: 1px solid rgba(236,225,198,0.18);
+    text-align: center;
+    font-size: 0.82rem;
+    color: rgba(236,225,198,0.55);
+    font-family: var(--sans);
+  }
+  .step .num{
+    font-family: var(--serif);
+    font-size: 0.75rem;
+    display:block;
+    margin-bottom: 2px;
+    opacity: 0.8;
+  }
+  .step.current{
+    background: var(--parchment);
+    color: var(--ink);
+    border-color: var(--parchment);
+    font-weight: 600;
+  }
+  .step.done{
+    background: rgba(236,225,198,0.16);
+    color: var(--parchment);
+    border-color: rgba(236,225,198,0.3);
+  }
+  .step.done .num::after{ content: " \2713"; }
+
+  /* ---------- board ---------- */
+  .board{
+    background: var(--parchment);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 24px;
+  }
+
+  .bankTitle{
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .bankHint{
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
+  .chips{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+    min-height: 46px;
+  }
+  .chip{
+    background: #fff;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 0.86rem;
+    line-height: 1.35;
+    padding: 10px 14px;
+    border-radius: 3px;
+    max-width: 320px;
+    text-align: left;
+    cursor: grab;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .chip:hover{ box-shadow: 0 2px 6px rgba(22,33,44,0.18); }
+  .chip.selected{
+    background: var(--ink);
+    color: var(--parchment);
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(22,33,44,0.3);
+  }
+  .chip:focus-visible, .miniSlot:focus-visible{
+    outline: 3px solid var(--plc);
+    outline-offset: 2px;
+  }
+  .bankEmpty{
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 10px 0;
+  }
+
+  /* ---------- matrix table ---------- */
+  table.matrix{
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid var(--ink);
+  }
+  table.matrix th, table.matrix td{
+    border: 1px solid var(--line);
+    padding: 8px;
+    vertical-align: top;
+    text-align: left;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  table.matrix thead th{
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: var(--serif);
+    font-weight: normal;
+    font-size: 0.88rem;
+    position: sticky;
+    top: 0;
+  }
+  table.matrix thead th.corner{ background: var(--ink); }
+  table.matrix thead th.stage-current{ background: var(--plc); }
+  table.matrix thead th.stage-future{ background: var(--ink-soft); opacity: 0.7; }
+
+  table.matrix tbody th{
+    background: var(--parchment-dark);
+    font-family: var(--serif);
+    font-weight: normal;
+    font-size: 0.9rem;
+    width: 140px;
+    color: var(--ink);
+    border-left: 6px solid var(--rowAccent, var(--ink));
+    padding: 10px 12px;
+  }
+  tr[data-type="soleTrader"] th{ --rowAccent: var(--sole); }
+  tr[data-type="ltd"] th{ --rowAccent: var(--ltd); }
+  tr[data-type="plc"] th{ --rowAccent: var(--plc); }
+  tr[data-type="coop"] th{ --rowAccent: var(--coop); }
+  tr[data-type="socent"] th{ --rowAccent: var(--socent); }
+
+  td.cell{ width: 21%; padding: 8px; }
+  td.cell.future{
+    color: transparent;
+    background: repeating-linear-gradient(
+      var(--parchment), var(--parchment) 22px, var(--line) 23px, var(--parchment) 24px
+    );
+  }
+  td.cell.past{
+    background: #fbf8ef;
+    color: var(--ink-soft);
+    padding: 10px 12px;
+  }
+  td.cell.past ul{ margin: 0; padding-left: 16px; }
+  td.cell.past li{ margin-bottom: 4px; }
+
+  .slotStack{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .miniSlot{
+    border: 1.5px dashed var(--line);
+    border-radius: 3px;
+    padding: 8px 9px;
+    min-height: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .miniSlot.filled{
+    border-style: solid;
+    background: #fff8e6;
+    color: var(--ink);
+    font-style: normal;
+  }
+  .miniSlot.correct{
+    background: #eaf3ea;
+    border-color: var(--ok);
+    border-style: solid;
+    color: var(--ink);
+    cursor: default;
+  }
+  .miniSlot.correct::before{ content: "\2713 "; color: var(--ok); font-weight: bold; }
+  .miniSlot.wrong{
+    background: #f7e6e4;
+    border-color: var(--bad);
+    border-style: solid;
+    color: var(--ink);
+    animation: shake 0.4s;
+  }
+  .miniSlot.wrong::before{ content: "\2717 "; color: var(--bad); font-weight: bold; }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-4px); }
+    75%{ transform: translateX(4px); }
+  }
+  .miniSlot.dragover{ outline: 2px dashed var(--plc); outline-offset: -3px; }
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .feedback{
+    font-size: 0.9rem;
+    color: var(--parchment);
+    flex: 1;
+    min-width: 200px;
+  }
+  button.action{
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    padding: 11px 20px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+  }
+  #checkBtn{ background: var(--plc); color: #fff; }
+  #checkBtn:hover{ background: #24455F; }
+  #nextBtn{ background: var(--coop); color: #1E1600; }
+  #nextBtn:disabled{ background: rgba(236,225,198,0.15); color: rgba(236,225,198,0.35); cursor: not-allowed; }
+  #restartBtn{ background: transparent; color: var(--parchment); border: 1px solid var(--parchment-dark); }
+  #restartBtn:hover{ background: rgba(236,225,198,0.08); }
+
+  .finishBanner{
+    background: var(--coop);
+    color: #1E1600;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+  }
+
+  .nameBox{ display:none; }
+
+  /* ---------- print ---------- */
+  @media print{
+    .top{ display: none; }
+    .intro{ display:none; }
+    .stepper{ display:none; }
+    .bank{ display:none; }
+    .controls{ display:none; }
+    .app{ max-width: 100%; padding: 0; }
+    .board{ background:#fff; border:none; padding:0; }
+    body, .app{ background:#fff; }
+
+    .printHeader{
+      display:flex !important;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      font-family: var(--serif);
+    }
+    .printHeader .pTitle{ font-size: 1.2rem; }
+    .printHeader .pBrand{ font-size: 0.85rem; color:#444; }
+
+    .nameBox{
+      display:flex !important;
+      gap: 16px;
+      background: #fff;
+      border: 1.5px solid #16212C;
+      border-radius: 3px;
+      padding: 8px 14px;
+      margin-bottom: 16px;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      color: #16212C;
+    }
+    .nameBox span{ font-weight: 600; color: #16212C; }
+    .nameBox .field{ flex:1; border-bottom: 1px solid #16212C; padding-bottom: 2px; }
+
+    table.matrix{ border: 1px solid #000; }
+    table.matrix th, table.matrix td{ border: 1px solid #999; color: #000; font-size: 0.76rem; }
+    table.matrix thead th{ background: #eee !important; color: #000 !important; }
+    table.matrix tbody th{ background: #f5f5f0 !important; color: #000 !important; border-left: 4px solid #000 !important; }
+    td.cell.future{
+      color: transparent !important;
+      background: repeating-linear-gradient(#fff, #fff 20px, #bbb 21px, #fff 22px) !important;
+    }
+    td.cell.past, td.cell{ background: #fff !important; color: #000 !important; }
+    .miniSlot{ border-color: #999 !important; color: #000 !important; }
+    .miniSlot.correct, .miniSlot.filled, .miniSlot.wrong{ background: #fff !important; }
+    .miniSlot.correct::before, .miniSlot.wrong::before{ content: "" !important; }
+    .miniSlot:empty::before{ content:""; }
+
+    .printFooter{
+      display:block !important;
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: #444;
+      font-family: var(--sans);
+    }
+  }
+  .printHeader, .printFooter{ display:none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <a class="brand" href="explore.html">BIZ-OMICS</a>
+    <div class="topBtns">
+      <button class="btn-ghost" id="saveBtn">Save a copy</button>
+      <button class="btn-ghost" id="printBtn">Print worksheet</button>
+    </div>
+  </div>
+
+  <div class="intro">
+    <h1>Build your own ownership &amp; structure matrix</h1>
+    <p>Match each statement to the correct type of business. Get every match right in a round to unlock the next column — definition, then key feature, then advantages, then disadvantages — until you've built the full comparison matrix yourself. Advantages and disadvantages have two statements per business type. Your progress auto-saves in this browser, and "Save a copy" downloads your finished matrix as a file any time — no need to print straight away.</p>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="board" id="board">
+    <div class="bank" id="bankArea">
+      <h2 class="bankTitle" id="bankTitle">Definitions</h2>
+      <p class="bankHint" id="bankHint">Select a statement, then select the row it belongs to. Selecting a placed statement again picks it back up.</p>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="printHeader">
+      <span class="pTitle">Ownership &amp; Structure — Comparison Matrix</span>
+      <span class="pBrand">BIZ-OMICS</span>
+    </div>
+    <div class="nameBox">
+      <div class="field"><span>Name:</span></div>
+      <div class="field"><span>Class:</span></div>
+      <div class="field"><span>Date:</span></div>
+    </div>
+
+    <div class="matrixWrap">
+      <table class="matrix" id="matrixTable"></table>
+    </div>
+
+    <div class="printFooter">Print tip: anything not yet matched on screen appears as blank ruled lines here — complete it by hand, or finish the digital version first for a fully filled revision sheet.</div>
+  </div>
+
+  <div class="controls">
+    <div class="feedback" id="feedback"></div>
+    <button class="action" id="checkBtn">Check answers</button>
+    <button class="action" id="nextBtn" disabled>Next</button>
+    <button class="action" id="restartBtn">Start over</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TYPES = [
+    { id:"soleTrader", name:"Sole Trader" },
+    { id:"ltd",         name:"Private Limited Company (Ltd)" },
+    { id:"plc",         name:"Public Limited Company (plc)" },
+    { id:"coop",        name:"Co-operative" },
+    { id:"socent",      name:"Social Enterprise" }
+  ];
+
+  var STAGES = ["definition","feature","advantage","disadvantage"];
+  var STAGE_LABEL = {
+    definition:"Definition", feature:"Key Feature",
+    advantage:"Advantage", disadvantage:"Disadvantage"
+  };
+  var STAGE_BANK_TITLE = {
+    definition:"Definitions", feature:"Key Features",
+    advantage:"Advantages", disadvantage:"Disadvantages"
+  };
+  var CAPACITY = { definition:1, feature:1, advantage:2, disadvantage:2 };
+
+  var CONTENT = {
+    soleTrader: {
+      definition:"Owned and run by one person, who keeps all the profit but has unlimited liability for any debts the business owes.",
+      feature:"Because there's no legal separation between the owner and the business, personal savings and property are at risk if it fails.",
+      advantage:[
+        "Simple and cheap to set up, with very little legal paperwork or cost involved.",
+        "Total control over every decision, with no need to consult shareholders or fellow owners."
+      ],
+      disadvantage:[
+        "Unlimited liability means personal possessions could be seized to repay business debts.",
+        "The business relies heavily on one person, so it's hard to take time off and growth is limited by their own finance and skills."
+      ]
+    },
+    ltd: {
+      definition:"A company with its own legal identity, owned by shareholders whose shares cannot be bought or sold by the general public.",
+      feature:"Shares can only be transferred privately, usually with the agreement of the other shareholders, keeping ownership within a small, chosen group.",
+      advantage:[
+        "Simpler and less costly to set up and run than a plc, since there's no stock market listing or prospectus required.",
+        "Because shares can't be sold to the public, the original owners keep close control over who joins them."
+      ],
+      disadvantage:[
+        "Cannot sell shares on the stock exchange, which caps how much capital can realistically be raised.",
+        "Can find it harder to build public profile and brand recognition than a plc, since there's no stock market listing to raise its status."
+      ]
+    },
+    plc: {
+      definition:"A company with its own legal identity, owned by shareholders whose shares are bought and sold freely on the stock exchange.",
+      feature:"Anyone can buy shares once they're listed, so ownership — and control — can shift hands constantly as shares are traded.",
+      advantage:[
+        "Selling shares on the stock exchange can raise very large amounts of capital for expansion.",
+        "A stock market listing raises the company's public profile and can make it easier to attract talent and lenders."
+      ],
+      disadvantage:[
+        "Vulnerable to a hostile takeover if enough shares are bought up by a rival.",
+        "Must publish detailed, audited financial accounts and face constant pressure from thousands of external shareholders for short-term profit."
+      ]
+    },
+    coop: {
+      definition:"A business owned and democratically controlled by its members — workers, customers, or producers — who each hold one vote no matter how much they've put in.",
+      feature:"Surpluses are distributed among members in proportion to how much they've traded with or worked for the business, not how much capital they've supplied.",
+      advantage:[
+        "Members are usually highly motivated and loyal, since they share directly in decisions and rewards.",
+        "The ethos of fairness and mutual benefit can build strong customer or supplier loyalty."
+      ],
+      disadvantage:[
+        "Raising large amounts of capital is difficult without being able to attract outside investors.",
+        "Reaching agreement among many members with equal votes can slow decision-making down."
+      ]
+    },
+    socent: {
+      definition:"A trading business set up mainly to achieve a social or environmental goal, putting most of its profit back into that mission.",
+      feature:"Success is measured on a 'double bottom line' — financial performance and the social or environmental impact it was set up to deliver.",
+      advantage:[
+        "Can attract funding, grants and customers that a purely profit-driven business can't access.",
+        "Motivated staff and a strong reputation, since people want to support the mission as well as buy the product."
+      ],
+      disadvantage:[
+        "Balancing the social mission against generating income can limit how fast the business grows.",
+        "May struggle to compete on price with rivals who are focused purely on profit."
+      ]
+    }
+  };
+
+  // ---- build a flat statement list per stage: {id, typeId, text} ----
+  var STATEMENTS = {};   // stage -> array of ids
+  var STATEMENTS_BY_ID = {}; // id -> {typeId, text}
+
+  STAGES.forEach(function(stage){
+    STATEMENTS[stage] = [];
+    TYPES.forEach(function(t){
+      var val = CONTENT[t.id][stage];
+      if (Array.isArray(val)){
+        val.forEach(function(text, i){
+          var id = stage + "__" + t.id + "__" + i;
+          STATEMENTS[stage].push(id);
+          STATEMENTS_BY_ID[id] = { typeId: t.id, text: text };
+        });
+      } else {
+        var id = stage + "__" + t.id;
+        STATEMENTS[stage].push(id);
+        STATEMENTS_BY_ID[id] = { typeId: t.id, text: val };
+      }
+    });
+  });
+
+  var stageIndex = 0;
+  var finished = false;
+  var slots = {};       // typeId -> array of pending statement ids placed in this row (unchecked)
+  var lockedList = {};  // typeId -> array of statement ids correctly locked this stage
+  var wrongIds = {};    // statementId -> true (transient)
+  var bank = [];         // array of statement ids remaining unplaced
+  var selectedChip = null;
+  var matrixData = {};  // typeId -> stage -> array of finalized texts
+
+  TYPES.forEach(function(t){ matrixData[t.id] = {}; });
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i+1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function capacity(stage){ return CAPACITY[stage]; }
+  function currentStage(){ return STAGES[stageIndex]; }
+
+  var STORAGE_KEY = "biz-omics-ownership-matrix-v1";
+
+  function saveState(){
+    try{
+      var data = {
+        stageIndex: stageIndex, finished: finished,
+        slots: slots, lockedList: lockedList, bank: bank,
+        matrixData: matrixData
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e){ /* private browsing / quota — fail silently */ }
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!data || typeof data.stageIndex !== "number") return false;
+      stageIndex = data.stageIndex;
+      finished = !!data.finished;
+      slots = data.slots || {};
+      lockedList = data.lockedList || {};
+      bank = data.bank || [];
+      matrixData = data.matrixData || {};
+      TYPES.forEach(function(t){
+        if (!slots[t.id]) slots[t.id] = [];
+        if (!lockedList[t.id]) lockedList[t.id] = [];
+        if (!matrixData[t.id]) matrixData[t.id] = {};
+      });
+      return true;
+    } catch(e){ return false; }
+  }
+
+  function clearState(){
+    try{ localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  }
+
+  function initStage(idx){
+    stageIndex = idx;
+    finished = false;
+    slots = {}; lockedList = {}; wrongIds = {};
+    TYPES.forEach(function(t){ slots[t.id] = []; lockedList[t.id] = []; });
+    bank = shuffle(STATEMENTS[currentStage()].slice());
+    selectedChip = null;
+    renderAll();
+  }
+
+  function renderStepper(){
+    var el = document.getElementById("stepper");
+    el.innerHTML = "";
+    STAGES.forEach(function(s, i){
+      var div = document.createElement("div");
+      div.className = "step" + (i === stageIndex && !finished ? " current" : "") + (i < stageIndex || finished ? " done" : "");
+      div.innerHTML = '<span class="num">Round ' + (i+1) + '</span>' + STAGE_LABEL[s];
+      el.appendChild(div);
+    });
+  }
+
+  function renderBank(){
+    var titleEl = document.getElementById("bankTitle");
+    var hintEl = document.getElementById("bankHint");
+    var chipsEl = document.getElementById("chips");
+    var bankArea = document.getElementById("bankArea");
+    if (finished){
+      bankArea.style.display = "none";
+      return;
+    }
+    bankArea.style.display = "";
+    titleEl.textContent = STAGE_BANK_TITLE[currentStage()];
+    hintEl.textContent = capacity(currentStage()) > 1
+      ? "Select a statement, then select the row it belongs to. Each business type has two " + STAGE_LABEL[currentStage()].toLowerCase() + "s to find. Selecting a placed statement again picks it back up."
+      : "Select a statement, then select the row it belongs to. Selecting a placed statement again picks it back up.";
+    chipsEl.innerHTML = "";
+    if (bank.length === 0){
+      var p = document.createElement("p");
+      p.className = "bankEmpty";
+      p.textContent = "All statements placed — hit Check answers.";
+      chipsEl.appendChild(p);
+      return;
+    }
+    bank.forEach(function(id){
+      var btn = document.createElement("button");
+      btn.className = "chip" + (selectedChip === id ? " selected" : "");
+      btn.type = "button";
+      btn.draggable = true;
+      btn.textContent = STATEMENTS_BY_ID[id].text;
+      btn.addEventListener("click", function(){ onChipClick(id); });
+      btn.addEventListener("dragstart", function(e){
+        e.dataTransfer.setData("text/plain", id);
+      });
+      chipsEl.appendChild(btn);
+    });
+  }
+
+  function formatFinal(type, stage){
+    var arr = matrixData[type][stage] || [];
+    if (arr.length <= 1){
+      return arr[0] || "";
+    }
+    var html = "<ul>";
+    arr.forEach(function(t){ html += "<li>" + t + "</li>"; });
+    html += "</ul>";
+    return html;
+  }
+
+  function renderMatrix(){
+    var table = document.getElementById("matrixTable");
+    table.innerHTML = "";
+
+    var thead = document.createElement("thead");
+    var hrow = document.createElement("tr");
+    var corner = document.createElement("th");
+    corner.className = "corner";
+    hrow.appendChild(corner);
+    STAGES.forEach(function(s, i){
+      var th = document.createElement("th");
+      th.textContent = STAGE_LABEL[s];
+      if (!finished){
+        if (i === stageIndex) th.className = "stage-current";
+        else if (i > stageIndex) th.className = "stage-future";
+      }
+      hrow.appendChild(th);
+    });
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement("tbody");
+    TYPES.forEach(function(t){
+      var tr = document.createElement("tr");
+      tr.setAttribute("data-type", t.id);
+      var th = document.createElement("th");
+      th.textContent = t.name;
+      tr.appendChild(th);
+
+      STAGES.forEach(function(s, i){
+        var td = document.createElement("td");
+        td.className = "cell";
+
+        var isPastDone = finished ? (i < stageIndex || i === stageIndex) : i < stageIndex;
+        var isCurrent = !finished && i === stageIndex;
+
+        if (isPastDone){
+          td.classList.add("past");
+          td.innerHTML = formatFinal(t.id, s);
+        } else if (isCurrent){
+          renderCurrentCell(td, t.id);
+        } else {
+          td.classList.add("future");
+          td.textContent = "—";
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+  }
+
+  function renderCurrentCell(td, rowType){
+    var stack = document.createElement("div");
+    stack.className = "slotStack";
+    var cap = capacity(currentStage());
+    var lockedIds = lockedList[rowType];
+    var pendingIds = slots[rowType];
+
+    lockedIds.forEach(function(id){
+      var d = document.createElement("div");
+      d.className = "miniSlot correct";
+      d.textContent = STATEMENTS_BY_ID[id].text;
+      stack.appendChild(d);
+    });
+
+    pendingIds.forEach(function(id, idx){
+      var d = document.createElement("div");
+      d.className = "miniSlot filled" + (wrongIds[id] ? " wrong" : "");
+      d.textContent = STATEMENTS_BY_ID[id].text;
+      d.tabIndex = 0;
+      d.addEventListener("click", function(){ pickUp(rowType, idx); });
+      d.addEventListener("keydown", function(e){
+        if (e.key === "Enter" || e.key === " "){ e.preventDefault(); pickUp(rowType, idx); }
+      });
+      stack.appendChild(d);
+    });
+
+    var emptyCount = cap - lockedIds.length - pendingIds.length;
+    for (var k = 0; k < emptyCount; k++){
+      var e2 = document.createElement("div");
+      e2.className = "miniSlot";
+      e2.textContent = "Tap a statement, then tap here";
+      e2.tabIndex = 0;
+      (function(){
+        e2.addEventListener("click", function(){ onEmptySlotClick(rowType); });
+        e2.addEventListener("keydown", function(e){
+          if (e.key === "Enter" || e.key === " "){ e.preventDefault(); onEmptySlotClick(rowType); }
+        });
+        e2.addEventListener("dragover", function(e){ e.preventDefault(); e2.classList.add("dragover"); });
+        e2.addEventListener("dragleave", function(){ e2.classList.remove("dragover"); });
+        e2.addEventListener("drop", function(e){
+          e.preventDefault();
+          e2.classList.remove("dragover");
+          var id = e.dataTransfer.getData("text/plain");
+          if (id) onDrop(rowType, id);
+        });
+      })();
+      stack.appendChild(e2);
+    }
+
+    td.appendChild(stack);
+  }
+
+  function renderControls(){
+    var checkBtn = document.getElementById("checkBtn");
+    var nextBtn = document.getElementById("nextBtn");
+    var feedback = document.getElementById("feedback");
+
+    var cap = capacity(currentStage());
+    var allLocked = TYPES.every(function(t){ return lockedList[t.id].length === cap; });
+
+    if (finished){
+      checkBtn.style.display = "none";
+      nextBtn.style.display = "none";
+      feedback.innerHTML = '<div class="finishBanner">Matrix complete — every row and column filled. Print it below, or start over to try a fresh shuffle.</div>';
+      return;
+    }
+
+    checkBtn.style.display = "";
+    nextBtn.style.display = "";
+    checkBtn.disabled = allLocked;
+    nextBtn.disabled = !allLocked;
+    nextBtn.textContent = (stageIndex === STAGES.length - 1) ? "Finish matrix" : "Continue to " + STAGE_LABEL[STAGES[stageIndex+1]];
+
+    if (allLocked){
+      feedback.textContent = "All correct for this round. Ready for the next column.";
+    } else {
+      var totalItems = TYPES.length * cap;
+      var correctCount = TYPES.reduce(function(sum, t){ return sum + lockedList[t.id].length; }, 0);
+      feedback.textContent = correctCount + " of " + totalItems + " correct so far.";
+    }
+  }
+
+  function renderAll(){
+    renderStepper();
+    renderBank();
+    renderMatrix();
+    renderControls();
+    saveState();
+  }
+
+  function onChipClick(id){
+    selectedChip = (selectedChip === id) ? null : id;
+    renderAll();
+  }
+
+  function onEmptySlotClick(rowType){
+    if (selectedChip !== null){
+      placeChip(rowType, selectedChip);
+    }
+  }
+
+  function pickUp(rowType, idx){
+    var id = slots[rowType][idx];
+    if (id === undefined) return;
+    slots[rowType].splice(idx, 1);
+    delete wrongIds[id];
+    bank.push(id);
+    renderAll();
+  }
+
+  function onDrop(rowType, id){
+    if (bank.indexOf(id) === -1) return;
+    placeChip(rowType, id);
+  }
+
+  function placeChip(rowType, id){
+    var cap = capacity(currentStage());
+    if (lockedList[rowType].length + slots[rowType].length >= cap) return;
+    bank = bank.filter(function(x){ return x !== id; });
+    slots[rowType].push(id);
+    selectedChip = null;
+    renderAll();
+  }
+
+  function checkAnswers(){
+    var toReturn = [];
+    TYPES.forEach(function(t){
+      slots[t.id].slice().forEach(function(id){
+        var stmt = STATEMENTS_BY_ID[id];
+        if (stmt.typeId === t.id){
+          lockedList[t.id].push(id);
+          matrixData[t.id][currentStage()] = matrixData[t.id][currentStage()] || [];
+          matrixData[t.id][currentStage()].push(stmt.text);
+          slots[t.id] = slots[t.id].filter(function(x){ return x !== id; });
+        } else {
+          wrongIds[id] = true;
+          toReturn.push(id);
+        }
+      });
+    });
+    renderAll();
+    if (toReturn.length){
+      setTimeout(function(){
+        TYPES.forEach(function(t){
+          slots[t.id] = slots[t.id].filter(function(id){
+            if (wrongIds[id]){
+              bank.push(id);
+              delete wrongIds[id];
+              return false;
+            }
+            return true;
+          });
+        });
+        renderAll();
+      }, 750);
+    }
+  }
+
+  function nextStage(){
+    if (stageIndex < STAGES.length - 1){
+      initStage(stageIndex + 1);
+    } else {
+      finished = true;
+      renderAll();
+    }
+  }
+
+  function restart(){
+    TYPES.forEach(function(t){ matrixData[t.id] = {}; });
+    clearState();
+    initStage(0);
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function buildSnapshotHTML(){
+    var head = STAGES.map(function(s){ return "<th>" + STAGE_LABEL[s] + "</th>"; }).join("");
+    var rows = TYPES.map(function(t){
+      var cells = STAGES.map(function(s){
+        var arr = matrixData[t.id][s] || [];
+        if (!arr.length) return '<td class="blank"></td>';
+        if (arr.length === 1) return "<td>" + escapeHtml(arr[0]) + "</td>";
+        return "<td><ul>" + arr.map(function(x){ return "<li>" + escapeHtml(x) + "</li>"; }).join("") + "</ul></td>";
+      }).join("");
+      return "<tr><th>" + escapeHtml(t.name) + "</th>" + cells + "</tr>";
+    }).join("");
+    var dateStr = new Date().toLocaleDateString("en-GB");
+    return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">" +
+      "<title>Ownership &amp; Structure Matrix</title><style>" +
+      "body{font-family:Georgia,serif;background:#fff;color:#16212C;padding:24px;max-width:900px;margin:0 auto;}" +
+      "h1{font-size:1.3rem;}p.meta{font-family:-apple-system,sans-serif;font-size:0.8rem;color:#555;}" +
+      "table{border-collapse:collapse;width:100%;margin-top:12px;}" +
+      "th,td{border:1px solid #999;padding:8px;text-align:left;font-size:0.85rem;vertical-align:top;font-family:-apple-system,sans-serif;}" +
+      "thead th{background:#eee;}tbody th{background:#f5f5f0;width:150px;font-family:Georgia,serif;}" +
+      "td.blank{background:repeating-linear-gradient(#fff,#fff 20px,#bbb 21px,#fff 22px);}" +
+      "ul{margin:0;padding-left:16px;}li{margin-bottom:4px;}" +
+      "</style></head><body>" +
+      "<h1>Ownership &amp; Structure — Comparison Matrix</h1>" +
+      '<p class="meta">Saved from the BIZ-OMICS matrix builder — ' + dateStr + '. Blank cells were not completed at the time of saving.</p>' +
+      "<table><thead><tr><th></th>" + head + "</tr></thead><tbody>" + rows + "</tbody></table>" +
+      "</body></html>";
+  }
+
+  function saveCopy(){
+    var html = buildSnapshotHTML();
+    var blob = new Blob([html], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var dateSlug = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = "ownership-matrix-" + dateSlug + ".html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  document.getElementById("checkBtn").addEventListener("click", checkAnswers);
+  document.getElementById("nextBtn").addEventListener("click", nextStage);
+  document.getElementById("restartBtn").addEventListener("click", restart);
+  document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+  document.getElementById("saveBtn").addEventListener("click", saveCopy);
+
+  if (!loadState()){
+    initStage(0);
+  } else {
+    renderAll();
+  }
+})();
+</script>
+</body>
+</html>
