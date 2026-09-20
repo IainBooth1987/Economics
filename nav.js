@@ -26,6 +26,17 @@
 
    That's it — no other markup needed. The menu button appears
    automatically, fixed in the top-left corner.
+
+   THEMING
+   ------------------------------------------------------------
+   This menu no longer inherits color from the host page's CSS
+   variables (some pages define --text/--border but not
+   --bg-card/--accent/etc, which used to produce low-contrast,
+   near-invisible menus in light mode). Instead it carries its
+   own complete dark palette by default, and its own complete
+   light palette applied whenever an ancestor has
+   [data-theme="light"] (matching the toggleTheme() pattern used
+   across the site: document.body.dataset.theme = 'light').
    ============================================================ */
 
 const BIZOMICS_NAV = [
@@ -81,39 +92,57 @@ const BIZOMICS_NAV = [
   }
 
   // ---- Styles ----
+  // Own, self-contained palette (not borrowed from host-page CSS variables),
+  // with an explicit light-mode override block so contrast is always correct
+  // regardless of what variables (if any) the host page defines.
   var style = document.createElement("style");
   style.textContent =
     "#biz-nav-toggle{position:fixed;top:16px;left:16px;z-index:301;width:44px;height:44px;" +
-    "border-radius:50%;border:1px solid var(--border,rgba(255,255,255,0.12));" +
-    "background:var(--bg-card,#0d1f19);color:var(--text,#eef5f2);cursor:pointer;" +
+    "border-radius:50%;border:1px solid rgba(255,255,255,0.12);" +
+    "background:#0d1f19;color:#eef5f2;cursor:pointer;" +
     "display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.25);" +
-    "transition:border-color .2s, background .2s;font-family:'DM Sans',sans-serif;}" +
-    "#biz-nav-toggle:hover{border-color:var(--accent,#10b981);background:var(--bg-hover,#122b22);}" +
+    "transition:border-color .2s, background .2s, color .2s;font-family:'DM Sans',sans-serif;}" +
+    "#biz-nav-toggle:hover{border-color:#10b981;background:#122b22;}" +
     "#biz-nav-toggle svg{width:20px;height:20px;}" +
     "#biz-nav-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:299;" +
     "opacity:0;pointer-events:none;transition:opacity .25s;}" +
     "#biz-nav-overlay.open{opacity:1;pointer-events:auto;}" +
     "#biz-nav-panel{position:fixed;top:0;left:0;bottom:0;width:300px;max-width:85vw;z-index:300;" +
-    "background:var(--bg-card,#0d1f19);border-right:1px solid var(--border,rgba(255,255,255,0.08));" +
+    "background:#0d1f19;border-right:1px solid rgba(255,255,255,0.08);" +
     "transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);" +
     "overflow-y:auto;font-family:'DM Sans',sans-serif;}" +
     "#biz-nav-panel.open{transform:translateX(0);}" +
-    "#biz-nav-header{padding:20px 22px 16px;border-bottom:1px solid var(--border,rgba(255,255,255,0.08));" +
+    "#biz-nav-header{padding:20px 22px 16px;border-bottom:1px solid rgba(255,255,255,0.08);" +
     "display:flex;align-items:center;justify-content:space-between;}" +
-    "#biz-nav-header .brand{font-family:'Fraunces',serif;font-weight:700;font-size:17px;color:var(--text,#eef5f2);}" +
-    "#biz-nav-header .brand span{color:var(--accent,#10b981);}" +
-    "#biz-nav-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--border,rgba(255,255,255,0.1));" +
-    "background:transparent;color:var(--text-muted,rgba(238,245,242,0.5));cursor:pointer;font-size:14px;}" +
-    "#biz-nav-close:hover{border-color:var(--accent,#10b981);color:var(--accent-lt,#34d399);}" +
+    "#biz-nav-header .brand{font-family:'Fraunces',serif;font-weight:700;font-size:17px;color:#eef5f2;}" +
+    "#biz-nav-header .brand span{color:#10b981;}" +
+    "#biz-nav-close{width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);" +
+    "background:transparent;color:rgba(238,245,242,0.5);cursor:pointer;font-size:14px;}" +
+    "#biz-nav-close:hover{border-color:#10b981;color:#34d399;}" +
     "#biz-nav-body{padding:8px 14px 28px;}" +
     ".biz-nav-cat{margin-top:20px;}" +
     ".biz-nav-cat:first-child{margin-top:14px;}" +
     ".biz-nav-cat-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;" +
-    "color:var(--accent,#10b981);padding:0 10px 8px;}" +
+    "color:#10b981;padding:0 10px 8px;}" +
     ".biz-nav-link{display:block;padding:10px 12px;border-radius:10px;text-decoration:none;" +
-    "color:var(--text,#eef5f2);font-size:13.5px;font-weight:500;line-height:1.4;transition:background .15s;}" +
-    ".biz-nav-link:hover{background:var(--bg-hover,#122b22);}" +
-    ".biz-nav-link.current{background:var(--accent-glow,rgba(16,185,129,0.15));color:var(--accent-lt,#34d399);font-weight:700;}" +
+    "color:#eef5f2;font-size:13.5px;font-weight:500;line-height:1.4;transition:background .15s,color .15s;}" +
+    ".biz-nav-link:hover{background:#122b22;}" +
+    ".biz-nav-link.current{background:rgba(16,185,129,0.15);color:#34d399;font-weight:700;}" +
+    /* ---- Light-mode overrides ---- */
+    "[data-theme=\"light\"] #biz-nav-toggle{background:#ffffff;color:#0f172a;" +
+    "border-color:rgba(0,0,0,0.12);box-shadow:0 4px 16px rgba(0,0,0,0.1);}" +
+    "[data-theme=\"light\"] #biz-nav-toggle:hover{border-color:#059669;background:#f0fdf9;}" +
+    "[data-theme=\"light\"] #biz-nav-panel{background:#ffffff;border-right-color:rgba(0,0,0,0.09);" +
+    "box-shadow:0 0 40px rgba(0,0,0,0.12);}" +
+    "[data-theme=\"light\"] #biz-nav-header{border-bottom-color:rgba(0,0,0,0.09);}" +
+    "[data-theme=\"light\"] #biz-nav-header .brand{color:#0f172a;}" +
+    "[data-theme=\"light\"] #biz-nav-header .brand span{color:#059669;}" +
+    "[data-theme=\"light\"] #biz-nav-close{border-color:rgba(0,0,0,0.1);color:rgba(15,23,42,0.55);}" +
+    "[data-theme=\"light\"] #biz-nav-close:hover{border-color:#059669;color:#059669;}" +
+    "[data-theme=\"light\"] .biz-nav-cat-title{color:#059669;}" +
+    "[data-theme=\"light\"] .biz-nav-link{color:#0f172a;}" +
+    "[data-theme=\"light\"] .biz-nav-link:hover{background:#f1f5f9;}" +
+    "[data-theme=\"light\"] .biz-nav-link.current{background:rgba(16,185,129,0.12);color:#059669;}" +
     "@media (max-width:600px){#biz-nav-toggle{top:12px;left:12px;}}";
   document.head.appendChild(style);
 
