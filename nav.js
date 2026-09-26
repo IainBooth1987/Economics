@@ -64,7 +64,6 @@ const BIZOMICS_NAV = [
   { category: "Business", label: "Simulated Resources", url: "/business/exam-boards.html" },
   { category: "Business", label: "University Support", url: "/business/business_futures.html" },
 
-  { category: "More", label: "Explore All Free Resources", url: "/explore.html" },
 ];
 
 const CATEGORY_COLOURS = {
@@ -207,7 +206,7 @@ const CATEGORY_COLOURS = {
     });
     html += '</div>';
   });
-  html += '<div id="biz-nav-empty">No matches. <a href="/explore.html">Browse all free resources \u2192</a></div></div>';
+  html += '<div id="biz-nav-empty">No matches. Try \u201cdiagram\u201d, \u201cglossary\u201d or \u201cnews\u201d.</div></div>';
   panel.innerHTML = html;
   document.body.appendChild(panel);
 
