@@ -533,14 +533,14 @@
     position:absolute;
     inset:0;
     border-radius:14px;
-    padding:2.2rem 2.4rem;
+    padding:clamp(1rem,2.2vh,2.2rem) clamp(1.1rem,2vw,2.4rem);
     backface-visibility:hidden;
     display:flex;
     flex-direction:column;
     cursor:pointer;
-    overflow-y:auto;
+    overflow:hidden;
   }
-  .present-face-q{background:#1b1e24;border:1px solid #33373f;position:relative;overflow:hidden;}
+  .present-face-q{background:#1b1e24;border:1px solid #33373f;}
   .present-face-q::before{
     content:"";
     position:absolute;
@@ -566,11 +566,14 @@
   }
   .present-face-a .present-tag{color:var(--purple);background:#ece3f7;}
   .present-body{
-    font-size:clamp(1.15rem, 2.1vw, 1.9rem);
-    line-height:1.4;
+    font-size:clamp(1.3rem, 2.6vw, 2.4rem);
+    line-height:1.35;
     color:#fff;
     font-weight:600;
-    flex:1;
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-wrap:break-word;
   }
   .present-face-a .present-body{color:var(--purple);}
   .present-empty{
@@ -636,6 +639,27 @@
     color:#565a63;
     letter-spacing:0.04em;
   }
+
+
+  /* ---------- Class history & saved sets bar ---------- */
+  .class-bar{display:flex;flex-wrap:wrap;gap:0.55rem 0.9rem;align-items:center;padding:0.75rem 1.25rem;background:#fbfbfc;border-top:1px solid var(--line);}
+  .cb-group{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;}
+  .cb-label{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.04em;color:#8a8f99;text-transform:uppercase;}
+  .cb-input,.cb-select{font-family:var(--sans);font-size:0.85rem;padding:0.4rem 0.55rem;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);}
+  .cb-input{width:8rem;}
+  .cb-select{max-width:15rem;}
+  .cb-input:focus-visible,.cb-select:focus-visible{outline:2px solid var(--red);outline-offset:1px;}
+  .cb-btn{font-family:var(--mono);font-size:0.72rem;padding:0.42rem 0.7rem;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink-soft);cursor:pointer;}
+  .cb-btn:hover{border-color:#b8bcc4;}
+  .cb-btn:focus-visible,.cb-link:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .cb-link{font-family:var(--mono);font-size:0.72rem;color:#8a8f99;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+  .cb-sep{width:1px;height:1.4rem;background:var(--line);}
+  @media(max-width:720px){.cb-sep{display:none;}}
+  .cb-status{font-family:var(--mono);font-size:0.72rem;color:var(--red);}
+  .used-badge{display:inline-block;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.02em;padding:0.08rem 0.42rem;border-radius:999px;background:#fff1d6;color:#8a5a00;margin-left:0.35rem;vertical-align:middle;}
+  .used-badge.old{background:#eef0f3;color:#6b717c;}
+  .modal-item.is-recent{opacity:0.6;}
+  @media print{.class-bar{display:none !important;}}
 
   footer{
     padding:1.5rem 1.25rem 2.5rem;
@@ -707,6 +731,9 @@
     <p>Retrieving spaced-out material is harder than reviewing what's fresh, and that difficulty is the point: it's what makes the memory stick and builds the connections between topics that exam answers depend on.</p>
     <h2>Why you build it yourself</h2>
     <p>The four slots always mean the same thing &mdash; last lesson, last week, last month, last year &mdash; but which question fills each one is up to you. Every school sequences its scheme of work differently, so pick whichever topic from the bank actually was covered last lesson, last week, etc. for your class.</p>
+    <h2>Classes, repeats and saved pit stops</h2>
+    <p>Type a <b>class</b> (e.g. 13A) in the bar above the cards. Each time you <b>Present</b> or <b>Print</b> a pit stop, its questions are logged against that class. The question picker then shows when each question was last used with that class, and pushes anything inside the <b>Avoid repeats</b> window to the bottom of the list, faded. History is stored in this browser only.</p>
+    <p><b>Save</b> a pit stop by name to reuse it, or <b>Copy link</b> &mdash; the current pit stop is kept in the page address, so a link opens the same four questions for a colleague.</p>
     <h2>Running it</h2>
     <p>Build the pit stop, then hit <b>Present</b> to put it on the board full-screen. Students answer in black pen; click a card to reveal the model answer and mark corrections in purple.</p>
   </div>
@@ -719,6 +746,34 @@
 </nav>
 
 <p class="mode-note" id="modeNote"></p>
+
+<div class="class-bar" id="classBar">
+  <div class="cb-group">
+    <label class="cb-label" for="classInput">Class</label>
+    <input class="cb-input" id="classInput" list="classList" placeholder="e.g. 12B" autocomplete="off">
+    <datalist id="classList"></datalist>
+    <label class="cb-label" for="avoidSel">Avoid repeats from</label>
+    <select class="cb-select" id="avoidSel">
+      <option value="0">Off</option>
+      <option value="7">Last week</option>
+      <option value="14">Last 2 weeks</option>
+      <option value="28">Last 4 weeks</option>
+      <option value="42">Last 6 weeks</option>
+      <option value="365">This year</option>
+    </select>
+    <button type="button" class="cb-link" id="clearHistBtn">Reset history</button>
+  </div>
+  <span class="cb-sep"></span>
+  <div class="cb-group">
+    <label class="cb-label" for="savedSel">Saved pit stops</label>
+    <select class="cb-select" id="savedSel"></select>
+    <button type="button" class="cb-btn" id="savedDelBtn">Delete</button>
+    <input class="cb-input" id="saveName" placeholder="Name this pit stop">
+    <button type="button" class="cb-btn" id="saveBtn">Save</button>
+    <button type="button" class="cb-btn" id="copyLinkBtn">Copy link</button>
+  </div>
+  <span class="cb-status" id="cbStatus" role="status" aria-live="polite"></span>
+</div>
 
 <div class="deck">
   <div class="legend">
@@ -1276,6 +1331,164 @@ SUBJECTS.forEach(subject=>{
   });
 });
 
+/* ============ CLASS HISTORY & SAVED SETS ============ */
+/* Questions are keyed by a short hash of their text (not their position in
+   the bank), so history, saved sets and shared links survive new questions
+   being added to the bank. Everything lives in this browser's localStorage. */
+const STORE_PREFIX = "ps-economics";
+const DAY_MS = 86400000;
+function qHash(text){
+  let h = 5381;
+  for(let i=0;i<text.length;i++){ h = ((h<<5) + h + text.charCodeAt(i)) | 0; }
+  return (h>>>0).toString(36);
+}
+function esc(t){ return String(t).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function lsGet(k, def){
+  try{ const v = localStorage.getItem(STORE_PREFIX+":"+k); return v ? JSON.parse(v) : def; }catch(e){ return def; }
+}
+function lsSet(k, v){
+  try{ localStorage.setItem(STORE_PREFIX+":"+k, JSON.stringify(v)); }catch(e){ /* storage blocked — features degrade quietly */ }
+}
+const History = {
+  cls(){ return lsGet("currentClass", ""); },
+  setCls(c){
+    lsSet("currentClass", c);
+    const list = lsGet("classes", []);
+    if(c && !list.includes(c)){ list.push(c); list.sort(); lsSet("classes", list); }
+  },
+  classes(){ return lsGet("classes", []); },
+  map(){ const c = this.cls(); return c ? lsGet("hist:"+c, {}) : {}; },
+  lastUsed(h){ return this.map()[h] || null; },
+  record(hashes){
+    const c = this.cls(); if(!c) return;
+    const m = lsGet("hist:"+c, {}); const now = Date.now();
+    hashes.forEach(h=>{ if(h) m[h] = now; });
+    lsSet("hist:"+c, m);
+  },
+  clear(){ const c = this.cls(); if(c) lsSet("hist:"+c, {}); },
+  windowDays(){ return lsGet("avoidDays", 14); },
+  setWindow(d){ lsSet("avoidDays", d); },
+  isRecent(h){
+    const d = this.windowDays(); if(!d) return false;
+    const t = this.lastUsed(h);
+    return !!t && (Date.now() - t) < d*DAY_MS;
+  }
+};
+function agoText(t){
+  const d = Math.floor((Date.now() - t) / DAY_MS);
+  if(d <= 0) return "today";
+  if(d === 1) return "yesterday";
+  if(d < 14) return d + " days ago";
+  if(d < 60) return Math.round(d/7) + " weeks ago";
+  return Math.round(d/30) + " months ago";
+}
+function usedBadge(h){
+  const t = History.lastUsed(h);
+  if(!t) return "";
+  return '<span class="used-badge'+(History.isRecent(h)?"":" old")+'" title="Last used with '+esc(History.cls())+'">Used '+agoText(t)+'</span>';
+}
+let cbStatusTimer = null;
+function cbStatus(msg){
+  const el = document.getElementById("cbStatus");
+  el.textContent = msg;
+  clearTimeout(cbStatusTimer);
+  cbStatusTimer = setTimeout(()=>{ el.textContent = ""; }, 3500);
+}
+function initClassBar(hooks){
+  const inp = document.getElementById("classInput");
+  const dl = document.getElementById("classList");
+  const avoid = document.getElementById("avoidSel");
+  const savedSel = document.getElementById("savedSel");
+  const saveName = document.getElementById("saveName");
+
+  function refreshClassList(){ dl.innerHTML = History.classes().map(c=>'<option value="'+esc(c)+'">').join(""); }
+  function renderSaved(selectName){
+    const list = lsGet("saved", []);
+    savedSel.innerHTML = '<option value="">' + (list.length ? "— Load a saved set —" : "No saved sets yet") + '</option>' +
+      list.map((s,i)=>'<option value="'+i+'"'+(s.name===selectName?" selected":"")+'>'+esc(hooks.label ? hooks.label(s) : s.name)+'</option>').join("");
+  }
+
+  refreshClassList();
+  inp.value = History.cls();
+  const w = String(History.windowDays());
+  avoid.value = [...avoid.options].some(o=>o.value===w) ? w : "14";
+  renderSaved();
+
+  inp.addEventListener("change", ()=>{
+    const c = inp.value.trim();
+    inp.value = c;
+    History.setCls(c);
+    refreshClassList();
+    hooks.onHistoryChange();
+    cbStatus(c ? "Tracking repeats for " + c : "Class cleared — repeats not tracked");
+  });
+  avoid.addEventListener("change", ()=>{ History.setWindow(Number(avoid.value)); hooks.onHistoryChange(); });
+  document.getElementById("clearHistBtn").addEventListener("click", ()=>{
+    const c = History.cls();
+    if(!c){ cbStatus("Choose a class first"); return; }
+    if(confirm("Reset the used-question history for " + c + "? This can't be undone.")){
+      History.clear(); hooks.onHistoryChange(); cbStatus("History reset for " + c);
+    }
+  });
+
+  savedSel.addEventListener("change", ()=>{
+    if(savedSel.value === "") return;
+    const item = lsGet("saved", [])[Number(savedSel.value)];
+    if(item){ applyingSaved = true; try{ hooks.applySaved(item); } finally { applyingSaved = false; } cbStatus("Loaded “" + item.name + "”"); }
+  });
+  document.getElementById("savedDelBtn").addEventListener("click", ()=>{
+    if(savedSel.value === ""){ cbStatus("Pick the saved set in the list first, then Delete"); return; }
+    const list = lsGet("saved", []);
+    const item = list[Number(savedSel.value)];
+    if(item && confirm("Delete “" + item.name + "”?")){
+      list.splice(Number(savedSel.value), 1); lsSet("saved", list); renderSaved(); cbStatus("Deleted");
+    }
+  });
+  function doSave(){
+    const snap = hooks.snapshot();
+    if(!snap){ cbStatus("Nothing to save yet"); return; }
+    const d = new Date();
+    const name = saveName.value.trim() || ("Set " + d.toLocaleDateString("en-GB") + " " + d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}));
+    const list = lsGet("saved", []).filter(s=>s.name !== name);
+    list.unshift(Object.assign({ name, t: Date.now() }, snap));
+    lsSet("saved", list);
+    saveName.value = "";
+    renderSaved();
+    cbStatus("Saved “" + name + "”");
+  }
+  document.getElementById("saveBtn").addEventListener("click", doSave);
+  saveName.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); doSave(); } });
+
+  document.getElementById("copyLinkBtn").addEventListener("click", ()=>{
+    if(!hooks.snapshot()){ cbStatus("Build a set first"); return; }
+    const url = location.href;
+    const note = location.protocol === "file:" ? " (works for others once the page is hosted online)" : "";
+    const fallback = ()=>{ window.prompt("Copy this link:", url); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(()=> cbStatus("Link copied" + note), fallback);
+    }else{ fallback(); }
+  });
+}
+/* A saved-set selection only stays showing while that set is on screen, so
+   picking the same saved set again after changing anything reloads it. */
+let applyingSaved = false;
+function markSavedStale(){
+  if(applyingSaved) return;
+  const el = document.getElementById("savedSel");
+  if(el) el.value = "";
+}
+function setHash(h){
+  if(location.hash === h || (h === "" && !location.hash)) return;
+  try{ history.replaceState(null, "", location.pathname + location.search + h); }
+  catch(e){ /* some file:// contexts block replaceState — fall back */ if(h) location.hash = h; }
+}
+
+const BY_HASH = {};
+SUBJECTS.forEach(subject=>{
+  BY_HASH[subject] = {};
+  BANK[subject].forEach(item=>{ item.h = qHash(item.q); BY_HASH[subject][item.h] = item; });
+});
+
 /* ============ SEARCH: synonym/concept clusters ============ */
 // Each cluster groups a term with the abbreviations, formulas, and related
 // phrasing it's commonly known by, so searching one surfaces the others even
@@ -1379,7 +1592,31 @@ let state = {
 };
 hydrateCustomFromStorage();
 
+function syncHash(){
+  markSavedStale();
+  const slots = state.custom[state.subject];
+  if(!slots.some(Boolean)){ setHash(""); return; }
+  setHash("#c=" + state.subject + "&s=" + slots.map(sl=> sl ? sl.h : "-").join("."));
+}
+function setActiveCircuit(){
+  document.querySelectorAll(".circuit-btn").forEach(b=> b.classList.toggle("active", b.dataset.subject === state.subject));
+}
+function applySlots(subject, hashes){
+  state.subject = subject;
+  state.custom[subject] = [0,1,2,3].map(i=> (hashes[i] && BY_HASH[subject][hashes[i]]) || null);
+  saveCustom();
+  setActiveCircuit();
+}
+function loadFromHash(){
+  const c = (location.hash.match(/c=([a-z0-9]+)/i) || [])[1];
+  const sl = (location.hash.match(/s=([a-z0-9.\-]+)/i) || [])[1];
+  if(!c || !sl || !SUBJECTS.includes(c)) return false;
+  applySlots(c, sl.split("."));
+  return true;
+}
+
 function render(){
+  syncHash();
   document.getElementById("modeNote").textContent =
     "Pick any question from the " + SUBJECT_NAMES[state.subject] + " bank for each of the four slots below — build today's pit stop to match your own scheme of work.";
   renderBuild();
@@ -1390,7 +1627,7 @@ function renderBuild(){
     "<b>Your pit stop.</b> Answer in black pen, mark in purple with corrections.";
 
   const slots = state.custom[state.subject];
-  const qsForGrid = slots.map((slot, i)=> slot ? { label:SLOT_LABELS[i], q:slot.q, a:slot.a } : null);
+  const qsForGrid = slots.map((slot, i)=> slot ? { label:SLOT_LABELS[i], q:slot.q, a:slot.a, h:slot.h } : null);
   renderGrid(qsForGrid, true);
 
   const filled = slots.filter(Boolean);
@@ -1451,7 +1688,7 @@ function renderGrid(items, isBuildMode){
     faceQ.innerHTML =
       '<span class="face-tag" style="background:var(--'+slotLabel+')">'+tag.text+'</span>' +
       '<div class="face-body">'+item.q+'</div>' +
-      '<div class="face-hint">Tap to reveal &#8594;</div>' +
+      '<div class="face-hint">Tap to reveal &#8594;'+usedBadge(item.h)+'</div>' +
       (isBuildMode ? '<button type="button" class="card-change">Change</button>' : '');
 
     const faceA = document.createElement("div");
@@ -1542,9 +1779,11 @@ function renderPicker(searchText){
     });
   }
 
+  // Fresh-for-this-class first; recently used ones sink to the bottom (faded).
+  results = results.slice().sort((x,y)=> (History.isRecent(x.h)?1:0) - (History.isRecent(y.h)?1:0));
   const listHtml = results.length
     ? results.map(item=>
-        '<button type="button" class="modal-item" data-q="'+encodeURIComponent(item.q)+'">' + item.q + '</button>'
+        '<button type="button" class="modal-item'+(History.isRecent(item.h)?" is-recent":"")+'" data-q="'+encodeURIComponent(item.q)+'">' + item.q + usedBadge(item.h) + '</button>'
       ).join("")
     : '<div class="modal-empty">No questions match. Try a different search.</div>';
 
@@ -1585,8 +1824,13 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============ PRESENTATION MODE ============ */
+function recordCurrentPitStop(){
+  History.record(state.custom[state.subject].filter(Boolean).map(sl=>sl.h));
+}
+
 function openPresent(){
   const root = document.getElementById("presentRoot");
+  recordCurrentPitStop();
   state.presenting = true;
 
   // Request fullscreen on a placeholder root before building content, so the
@@ -1682,12 +1926,40 @@ function renderPresentGrid(){
     card.addEventListener("click", ()=> card.classList.toggle("flipped"));
   });
   document.getElementById("exitPresentBtn").addEventListener("click", closePresent);
+  requestAnimationFrame(()=> autoFitAll("#presentRoot .present-body", 14));
 }
+
+/* True shrink-to-fit: measures the rendered box and steps the font down
+   until the text stops overflowing. */
+function autoFitText(el, minPx){
+  if(!el) return;
+  el.style.fontSize = "";
+  const min = minPx || 12;
+  let size = parseFloat(window.getComputedStyle(el).fontSize);
+  let guard = 0;
+  while((el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) && size > min && guard < 60){
+    size -= 1;
+    el.style.fontSize = size + "px";
+    guard++;
+  }
+}
+function autoFitAll(selector, minPx){
+  document.querySelectorAll(selector).forEach(el=> autoFitText(el, minPx));
+}
+
+/* Re-fit once fullscreen engages / the projector resolution settles. */
+let presentFitTimer = null;
+window.addEventListener("resize", ()=>{
+  if(!state.presenting) return;
+  clearTimeout(presentFitTimer);
+  presentFitTimer = setTimeout(()=> autoFitAll("#presentRoot .present-body", 14), 120);
+});
 
 function closePresent(){
   if(document.fullscreenElement){ document.exitFullscreen().catch(()=>{}); }
   document.getElementById("presentRoot").innerHTML = "";
   state.presenting = false;
+  render(); // refresh 'used' badges
 }
 
 document.addEventListener("keydown", (e)=>{
@@ -1711,7 +1983,7 @@ document.getElementById("circuitSelect").addEventListener("click", (e)=>{
   render();
 });
 
-document.getElementById("printBtn").addEventListener("click", ()=>window.print());
+document.getElementById("printBtn").addEventListener("click", ()=>{ window.print(); recordCurrentPitStop(); render(); });
 document.getElementById("presentBtn").addEventListener("click", openPresent);
 document.getElementById("answerToggle").addEventListener("change", renderBuild);
 
@@ -1722,6 +1994,17 @@ document.getElementById("aboutBtn").addEventListener("click", ()=>{
   else{ panel.setAttribute("hidden",""); document.getElementById("aboutBtn").textContent = "About this resource"; }
 });
 
+initClassBar({
+  snapshot: ()=>{
+    const slots = state.custom[state.subject];
+    return slots.some(Boolean) ? { subject: state.subject, hashes: slots.map(sl=> sl ? sl.h : null) } : null;
+  },
+  applySaved: (item)=>{ applySlots(item.subject, item.hashes); render(); },
+  label: (item)=> item.name + " (" + (SUBJECT_NAMES[item.subject] || item.subject) + ")",
+  onHistoryChange: ()=> render()
+});
+loadFromHash();
+window.addEventListener("hashchange", ()=>{ if(loadFromHash()) render(); });
 render();
 </script>
 </body>
