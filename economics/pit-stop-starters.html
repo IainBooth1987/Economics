@@ -355,6 +355,8 @@
   .build-toolbar{
     display:flex;
     justify-content:flex-end;
+    align-items:center;
+    gap:0.9rem;
     margin-bottom:0.8rem;
   }
   .build-toolbar:empty{display:none;margin:0;}
@@ -641,6 +643,18 @@
   }
 
 
+  .toolbar-right{display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap;}
+  .btn-mark{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.02em;padding:0.38rem 0.75rem;border-radius:6px;border:1px solid var(--red);background:#fff;color:var(--red);cursor:pointer;font-weight:700;}
+  .btn-mark:hover:not(:disabled){background:var(--red);color:#fff;}
+  .btn-mark.is-marked{border-color:#1f9e8b;color:#157a6b;background:#e8f6f3;}
+  .btn-mark.is-marked:hover{background:#1f9e8b;color:#fff;}
+  .btn-mark:disabled{border-color:var(--line);color:#8a8f99;background:#fff;cursor:default;font-weight:400;}
+  .btn-mark:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  .btn-mark-present{font-family:var(--mono);font-size:0.85rem;letter-spacing:0.03em;background:transparent;color:#ff8fa1;border:1px solid #c81e3a;padding:0.5rem 0.9rem;border-radius:4px;cursor:pointer;}
+  .btn-mark-present:hover:not(:disabled){background:#c81e3a;color:#fff;}
+  .btn-mark-present.is-marked{color:#6fe0cc;border-color:#1f9e8b;}
+  .btn-mark-present.is-marked:hover{background:#1f9e8b;color:#fff;}
+  .btn-mark-present:disabled{color:#565a63;border-color:#33373f;cursor:default;}
   /* ---------- Class history & saved sets bar ---------- */
   .class-bar{display:flex;flex-wrap:wrap;gap:0.55rem 0.9rem;align-items:center;padding:0.75rem 1.25rem;background:#fbfbfc;border-top:1px solid var(--line);}
   .cb-group{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;}
@@ -732,7 +746,7 @@
     <h2>Why you build it yourself</h2>
     <p>The four slots always mean the same thing &mdash; last lesson, last week, last month, last year &mdash; but which question fills each one is up to you. Every school sequences its scheme of work differently, so pick whichever topic from the bank actually was covered last lesson, last week, etc. for your class.</p>
     <h2>Classes, repeats and saved pit stops</h2>
-    <p>Type a <b>class</b> (e.g. 13A) in the bar above the cards. Each time you <b>Present</b> or <b>Print</b> a pit stop, its questions are logged against that class. The question picker then shows when each question was last used with that class, and pushes anything inside the <b>Avoid repeats</b> window to the bottom of the list, faded. History is stored in this browser only.</p>
+    <p>Type a <b>class</b> (e.g. 13A) in the bar above the cards. Once you've run a pit stop with the class, click <b>Mark as used</b> (above the cards, or top-right in Present mode) to log its questions &mdash; previewing or printing on its own doesn't count, and the last mark can be undone. The question picker then shows when each question was last used with that class, and pushes anything inside the <b>Avoid repeats</b> window to the bottom of the list, faded. History is stored in this browser only.</p>
     <p><b>Save</b> a pit stop by name to reuse it, or <b>Copy link</b> &mdash; the current pit stop is kept in the page address, so a link opens the same four questions for a colleague.</p>
     <h2>Running it</h2>
     <p>Build the pit stop, then hit <b>Present</b> to put it on the board full-screen. Students answer in black pen; click a card to reveal the model answer and mark corrections in purple.</p>
@@ -1471,6 +1485,45 @@ function initClassBar(hooks){
 }
 /* A saved-set selection only stays showing while that set is on screen, so
    picking the same saved set again after changing anything reloads it. */
+/* ---------- Mark as used ----------
+   Nothing is logged automatically — previewing in Present or cancelling a
+   print doesn't count. The teacher marks a set as used once it has actually
+   been done with the class; the last mark can be undone. */
+let lastMark = null; // { cls, key, prev:{hash: previousTimestamp|undefined} }
+function isMarked(hashes){
+  return !!(lastMark && hashes.length && lastMark.cls === History.cls() && lastMark.key === hashes.join("."));
+}
+function markUsed(hashes){
+  const c = History.cls();
+  if(!c || !hashes.length) return false;
+  const m = lsGet("hist:"+c, {});
+  const prev = {};
+  hashes.forEach(h=>{ prev[h] = m[h]; });
+  History.record(hashes);
+  lastMark = { cls:c, key:hashes.join("."), prev };
+  return true;
+}
+function undoMark(){
+  if(!lastMark) return;
+  const m = lsGet("hist:"+lastMark.cls, {});
+  Object.keys(lastMark.prev).forEach(h=>{ if(lastMark.prev[h]) m[h] = lastMark.prev[h]; else delete m[h]; });
+  lsSet("hist:"+lastMark.cls, m);
+  lastMark = null;
+}
+function markButtonHtml(id, cssClass, hashes){
+  const c = History.cls();
+  if(!c) return '<button type="button" class="'+cssClass+'" id="'+id+'" disabled title="Type a class in the Class box to track what each class has seen">Set a class to mark as used</button>';
+  if(isMarked(hashes)) return '<button type="button" class="'+cssClass+' is-marked" id="'+id+'" title="Logged for '+esc(c)+' — click to undo">&#10003; Used with '+esc(c)+' &middot; Undo</button>';
+  return '<button type="button" class="'+cssClass+'" id="'+id+'" title="Log these questions as used with '+esc(c)+', so they are avoided next time">Mark as used with '+esc(c)+'</button>';
+}
+/* Returns true if anything changed. */
+function toggleMark(hashes){
+  if(!hashes.length || !History.cls()) return false;
+  if(isMarked(hashes)){ undoMark(); cbStatus("Unmarked — history restored"); }
+  else { markUsed(hashes); cbStatus("Marked as used with " + History.cls()); }
+  return true;
+}
+
 let applyingSaved = false;
 function markSavedStale(){
   if(applyingSaved) return;
@@ -1653,6 +1706,13 @@ function renderGrid(items, isBuildMode){
       saveCustom();
       render();
     });
+    if(items.some(Boolean)){
+      const markWrap = document.createElement("span");
+      markWrap.innerHTML = markButtonHtml("markUsedBtn", "btn-mark", currentHashes());
+      toolbarEl.appendChild(markWrap);
+      const markBtn = markWrap.querySelector("#markUsedBtn");
+      if(!markBtn.disabled) markBtn.addEventListener("click", ()=>{ if(toggleMark(currentHashes())) render(); });
+    }
     toolbarEl.appendChild(clearBtn);
   }
 
@@ -1824,13 +1884,23 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============ PRESENTATION MODE ============ */
-function recordCurrentPitStop(){
-  History.record(state.custom[state.subject].filter(Boolean).map(sl=>sl.h));
+function currentHashes(){
+  return state.custom[state.subject].filter(Boolean).map(sl=>sl.h);
+}
+/* Re-render only the mark button so card flips on the board are kept. */
+function bindPresentMark(){
+  const btn = document.getElementById("presentMarkBtn");
+  if(!btn) return;
+  btn.addEventListener("click", ()=>{
+    if(toggleMark(currentHashes())){
+      document.getElementById("presentMarkSlot").innerHTML = markButtonHtml("presentMarkBtn", "btn-mark-present", currentHashes());
+      bindPresentMark();
+    }
+  });
 }
 
 function openPresent(){
   const root = document.getElementById("presentRoot");
-  recordCurrentPitStop();
   state.presenting = true;
 
   // Request fullscreen on a placeholder root before building content, so the
@@ -1917,6 +1987,7 @@ function renderPresentGrid(){
       '<div class="present-top">' +
         '<span class="present-brand">&#127937; BIZ-OMICS &middot; Pit Stop</span>' +
         '<span class="present-instructions">Answer in <span class="pen">black pen</span>, mark in <span class="mark">purple</span> with corrections</span>' +
+        '<span id="presentMarkSlot">' + markButtonHtml("presentMarkBtn", "btn-mark-present", currentHashes()) + '</span>' +
         '<button type="button" class="btn-exit" id="exitPresentBtn">Exit &#10005;</button>' +
       '</div>' +
       '<div class="present-grid">'+cardsHtml+'</div>' +
@@ -1926,6 +1997,7 @@ function renderPresentGrid(){
     card.addEventListener("click", ()=> card.classList.toggle("flipped"));
   });
   document.getElementById("exitPresentBtn").addEventListener("click", closePresent);
+  bindPresentMark();
   requestAnimationFrame(()=> autoFitAll("#presentRoot .present-body", 14));
 }
 
@@ -1983,7 +2055,7 @@ document.getElementById("circuitSelect").addEventListener("click", (e)=>{
   render();
 });
 
-document.getElementById("printBtn").addEventListener("click", ()=>{ window.print(); recordCurrentPitStop(); render(); });
+document.getElementById("printBtn").addEventListener("click", ()=>window.print());
 document.getElementById("presentBtn").addEventListener("click", openPresent);
 document.getElementById("answerToggle").addEventListener("change", renderBuild);
 
