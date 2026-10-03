@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMART Objectives: Teacher Present | BIZ-OMICS</title>
+<style>
+:root{
+  --navy:#14254a; --navy2:#223a6e; --gold:#e0a526; --ink:#1b2233; --muted:#5b6478;
+  --line:#d9deea; --soft:#eef2fb; --bg:#f3f5fa;
+  --good:#1f8a4c; --goodbg:#e6f5ec; --bad:#b83232; --badbg:#fbeaea; --warnbg:#fff5dc; --purple:#6b4bb8;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);line-height:1.5}
+#src{display:none}
+
+/* ---------- Page chrome ---------- */
+.topbar{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.topbar .inner{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:.06em;font-size:15px}
+.brand span{color:var(--gold)}
+.jump{display:flex;gap:4px;flex-wrap:wrap;flex:1;justify-content:center}
+.jump a{color:#dfe5f3;text-decoration:none;font-size:13px;font-weight:700;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.08)}
+.jump a:hover{background:rgba(255,255,255,.2)}
+.jump a.t{background:rgba(224,165,38,.18);color:#ffe3a3}
+.tbtn{border:0;border-radius:8px;padding:7px 12px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.12);color:#fff}
+.tbtn.on{background:#fff;color:var(--navy)}
+.tbtn.gold{background:var(--gold);color:var(--navy)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 60px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:0 0 18px 18px;padding:26px 24px 22px;margin:0 -16px 22px}
+.hero .k{color:var(--gold);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.hero h1{margin:6px 0;font-size:34px;line-height:1.1}
+.hero p{margin:0;opacity:.9;max-width:760px}
+.plan{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:24px}
+.plan a{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 8px;text-align:center;color:var(--ink)}
+.plan a small{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.plan a b{display:block;color:var(--navy);font-size:14px}
+.plan a i{font-style:normal;font-size:12px;color:#9a6a00;font-weight:700}
+.plan a.task{border-color:#e9cf8f;background:#fffbf0}
+
+/* ---------- Section blocks ---------- */
+.psec{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;margin-bottom:26px;scroll-margin-top:70px}
+.psec.task{border-top:5px solid var(--gold)}
+.psec.theory{border-top:5px solid var(--navy)}
+.phead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.phead .ptag{background:var(--navy);color:#fff;font-weight:800;font-size:13px;border-radius:8px;padding:4px 10px;letter-spacing:.04em;text-transform:uppercase}
+.psec.task .phead .ptag{background:var(--gold);color:var(--navy)}
+.phead h2{margin:0;font-size:24px;color:var(--navy)}
+.phead .pm{background:var(--warnbg);color:#9a6a00;font-weight:800;font-size:13px;border-radius:999px;padding:3px 10px}
+.phead .sp{flex:1}
+.present{border:0;border-radius:10px;padding:10px 18px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;display:flex;align-items:center;gap:8px}
+.psec.task .present{background:var(--gold);color:var(--navy)}
+.present:hover{filter:brightness(1.1)}
+.pdesc{color:var(--muted);margin:0 0 12px;font-size:15px}
+
+/* Frame = the thing that goes full screen */
+.frame{position:relative;width:100%;aspect-ratio:16/9;background:#0d1730;border-radius:12px;overflow:hidden}
+.stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;background:#fff;overflow:hidden}
+.frame:fullscreen{border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
+.frame:-webkit-full-screen{border-radius:0;width:100vw;height:100vh}
+.frame.fsfake{position:fixed;inset:0;z-index:100;border-radius:0;aspect-ratio:auto;width:100vw;height:100vh}
+.frame .black{position:absolute;inset:0;background:#000;z-index:60;display:none}
+.frame .black.show{display:block}
+.progress{position:absolute;left:0;bottom:0;height:5px;background:var(--gold);transition:width .3s;z-index:5}
+
+/* Controls under the frame (page view) */
+.ctrl{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cbtn{border:1.5px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:6px 12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+.cbtn:hover{background:var(--soft)}
+.dots{display:flex;gap:6px;align-items:center}
+.dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:#fff;color:var(--muted);font-weight:800;font-size:12px;cursor:pointer;font-family:inherit}
+.dots button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.ctrl .ctitle{font-weight:700;color:var(--navy);font-size:14px}
+.ctrl .sp{flex:1}
+.pnotes{display:none;margin-top:10px;background:#f1ecfb;border-left:5px solid var(--purple);border-radius:8px;padding:10px 14px;font-size:15px}
+body.shownotes .pnotes{display:block}
+.pnotes b.tag{color:var(--purple)}
+
+/* Floating bar shown only while presenting */
+.fsbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;display:none;align-items:center;gap:6px;background:rgba(10,18,38,.88);border-radius:12px;padding:6px 8px;color:#fff;font-size:14px;font-weight:700;transition:opacity .4s}
+.presenting .fsbar{display:flex}
+.presenting.idle .fsbar{opacity:0}
+.presenting.idle{cursor:none}
+.fsbar button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:8px;height:34px;min-width:36px;padding:0 10px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+.fsbar button:hover{background:rgba(255,255,255,.25)}
+.fsbar .fsec{color:var(--gold);font-size:13px;padding:0 4px;white-space:nowrap}
+.fsbar .fdiv{width:1px;height:22px;background:rgba(255,255,255,.2);margin:0 2px}
+.fsbar .fc{min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* ---------- Slide styles ---------- */
+/* Slides */
+.slide{position:absolute;inset:0;display:none;flex-direction:column;background:#fff}
+.slide.active{display:flex}
+.shead{height:92px;flex:0 0 92px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;display:flex;align-items:center;padding:0 48px;gap:18px}
+.shead h2{margin:0;font-size:34px;font-weight:800;letter-spacing:-.01em}
+.stag{background:var(--gold);color:var(--navy);font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:5px 12px;white-space:nowrap}
+.stag.task{background:#fff}
+.sbody{flex:1;padding:28px 48px 30px;position:relative;overflow:hidden}
+.brandmark{position:absolute;right:24px;bottom:12px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#b6bfd3}
+.brandmark span{color:var(--gold)}
+.lead{font-size:21px;color:var(--muted);margin:0 0 18px;line-height:1.4}
+.lead b{color:var(--ink)}
+
+/* Steps */
+.step{opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}
+.step.on{opacity:1;transform:none}
+span.step{display:inline;transform:none}
+.host{cursor:pointer}
+.tapme{font-size:13px;color:#8b93a6;font-weight:600}
+.host .tapme{display:inline}
+
+/* Generic boxes */
+.card{background:#fff;border:2px solid var(--line);border-radius:14px;padding:18px 20px}
+.keybox{background:var(--soft);border-left:6px solid var(--navy);border-radius:10px;padding:16px 20px;font-size:20px;line-height:1.45}
+.alert{background:var(--warnbg);border-left:6px solid var(--gold);border-radius:10px;padding:16px 20px;font-size:20px;line-height:1.45}
+.ans{background:var(--goodbg);border-left:5px solid var(--good);border-radius:8px;padding:10px 14px;font-size:18px;line-height:1.45;margin-top:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+/* Title slide */
+.title-slide{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff}
+.title-slide .inner{padding:70px 80px;display:flex;flex-direction:column;height:100%}
+.kicker{color:var(--gold);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:18px}
+.title-slide h1{font-size:92px;margin:10px 0 6px;line-height:1;letter-spacing:-.02em}
+.title-slide .sub{font-size:26px;opacity:.9;margin:0 0 34px}
+.specbox{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);border-radius:14px;padding:18px 24px;font-size:22px;line-height:1.5;max-width:900px}
+.specbox b{color:var(--gold)}
+.routeline{display:flex;gap:7px;margin-top:auto;flex-wrap:nowrap}
+.routeline div{background:rgba(255,255,255,.1);border-radius:9px;padding:7px 11px;font-weight:700;font-size:15px}
+.routeline div small{display:block;color:var(--gold);font-size:13px;font-weight:700}
+.bm-title{font-weight:900;letter-spacing:.08em;font-size:20px;margin-bottom:40px}
+.bm-title span{color:var(--gold)}
+
+/* Tell me why */
+.twy{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.twy .card{display:flex;flex-direction:column}
+.twy .q{font-size:23px;font-weight:700;line-height:1.35;color:var(--navy)}
+.twy .num{font-size:15px;font-weight:800;color:var(--gold);letter-spacing:.06em;margin-bottom:6px}
+
+/* Hierarchy */
+.hier{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.hier .lvl{border-radius:12px;padding:12px 16px;color:#fff;font-weight:800;font-size:20px}
+.hier .lvl small{display:block;font-weight:500;font-size:15px;opacity:.9}
+.hier .arr{text-align:center;color:var(--gold);font-size:22px;line-height:1;font-weight:900}
+.purp{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.purp .ic{flex:0 0 44px;height:44px;border-radius:10px;background:var(--navy);color:var(--gold);font-weight:900;font-size:20px;display:flex;align-items:center;justify-content:center}
+.purp b{font-size:21px;color:var(--navy)}
+.purp div div{font-size:17px;color:var(--muted);line-height:1.35}
+
+/* SMART cards */
+.smart{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.sc{border:2.5px solid var(--navy);border-radius:16px;padding:18px 16px;display:flex;flex-direction:column;min-height:420px}
+.sc .L{font-size:84px;font-weight:900;color:var(--navy);line-height:.9}
+.sc .W{font-size:24px;font-weight:800;margin:6px 0 10px}
+.sc .D{font-size:17px;color:var(--ink);line-height:1.4}
+.sc .T{margin-top:auto;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:700;color:var(--navy);line-height:1.35}
+.sc .T small{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sc.key{border-color:var(--gold);box-shadow:0 0 0 4px rgba(224,165,38,.3)}
+
+/* Accountable */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px}
+.vs .card{font-size:21px;line-height:1.45}
+.vs .big{font-size:44px;font-weight:900;margin-bottom:6px}
+.strike{color:var(--bad);text-decoration:line-through;text-decoration-thickness:4px}
+.yes{color:var(--good)}
+
+/* Build it */
+.buildq{font-size:28px;font-style:italic;font-weight:700;color:var(--bad);margin-bottom:18px}
+.brow{display:grid;grid-template-columns:70px 1fr;gap:14px;align-items:center;margin-bottom:10px}
+.brow .bl{height:56px;border-radius:12px;background:var(--navy);color:#fff;font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.brow .bt{font-size:21px;line-height:1.35;background:var(--soft);border-radius:10px;padding:12px 16px}
+.brow .bt em{color:var(--navy);font-weight:800;font-style:normal}
+.final{margin-top:16px;border:3px solid var(--good);border-radius:14px;padding:16px 20px;font-size:23px;font-weight:700;line-height:1.4;background:var(--goodbg)}
+
+/* Verdict chips */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{min-width:38px;height:38px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;padding:0 10px}
+.chip.fail{background:var(--bad);color:#fff}
+.chip.pass{background:var(--good);color:#fff}
+
+/* Task 1 cards */
+.dcard{border:2px solid var(--line);border-radius:14px;padding:14px 15px;display:flex;flex-direction:column;height:268px}
+.dcard .firm{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dcard .stmt{font-size:18.5px;font-weight:600;font-style:italic;line-height:1.35;margin:6px 0 8px}
+.dcard .res{margin-top:auto}
+.dcard .tip{font-size:14px;color:var(--ink);margin-top:6px;line-height:1.35}
+
+/* Task 2 */
+.fcard{border:2px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
+.fcard .orig{font-size:20px;font-weight:700;font-style:italic;line-height:1.35}
+.fcard .why{font-size:15px;font-weight:800;color:var(--bad);margin:6px 0 0;text-transform:uppercase;letter-spacing:.04em}
+
+/* Task 3 */
+.corp{background:var(--navy);color:#fff;border-radius:12px;padding:14px 20px;font-size:21px;margin-bottom:16px}
+.corp b{color:var(--gold)}
+.orow{display:grid;grid-template-columns:1fr 150px;gap:12px;align-items:center;border:2px solid var(--line);border-radius:12px;padding:10px 14px;min-height:104px}
+.orow .ot{font-size:18px;line-height:1.35}
+.orow .ot b{color:var(--navy)}
+.owner{border-radius:999px;padding:8px 10px;text-align:center;font-weight:800;font-size:17px;color:#fff}
+.o-Marketing{background:#c0567d}.o-Operations{background:#2f7d8f}.o-Finance{background:#1f8a4c}.o-HR{background:#6b4bb8}
+.ohold{border:2px dashed var(--line);border-radius:999px;height:40px;position:relative}
+.ohold .owner{position:absolute;inset:-2px}
+
+/* Case */
+.case{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;height:100%}
+.case p{font-size:17px;line-height:1.5;margin:0 0 10px}
+.mission{border-left:5px solid var(--gold);padding:6px 12px;font-style:italic;font-weight:700;font-size:19px;margin:0 0 12px;background:#fbfaf6}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{background:var(--navy);color:#fff}
+tbody tr:nth-child(even){background:#f7f8fc}
+.taskbox{background:var(--warnbg);border:2px solid var(--gold);border-radius:12px;padding:14px 16px;font-size:18px;line-height:1.45;margin-top:14px}
+.mrow{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:center;margin-bottom:12px}
+.mrow .owner{font-size:18px;padding:12px}
+.mrow .mt{font-size:21px;line-height:1.4;background:var(--soft);border-radius:10px;padding:12px 16px}
+
+/* Task 5 */
+.qbox{background:var(--navy);color:#fff;border-radius:12px;padding:18px 22px;font-size:27px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.qbox span{color:var(--gold);white-space:nowrap}
+.chain{display:grid;grid-template-columns:1fr 26px 1fr 26px 1fr 26px 1fr 26px 1fr;align-items:stretch;margin:18px 0}
+.link{border:2.5px solid var(--navy);border-radius:12px;padding:12px;background:#fff}
+.link .lab{font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--navy)}
+.link .hint{font-size:15px;color:var(--muted);line-height:1.35;margin-top:6px}
+.carr{display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:26px;font-weight:900}
+.conn{display:flex;flex-wrap:wrap;gap:8px}
+.conn span{background:var(--soft);border:1.5px solid var(--line);border-radius:999px;padding:6px 14px;font-size:17px;font-weight:700;color:var(--navy)}
+.model{font-size:21px;line-height:1.6}
+.model .c{background:#ffe7a6;border-radius:4px;padding:0 3px;font-weight:800}
+.model .ctx{text-decoration:underline;text-decoration-color:var(--good);text-decoration-thickness:3px;text-underline-offset:3px}
+.levels td{text-align:left;font-size:16px;vertical-align:top}
+.levels td:first-child{white-space:nowrap;font-weight:800;color:var(--navy)}
+.lim{border:2px solid var(--line);border-radius:14px;padding:16px 18px}
+.lim b{display:block;font-size:20px;color:var(--bad);margin-bottom:6px}
+.lim div{font-size:17px;line-height:1.45}
+
+/* Plenary */
+.pobj{border:3px dashed var(--navy);border-radius:14px;padding:22px 26px;font-size:28px;font-weight:700;min-height:130px;line-height:1.35;outline:none;background:var(--soft)}
+.pobj:empty:before{content:attr(data-ph);color:#8b93a6;font-weight:500}
+.votes{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:22px 0}
+.vote{border:3px solid var(--navy);border-radius:16px;background:#fff;cursor:pointer;padding:14px;text-align:center;font-family:inherit;color:var(--navy)}
+.vote .L{font-size:64px;font-weight:900;line-height:1}
+.vote .W{font-size:17px;font-weight:700;margin-top:4px}
+.vote .S{font-size:30px;height:36px;margin-top:4px}
+.vote.yes{background:var(--goodbg);border-color:var(--good);color:var(--good)}
+.vote.no{background:var(--badbg);border-color:var(--bad);color:var(--bad)}
+
+/* Section divider */
+.divider{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;justify-content:center;padding:0 90px}
+.divider .kicker{font-size:20px}
+.divider h1{font-size:78px;margin:10px 0 24px;line-height:1.05}
+.dtasks{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.dtasks div{background:rgba(255,255,255,.1);border-radius:12px;padding:16px;font-size:20px;font-weight:800}
+.dtasks small{display:block;color:var(--gold);font-size:15px;margin-bottom:4px}
+.dtasks span{display:block;font-size:15px;font-weight:500;opacity:.85;margin-top:6px}
+
+
+
+
+/* Mission-lesson hierarchy (matches influences-on-mission.html) */
+.mh{max-width:360px}
+.mrow2{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;color:#fff;font-weight:800;font-size:18px;box-shadow:0 3px 8px rgba(0,0,0,.15);margin-bottom:6px;position:relative}
+.mrow2 em{margin-left:auto;font-style:normal;font-size:11px;letter-spacing:.08em;background:#fff;color:#375761;border-radius:999px;padding:2px 8px}
+.mrow2 small{display:block;font-weight:500;font-size:14px;opacity:.9}
+.mrow2.y1{background:#0e1a38}
+.mrow2.y2{background:var(--navy2)}
+.mrow2.y3{background:#5670ad}
+.mrow2.t1{background:linear-gradient(135deg,#b6913f,#8f6f28)}
+.mrow2.t2{background:linear-gradient(135deg,#4f7a86,#375761)}
+.mrow2.t3{background:linear-gradient(135deg,#7d6c5c,#5c4e42)}
+.mrow2.t4{background:linear-gradient(135deg,#5f7a5c,#435843)}
+.mrow2.focus{outline:4px solid var(--gold);outline-offset:2px}
+.marr{text-align:center;color:#b6913f;font-size:13px;margin:-2px 0 4px}
+.mtg{position:relative;padding-right:92px}
+.mbr{position:absolute;top:0;bottom:6px;right:56px;width:14px;border:3px dashed #b3382c;border-left:0;border-radius:0 6px 6px 0}
+.mbr span{position:absolute;top:50%;left:22px;transform:translateY(-50%);color:#b3382c;font-weight:900;font-size:12px;letter-spacing:.05em}
+
+/* Mission vs objectives */
+.mvo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:2px solid var(--line);border-radius:14px;overflow:hidden}
+.mvo .hd{padding:14px 20px;font-size:24px;font-weight:900;color:#fff}
+.mvo .hd.m{background:linear-gradient(135deg,#b6913f,#8f6f28)}
+.mvo .hd.o{background:linear-gradient(135deg,#4f7a86,#375761)}
+.mvo .c{padding:11px 20px;font-size:19px;line-height:1.35;border-top:1px solid var(--line)}
+.mvo .c.o{border-left:2px solid var(--line)}
+.mvo .c small{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+/* Plaques */
+.plaque{background:linear-gradient(180deg,#f4efe2,#e8e1cf);border-radius:10px;padding:22px 24px;box-shadow:inset 0 0 0 1px rgba(29,43,58,.12)}
+.plaque .pq{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:27px;line-height:1.35;color:#1d2b3a;text-align:center}
+.plaque .pn{text-align:center;font-weight:800;color:#8f6f28;font-size:15px;letter-spacing:.06em;margin-top:8px}
+
+/* Missing word */
+.cloze{font-size:25px;line-height:1.75;color:var(--ink)}
+.blank .word{display:none;color:var(--navy);font-weight:900;border-bottom:3px solid var(--gold);padding:0 4px}
+.blank .word.on{display:inline}
+.blank .word.on + .gap{display:none}
+.blank .gap{color:#b6913f;font-weight:900;letter-spacing:2px}
+.wbank{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.wchip{border:2px solid #b6913f;border-radius:999px;padding:6px 16px;font-weight:800;font-size:18px;color:var(--navy);background:#fbf6ea}
+.bankkey{font-size:15px;color:var(--muted);font-style:italic;margin-top:14px}
+.bankkey.on ~ .wbank .wchip.ok{background:#b6913f;color:#fff}
+.bankkey.on ~ .wbank .wchip.no{opacity:.35;text-decoration:line-through;border-style:dashed}
+.cloze-tag{font-size:14px;font-weight:900;letter-spacing:.08em;color:#8f6f28;text-transform:uppercase;margin-bottom:6px}
+
+
+/* Guess the business */
+.gwrap{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;height:100%}
+.gplaque{padding:30px 28px;margin-bottom:14px}
+.gplaque .pq{font-size:34px}
+.ghint{display:flex;gap:12px;align-items:baseline;border-left:4px solid #b6913f;background:#fbf6ea;border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:18px;min-height:46px}
+.ghint b{color:#8f6f28;font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.greveal{border:2.5px dashed #c9ced9;border-radius:14px;padding:20px 22px;position:relative}
+.gph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8b93a6;font-weight:700;font-size:18px}
+.gans{position:relative;background:#fff}
+.gans.on{z-index:1}
+.greveal:has(.gans.on) .gph{display:none}
+.gname{font-size:34px;font-weight:900;color:var(--navy)}
+.gtag{display:inline-block;background:var(--navy);color:#fff;font-size:13px;font-weight:800;letter-spacing:.05em;border-radius:4px;padding:3px 10px;margin:6px 0 12px}
+.gsub{font-size:13px;font-weight:800;color:#8f6f28;letter-spacing:.06em;text-transform:uppercase}
+.gans ul{margin:8px 0 0;padding-left:22px;font-size:19px;line-height:1.45}
+.gans li{margin-bottom:6px}
+
+
+/* Planning hierarchy */
+.mis{background:#0e1a38}.cor{background:#223a6e}.fun{background:#35508f}.str{background:#2f7d8f}.tac{background:#5f7a5c}
+.hl{display:grid;grid-template-columns:230px 1fr 1fr 118px;grid-template-rows:auto repeat(5,1fr);column-gap:14px;row-gap:9px;height:100%}
+.hl-h{font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;grid-row:1}
+.hl-row{display:contents}
+.hl-row.step>div{opacity:0;transition:opacity .35s}
+.hl-row.step.on>div{opacity:1}
+.hl-lvl{color:#fff;border-radius:10px;font-weight:900;font-size:19px;display:flex;align-items:center;padding:0 16px}
+.hl-row .hl-lvl{grid-column:1}
+.hl-def{grid-column:2;font-size:16.5px;line-height:1.35;display:flex;align-items:center;background:var(--soft);border-radius:10px;padding:8px 14px}
+.hl-ex{grid-column:3;font-size:16px;line-height:1.35;display:flex;align-items:center;border:2px solid var(--line);border-radius:10px;padding:8px 14px;font-style:italic}
+.hl-grp{grid-column:4;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:17px;letter-spacing:.08em;text-align:center}
+.hl-grp small{font-size:11px;letter-spacing:.04em;margin-top:4px}
+.g-why{border:3px solid #0e1a38;color:#0e1a38}
+.g-what{border:3px solid var(--gold);background:#fff7e3;color:#9a6a00}
+.g-how{border:3px solid #2f7d8f;color:#2f7d8f}
+.srt{display:flex;flex-direction:column;gap:12px;padding:16px 18px;min-height:150px}
+.srt-t{font-size:19px;font-weight:600;line-height:1.35}
+.srt .step{margin-top:auto}
+.chipl{display:inline-flex;height:36px;font-size:16px}
+.mini{display:flex;flex-direction:column;gap:6px}
+.mini-r{color:#fff;border-radius:8px;padding:10px 14px;font-weight:800;font-size:17px}
+.mini-obj{position:relative;display:flex;flex-direction:column;gap:6px;padding:6px 110px 6px 6px;border:3px solid var(--gold);border-radius:10px;background:#fff7e3}
+.mini-obj span{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#9a6a00;font-weight:900;font-size:13px;letter-spacing:.06em;text-align:center;line-height:1.3}
+
+/* Timer (inside each stage) */
+.timer{position:absolute;top:20px;right:28px;z-index:6;display:none;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);border-radius:14px;padding:6px 8px 6px 14px;color:#fff}
+.timer.show{display:flex}
+.timer .tv{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;min-width:92px;text-align:center}
+.timer button{border:0;border-radius:9px;background:var(--gold);color:var(--navy);font-weight:900;font-size:15px;padding:8px 11px;cursor:pointer;font-family:inherit}
+.timer button.rs{background:rgba(255,255,255,.2);color:#fff}
+.timer.low{border-color:var(--gold)}
+.timer.done{background:var(--bad);border-color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.notes-src{display:none}
+
+@media (max-width:820px){
+  .plan{grid-template-columns:repeat(4,1fr)}
+  .jump{display:none}
+  .phead h2{font-size:20px}
+  .present{padding:8px 12px;font-size:14px}
+  .dots button{width:26px;height:26px}
+}
+
+/* ---------- PRINT: every slide one per landscape page, all reveals shown ---------- */
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  body{background:#fff}
+  .topbar,.hero,.plan,.phead,.pdesc,.ctrl,.fsbar,.timer,.progress,.black{display:none !important}
+  .wrap{max-width:none;padding:0}
+  .psec{border:0 !important;padding:0;margin:0;border-radius:0}
+  .frame{aspect-ratio:auto;background:#fff;overflow:visible;border-radius:0}
+  .stage{position:static;transform:none !important;width:1280px;height:auto;overflow:visible;zoom:.82;background:#fff}
+  .slide{position:relative;display:flex !important;height:720px;page-break-after:always;break-after:page;border:1px solid #000;font-family:Georgia,"Times New Roman",serif}
+  .step{opacity:1 !important;transform:none !important}
+  .shead,.title-slide,.divider{background:#fff !important;color:#000 !important;border-bottom:2px solid #000}
+  .title-slide h1,.divider h1{color:#000}
+  .stag{background:#fff;border:1.5px solid #000;color:#000}
+  .kicker,.specbox b,.bm-title span{color:#000 !important}
+  .specbox,.routeline div,.dtasks div{background:#fff !important;border:1px solid #000;color:#000}
+  .dtasks small{color:#000}
+  .qbox,.corp{background:#fff !important;color:#000 !important;border:2px solid #000}
+  .qbox span,.corp b{color:#000}
+  .tapme{display:none !important}
+  .gph{display:none !important}
+  .hl-row.step>div{opacity:1 !important}
+  .blank .word{display:inline !important}
+  .blank .gap{display:none !important}
+  .wchip.no{text-decoration:line-through}
+  .pnotes{display:none !important}
+  body.shownotes .notes-src{display:block;position:absolute;left:48px;right:48px;bottom:10px;font-size:13px;border-top:1px solid #000;padding-top:4px;font-family:Georgia,serif}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="inner">
+    <div class="brand">BIZ-<span>OMICS</span></div>
+    <nav class="jump" id="jump"></nav>
+    <button class="tbtn" type="button" id="bNotes">Teacher notes</button>
+    <button class="tbtn gold" type="button" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="k">AQA A-level Business 7138 · Business objectives · Teacher present mode</div>
+    <h1>SMART Objectives</h1>
+    <p>Click <b>▶ Present</b> on any section to show it full screen as slides. Use the arrow keys, space or a clicker to reveal and move on. At the end of a section it carries straight on into the next one (⏮ ⏭ skip sections). Press Esc to return here.</p>
+  </header>
+  <nav class="plan" id="plan"></nav>
+  <main id="sections"></main>
+</div>
+
+<div id="src">
+<!-- ========== THEORY ========== -->
+
+<section class="slide title-slide" data-section="Theory" data-title="Title">
+  <div class="inner">
+    <div class="bm-title">BIZ-<span>OMICS</span></div>
+    <div class="kicker">AQA A-level Business 7138 · Business objectives</div>
+    <h1>SMART Objectives</h1>
+    <p class="sub">Why businesses set objectives, and what makes one effective</p>
+    <div class="specbox">
+      <b>Specification</b><br>
+      • The purpose and value of setting business objectives<br>
+      • The characteristics of effective objectives: <b>S</b>pecific, <b>M</b>easurable, <b>A</b>ccountable, <b>R</b>ealistic, <b>T</b>ime specific (SMART)
+    </div>
+    <div class="routeline">
+      <div><small>Starter</small>Guess the business</div>
+      <div><small>Theory</small>Hierarchy</div>
+      <div><small>Theory</small>Why objectives?</div>
+      <div><small>Theory</small>SMART</div>
+      <div><small>Task 1</small>Diagnose</div>
+      <div><small>Task 2</small>Fix it</div>
+      <div><small>Task 3</small>Who owns it?</div>
+      <div><small>Task 4</small>Apply</div>
+      <div><small>Task 5</small>Judge</div>
+      <div><small>Plenary</small>Missing word</div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> While presenting: → / space / Enter / clicker = next reveal or slide (carries on into the next section); ← = back; Shift + → or Shift + PageDown = next section; Shift + ← or Shift + PageUp = previous section; Home / End = first / last slide of the section; A = reveal everything on the slide; T = start or pause the timer; B = blank screen; Esc = back to the page. Teacher notes are shown on the page with the Teacher notes button (not while presenting).</div>
+</section>
+
+<section class="slide divider" data-section="Theory" data-title="Guess the business">
+  <div class="kicker">Starter · no theory needed yet</div>
+  <h1>Guess the business</h1>
+  <p style="font-size:26px;line-height:1.45;max-width:980px;margin:0 0 26px;opacity:.92">Each plaque is a real company's <b style="color:var(--gold)">mission statement</b>. Read it, guess the business, and use up to three hints if you're stuck.</p>
+  <div class="dtasks" style="grid-template-columns:repeat(3,1fr);max-width:900px">
+    <div><small>Step 1</small>Read the plaque<span>What does it say the business is <i>for</i>?</span></div>
+    <div><small>Step 2</small>Hints if needed<span>Press → for up to three</span></div>
+    <div><small>Step 3</small>Reveal<span>What values are built into the wording?</span></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Six plaques: use as many as you like, and skip any with the dots or ⏭. → reveals hint 1, 2, 3, then the answer. Click the answer box to reveal straight away.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 1: Patagonia">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 1 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“We're in business to save our home planet.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">It's in the outdoor clothing and gear industry.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">Its founder gave away almost the entire company in 2022 to fight climate change.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">Its logo is a mountain skyline: Mount Fitz Roy.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">Patagonia</div><span class="gtag">Private, purpose-trust owned</span><div class="gsub">What's built into the wording?</div><ul><li>The planet is the goal; clothing is just the method</li><li>No mention of profit, growth or customers</li><li>Short and absolute, leaving little room for compromise</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 2: LEGO Group">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 2 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“To inspire and develop the builders of tomorrow.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">Almost every child has played with its product.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">The product is small interlocking plastic bricks.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">It's Danish: the name comes from “leg godt”, meaning “play well”.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">LEGO Group</div><span class="gtag">Private, family-controlled</span><div class="gsub">What's built into the wording?</div><ul><li>Focuses on the child's development, not the toy</li><li>“Tomorrow” signals a long time horizon</li><li>Justifies education programmes that don't sell a single brick</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 3: Tesla">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 3 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“To accelerate the world's transition to sustainable energy.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">Best known for electric cars.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">Its CEO also founded a rocket company.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">It's named after the inventor who pioneered AC electricity.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">Tesla</div><span class="gtag">Public limited company (PLC)</span><div class="gsub">What's built into the wording?</div><ul><li>Says nothing about cars: the product is a means to a bigger end</li><li>Explains why it also sells batteries and solar panels</li><li>A mission this broad still has to keep shareholders on side</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 4: John Lewis Partnership">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 4 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“Working in Partnership for a happier world.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">A well-known UK retailer.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">Every staff member is a part-owner, called a “Partner”.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">It also owns a major supermarket chain: Waitrose.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">John Lewis Partnership</div><span class="gtag">Employee-owned</span><div class="gsub">What's built into the wording?</div><ul><li>“Partnership” reflects the ownership structure itself</li><li>Happiness, not shareholder return, is the stated measure</li><li>Traces back to Spedan Lewis giving the business to its staff in 1929</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 5: Oxfam">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 5 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“A global movement of people working together to end the injustice of poverty.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">It doesn't sell anything to make a profit.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">A well-known UK charity working internationally.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">Its shops sell donated goods on many British high streets.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">Oxfam</div><span class="gtag">Registered charity</span><div class="gsub">What's built into the wording?</div><ul><li>No product, no customer, no profit motive in the wording</li><li>Success is measured in social outcomes</li><li>“Movement” frames supporters as participants</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission 6: IKEA">
+  <div class="shead"><span class="stag">Starter</span><h2>Guess the business · mission 6 of 6</h2></div>
+  <div class="sbody">
+    <div class="gwrap">
+      <div>
+        <div class="plaque gplaque"><div class="pq">“To create a better everyday life for the many people.”</div></div>
+        <div class="ghint host"><b>Hint 1</b><span class="step">Sells flat-pack furniture and home goods worldwide.</span></div><div class="ghint host"><b>Hint 2</b><span class="step">Famous for maze-like stores and a meatball restaurant.</span></div><div class="ghint host"><b>Hint 3</b><span class="step">Founded in Sweden in 1943 by Ingvar Kamprad.</span></div>
+      </div>
+      <div class="greveal host">
+        <div class="gph">Click to reveal the business</div>
+        <div class="step gans"><div class="gname">IKEA</div><span class="gtag">Foundation-owned</span><div class="gsub">What's built into the wording?</div><ul><li>“The many people” signals mass-market affordability</li><li>Owned by a foundation, not shareholders</li><li>Structure protects long-term independence from takeover</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="What is a mission?">
+  <div class="shead"><span class="stag">Starter</span><h2>So what is a mission statement?</h2></div>
+  <div class="sbody">
+    <div class="keybox" style="font-size:24px;margin-bottom:18px">A <b>mission statement</b> is a short statement of <b>why a business exists</b> and what it is fundamentally trying to achieve: its core purpose, beyond simply making money.</div>
+    <div class="alert host" style="font-size:21px"><b>Tell me why:</b> take any plaque from the starter. Could you tell, at the end of this year, whether the business had <i>achieved</i> its mission?
+      <div class="ans step">Not really. "Save our home planet" or "a happier world" can't be ticked off. It gives direction and values, but no number, deadline or owner. That's the gap <b>objectives</b> fill, and today's lesson is how to write good ones.</div></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> This is the bridge from the starter into the lesson question. Push for "you can't measure it", which sets up SMART.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="The planning hierarchy">
+  <div class="shead"><span class="stag">Theory</span><h2>From mission to action: the planning hierarchy</h2></div>
+  <div class="sbody" style="padding-top:18px;padding-bottom:22px">
+    <div class="hl">
+      <div class="hl-h" style="grid-column:1">Level</div><div class="hl-h" style="grid-column:2">What it is</div><div class="hl-h" style="grid-column:3">Example: Kiln &amp; Co (homeware retailer)</div>
+      <div class="hl-row step"><div class="hl-lvl mis" style="grid-row:2">Mission</div><div class="hl-def" style="grid-row:2"><span>Why the business exists. Qualitative and long-term.</span></div><div class="hl-ex" style="grid-row:2"><span>“Beautiful, well-made homeware that everyone can afford.”</span></div></div>
+<div class="hl-row step"><div class="hl-lvl cor" style="grid-row:3">Corporate objectives</div><div class="hl-def" style="grid-row:3"><span>Measurable targets for the <b>whole business</b>, set by the board.</span></div><div class="hl-ex" style="grid-row:3"><span>Increase operating profit by 15% by March 2028.</span></div></div>
+<div class="hl-row step"><div class="hl-lvl fun" style="grid-row:4">Functional objectives</div><div class="hl-def" style="grid-row:4"><span>Targets for each <b>department</b> (marketing, operations, finance, HR) that add up to the corporate objective.</span></div><div class="hl-ex" style="grid-row:4"><span>Marketing: raise online sales from 20% to 30% of revenue by March 2027.</span></div></div>
+<div class="hl-row step"><div class="hl-lvl str" style="grid-row:5">Strategy</div><div class="hl-def" style="grid-row:5"><span>The <b>long-term plan</b> for how the objectives will be achieved.</span></div><div class="hl-ex" style="grid-row:5"><span>Grow online sales and switch to cheaper overseas suppliers over the next three years.</span></div></div>
+<div class="hl-row step"><div class="hl-lvl tac" style="grid-row:6">Tactics</div><div class="hl-def" style="grid-row:6"><span><b>Short-term actions</b> that carry the strategy out day to day.</span></div><div class="hl-ex" style="grid-row:6"><span>A spring Instagram campaign, free delivery over £40, renegotiating the courier contract this quarter.</span></div></div>
+
+      <div class="hl-grp g-why step" style="grid-row:2">WHY</div>
+      <div class="hl-grp g-what step" style="grid-row:3 / span 2">WHAT<small>must be SMART</small></div>
+      <div class="hl-grp g-how step" style="grid-row:5 / span 2">HOW</div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Build it one level at a time and ask "what would come next?" before each reveal. The last three reveals group the levels: <b>why / what / how</b>. The key point for today is that SMART applies to the two objective levels, not the mission. Kiln &amp; Co reappears in Task 3, where students assign functional objectives to directors.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Sort it">
+  <div class="shead"><span class="stag">Quick check</span><h2>Sort it: which level of the hierarchy?</h2></div>
+  <div class="sbody">
+    <p class="lead">Velo Studio, a gym chain. Mission, corporate objective, functional objective, strategy or tactic? <b>Tell me why.</b> <span class="tapme">(Click a card to reveal.)</span></p>
+    <div class="grid3" style="gap:14px"><div class="card host srt"><div class="srt-t">“To help every member feel stronger, every week.”</div><div class="step"><span class="hl-lvl mis chipl">Mission</span></div></div><div class="card host srt"><div class="srt-t">Increase total revenue by 20% by December 2028.</div><div class="step"><span class="hl-lvl cor chipl">Corporate objective</span></div></div><div class="card host srt"><div class="srt-t">Run a half-price January offer promoted on TikTok.</div><div class="step"><span class="hl-lvl tac chipl">Tactic</span></div></div><div class="card host srt"><div class="srt-t">HR: cut staff turnover from 35% to 25% by September 2027.</div><div class="step"><span class="hl-lvl fun chipl">Functional objective</span></div></div><div class="card host srt"><div class="srt-t">Open budget studios in university towns over the next three years.</div><div class="step"><span class="hl-lvl str chipl">Strategy</span></div></div><div class="card host srt"><div class="srt-t">Marketing: grow app sign-ups from 5,000 to 8,000 by December 2027.</div><div class="step"><span class="hl-lvl fun chipl">Functional objective</span></div></div></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Cold-call and insist on the reason: "It's a functional objective <i>because</i> it's one department and it has a measurable target." The strategy/tactic pair is the one students confuse most: strategy is long-term direction, a tactic is a short-term action.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Tell me why">
+  <div class="shead"><span class="stag">Theory</span><h2>Tell me why…</h2></div>
+  <div class="sbody">
+    <p class="lead">One sentence each. Be ready to <b>justify</b> your answer. <span class="tapme">(Click a card to reveal.)</span></p>
+    <div class="twy">
+      <div class="card host"><div class="num">QUESTION 1</div><div class="q">Why might a business with no clear objectives struggle to coordinate its departments?</div>
+        <div class="ans step">Each department chases its own priorities, for example marketing pushes volume while finance cuts costs. A shared objective gives everyone the same end point.</div></div>
+      <div class="card host"><div class="num">QUESTION 2</div><div class="q">Why do banks and investors care whether a firm has clear objectives?</div>
+        <div class="ans step">Objectives show where the firm is heading and give outsiders a yardstick for progress. That lowers the perceived risk of lending or investing.</div></div>
+      <div class="card host"><div class="num">QUESTION 3</div><div class="q">Why is "to make a profit" a weak objective?</div>
+        <div class="ans step">It has no amount, no deadline and no owner. £1 of profit would count as success, so it gives no direction for decisions.</div></div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Cold-call for Q1 and Q2 and push for "tell me why". Q3 sets up SMART: ask which letters "make a profit" fails before revealing.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Purpose & value">
+  <div class="shead"><span class="stag">Theory</span><h2>The purpose and value of setting objectives</h2></div>
+  <div class="sbody">
+    <div style="display:grid;grid-template-columns:360px 1fr;gap:34px;height:100%">
+      <div>
+        <p class="lead" style="font-size:18px;margin-bottom:12px">Where objectives fit.</p>
+        <div class="mini">
+          <div class="mini-r mis">Mission</div>
+          <div class="mini-obj">
+            <div class="mini-r cor">Corporate objectives</div>
+            <div class="mini-r fun">Functional objectives</div>
+            <span>OBJECTIVES<br>today</span>
+          </div>
+          <div class="mini-r str">Strategy</div>
+          <div class="mini-r tac">Tactics</div>
+        </div>
+        <p style="font-size:14px;color:var(--muted);margin:10px 0 0;line-height:1.35">The purposes on the right apply to both objective levels: whole-business and departmental.</p>
+      </div>
+      <div>
+        <div class="purp step"><div class="ic">1</div><div><b>Direction and focus</b><div>Turns a broad mission into targets that guide day-to-day decisions and resource allocation.</div></div></div>
+        <div class="purp step"><div class="ic">2</div><div><b>Coordination</b><div>Functional objectives all pull towards the same corporate target, so departments don't work against each other.</div></div></div>
+        <div class="purp step"><div class="ic">3</div><div><b>Measuring performance</b><div>Gives a benchmark to compare actual results against, so problems are spotted and corrected early.</div></div></div>
+        <div class="purp step"><div class="ic">4</div><div><b>Motivation</b><div>Clear, owned targets give managers and staff something to aim for and a basis for reward.</div></div></div>
+        <div class="purp step"><div class="ic">5</div><div><b>Communicating with stakeholders</b><div>Shows investors, lenders and employees where the business is going and how progress will be judged.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Reveal one purpose at a time and ask students to predict the next. Link to the mission–objectives–strategy matrix if they have met it. Task 5 later asks them to analyse the value, so emphasise the chain: objective → measurable → spot problems early → act → profit.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Mission vs objectives">
+  <div class="shead"><span class="stag">Theory</span><h2>Don't mix them up: mission vs objectives</h2></div>
+  <div class="sbody">
+    <div class="mvo">
+      <div class="hd m">Mission statement</div><div class="hd o">Objectives</div>
+      <div class="c step"><small>Answers</small>Why do we exist?</div><div class="c o step"><small>Answers</small>What exactly must we achieve, and by when?</div>
+      <div class="c step"><small>Form</small>Qualitative: words and values</div><div class="c o step"><small>Form</small>Quantified: numbers, baselines and targets</div>
+      <div class="c step"><small>Timescale</small>Long-term, rarely changes</div><div class="c o step"><small>Timescale</small>Time-bound, reviewed and reset</div>
+      <div class="c step"><small>As a benchmark</small>Loose: "are we living up to it?"</div><div class="c o step"><small>As a benchmark</small>Precise: "did we hit it or not?"</div>
+    </div>
+    <div class="alert host" style="margin-top:16px;font-size:19px"><b>Tell me why:</b> using LEGO's mission, what is one objective that would show "developing the builders of tomorrow" is actually happening?
+      <div class="ans step">e.g. <i>The education director will reach 2 million more children a year through school play programmes by 2029.</i> It now has a number, a deadline and an owner. (Illustrative figures, not LEGO's actual targets.)</div></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> The benchmark row is the key exam distinction: a mission is a loose benchmark, while objectives make progress measurable. The LEGO prompt previews SMART before the criteria slide.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="SMART criteria">
+  <div class="shead"><span class="stag">Theory</span><h2>What makes an objective effective? SMART</h2></div>
+  <div class="sbody">
+    <div class="smart">
+      <div class="sc step"><div class="L">S</div><div class="W">Specific</div><div class="D">States exactly what is to be achieved. No vague words like "improve", "grow" or "better".</div><div class="T"><small>Test question</small>Would two managers read it the same way?</div></div>
+      <div class="sc step"><div class="L">M</div><div class="W">Measurable</div><div class="D">Includes a number or clear measure, ideally a starting point and a target.</div><div class="T"><small>Test question</small>Could we prove, with data, that it was met?</div></div>
+      <div class="sc step key"><div class="L">A</div><div class="W">Accountable</div><div class="D">A named person or function is responsible for delivering it and answers for the result.</div><div class="T"><small>Test question</small>Whose name is on it?</div></div>
+      <div class="sc step"><div class="L">R</div><div class="W">Realistic</div><div class="D">Achievable with the firm's resources and the market conditions it faces: stretching, not fantasy.</div><div class="T"><small>Test question</small>Given what we have, can it actually be done?</div></div>
+      <div class="sc step"><div class="L">T</div><div class="W">Time specific</div><div class="D">Has a clear deadline or time period for achievement and review.</div><div class="T"><small>Test question</small>When exactly will we check?</div></div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Before each reveal, ask the class to guess the word for the letter. They will say "Achievable" for A, which leads into the next slide. The test questions become their self-check tool in the tasks.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="A = Accountable">
+  <div class="shead"><span class="stag">Exam warning</span><h2>A = Accountable, not Achievable</h2></div>
+  <div class="sbody">
+    <div class="vs">
+      <div class="card"><div class="big"><span class="strike">Achievable</span></div>This is what most websites, GCSE textbooks and older resources say. <b>It is not what your specification says.</b></div>
+      <div class="card" style="border-color:var(--good)"><div class="big yes">Accountable ✓</div>Use this in the exam. The "can it be done?" idea is covered by <b>Realistic</b>.</div>
+    </div>
+    <div class="alert host"><b>Tell me why:</b> an objective could be specific, measurable, realistic and dated, but still fail. Why might having <b>no named owner</b> make that likely?
+      <div class="ans step">If nobody is responsible, everyone assumes someone else is dealing with it. Nobody monitors progress, nobody acts when it slips, and at the review nobody has to explain a miss, so there is little incentive to prioritise it.</div></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Worth labouring. Ask students to cross out "Achievable" in any notes they already have.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Worked example">
+  <div class="shead"><span class="stag">Worked example</span><h2>Building a SMART objective, one letter at a time</h2></div>
+  <div class="sbody">
+    <div class="buildq">Parkside Cinemas: "We want more people to come to the cinema."</div>
+    <div class="brow step"><div class="bl">S</div><div class="bt">Which people? Which measure? → <em>increase weekday evening admissions</em></div></div>
+    <div class="brow step"><div class="bl">M</div><div class="bt">From what, to what? → <em>by 15%, from 8,000 to 9,200 a month</em></div></div>
+    <div class="brow step"><div class="bl">A</div><div class="bt">Who owns it? → <em>the marketing manager will…</em></div></div>
+    <div class="brow step"><div class="bl">R</div><div class="bt">Is 15% plausible? → <em>a new weekday-discount scheme and two extra screens make it stretching but achievable</em></div></div>
+    <div class="brow step"><div class="bl">T</div><div class="bt">By when? → <em>by 31 August 2027</em></div></div>
+    <div class="final step">"The marketing manager will increase weekday evening admissions by 15%, from 8,000 to 9,200 a month, by 31 August 2027."</div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Take suggestions for each letter before revealing. Point out that R is a judgement in context: the objective itself doesn't "say" it's realistic, so you have to check it against resources and the market.</div>
+</section>
+
+<section class="slide" data-section="Theory" data-title="Quick check">
+  <div class="shead"><span class="stag">Quick check</span><h2>Hands up: SMART or not?</h2></div>
+  <div class="sbody">
+    <div class="grid2" style="gap:24px">
+      <div class="card host" style="padding:22px 24px">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.05em">NIMBUS PARCELS</div>
+        <div style="font-size:26px;font-weight:700;font-style:italic;line-height:1.35;margin:8px 0 14px">"The operations director will reduce delivery errors from 3% to 1% of parcels by June 2027."</div>
+        <div class="step"><div class="chips"><span class="chip pass">S</span><span class="chip pass">M</span><span class="chip pass">A</span><span class="chip pass">R</span><span class="chip pass">T</span></div>
+          <div class="ans">Fully SMART: precise measure, baseline and target, named owner, a plausible improvement and a deadline.</div></div>
+      </div>
+      <div class="card host" style="padding:22px 24px">
+        <div style="font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.05em">GREENLEAF GARDEN CENTRES</div>
+        <div style="font-size:26px;font-weight:700;font-style:italic;line-height:1.35;margin:8px 0 14px">"The HR team will make staff happier by next summer."</div>
+        <div class="step"><div class="chips"><span class="chip fail">S</span><span class="chip fail">M</span><span class="chip fail">A?</span><span class="chip pass">R</span><span class="chip pass">T</span></div>
+          <div class="ans">"Happier" is vague and unmeasured. "The HR team" is weaker than a named person, and "next summer" is only loosely timed. How could you measure happiness? (e.g. staff survey score, absence rate)</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Hands up for SMART / not SMART, then "tell me why" from a student in each camp. The A? on the right is deliberately debatable: a team is a function, but accountability is sharper with a named role.</div>
+</section>
+
+<!-- ========== TASKS ========== -->
+
+<section class="slide divider" data-section="Tasks" data-title="Independent tasks">
+  <div class="kicker">Your turn · work independently</div>
+  <h1>Open your SMART Objectives booklet</h1>
+  <div class="dtasks">
+    <div><small>Task 1</small>Diagnose<span>Spot which letters fail</span></div>
+    <div><small>Task 2</small>Fix it<span>Rewrite so it is SMART</span></div>
+    <div><small>Task 3</small>Who owns it?<span>Assign accountability</span></div>
+    <div><small>Task 4</small>Apply<span>Loaf &amp; Ladle case study</span></div>
+    <div><small>Task 5</small>Judge<span>6-mark Analyse</span></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Leave each task slide up with the timer running while students work. Answer reveals are on the same slides, so you can go through them at the end of each task or save them for a whole-class check.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 1: Diagnose" data-timer="5">
+  <div class="shead"><span class="stag task">Task 1</span><h2>Diagnose: which letters does each one fail?</h2></div>
+  <div class="sbody" style="padding-top:22px">
+    <div class="grid4" id="t1grid"></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Click a card to reveal. Item 6 is the trap: it is fully SMART. Item 5 is really a <b>mission statement</b>, like the starter plaques. It fails almost everything because missions describe purpose rather than measurable targets.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 2: Fix it" data-timer="8">
+  <div class="shead"><span class="stag task">Task 2</span><h2>Fix it: rewrite each one so it is fully SMART</h2></div>
+  <div class="sbody">
+    <p class="lead" style="font-size:18px;margin-bottom:14px">Invent sensible figures, dates and owners. Self-check: <b>could two managers agree whether it had been met?</b></p>
+    <div class="grid2" id="t2grid" style="gap:14px"></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Model answers are one valid version, not the only one. Before revealing, ask students to share a rewrite and have the class test it letter by letter.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 3: Who owns it?" data-timer="5">
+  <div class="shead"><span class="stag task">Task 3</span><h2>Who owns it? Assign each objective to a director</h2></div>
+  <div class="sbody" style="padding-top:20px">
+    <div class="corp">Kiln &amp; Co corporate objective: <b>increase operating profit by 15% by March 2028</b></div>
+    <div class="grid2" id="t3grid" style="gap:10px"></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Same Kiln &amp; Co as the hierarchy slide: this is the corporate → functional step in action. Tell me why follow-up: "How does giving each objective an owner make the 15% corporate target more likely?" Each director knows their share, nothing falls between departments, and performance can be reviewed person by person.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 4: Case study" data-timer="10">
+  <div class="shead"><span class="stag task">Task 4</span><h2>Apply: Loaf &amp; Ladle</h2></div>
+  <div class="sbody" style="padding-top:22px">
+    <div class="case">
+      <div>
+        <p>Loaf &amp; Ladle is a family-owned chain of <b>seven bakery-cafés</b> across West Yorkshire, run by founder Priya Shah. Every site bakes on the premises each morning.</p>
+        <div class="mission">"Proper food, baked this morning, served by people who know your name."</div>
+        <p>Rivals in the region are growing at around 6% a year. Priya has noticed more unsold bread going in the bin, and store managers say they are always training new staff. App orders are still a small share of sales.</p>
+        <p>Priya wants to open an eighth café in <b>Harrogate</b> within two years, costing about <b>£400,000</b>. The bank wants evidence of <b>improving profitability</b> before it agrees a loan.</p>
+        <div class="taskbox"><b>Your task:</b> write <b>three</b> SMART objectives for Loaf &amp; Ladle. Each must have a <b>different owner</b> and tackle a problem shown in the data.</div>
+      </div>
+      <div>
+        <table>
+          <thead><tr><th></th><th>2023/24</th><th>2024/25</th><th>2025/26</th></tr></thead>
+          <tbody>
+            <tr><td>Revenue</td><td>£2.95m</td><td>£3.04m</td><td>£3.10m</td></tr>
+            <tr><td>Operating profit</td><td>£236k</td><td>£198k</td><td>£155k</td></tr>
+            <tr><td>Operating margin</td><td>8.0%</td><td>6.5%</td><td>5.0%</td></tr>
+            <tr><td>Food waste (% unsold)</td><td>9%</td><td>11%</td><td>14%</td></tr>
+            <tr><td>Staff turnover</td><td>30%</td><td>39%</td><td>48%</td></tr>
+            <tr><td>App orders (% revenue)</td><td>2%</td><td>3%</td><td>4%</td></tr>
+            <tr><td>Review rating (/5)</td><td>4.6</td><td>4.4</td><td>4.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Prompt: "Which three rows are getting worse fastest?" Waste, staff turnover and margin are the obvious targets. Model objectives are on the next slide.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 4: Model objectives">
+  <div class="shead"><span class="stag task">Task 4</span><h2>Model objectives for Loaf &amp; Ladle</h2></div>
+  <div class="sbody">
+    <div class="mrow step"><div class="owner o-Operations">Operations manager</div><div class="mt">Reduce food waste from <b>14% to 9%</b> of baked goods across all seven sites by <b>31 August 2027</b>, reviewed monthly by site.</div></div>
+    <div class="mrow step"><div class="owner o-HR">HR manager</div><div class="mt">Reduce staff turnover from <b>48% to 35%</b> by <b>30 September 2027</b>.</div></div>
+    <div class="mrow step"><div class="owner o-Marketing">Marketing manager</div><div class="mt">Increase app/online orders from <b>4% to 10%</b> of revenue by <b>31 December 2027</b>.</div></div>
+    <div class="mrow step"><div class="owner o-Finance">Finance manager</div><div class="mt">Raise operating profit margin from <b>5.0% to 7.5%</b> by the end of the <b>2027/28</b> financial year.</div></div>
+    <div class="keybox step" style="margin-top:16px">Each one <b>starts from a figure in the data</b> (so it's Measurable against a baseline), and none tries to fix everything at once (so it stays Realistic).</div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Ask: "Is 48% → 35% turnover in a year realistic in hospitality?" This is a good debate, and it links to the stretch task on limitations.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 5: Judge" data-timer="10">
+  <div class="shead"><span class="stag task">Task 5</span><h2>Judge: the purpose and value of objectives</h2></div>
+  <div class="sbody" style="padding-top:22px">
+    <div class="qbox">Analyse the value to Loaf &amp; Ladle of setting SMART objectives. <span>[6 marks]</span></div>
+    <div class="chain">
+      <div class="link"><div class="lab">Point</div><div class="hint">Which <b>one</b> benefit of SMART objectives?</div></div><div class="carr">→</div>
+      <div class="link"><div class="lab">Evidence</div><div class="hint">Which figure from the table does it help with?</div></div><div class="carr">→</div>
+      <div class="link"><div class="lab">Consequence 1</div><div class="hint">What changes inside the business?</div></div><div class="carr">→</div>
+      <div class="link"><div class="lab">Consequence 2</div><div class="hint">What does that lead to? Costs, revenue, margin…</div></div><div class="carr">→</div>
+      <div class="link" style="border-color:var(--gold)"><div class="lab">So for L&amp;L…</div><div class="hint">Why does it matter to Priya? (Harrogate!)</div></div>
+    </div>
+    <div class="alert" style="font-size:19px;margin-bottom:14px"><b>Not GCSE mode:</b> pick <b>one</b> benefit and push it as far as it will go. Depth beats breadth.</div>
+    <div class="conn"><span>because</span><span>which means that</span><span>as a result</span><span>this leads to</span><span>consequently</span><span>therefore</span><span>so for Loaf &amp; Ladle</span></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Common Level 2 answer: lists focus, motivation and measurement without developing any of them. Push students to follow one benefit through to margin and the bank loan. Other valid chains: staff turnover → HR target → training costs and service → reviews → revenue.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Task 5: Model answer">
+  <div class="shead"><span class="stag task">Task 5</span><h2>Level 3 model answer</h2></div>
+  <div class="sbody">
+    <div class="model">
+      <span class="step">Setting SMART objectives would help Loaf &amp; Ladle reverse its falling profitability, <span class="c">because</span> it turns a vague aim like "do better" into a precise target that a named manager must act on. </span><span class="step"><span class="ctx">Food waste has risen from 9% to 14% of baked goods in two years.</span> If the operations manager is made accountable for cutting waste back to 9% by August 2027, bakers at all seven sites know exactly what to aim for and progress can be checked monthly, <span class="c">which means that</span> overproduction at a particular site is spotted early rather than at the year end. </span><span class="step"><span class="c">As a result</span>, fewer ingredients are thrown away and cost of sales falls, without Priya needing to raise prices in a market where <span class="ctx">rivals are growing faster</span>. </span><span class="step"><span class="c">Consequently</span> the <span class="ctx">operating margin, which has slid from 8% to 5%</span>, should begin to recover. </span><span class="step"><span class="c">This matters for Loaf &amp; Ladle in particular because</span> <span class="ctx">the bank wants evidence of improving profitability before lending £400,000 for Harrogate</span>, and measurable, time-bound targets that are being hit provide exactly that evidence.</span>
+    </div>
+    <div class="step" style="margin-top:18px;display:flex;gap:26px;font-size:17px;align-items:center">
+      <span><span class="model"><span class="c" style="font-size:17px">Highlighted</span></span> = connectives driving the chain</span>
+      <span><span style="text-decoration:underline;text-decoration-color:var(--good);text-decoration-thickness:3px">Underlined</span> = application to the case</span>
+    </div>
+    <table class="levels step" style="margin-top:14px">
+      <tbody>
+        <tr><td>Level 3 (5–6)</td><td>Well-developed chain with several linked consequences, applied to L&amp;L throughout using the data.</td></tr>
+        <tr><td>Level 2 (3–4)</td><td>Some developed reasoning, but the chain breaks or application is patchy.</td></tr>
+        <tr><td>Level 1 (1–2)</td><td>Knowledge with little development. Generic or a list.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Reveal sentence by sentence and ask "what's the next link?" before each one. Indicative levels for practice only; check against the published AQA 7138 mark scheme.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Stretch: limitations">
+  <div class="shead"><span class="stag task">Stretch</span><h2>Are SMART objectives always valuable?</h2></div>
+  <div class="sbody">
+    <p class="lead">Think about the Loaf &amp; Ladle <b>mission statement</b>. What could go wrong?</p>
+    <div class="grid3" style="gap:16px">
+      <div class="lim step"><b>Unintended consequences</b><div>A manager chasing the waste target simply bakes less, leaving empty shelves by lunchtime and losing sales.</div></div>
+      <div class="lim step"><b>Hard to measure what matters</b><div>"Served by people who know your name" is central to the mission but hard to turn into a number, so it gets ignored.</div></div>
+      <div class="lim step"><b>Rigidity</b><div>If flour or energy prices jump, a fixed margin target becomes unrealistic, and chasing it pushes managers into short-term cuts.</div></div>
+      <div class="lim step"><b>Monitoring cost</b><div>A small family firm may lack the systems and management time to track several targets across seven sites.</div></div>
+      <div class="lim step"><b>Demotivation</b><div>Targets seen as unrealistic, like a big cut in staff turnover in a tight labour market, can demotivate the managers held accountable.</div></div>
+      <div class="lim step" style="background:var(--soft);border-color:var(--navy)"><b style="color:var(--navy)">So… it depends on</b><div>how realistic the targets are, whether they are reviewed and adjusted, and whether they fit the mission rather than replace it.</div></div>
+    </div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Use this for fast finishers or as a whole-class discussion. The final card models the "it depends on…" judgement they'll need for 9-mark Assess and 15-mark Evaluate questions.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Missing word: SMART">
+  <div class="shead"><span class="stag">Plenary</span><h2>Missing word: SMART criteria</h2></div>
+  <div class="sbody">
+    <div class="cloze-tag">SMART criteria · fill every gap from the bank</div>
+    <div class="cloze">An effective objective is <span class="blank"><span class="word step">Specific</span><span class="gap">______</span></span>, so everyone reads it the same way, and <span class="blank"><span class="word step">Measurable</span><span class="gap">______</span></span>, with a baseline and a target. Someone must be <span class="blank"><span class="word step">Accountable</span><span class="gap">______</span></span> for delivering it, it must be <span class="blank"><span class="word step">Realistic</span><span class="gap">______</span></span> given the firm's resources and market, and it needs a clear <span class="blank"><span class="word step">deadline</span><span class="gap">______</span></span>.</div>
+    <div class="bankkey step">Filled = used · crossed out = decoy</div>
+    <div class="wbank"><span class="wchip ok">Measurable</span><span class="wchip no">Relevant</span><span class="wchip no">Attainable</span><span class="wchip ok">deadline</span><span class="wchip ok">Specific</span><span class="wchip no">mission</span><span class="wchip ok">Realistic</span><span class="wchip ok">Accountable</span><span class="wchip no">Achievable</span></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Read it aloud and agree each gap as a class, then press → to fill the gaps one at a time. The final press shows which bank words were decoys. </div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Missing word: value of objectives">
+  <div class="shead"><span class="stag">Plenary</span><h2>Missing word: the value of objectives</h2></div>
+  <div class="sbody">
+    <div class="cloze-tag">Purpose and value · fill every gap from the bank</div>
+    <div class="cloze">Setting objectives gives a business a clear sense of <span class="blank"><span class="word step">direction</span><span class="gap">______</span></span>, helps <span class="blank"><span class="word step">coordinate</span><span class="gap">______</span></span> departments towards the same target, and provides a <span class="blank"><span class="word step">benchmark</span><span class="gap">______</span></span> for reviewing performance. Clear, owned targets can <span class="blank"><span class="word step">motivate</span><span class="gap">______</span></span> staff, but objectives that are <span class="blank"><span class="word step">unrealistic</span><span class="gap">______</span></span> may have the opposite effect.</div>
+    <div class="bankkey step">Filled = used · crossed out = decoy</div>
+    <div class="wbank"><span class="wchip ok">benchmark</span><span class="wchip no">tactics</span><span class="wchip ok">direction</span><span class="wchip ok">coordinate</span><span class="wchip no">mission</span><span class="wchip ok">unrealistic</span><span class="wchip ok">motivate</span><span class="wchip no">shareholders</span><span class="wchip no">estimated</span></div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Read it aloud and agree each gap as a class, then press → to fill the gaps one at a time. The final press shows which bank words were decoys.</div>
+</section>
+
+<section class="slide" data-section="Tasks" data-title="Plenary: vote">
+  <div class="shead"><span class="stag">Plenary</span><h2>Class vote: is this student's objective SMART?</h2></div>
+  <div class="sbody">
+    <div class="pobj" contenteditable="true" spellcheck="false" data-ph="Click and type (or paste) a student's Task 4 objective here…"></div>
+    <div class="votes" id="votes"></div>
+    <div class="keybox"><b>Tell me why:</b> for any letter the class disagrees on, what would you change to fix it?</div>
+  </div>
+  <div class="notes-src"><b class="tag">Notes.</b> Click each letter to cycle neutral → ✓ → ✗ as the class votes. Pick one strong and one flawed objective from Task 4.</div>
+</section>
+
+
+</div>
+
+<script>
+(function(){
+/* ---------- Build data-driven slides ---------- */
+  var D=[
+    {f:'Northway Buses',s:'Increase passenger revenue by 5% by March 2028.',a:'A',t:'Nobody owns it.'},
+    {f:'Velo Studio (gyms)',s:'The marketing director will improve our brand image by the end of next year.',a:'SM',t:'"Improve brand image" is vague and unmeasured.'},
+    {f:'Fettle Foods',s:'The operations director will cut average delivery time from 42 to 30 minutes.',a:'T',t:'No deadline, so it could drift for years.'},
+    {f:'Kiln & Co',s:'The sales director will raise our UK market share from 3% to 25% within 12 months.',a:'R',t:'An eightfold rise in a year is fantasy.'},
+    {f:'Brewline Coffee',s:'To be the best-loved coffee chain in Britain.',a:'SMAT',t:'A mission statement, not an objective.'},
+    {f:'Harbour Hotels',s:'The HR director will reduce labour turnover from 22% to 15% by December 2027.',a:'',t:'Trap! This one is fully SMART.'},
+    {f:'Tidewell Logistics',s:'The finance director will reduce costs significantly by the end of Q4 2027.',a:'SM',t:'Which costs? "Significantly" isn’t a number.'},
+    {f:'PixelPlay (games)',s:'Cut customer complaints by 20% as soon as possible.',a:'AT',t:'No owner; "ASAP" isn’t a deadline.'}
+  ];
+  var g1=document.getElementById('t1grid');
+  D.forEach(function(d,i){
+    var chips='SMART'.split('').map(function(l){return '<span class="chip '+(d.a.indexOf(l)>-1?'fail':'pass')+'">'+l+'</span>'}).join('');
+    g1.insertAdjacentHTML('beforeend','<div class="dcard host"><div class="firm">'+(i+1)+'. '+d.f+'</div><div class="stmt">"'+d.s+'"</div><div class="res step"><div class="chips">'+chips+'</div><div class="tip"><b>'+(d.a?'Fails '+d.a.split('').join(', ')+'.':'Passes all.')+'</b> '+d.t+'</div></div></div>');
+  });
+
+  var F=[
+    {i:1,w:'Fails S, M',m:'The marketing director will raise the share of new members rating Velo Studio "excellent" in our quarterly survey from 38% to 55% by December 2027.'},
+    {i:2,w:'Fails T',m:'The operations director will cut average delivery time from 42 to 30 minutes by 31 March 2027, measured monthly across all zones.'},
+    {i:6,w:'Fails S, M',m:'The finance director will reduce energy and packaging costs by 10%, from £2.4m to £2.16m a year, by the end of Q4 2027.'},
+    {i:7,w:'Fails A, T',m:'The customer services manager will cut complaints by 20%, from 1,500 to 1,200 a month, by 30 June 2027.'}
+  ];
+  var g2=document.getElementById('t2grid');
+  F.forEach(function(f,k){
+    var d=D[f.i];
+    g2.insertAdjacentHTML('beforeend','<div class="fcard host"><div style="font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase">'+String.fromCharCode(65+k)+'. '+d.f+'</div><div class="orig">"'+d.s+'"</div><div class="why">'+f.w+'</div><div class="ans step" style="font-size:17px"><b>Model:</b> '+f.m+'</div></div>');
+  });
+
+  var O=[
+    ['Raise brand awareness among 18–34 year-olds from 22% to 35% by December 2027.','Marketing'],
+    ['Reduce the average cost of goods per item sold by 6% within 18 months.','Operations'],
+    ['Reduce gearing from 55% to 40% by March 2028.','Finance'],
+    ['Cut average staff absence from 7 to 4 days per employee per year by August 2027.','HR'],
+    ['Reduce customer returns for damaged goods from 4% to 1.5% within 12 months.','Operations'],
+    ['Reduce receivables days from 50 to 35 days by June 2027.','Finance'],
+    ['Increase loyalty-card repeat purchases from 30% to 40% of sales by December 2027.','Marketing'],
+    ['Fill 60% of management vacancies through internal promotion by March 2028.','HR']
+  ];
+  var g3=document.getElementById('t3grid');
+  O.forEach(function(o,i){
+    g3.insertAdjacentHTML('beforeend','<div class="orow host"><div class="ot"><b>'+(i+1)+'.</b> '+o[0]+'</div><div class="ohold"><div class="owner o-'+o[1]+' step">'+o[1]+'</div></div></div>');
+  });
+
+  var vw=document.getElementById('votes');
+  [['S','Specific'],['M','Measurable'],['A','Accountable'],['R','Realistic'],['T','Time specific']].forEach(function(v){
+    var b=document.createElement('button'); b.type='button'; b.className='vote';
+    b.innerHTML='<div class="L">'+v[0]+'</div><div class="W">'+v[1]+'</div><div class="S"></div>';
+    b.onclick=function(e){e.stopPropagation();
+      var st=b.classList.contains('yes')?'no':b.classList.contains('no')?'':'yes';
+      b.classList.remove('yes','no'); if(st)b.classList.add(st);
+      b.querySelector('.S').textContent=st==='yes'?'✓':st==='no'?'✗':'';
+    };
+    vw.appendChild(b);
+  });
+
+  
+
+  /* ================= SECTIONS ================= */
+  var SECTIONS=[
+    {id:'starter',kind:'theory',tag:'Starter',title:'Guess the business',desc:'Title slide, then six real mission statements. Guess the company, use up to three hints, then reveal the values built into the wording. Finishes with what a mission is and why it can\u2019t be measured.',slides:['Title','Guess the business','Mission 1: Patagonia','Mission 2: LEGO Group','Mission 3: Tesla','Mission 4: John Lewis Partnership','Mission 5: Oxfam','Mission 6: IKEA','What is a mission?']},
+    {id:'theory',kind:'theory',tag:'Theory',title:'Hierarchy, purpose and SMART',desc:'The planning hierarchy (mission → corporate → functional → strategy → tactics) with a sorting check, tell me why questions, why businesses set objectives, mission vs objectives, the five SMART criteria, the Accountable warning, a worked example and a hands-up check.',slides:['The planning hierarchy','Sort it','Tell me why','Purpose & value','Mission vs objectives','SMART criteria','A = Accountable','Worked example','Quick check']},
+    {id:'task1',kind:'task',tag:'Task 1',title:'Diagnose',desc:'Task overview, then eight flawed objectives. Start the timer, then click each card to reveal which letters it fails.',slides:['Independent tasks','Task 1: Diagnose']},
+    {id:'task2',kind:'task',tag:'Task 2',title:'Fix it',desc:'Rewrite four objectives so they are fully SMART. Click a card to reveal a model rewrite.',slides:['Task 2: Fix it']},
+    {id:'task3',kind:'task',tag:'Task 3',title:'Who owns it?',desc:'Assign eight Kiln & Co functional objectives to the accountable director.',slides:['Task 3: Who owns it?']},
+    {id:'task4',kind:'task',tag:'Task 4',title:'Apply: Loaf & Ladle',desc:'Case study and data, then model objectives revealed one at a time.',slides:['Task 4: Case study','Task 4: Model objectives']},
+    {id:'task5',kind:'task',tag:'Task 5',title:'Judge: 6-mark Analyse',desc:'The exam question with the chain scaffold, a Level 3 model answer revealed sentence by sentence, and a stretch slide on limitations.',slides:['Task 5: Judge','Task 5: Model answer','Stretch: limitations']},
+    {id:'plenary',kind:'theory',tag:'Plenary',title:'Missing word & class vote',desc:'Two Missing Word recaps with decoys (Achievable, Relevant…), then a class vote on a student\u2019s Task 4 objective.',slides:['Missing word: SMART','Missing word: value of objectives','Plenary: vote']}
+  ];
+
+  var src={};
+  [].forEach.call(document.querySelectorAll('#src .slide'),function(s){src[s.dataset.title]=s});
+  var main=document.getElementById('sections'), plan=document.getElementById('plan'), jump=document.getElementById('jump');
+  var decks=[];
+
+  SECTIONS.forEach(function(sec,si){
+    plan.insertAdjacentHTML('beforeend','<a href="#'+sec.id+'" class="'+(sec.kind==='task'?'task':'')+'"><small>'+sec.tag+'</small><b>'+sec.title.split(':')[0]+'</b></a>');
+    jump.insertAdjacentHTML('beforeend','<a href="#'+sec.id+'" class="'+(sec.kind==='task'?'t':'')+'">'+sec.tag+'</a>');
+    var el=document.createElement('section'); el.className='psec '+sec.kind; el.id=sec.id;
+    el.innerHTML='<div class="phead"><span class="ptag">'+sec.tag+'</span><h2>'+sec.title+'</h2><span class="sp"></span><button type="button" class="present">▶ Present</button></div>'+
+      '<p class="pdesc">'+sec.desc+'</p>'+
+      '<div class="frame"><div class="stage"></div><div class="black"></div>'+
+        '<div class="fsbar"><button type="button" data-a="psec" title="Previous section">⏮</button><span class="fsec">'+sec.tag+' · '+sec.title+'</span><button type="button" data-a="nsec" title="Next section">⏭</button><span class="fdiv"></span><button type="button" data-a="prev">◀</button><span class="fc"></span><button type="button" data-a="next">▶</button><button type="button" data-a="all">Reveal all</button><button type="button" data-a="black">Blank</button><button type="button" data-a="exit">✕ Exit</button></div></div>'+
+      '<div class="ctrl"><button type="button" class="cbtn" data-a="prev">◀ Prev</button><div class="dots"></div><button type="button" class="cbtn" data-a="next">Next ▶</button><span class="ctitle"></span><span class="sp"></span><button type="button" class="cbtn" data-a="all">Reveal all</button><button type="button" class="cbtn" data-a="reset">Hide all</button></div>'+
+      '<div class="pnotes"></div>';
+    main.appendChild(el);
+    var stage=el.querySelector('.stage');
+    var slides=sec.slides.map(function(t){var s=src[t];if(!s)console.warn('missing',t);stage.appendChild(s);return s});
+    stage.insertAdjacentHTML('beforeend','<div class="timer"><span class="tv">5:00</span><button type="button" class="tgo">Start</button><button type="button" class="rs" title="Reset">↺</button></div><div class="progress"></div>');
+    var d=makeDeck(el,slides); decks.push(d);
+  });
+  document.getElementById('src').remove();
+
+  /* ================= DECK ================= */
+  var active=null;
+  function makeDeck(el,slides){
+    var frame=el.querySelector('.frame'), stage=el.querySelector('.stage');
+    var dots=el.querySelector('.dots');
+    var d={el:el,frame:frame,stage:stage,slides:slides,cur:0};
+    slides.forEach(function(s,i){var b=document.createElement('button');b.type='button';b.textContent=i+1;b.title=s.dataset.title;b.onclick=function(){go(i)};dots.appendChild(b)});
+
+    /* timer */
+    var T={el:stage.querySelector('.timer'),tv:stage.querySelector('.tv'),go:stage.querySelector('.tgo'),left:0,total:0,iv:null};
+    function fmt(x){return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2)}
+    function paint(){T.tv.textContent=fmt(T.left);T.el.classList.toggle('low',T.left<=60&&T.left>0);T.el.classList.toggle('done',T.left===0&&T.total>0);T.go.textContent=T.iv?'Pause':(T.left===0?'Again':'Start')}
+    function setT(m){T.total=m*60;T.left=T.total;paint()}
+    function toggleT(){
+      if(!T.el.classList.contains('show'))return;
+      if(T.iv){clearInterval(T.iv);T.iv=null;paint();return}
+      if(T.left===0)T.left=T.total;
+      T.iv=setInterval(function(){T.left--;if(T.left<=0){T.left=0;clearInterval(T.iv);T.iv=null}paint()},1000);paint();
+    }
+    function timerForSlide(){var m=+slides[d.cur].dataset.timer||0;if(T.iv){T.el.classList.add('show');return}if(m){T.el.classList.add('show');setT(m)}else T.el.classList.remove('show')}
+    T.go.onclick=function(e){e.stopPropagation();toggleT()};
+    T.el.querySelector('.rs').onclick=function(e){e.stopPropagation();if(T.iv){clearInterval(T.iv);T.iv=null}setT(+slides[d.cur].dataset.timer||T.total/60||5);timerForSlide()};
+    d.toggleT=toggleT;
+
+    function steps(){return [].slice.call(slides[d.cur].querySelectorAll('.step'))}
+    function go(i){
+      i=Math.max(0,Math.min(slides.length-1,i));
+      slides.forEach(function(s,k){s.classList.toggle('active',k===i)});
+      d.cur=i;
+      [].forEach.call(dots.children,function(b,k){b.classList.toggle('on',k===i)});
+      el.querySelector('.ctitle').textContent=slides[i].dataset.title;
+      el.querySelector('.fc').textContent=(i+1)+' / '+slides.length;
+      stage.querySelector('.progress').style.width=((i+1)/slides.length*100)+'%';
+      var n=slides[i].querySelector('.notes-src');
+      el.querySelector('.pnotes').innerHTML=n?n.innerHTML:'<i>No notes for this slide.</i>';
+      timerForSlide();
+    }
+    d.go=go;
+    d.next=function(){var h=steps().filter(function(s){return !s.classList.contains('on')});if(h.length)h[0].classList.add('on');else if(d.cur<slides.length-1)go(d.cur+1);else if(d.isPresenting())jumpSection(d,1)};
+    d.prev=function(){var o=steps().filter(function(s){return s.classList.contains('on')});if(o.length)o[o.length-1].classList.remove('on');else if(d.cur>0)go(d.cur-1);else if(d.isPresenting())jumpSection(d,-1,true)};
+    d.all=function(){var st=steps();var all=st.every(function(s){return s.classList.contains('on')});st.forEach(function(s){s.classList.toggle('on',!all)})};
+    d.reset=function(){steps().forEach(function(s){s.classList.remove('on')})};
+    d.black=function(){frame.querySelector('.black').classList.toggle('show')};
+    d.fit=function(){
+      var w=frame.clientWidth,h=frame.clientHeight,s=Math.min(w/1280,h/720);
+      stage.style.transform='translate('+((w-1280*s)/2)+'px,'+((h-720*s)/2)+'px) scale('+s+')';
+    };
+    d.present=function(){startPresenting(d)};
+    d.exit=function(){stopPresenting()};
+    d.isPresenting=function(){return frame.classList.contains('presenting')};
+
+    el.querySelector('.present').onclick=d.present;
+    el.addEventListener('click',function(e){
+      var b=e.target.closest('[data-a]');
+      if(b){e.stopPropagation();({prev:d.prev,next:d.next,all:d.all,reset:d.reset,black:d.black,exit:d.exit,psec:function(){jumpSection(d,-1)},nsec:function(){jumpSection(d,1)}})[b.dataset.a]();active=d;return}
+      var h=e.target.closest('.host');
+      if(h){var st=[].slice.call(h.querySelectorAll('.step'));var any=st.some(function(s){return !s.classList.contains('on')});st.forEach(function(s){s.classList.toggle('on',any)});active=d}
+    });
+    frame.querySelector('.black').onclick=function(e){e.stopPropagation();this.classList.remove('show')};
+    if(window.ResizeObserver)new ResizeObserver(d.fit).observe(frame);
+    go(0); d.fit();
+    return d;
+  }
+
+  function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement}
+  function show(d,on){
+    d.frame.classList.toggle('fsfake',on);
+    d.frame.classList.toggle('presenting',on);
+    setTimeout(d.fit,40);
+  }
+  function startPresenting(d){
+    decks.forEach(function(x){if(x!==d)show(x,false)});
+    show(d,true); active=d;
+    document.body.style.overflow='hidden';
+    if(!fsEl()){
+      var de=document.documentElement, r=de.requestFullscreen||de.webkitRequestFullscreen;
+      if(r){try{var pr=r.call(de);if(pr&&pr.catch)pr.catch(function(){})}catch(e){}}
+    }
+  }
+  function stopPresenting(){
+    var was=active;
+    decks.forEach(function(x){show(x,false);x.frame.querySelector('.black').classList.remove('show')});
+    document.body.style.overflow='';
+    if(fsEl()){var x=document.exitFullscreen||document.webkitExitFullscreen;if(x)x.call(document)}
+    if(was)setTimeout(function(){was.el.scrollIntoView({block:'start'})},80);
+  }
+  /* Move to the previous/next section without leaving present mode */
+  function jumpSection(d,dir,toEnd){
+    var i=decks.indexOf(d)+dir;
+    if(i<0||i>=decks.length)return;
+    var n=decks[i];
+    n.go(toEnd?n.slides.length-1:0);
+    if(!toEnd)n.reset();
+    startPresenting(n);
+  }
+  function onFs(){
+    if(!fsEl())stopPresenting();
+    else decks.forEach(function(d){setTimeout(d.fit,50)});
+  }
+  document.addEventListener('fullscreenchange',onFs);
+  document.addEventListener('webkitfullscreenchange',onFs);
+  window.addEventListener('resize',function(){decks.forEach(function(d){d.fit()})});
+
+  /* Hide the floating bar and cursor after 2.5 s without mouse movement */
+  var idleT;
+  document.addEventListener('mousemove',function(){
+    decks.forEach(function(d){d.frame.classList.remove('idle')});
+    clearTimeout(idleT);
+    idleT=setTimeout(function(){decks.forEach(function(d){if(d.isPresenting())d.frame.classList.add('idle')})},2500);
+  });
+
+  /* Keyboard: only while a section is being presented */
+  document.addEventListener('keydown',function(e){
+    if(e.target.isContentEditable||/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    var d=decks.filter(function(x){return x.isPresenting()})[0];
+    if(!d)return;
+    var k=e.key;
+    if(e.shiftKey&&(k==='ArrowRight'||k==='PageDown')){e.preventDefault();jumpSection(d,1);return}
+    if(e.shiftKey&&(k==='ArrowLeft'||k==='PageUp')){e.preventDefault();jumpSection(d,-1);return}
+    if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'||k==='ArrowDown'){e.preventDefault();d.next()}
+    else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'||k==='ArrowUp'){e.preventDefault();d.prev()}
+    else if(k==='Home')d.go(0);
+    else if(k==='End')d.go(d.slides.length-1);
+    else if(k==='a'||k==='A')d.all();
+    else if(k==='t'||k==='T')d.toggleT();
+    else if(k==='b'||k==='B'||k==='.')d.black();
+    else if(k==='Escape')stopPresenting();
+  });
+
+  /* Teacher notes toggle */
+  var bN=document.getElementById('bNotes');
+  bN.onclick=function(){document.body.classList.toggle('shownotes');bN.classList.toggle('on',document.body.classList.contains('shownotes'))};
+
+  /* Print: show every slide */
+  window.addEventListener('beforeprint',function(){decks.forEach(function(d){d.slides.forEach(function(s){s.classList.add('active')})})});
+  window.addEventListener('afterprint',function(){decks.forEach(function(d){d.go(d.cur)})});
+})();
+</script>
+</body>
+</html>
