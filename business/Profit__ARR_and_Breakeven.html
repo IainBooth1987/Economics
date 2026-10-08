@@ -1315,12 +1315,19 @@
         function checkAnswer2(label, studentAnswer, correctAnswer, method, isInteger) {
             if (isInteger === undefined) isInteger = false;
             const tolerance = isInteger ? 0 : 0.5;
-            const isCorrect = Math.abs(studentAnswer - correctAnswer) <= tolerance;
+            const answered = !isNaN(studentAnswer);
+            const isCorrect = answered && Math.abs(studentAnswer - correctAnswer) <= tolerance;
+            const isPercent = /Margin/.test(label);
+            const fmt = function(v) {
+                if (isInteger) return v.toLocaleString() + ' units';
+                if (isPercent) return v.toFixed(2) + '%';
+                return '£' + v.toFixed(2);
+            };
             
             let html = '<div class="result-box ' + (isCorrect ? 'correct' : 'incorrect') + '">';
-            html += '<h4>' + label + ': ' + (isCorrect ? '✓ Correct' : '✗ Incorrect') + '</h4>';
-            html += '<p><strong>Your answer:</strong> ' + (isInteger ? studentAnswer : '£' + (studentAnswer ? studentAnswer.toFixed(2) : 'Not answered')) + '</p>';
-            html += '<p><strong>Correct answer:</strong> ' + (isInteger ? correctAnswer : '£' + correctAnswer.toFixed(2)) + '</p>';
+            html += '<h4>' + label + ': ' + (isCorrect ? '✓ Correct' : (answered ? '✗ Incorrect' : '✗ Not answered')) + '</h4>';
+            html += '<p><strong>Your answer:</strong> ' + (answered ? fmt(studentAnswer) : 'Not answered') + '</p>';
+            html += '<p><strong>Correct answer:</strong> ' + fmt(correctAnswer) + '</p>';
             html += '<div class="method-explanation"><strong>Method:</strong><br>' + method + '</div>';
             html += '</div>';
             

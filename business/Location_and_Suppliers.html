@@ -897,11 +897,13 @@
 
         // MCQ functionality
         let selectedAnswers = {};
+        let lockedQuestions = {};
 
         document.querySelectorAll('.mcq-option').forEach(option => {
             option.addEventListener('click', function() {
                 const question = this.getAttribute('data-question');
                 const selectedOption = this.getAttribute('data-option');
+                if (lockedQuestions[question]) return;
                 
                 // Remove selection from other options in the same question
                 document.querySelectorAll(`.mcq-option[data-question="${question}"]`).forEach(opt => {
@@ -924,6 +926,18 @@
                 return;
             }
             
+            // Lock this question so the answer can't be changed
+            lockedQuestions[questionNum] = true;
+            options.forEach(option => { option.style.cursor = 'default'; });
+
+            // Show verdict above the explanation
+            const isRight = selectedAnswer === correctAnswer;
+            const verdict = document.createElement('p');
+            verdict.innerHTML = isRight ? '<strong>✓ Correct!</strong>' : '<strong>✗ Incorrect.</strong> You chose ' + selectedAnswer + '.';
+            verdict.style.color = isRight ? '#2e7d32' : '#c62828';
+            verdict.style.marginTop = '0';
+            feedback.insertBefore(verdict, feedback.firstChild);
+
             // Show feedback
             feedback.classList.add('show');
             
