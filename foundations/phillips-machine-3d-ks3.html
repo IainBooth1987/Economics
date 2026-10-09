@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Money Machine 3D</title>
 <style>
 :root{
@@ -74,7 +74,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#120c1e;color:var(--in
 .ctrl .sub{font-size:12.5px;color:var(--muted)}
 .ctrl input{width:100%;accent-color:var(--gold);height:22px}
 .ctrl.locked{opacity:.35}
-.ctrl.locked .row span:first-child::after{content:"  🔒"}
+.ctrl.locked .row label::after{content:"  🔒"}
 
 .list button{display:block;width:100%;text-align:left;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
   color:var(--ink);border-radius:9px;padding:10px 12px;margin:6px 0;font:14px var(--sans);cursor:pointer}
@@ -85,8 +85,22 @@ html,body{margin:0;height:100%;overflow:hidden;background:#120c1e;color:var(--in
 .tour .step{font:800 12px var(--sans);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
 .tour h2{font:700 21px var(--serif);color:var(--gold2);margin:4px 0 6px}
 .tour .dots{display:flex;gap:5px;margin:6px 0 10px}
-.tour .dots i{width:22px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);cursor:pointer}
-.tour .dots i.on{background:var(--gold)} .tour .dots i.seen{background:rgba(201,162,39,.45)}
+.tour .dots button{width:22px;height:14px;border:0;padding:4px 0;margin:0;background:none;cursor:pointer;display:block}
+.tour .dots button::before{content:"";display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.15)}
+.tour .dots button.on::before{background:var(--gold)} .tour .dots button.seen::before{background:rgba(201,162,39,.45)}
+.tour .dots button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px;border-radius:3px}
+.pred{border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;margin:10px 0;background:rgba(255,255,255,.04);font-size:14.5px;line-height:1.45}
+.pred .lbl{font:800 12px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--gold2);display:block;margin-bottom:4px}
+.pred .opts{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.pred .opts .btn{flex:1;min-width:84px}
+.pred .opts .btn[aria-pressed="true"]{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.pred label{display:block;font-size:13.5px;color:var(--muted);margin-bottom:3px}
+.pred textarea{width:100%;box-sizing:border-box;min-height:52px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--ink);font:14px var(--sans);padding:6px 8px;resize:vertical}
+.pred .fb{margin-top:8px;font-weight:700}
+.try.waiting{opacity:.45}
+.assume{border-left:3px solid var(--gold);background:rgba(201,162,39,.08);border-radius:0 9px 9px 0;padding:7px 10px;margin:10px 0;font-size:13.5px;line-height:1.45;color:#d6deeb}
+.assume b{color:var(--gold2)}
+.ctrl label{cursor:pointer}
 .try{border:1.5px dashed var(--gold);border-radius:10px;padding:9px 11px;margin:10px 0;font-size:14.5px;line-height:1.45;background:rgba(201,162,39,.07)}
 .try .lbl{font:800 12px var(--sans);letter-spacing:.6px;text-transform:uppercase;color:var(--gold2);display:block;margin-bottom:2px}
 .try .ok{display:none;color:var(--top);font-weight:800;margin-top:6px}
@@ -215,6 +229,7 @@ body.notags .ltag:not(.hl):not(.on){display:none}
     <div class="busy" id="busyBox"></div>
     <div class="bal" id="balBox"></div>
     <p class="hint">Drag the black handles and the red wheel on the machine, or use these sliders.</p>
+    <div class="assume" id="predNotice" role="status" style="display:none">🔮 <b>Predict first!</b> Some levers are locked until you make your prediction in the tour. <button type="button" class="btn" id="predNoticeGo" style="margin-top:6px;display:block">Go to my prediction</button></div>
     <div id="ctrlList"></div>
     <label class="tagtoggle"><input type="checkbox" id="tagToggle" checked> Show floating name tags for every lever</label>
     <button class="btn ghost" id="resetBtn" style="width:100%">Reset the machine</button>
@@ -244,6 +259,7 @@ body.notags .ltag:not(.hl):not(.on){display:none}
       <li><b>Pull a lever:</b> drag a black handle, or turn the red wheel.</li>
       <li><b>Find out more:</b> tap any tank, label or lever.</li>
       <li><b>New here?</b> Follow the <b>Start here</b> tour, then try the <b>Missions</b> to earn stars.</li>
+      <li><b>It's a simple model:</b> the government and businesses can keep spending even when their tanks run low, because they can borrow. See <b>Explore → How this model works</b>.</li>
     </ul>
     <button class="btn" id="helpClose" style="margin-top:8px">Let's go</button>
   </div>
@@ -317,15 +333,20 @@ const P = Object.assign({}, DEF);
 const E = {Y:0, bal:{tre:0.5, sav:0.5, for:0.5}};
 let paused = false;
 let locked = new Set();
+let predLock = new Set(); // levers waiting for a tour prediction
+function isLocked(k){ return locked.has(k) || predLock.has(k); }
 
-function mpw(p){ return p.t + p.s*(1-p.t) + p.m; }
+// Imports can't be more than the money families have left after tax and saving,
+// so the share spent abroad is capped. (At the defaults the cap never bites.)
+function mEff(p){ return Math.min(p.m, (1-p.t)*(1-p.s)); }
+function mpw(p){ return p.t + p.s*(1-p.t) + mEff(p); }
 function inj(p){ return p.I + p.G + p.X; }
 function ystar(p){ return inj(p)/mpw(p); }
 function ripple(){ return 1/mpw(P); }
 function flows(){
-  const Y=E.Y, T=P.t*Y, S=P.s*(1-P.t)*Y, M=P.m*Y, I=P.I;
+  const Y=E.Y, T=P.t*Y, S=P.s*(1-P.t)*Y, M=mEff(P)*Y, I=P.I;
   const Call = Y - T - S;
-  const Cd = Call - M;
+  const Cd = Math.max(0, Call - M); // never negative: imports are capped in mEff()
   return {Y,T,S,M,I,G:P.G,X:P.X,Call,Cd,AD:Cd+I+P.G+P.X, W:T+S+M, J:I+P.G+P.X};
 }
 const BUSY = [
@@ -335,6 +356,9 @@ const BUSY = [
   {max:280, e:'😃', n:'Busy!', d:'Lots of shoppers and plenty of jobs.', c:'#3fb47a'},
   {max:1e9, e:'🤩', n:'Booming!', d:'So much spending that there may not be enough workers, and prices could start to rise.', c:'#6fdc9e'},
 ];
+// Water height in the income tank. Linear up to £300m (85% full), then a gentle
+// log curve so the water keeps rising all the way to the highest possible income (~£1000m).
+function levelFor(Y){ Y=Math.max(0,Y); return Y<=300 ? 0.85*Y/300 : Math.min(0.97, 0.85 + 0.12*Math.log(Y/300)/Math.log(1000/300)); }
 function busy(Y){ return BUSY.find(b=>Y<b.max); }
 E.Y = ystar(P);
 
@@ -691,7 +715,7 @@ canvas.addEventListener('pointerdown', e=>{
   if(pointers.size===2){ mode='pinch'; dragLever=null; const p=[...pointers.values()]; pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y), cx:(p[0].x+p[1].x)/2, cy:(p[0].y+p[1].y)/2}; return; }
   const L = hitLever(e);
   downInfo = {x:e.clientX, y:e.clientY, t:performance.now(), info:hitInfo(e), lever:L};
-  if(L && !locked.has(L.k)){ mode='lever'; dragLever=L; if(L.type==='wheel'){ wheelPrev = leverAngleFromPointer(L,e)||0; } }
+  if(L && !isLocked(L.k)){ mode='lever'; dragLever=L; if(L.type==='wheel'){ wheelPrev = leverAngleFromPointer(L,e)||0; } }
   else if(e.button===2 || e.shiftKey){ mode='pan'; }
   else mode='orbit';
   canvas.classList.add('dragging');
@@ -727,7 +751,7 @@ function pan(dx,dy){
 function endPtr(e){
   const wasTap = downInfo && pointers.size===1 && Math.hypot(e.clientX-downInfo.x, e.clientY-downInfo.y)<6 && performance.now()-downInfo.t<450;
   if(wasTap && downInfo.info) showInfo(downInfo.info);
-  if(wasTap && downInfo.lever && locked.has(downInfo.lever.k)) toast('That lever is locked in this mission', '#c9a227');
+  if(wasTap && downInfo.lever && isLocked(downInfo.lever.k)) toast(predLock.has(downInfo.lever.k) && !locked.has(downInfo.lever.k) ? 'Make your prediction first (Start here tab)' : 'That lever is locked in this mission', '#c9a227');
   pointers.delete(e.pointerId);
   if(pointers.size===0){ mode=null; dragLever=null; canvas.classList.remove('dragging'); downInfo=null; }
   else if(pointers.size===1){ mode='orbit'; }
@@ -755,31 +779,31 @@ const INFO = {
   taxation:{title:'Tax and the Government Pot', tag:'Leak · money flowing out', kind:'L', view:{target:[1.6,7.0,0.4], r:4.0, th:0.3, ph:1.35},
     text:'The tax lever sets how many pence in every £1 people earn go to the government. That money drains into the Government Pot instead of being spent in shops. The pot fills up if the government takes in more tax than it spends, and empties if it spends more than it takes.',
     eg:'If tax is 30p per £1, someone who earns £100 pays £30 in tax and has £70 left.',
-    live:f=>`Tax collected ${fmtbn(f.T)} · Government spends ${fmtbn(f.G)} · Pot is ${f.T>=f.G?'filling up':'running down'}`,
+    live:f=>`Tax collected ${fmtbn(f.T)} · Government spends ${fmtbn(f.G)} · Pot is ${f.T>=f.G?'filling up':'running down'}${potLow('tre')?' · Pot nearly empty: the government is borrowing to keep spending':''}`,
     q:'Why does the bottom tank go down when the tax lever goes up?',
     a:'Families have less money left over to spend in shops. Shops take in less, so they pay out less in wages, and the whole flow gets smaller.'},
   savings:{title:'Saving: the bank tank', tag:'Leak · money flowing out', kind:'L', view:{target:[-1.6,6.9,0.4], r:4.0, th:-0.3, ph:1.35},
     text:'Families don\'t spend every pound they get. Some goes into the bank as saving. Saving is a sensible thing for a family to do, but in the machine it is a leak, because that money is not being spent in shops right now.',
     eg:'Putting birthday money in a savings account instead of buying a game.',
-    live:f=>`Families save ${fmtbn(f.S)} · Businesses borrow ${fmtbn(f.I)}`,
+    live:f=>`Families save ${fmtbn(f.S)} · Businesses borrow ${fmtbn(f.I)}${potLow('sav')?' · Bank tank nearly empty: businesses are borrowing from elsewhere':''}`,
     q:'Saving is good for one family. So why does the country get quieter if everyone saves more at the same time?',
     a:'If everyone spends less at once, shops sell less. They need fewer workers and pay out less, so families end up earning less. Being careful on your own is fine, but everyone doing it together slows the country down.'},
   investment:{title:'Business spending (the red wheel)', tag:'Top-up · money flowing in', kind:'T', view:{target:[-2.3,5.8,0.5], r:4.0, th:-0.4, ph:1.35},
-    text:'Businesses borrow money that people have saved in banks and spend it on new factories, machines, vans and shops. Economists call this <b>investment</b>. Turn the red wheel to change how much businesses spend. The money flows out of the savings tank and back into the flow.',
+    text:'Businesses borrow money that people have saved in banks and spend it on new factories, machines, vans and shops. Economists call this <b>investment</b>. Turn the red wheel to change how much businesses spend. The money flows out of the savings tank and back into the flow.<div class="assume"><b>In this model:</b> businesses keep spending the amount you set, even if the savings tank runs empty. We pretend they can always borrow from somewhere else, such as banks abroad. In real life, borrowing would get harder or more expensive.</div>',
     eg:'A bakery borrows £20,000 to buy a bigger oven. The oven-maker\'s workers get paid.',
-    live:f=>`Business spending ${fmtbn(f.I)} a year`,
+    live:f=>`Business spending ${fmtbn(f.I)} a year${potLow('sav')?' · Bank tank nearly empty, but businesses keep borrowing':''}`,
     q:'In the real world, what might make businesses want to spend less on new machines?',
     a:'If they are worried that customers will stop buying, or if borrowing from the bank gets more expensive. Then they wait, and less money tops up the flow.'},
   government:{title:'Government spending', tag:'Top-up · money flowing in', kind:'T', view:{target:[1.6,5.0,0.5], r:4.0, th:0.35, ph:1.35},
-    text:'The government spends money on schools, hospitals, roads, the police, and paying people like nurses and teachers. This lever lets money flow out of the Government Pot into the middle of the machine. It is a top-up.',
+    text:'The government spends money on schools, hospitals, roads, the police, and paying people like nurses and teachers. This lever lets money flow out of the Government Pot into the middle of the machine. It is a top-up.<div class="assume"><b>In this model:</b> the government keeps spending the amount you set, even if the Government Pot runs empty. That is because real governments can <b>borrow</b>. The pot shows whether it is collecting more or less tax than it spends, not a hard limit. Borrowing has to be paid back later, with interest.</div>',
     eg:'Building a new hospital pays builders, electricians and then doctors and nurses.',
-    live:f=>`Government spends ${fmtbn(f.G)} · takes in ${fmtbn(f.T)} in tax`,
+    live:f=>`Government spends ${fmtbn(f.G)} · takes in ${fmtbn(f.T)} in tax${potLow('tre')?' · Pot nearly empty: now borrowing to keep spending':''}`,
     q:'A new school is built. Why might the café next door get busier too?',
     a:'The builders and teachers get paid, and they spend some of their wages nearby, for example at the café. The government\'s spending spreads through the country.'},
   imports:{title:'Buying from abroad', tag:'Leak · money flowing out', kind:'L', view:{target:[-1.6,5.2,0.5], r:4.4, th:-0.35, ph:1.4},
-    text:'When we buy things made in other countries, the money goes to workers and firms over there. It leaks out of our flow down the long hose into the Other Countries tank. Economists call this <b>imports</b>.',
+    text:'When we buy things made in other countries, the money goes to workers and firms over there. It leaks out of our flow down the long hose into the Other Countries tank. Economists call this <b>imports</b>.<div class="assume"><b>In this model:</b> families can\'t spend more abroad than they have left after tax and saving. If tax, saving and buying from abroad are all very high, the machine caps buying from abroad so shopping here never drops below zero.</div>',
     eg:'A games console made in Japan, bananas from Costa Rica, a holiday in Spain.',
-    live:f=>`We buy ${fmtbn(f.M)} from abroad · we sell ${fmtbn(f.X)}`,
+    live:f=>`We buy ${fmtbn(f.M)} from abroad · we sell ${fmtbn(f.X)}${mEff(P)<P.m?' · Imports capped at the money left after tax and saving, so shopping here has reached £0':''}`,
     q:'Why does buying a phone made abroad help our shops less than buying something made here?',
     a:'Most of the money goes to workers in the other country, so it leaves our flow. Money spent on things made here goes round again here.'},
   exports:{title:'Selling abroad', tag:'Top-up · money flowing in', kind:'T', view:{target:[-2.1,2.4,0.5], r:4.0, th:-0.25, ph:1.38},
@@ -806,6 +830,12 @@ const INFO = {
     live:()=>`Ripple number now: ×${ripple().toFixed(2)}`,
     q:'Why does the ripple number get smaller when the leaks get bigger?',
     a:'Each time the money goes round, some leaks out as tax, saving or buying from abroad. Bigger leaks mean less is passed on each time, so the ripples die away faster.'},
+  model:{title:'How this model works', tag:'The simplifications', kind:'N', view:{target:[0,5.0,0.4], r:9.0, th:0.05, ph:1.4},
+    text:'Every model leaves things out so we can see the main idea clearly. Money Island makes these simplifications:<ul style="margin:6px 0 0 18px;padding:0;line-height:1.5"><li><b>Spending doesn\'t stop when a tank is empty.</b> The government and businesses keep spending what you set, because they can borrow. The Government Pot and bank tank show whether money is building up or running down. They are not a hard limit.</li><li><b>Prices stay the same.</b> Higher income means more things are made and sold, not just higher prices. (When it says <i>Booming</i>, real prices would start to rise.)</li><li><b>Leaks are fixed shares.</b> Tax, saving and buying from abroad are always the same pence in every £1, whatever happens.</li><li><b>You can\'t spend more than you have.</b> Buying from abroad is capped at what is left after tax and saving.</li><li><b>Big numbers squash the tank.</b> Above about £300m the bottom tank fills more slowly, so it doesn\'t overflow. Read the exact income on the chip at the top.</li></ul>',
+    eg:'A map is a model too. It leaves out most things so you can find your way.',
+    live:f=>`Government Pot: ${potLow('tre')?'nearly empty (borrowing)':'has money in it'} · Bank tank: ${potLow('sav')?'nearly empty (borrowing)':'has money in it'}`,
+    q:'The machine lets the government keep spending with an empty pot. What would happen in real life if a government kept borrowing more and more?',
+    a:'It would owe more and more, and have to pay interest on the debt. Lenders might start to worry and charge more interest, so in the end the government might have to raise taxes or cut spending.'},
   about:{title:'The real Phillips Machine', tag:'Bill Phillips, London, 1949', kind:'N', view:{target:[1.55,3.3,0.2], r:3.0, th:0.2, ph:1.45},
     text:'Bill Phillips grew up on a farm in New Zealand and trained as an engineer. In 1949, while studying at the London School of Economics, he built the first machine in his landlady\'s garage. Only a small number were ever made, and one is on show at the Science Museum in London.',
     eg:'Economists also call it the MONIAC.',
@@ -815,6 +845,7 @@ const INFO = {
 };
 const infoEl = document.getElementById('info'), infoBody = document.getElementById('infoBody');
 let infoKey=null;
+function potLow(k){ return E.bal[k] <= 0.08; }
 function whyBlock(q,a){ return `<div class="why"><div class="q">🤔 Tell me why: ${q}</div><button class="btn ghost revealBtn" style="margin-top:8px">Reveal answer</button><div class="a">${a}</div></div>`; }
 function wireReveal(root){ root.querySelectorAll('.revealBtn').forEach(b=>b.onclick=function(){ this.parentElement.classList.add('shown'); this.remove(); }); }
 function showInfo(k){
@@ -832,7 +863,7 @@ document.getElementById('infoX').onclick=()=>{ infoEl.style.display='none'; info
 
 // explore list
 const exploreList = document.getElementById('exploreList');
-['national','pump','consumption','taxation','government','savings','investment','imports','exports','foreign','multiplier','about'].forEach(k=>{
+['national','pump','consumption','taxation','government','savings','investment','imports','exports','foreign','multiplier','model','about'].forEach(k=>{
   const b=document.createElement('button'); b.innerHTML=`<b>${INFO[k].title}</b><br><span class="hint">${INFO[k].tag}</span>`;
   b.onclick=()=>{ userMoved=true; flyTo(INFO[k].view); showInfo(k); }; exploreList.appendChild(b);
 });
@@ -842,9 +873,9 @@ const ctrlList = document.getElementById('ctrlList'); const sliders={};
 CTRL.forEach((c,i)=>{
   if(i===0 || CTRL[i-1].grp!==c.grp){ const h=document.createElement('div'); h.className='grp '+c.grp; h.textContent = c.grp==='L' ? '▼ Leaks: money flowing out' : '▲ Top-ups: money flowing in'; ctrlList.appendChild(h); }
   const d=document.createElement('div'); d.className='ctrl'; d.id='ctrl_'+c.k;
-  d.innerHTML=`<div class="row"><span>${c.name}</span><span id="v_${c.k}"></span></div><div class="sub">${c.sub}</div><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" aria-label="${c.name}">`;
+  d.innerHTML=`<div class="row"><label for="sl_${c.k}" id="lb_${c.k}">${c.name}</label><span id="v_${c.k}" aria-hidden="true"></span></div><div class="sub" id="sb_${c.k}">${c.sub}</div><input type="range" id="sl_${c.k}" min="${c.min}" max="${c.max}" step="${c.step}" aria-describedby="sb_${c.k}">`;
   const inp=d.querySelector('input'); inp.value=P[c.k];
-  inp.addEventListener('input',()=>{ if(!locked.has(c.k)) setParam(c.k, parseFloat(inp.value)); else inp.value=P[c.k]; });
+  inp.addEventListener('input',()=>{ if(!isLocked(c.k)) setParam(c.k, parseFloat(inp.value)); else inp.value=P[c.k]; });
   sliders[c.k]={inp, d}; ctrlList.appendChild(d);
 });
 function setParam(k, v){
@@ -853,11 +884,11 @@ function setParam(k, v){
 }
 function syncControl(k){
   const c=CTRL.find(c=>c.k===k);
-  sliders[k].inp.value=P[k]; document.getElementById('v_'+k).textContent=c.fmt(P[k]);
+  sliders[k].inp.value=P[k]; sliders[k].inp.setAttribute('aria-valuetext', c.fmt(P[k])); document.getElementById('v_'+k).textContent=c.fmt(P[k]);
   const L=levers[k]; if(L){ L.val.userData.draw(L.short? L.short(P[k]) : c.fmt(P[k])); }
 }
 CTRL.forEach(c=>syncControl(c.k));
-function applyLocks(){ CTRL.forEach(c=>{ sliders[c.k].d.classList.toggle('locked', locked.has(c.k)); sliders[c.k].inp.disabled=locked.has(c.k); }); }
+function applyLocks(){ CTRL.forEach(c=>{ const lk=isLocked(c.k); sliders[c.k].d.classList.toggle('locked', lk); sliders[c.k].inp.disabled=lk; sliders[c.k].d.title = predLock.has(c.k)&&!locked.has(c.k) ? 'Make your prediction in the Start here tab first' : ''; }); }
 
 /* ================= READOUTS: busy-o-meter and leaks vs top-ups ================= */
 const busyBox=document.getElementById('busyBox'), balBox=document.getElementById('balBox');
@@ -897,30 +928,35 @@ const TOUR = [
   {title:'Leak 1: Tax', info:'taxation', levers:['t'],
     text:'Some money <b>leaks</b> out of the flow. The government takes part of what people earn as <b>tax</b>. That money drains into the Government Pot instead of being spent in shops.',
     tryit:'Push the <b>TAX</b> lever up by dragging its black handle (or use the slider in Levers). Watch the bottom tank.',
+    predict:{q:'You are about to push <b>TAX</b> up. Will the country\'s income <b>rise or fall</b>?', opts:[['up','📈 Rise'],['down','📉 Fall'],['same','➖ Stay the same']], ans:'down'},
     done:s=>P.t>=s.t+0.08,
     q:'Why does the bottom tank go down when tax goes up?',
     a:'Families have less money left to spend in shops. Shops take in less, so they pay out less in wages, and the whole flow gets smaller.'},
   {title:'Top-up 1: Government spending', info:'government', levers:['G'],
     text:'The government spends tax money on schools, hospitals, roads and paying people like nurses and teachers. This is a <b>top-up</b>: money pouring back into the flow.',
     tryit:'Push the <b>GOVT SPENDING</b> lever up and watch the Busy-o-meter in the Levers tab.',
+    predict:{q:'You are about to push <b>GOVT SPENDING</b> up. Will the country\'s income <b>rise or fall</b>?', opts:[['up','📈 Rise'],['down','📉 Fall'],['same','➖ Stay the same']], ans:'up'},
     done:s=>P.G>=s.G+15,
     q:'A new school is built. Why might the café next door get busier too?',
     a:'The builders and teachers get paid, and they spend some of their wages nearby, for example at the café. The government\'s spending spreads through the country.'},
   {title:'Leak 2: Saving', info:'savings', levers:['s'],
     text:'Families don\'t spend every pound. Some goes into the bank as <b>saving</b>. Saving is sensible for a family, but in the machine it is a leak: that money is not being spent in shops right now.',
     tryit:'Push the <b>SAVING</b> lever up. What happens to the bottom tank?',
+    predict:{q:'You are about to push <b>SAVING</b> up. Will the country\'s income <b>rise or fall</b>?', opts:[['up','📈 Rise'],['down','📉 Fall'],['same','➖ Stay the same']], ans:'down'},
     done:s=>P.s>=s.s+0.08,
     q:'Saving is good for one family. So why does the country get quieter if everyone saves more at the same time?',
     a:'If everyone spends less at once, shops sell less. They need fewer workers and pay out less, so families end up earning less. Being careful on your own is fine, but everyone doing it together slows the country down.'},
   {title:'Top-up 2: Business spending', info:'investment', levers:['I'],
     text:'Businesses borrow the money people have saved and spend it on new factories, machines and shops. Economists call this <b>investment</b>. It is a top-up, and it is how saved money gets back into the flow.',
     tryit:'Turn the red <b>BUSINESS SPENDING</b> wheel to make businesses spend more.',
+    predict:{q:'You are about to make businesses spend more. Will the country\'s income <b>rise or fall</b>?', opts:[['up','📈 Rise'],['down','📉 Fall'],['same','➖ Stay the same']], ans:'up'},
     done:s=>P.I>=s.I+10,
     q:'Where does the money for business spending come from in this machine?',
     a:'From the savings tank. Banks lend the money people have saved to businesses, so some of that saving comes back into the flow.'},
   {title:'Buying and selling abroad', info:'imports', levers:['m','X'],
     text:'When we buy things made in other countries, like a games console made in Japan, money <b>leaks</b> abroad. When other countries buy things we make, like cars made in Sunderland, money <b>tops up</b> our flow.',
     tryit:'Push <b>SELLING ABROAD</b> up. Then push <b>BUYING FROM ABROAD</b> up. Which one makes the country busier?',
+    predict:{q:'First you will push <b>SELLING ABROAD</b> up. Will the country\'s income <b>rise or fall</b>?', opts:[['up','📈 Rise'],['down','📉 Fall'],['same','➖ Stay the same']], ans:'up'},
     done:s=>P.X>=s.X+10,
     q:'Why does buying a phone made abroad help our shops less than buying something made here?',
     a:'Most of the money goes to workers in the other country, so it leaves our flow. Money spent on things made here goes round again here.'},
@@ -932,41 +968,94 @@ const TOUR = [
   {title:'The ripple effect', info:'multiplier', levers:['G'],
     text:'If the government spends an extra £10m, the country\'s income grows by <b>more</b> than £10m. The builders spend their wages, the shopkeepers spend theirs, and so on, like ripples in a pond. The <b>ripple number</b> on the black dial tells you how much each £1 grows.',
     tryit:'Look at the income now. Push <b>GOVT SPENDING</b> up by £10m and wait for the water to settle. Did income grow by more than £10m?',
+    predict:{q:'The government is about to spend an extra £10m. By how much will the country\'s income grow?', opts:[['more','More than £10m'],['equal','Exactly £10m'],['less','Less than £10m']], ans:'more'},
     done:s=>P.G>=s.G+10 && E.Y>=s.Y+12,
     q:'Why does the ripple get smaller when the leaks are bigger?',
     a:'Each time the money goes round, some leaks out as tax, saving or buying from abroad. Bigger leaks mean less is passed on each time, so the ripples die away faster.'},
 ];
 let tourStep=0, tourSnap=null; const tourSeen=new Set([0]);
 const tourBox=document.getElementById('tourBox');
+document.getElementById('predNoticeGo').onclick=()=>{ document.querySelector('.tab[data-pane="pTour"]').click(); const b=document.getElementById('predBox'); if(b){ b.scrollIntoView({block:'center'}); const o=b.querySelector('.opts .btn'); if(o) o.focus(); } };
 function renderTour(){
   const s=TOUR[tourStep]; const last=tourStep===TOUR.length-1;
   tourBox.innerHTML = `<div class="step">Step ${tourStep+1} of ${TOUR.length}</div><h2>${s.title}</h2>
-    <div class="dots">${TOUR.map((_,i)=>`<i data-i="${i}" class="${i===tourStep?'on':tourSeen.has(i)?'seen':''}" title="Step ${i+1}"></i>`).join('')}</div>
+    <nav class="dots" aria-label="Tour steps">${TOUR.map((t,i)=>`<button type="button" data-i="${i}" class="${i===tourStep?'on':tourSeen.has(i)?'seen':''}" title="Step ${i+1}: ${t.title}" aria-label="Go to step ${i+1}: ${t.title}"${i===tourStep?' aria-current="step"':''}></button>`).join('')}</nav>
     <p>${s.text}</p>
-    <div class="try" id="tryBox"><span class="lbl">👉 Try this</span>${s.tryit}<div class="ok">✅ Nice one! You did it.</div></div>
+    ${s.predict?predictBlock(s.predict):''}
+    <div class="try${s.predict&&!tourPred?' waiting':''}" id="tryBox"><span class="lbl">👉 Try this</span>${s.tryit}<div class="ok" role="status">✅ Nice one! You did it.</div><div class="fb" id="predFb" role="status" style="margin-top:6px"></div></div>
     ${whyBlock(s.q,s.a)}
     ${s.info?`<button class="btn ghost" style="margin-top:12px;width:100%" id="tourMore">Find out more about this part</button>`:''}
     <div class="tnav"><button class="btn ghost" id="tPrev" ${tourStep===0?'disabled':''}>← Back</button>
     <button class="btn" id="tNext">${last?'Try the Missions →':'Next →'}</button></div>
     ${last?'<p class="hint" style="margin-top:12px">You have finished the tour. Now try the Missions to earn five stars!</p>':''}`;
   wireReveal(tourBox);
-  tourBox.querySelectorAll('.dots i').forEach(d=>d.onclick=()=>goTour(+d.dataset.i));
+  tourBox.querySelectorAll('.dots button').forEach(d=>d.onclick=()=>goTour(+d.dataset.i));
+  wirePredict(s);
   document.getElementById('tPrev').onclick=()=>goTour(tourStep-1);
   document.getElementById('tNext').onclick=()=>{ if(last){ document.querySelector('.tab[data-pane="pMissions"]').click(); } else goTour(tourStep+1); };
   const more=document.getElementById('tourMore'); if(more) more.onclick=()=>showInfo(s.info);
 }
+// ---- predict before you pull ----
+let tourPred=null; // {choice, why} once the pupil has predicted this step
+function predictBlock(pr){
+  const done=!!tourPred;
+  return `<div class="pred" id="predBox"><span class="lbl">🔮 Predict first</span>${pr.q}
+    <div class="opts" role="group" aria-label="Your prediction">${pr.opts.map(([k,l])=>`<button type="button" class="btn ghost" data-k="${k}" aria-pressed="${tourPred&&tourPred.choice===k?'true':'false'}" ${done?'disabled':''}>${l}</button>`).join('')}</div>
+    <label for="predWhy">Why do you think that? (optional)</label>
+    <textarea id="predWhy" placeholder="Because…" ${done?'disabled':''}>${done?esc(tourPred.why):''}</textarea>
+    <button type="button" class="btn" id="predGo" style="margin-top:8px;width:100%" ${done?'disabled':''}>${done?'Prediction locked in ✔ Now try it':'Lock in my prediction'}</button></div>`;
+}
+function esc(t){ return String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function needsPred(){ const s=TOUR[tourStep]; return !!(s && s.predict && !tourPred); }
+let tourActive=true; // false once a mission takes over from the tour
+// The prediction lock stays on in every tab (Levers, Explore, the 3D levers)
+// until the pupil predicts, moves to another tour step, or starts a mission.
+function setPredLock(){
+  predLock = (tourActive && !activeMission && needsPred()) ? new Set(TOUR[tourStep].levers) : new Set();
+  applyLocks();
+  const n=document.getElementById('predNotice'); if(n) n.style.display = predLock.size ? 'block' : 'none';
+}
+function wirePredict(s){
+  const box=document.getElementById('predBox'); if(!box || tourPred) return;
+  let pick=null; const go=document.getElementById('predGo');
+  go.disabled=true;
+  box.querySelectorAll('.opts .btn').forEach(b=>b.onclick=()=>{
+    pick=b.dataset.k; box.querySelectorAll('.opts .btn').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); go.disabled=false; });
+  go.onclick=()=>{ if(!pick) return;
+    tourPred={choice:pick, why:document.getElementById('predWhy').value.trim()};
+    box.querySelectorAll('button,textarea').forEach(x=>x.disabled=true);
+    go.textContent='Prediction locked in ✔ Now try it';
+    document.getElementById('tryBox').classList.remove('waiting');
+    setPredLock(); toast('Levers unlocked. Now try it!', '#3fb47a'); };
+}
+function predFeedback(s, snap){
+  const pr=s.predict; if(!pr || !tourPred) return '';
+  const endY=ystar(P), dY=endY-snap.Y; let actual; // judge on where the water will settle
+  if(pr.ans==='more'){ const dG=P.G-snap.G; actual = dY>dG+0.5?'more':dY>dG-0.5?'equal':'less'; }
+  else actual = dY>1?'up':dY<-1?'down':'same';
+  const lbl=k=>(pr.opts.find(o=>o[0]===k)||['',k])[1];
+  const right = tourPred.choice===actual;
+  const what = pr.ans==='more' ? `Government spending went up by ${fmtbn(P.G-snap.G)} and income is settling ${fmtbn(dY)} higher (${fmtbn(snap.Y)} → ${fmtbn(endY)}).` : `Income started at ${fmtbn(snap.Y)} and is settling at about ${fmtbn(endY)}.`;
+  const why = tourPred.why ? ` You said: “${esc(tourPred.why)}”. Does your reason still fit? Check it against the answer below.` : ' Now check your thinking against the answer below.';
+  return (right ? `🎯 Your prediction (${lbl(tourPred.choice)}) was right! ` : `🤔 You predicted ${lbl(tourPred.choice)}, but the answer was ${lbl(actual)}. `) + what + why;
+}
 function goTour(i){
   if(i<0||i>=TOUR.length) return;
   if(activeMission) endMission();
-  tourStep=i; tourSeen.add(i); resetEconomy();
+  tourStep=i; tourSeen.add(i); tourPred=null; tourActive=true; resetEconomy();
   tourSnap=Object.assign({Y:E.Y}, P);
   const s=TOUR[i]; userMoved=true; flyTo(s.info? INFO[s.info].view : VIEWS.overview);
   if(!s.info) userMoved=false;
-  renderTour(); document.getElementById('pTour').scrollTop=0;
+  renderTour(); setPredLock(); document.getElementById('pTour').scrollTop=0;
 }
 function checkTour(){
   const s=TOUR[tourStep]; const box=document.getElementById('tryBox');
-  if(box && s.done && tourSnap && !box.classList.contains('done') && s.done(tourSnap)) box.classList.add('done');
+  if(box && s.done && tourSnap && !box.classList.contains('done') && !needsPred() && s.done(tourSnap)){
+    box.classList.add('done');
+    // let the water settle a little before judging the prediction
+    if(s.predict){ const step=tourStep, snap=tourSnap; const fb=document.getElementById('predFb'); if(fb) fb.textContent='Watching the water…';
+      setTimeout(()=>{ if(tourStep!==step) return; const el=document.getElementById('predFb'); if(el) el.innerHTML=predFeedback(s, snap); }, 2000); }
+  }
 }
 
 /* ================= MISSIONS ================= */
@@ -1018,11 +1107,11 @@ function renderMissions(){
 }
 function startMission(m){
   resetEconomy(); Object.assign(P, m.start); CTRL.forEach(c=>syncControl(c.k)); E.Y=ystar(P);
-  activeMission=m; holdTime=0; locked=new Set(CTRL.map(c=>c.k).filter(k=>!m.allow.includes(k))); applyLocks();
+  activeMission=m; holdTime=0; tourActive=false; predLock=new Set(); locked=new Set(CTRL.map(c=>c.k).filter(k=>!m.allow.includes(k))); applyLocks();
   banner.style.display='block'; renderMissions(); userMoved=false; flyTo(VIEWS.overview); layout();
   infoEl.style.display='none'; infoKey=null;
 }
-function endMission(){ activeMission=null; locked=new Set(); applyLocks(); banner.style.display='none'; renderMissions(); layout(); }
+function endMission(){ activeMission=null; locked=new Set(); setPredLock(); banner.style.display='none'; renderMissions(); layout(); }
 function checkMission(dt){
   if(!activeMission) return; const f=flows(); const settled=Math.abs(f.Y-ystar(P))/ystar(P)<0.01; const ok=activeMission.goal(f);
   holdTime = (ok && settled) ? holdTime+dt : 0;
@@ -1071,7 +1160,7 @@ function updateTags(){
     el.style.display = vis?'':'none';
     if(vis){ const hw=el.offsetWidth/2+4; el.style.left=Math.max(r.left+hw, Math.min(r.right-hw, x))+'px'; el.style.top=y+'px'; }
     el.querySelector('.v').textContent=L.c.fmt(P[k]); el.querySelector('.vs').textContent=(L.c.grp==='L'?Math.round(P[k]*100)+'p':L.c.fmt(P[k]));
-    el.classList.toggle('on', dragLever===L); el.classList.toggle('lock', locked.has(k));
+    el.classList.toggle('on', dragLever===L); el.classList.toggle('lock', isLocked(k));
     el.classList.toggle('hl', !activeMission && document.getElementById('pTour').classList.contains('on') && !drawer.classList.contains('closed') && TOUR[tourStep].levers.includes(k));
   }
 }
@@ -1090,7 +1179,7 @@ canvas.addEventListener('pointercancel', ()=>{ dragTip.style.display='none'; });
 
 /* ================= UI WIRING ================= */
 const drawer=document.getElementById('drawer');
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on')); t.classList.add('on'); document.getElementById(t.dataset.pane).classList.add('on'); infoEl.style.display='none'; infoKey=null; openDrawer(); });
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on')); t.classList.add('on'); document.getElementById(t.dataset.pane).classList.add('on'); infoEl.style.display='none'; infoKey=null; openDrawer(); setPredLock(); });
 document.getElementById('drawerBtn').onclick=()=>{ drawer.classList.toggle('closed'); layout(); };
 document.getElementById('viewBtn').onclick=()=>{ userMoved=false; flyTo(VIEWS.overview); };
 document.getElementById('printBtn').onclick=()=>window.print();
@@ -1156,8 +1245,8 @@ function frame(now){
   }
   const f=flows();
   // tank levels
-  tanks.ni.target = Math.min(0.97, f.Y/300);
-  tanks.header.target = Math.min(0.95, 0.25 + f.Y/600);
+  tanks.ni.target = levelFor(f.Y);
+  tanks.header.target = Math.min(0.95, 0.25 + 0.7*levelFor(f.Y)/0.97);
   tanks.tre.target=E.bal.tre; tanks.sav.target=E.bal.sav; tanks.for.target=E.bal.for;
   for(const id in tanks){ const T=tanks[id]; T.level += (T.target-T.level)*Math.min(1,dt*3); const h=Math.max(0.001,T.level*(T.h-0.04));
     T.water.scale.y=h; T.float.position.y = -T.h/2 + 0.02 + h; }
@@ -1176,7 +1265,7 @@ function frame(now){
   }
   // levers follow params
   for(const k in levers){ const L=levers[k]; const ang=valToAng(L,P[k]); L.pivot.rotation.z += (-ang - L.pivot.rotation.z)*Math.min(1,dt*14);
-    const lk=locked.has(k); L.g.traverse(o=>{ if(o.isMesh && o.material===M_BLACK && lk){} }); }
+    const lk=isLocked(k); L.g.traverse(o=>{ if(o.isMesh && o.material===M_BLACK && lk){} }); }
   pumpDisc.rotation.z -= dt*(f.Y/40)*(paused?0:1);
 
   uiTimer+=dt;
@@ -1191,7 +1280,7 @@ function frame(now){
 document.getElementById('loading').remove();
 renderTour(); tourSnap=Object.assign({Y:E.Y}, P);
 requestAnimationFrame(frame);
-window.__moniac = {P, E, flows, flyTo, setParam, showInfo, goTour, startMission:i=>startMission(MISSIONS[i]), ripple, busy};
+window.__moniac = {P, E, flows, flyTo, setParam, showInfo, goTour, levelFor, ystar, resetEconomy, predLocked:()=>[...predLock], startMission:i=>startMission(MISSIONS[i]), ripple, busy};
 })();
 </script>
 </body>
