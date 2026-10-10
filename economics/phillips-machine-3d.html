@@ -486,7 +486,7 @@ makeLever('X', -1.25, 1.65, {title:'EXPORTS', size:0.7});
   const val = makeLabel(c.fmt(P.r), 0.75, 0.22, {fs:150}); val.position.set(0,-0.58,-0.05); g.add(val);
   const ttl = makeLabel('INTEREST RATE', 1.15, 0.21, {fs:140, bg:'#111', fg:'#ffd75e', border:false}); ttl.position.set(0,0.6,-0.05); g.add(ttl);
   ttl.userData.info='investment'; pickables.push(ttl);
-  const L = {k:'r', c, g, pivot:wheel, val, range:2.4, type:'wheel'};
+  const L = {k:'r', c, g, pivot:wheel, val, range:Math.PI*1.5, type:'wheel'};
   hit.userData.lever = L; leverHits.push(hit);
   levers.r = L;
 })();
@@ -548,9 +548,10 @@ function leverAngleFromPointer(L, e){
   const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, pw);
   const pt = new THREE.Vector3(); if(!ray.ray.intersectPlane(plane, pt)) return null;
   const dx = pt.x-pw.x, dy = pt.y-pw.y;
+  lastPtrRadius = Math.hypot(dx, dy);
   return Math.atan2(dx, dy);
 }
-let wheelPrev=0;
+let wheelPrev=0, wheelAcc=0, lastPtrRadius=1;
 canvas.addEventListener('pointerdown', e=>{
   canvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
@@ -558,7 +559,7 @@ canvas.addEventListener('pointerdown', e=>{
   if(pointers.size===2){ mode='pinch'; dragLever=null; const p=[...pointers.values()]; pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y), cx:(p[0].x+p[1].x)/2, cy:(p[0].y+p[1].y)/2}; return; }
   const L = hitLever(e);
   downInfo = {x:e.clientX, y:e.clientY, t:performance.now(), info:hitInfo(e), lever:L};
-  if(L && !locked.has(L.k)){ mode='lever'; dragLever=L; if(L.type==='wheel'){ wheelPrev = leverAngleFromPointer(L,e)||0; } }
+  if(L && !locked.has(L.k)){ mode='lever'; dragLever=L; if(L.type==='wheel'){ wheelPrev = leverAngleFromPointer(L,e)||0; wheelAcc = valToAng(L, P[L.k]); } }
   else if(e.button===2 || e.shiftKey){ mode='pan'; }
   else mode='orbit';
   canvas.classList.add('dragging');
@@ -576,7 +577,12 @@ canvas.addEventListener('pointermove', e=>{
   if(mode==='lever' && dragLever){
     const L=dragLever; const a = leverAngleFromPointer(L,e); if(a===null) return;
     let ang;
-    if(L.type==='wheel'){ let da=a-wheelPrev; if(da>Math.PI)da-=2*Math.PI; if(da<-Math.PI)da+=2*Math.PI; wheelPrev=a; ang = valToAng(L, P[L.k]) + da; }
+    if(L.type==='wheel'){
+      // ignore the unstable zone right at the hub, where tiny moves swing the angle wildly
+      if(lastPtrRadius < 0.1){ return; }
+      let da=a-wheelPrev; if(da>Math.PI)da-=2*Math.PI; if(da<-Math.PI)da+=2*Math.PI; wheelPrev=a;
+      // accumulate the raw turn so small movements are not lost to rounding
+      wheelAcc = Math.max(-L.range, Math.min(L.range, wheelAcc + da)); ang = wheelAcc; }
     else ang = a;
     ang = Math.max(-L.range, Math.min(L.range, ang));
     setParam(L.k, L.c.min + (ang+L.range)/(2*L.range)*(L.c.max-L.c.min));
@@ -914,7 +920,7 @@ function frame(now){
     p.im.instanceMatrix.needsUpdate=true;
   }
   // levers follow params
-  for(const k in levers){ const L=levers[k]; const ang=valToAng(L,P[k]); L.pivot.rotation.z += (-ang - L.pivot.rotation.z)*Math.min(1,dt*14);
+  for(const k in levers){ const L=levers[k]; const ang=(dragLever===L && L.type==='wheel') ? wheelAcc : valToAng(L,P[k]); L.pivot.rotation.z += (-ang - L.pivot.rotation.z)*Math.min(1,dt*14);
     const lk=locked.has(k); L.g.traverse(o=>{ if(o.isMesh && o.material===M_BLACK && lk){} }); }
   pumpDisc.rotation.z -= dt*(f.Y/400)*(paused?0:1);
 
