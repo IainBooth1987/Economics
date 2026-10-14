@@ -262,6 +262,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 .q-columns-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);display:block;margin-bottom:6px;}
 .q-columns-note .col-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .q-columns-note .col-chip{background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);border-radius:4px;padding:3px 10px;color:var(--text);font-weight:600;}
+
+/* ── UNIT PICKER ── */
+.units-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:210;overflow-y:auto;padding:24px;}
+.units-overlay.show{display:flex;align-items:flex-start;justify-content:center;}
+.units-panel{background:#fff;border-radius:16px;max-width:620px;width:100%;padding:32px;box-shadow:0 8px 40px rgba(0,0,0,.2);margin-top:4vh;}
+.units-panel h2{font-family:'Playfair Display',serif;font-size:24px;color:var(--navy);margin-bottom:6px;}
+.units-panel .sub{color:var(--muted);font-size:13.5px;line-height:1.55;margin-bottom:18px;}
+.unit-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.unit-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--off);cursor:pointer;transition:all .15s;user-select:none;}
+.unit-opt:hover{border-color:var(--navy);}
+.unit-opt input{width:18px;height:18px;accent-color:var(--navy);flex-shrink:0;cursor:pointer;}
+.unit-opt .uname{flex:1;font-size:14px;color:var(--text);font-weight:500;}
+.unit-opt .ucount{font-size:11px;color:var(--muted);white-space:nowrap;}
+.unit-opt.on{border-color:var(--gold);background:rgba(201,162,39,.10);}
+.unit-quick{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.unit-quick button{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.unit-quick button:hover{border-color:var(--navy);}
+.unit-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.unit-total{font-size:12.5px;color:var(--muted);}
+.unit-warn{font-size:12.5px;color:var(--err);display:none;margin-bottom:10px;}
+.unit-warn.show{display:block;}
+.units-summary{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;}
+.units-edit-btn{font-size:11.5px;padding:4px 10px;border-radius:14px;border:1px solid var(--gold);background:transparent;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;}
+.units-edit-btn:hover{background:var(--gold);}
+.topic-row.topic-off{opacity:.38;}
+.topic-row.topic-off .tscore::after{content:' · off';}
+@media (max-width:480px){.units-panel{padding:22px 16px;margin-top:0;}.unit-foot .btn{width:100%;text-align:center;}}
+@media print{.units-overlay{display:none!important;}}
 </style>
 </head>
 <body>
@@ -270,6 +298,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
   <div class="logo">BIZ-OMICS <span>Macroeconomics · Adaptive MCQ</span></div>
   <div class="hdr-btns">
     <a href="index.html" class="btn" style="text-decoration:none" aria-label="Home"><span class="btn-icon">⌂</span><span class="btn-label"> Home</span></a>
+    <button class="btn" onclick="openUnits()" aria-label="Choose units"><span class="btn-icon">☰</span><span class="btn-label"> Units</span></button>
     <button class="btn" onclick="showSummary()" aria-label="Summary"><span class="btn-icon">📊</span><span class="btn-label"> Summary</span></button>
     <button class="btn btn-danger" onclick="resetSession()" aria-label="Restart"><span class="btn-icon">↺</span><span class="btn-label"> Restart</span></button>
     <button class="btn" onclick="window.print()" aria-label="Print"><span class="btn-icon">⎙</span><span class="btn-label"> Print</span></button>
@@ -305,6 +334,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
     </div>
 
     <div class="sidebar-section">
+      <h3>Units in play</h3>
+      <div class="units-summary" id="units-summary"></div>
+      <button class="units-edit-btn" onclick="openUnits()">Change units</button>
+    </div>
+    <div class="sidebar-section">
       <h3>Current focus</h3>
       <div id="current-focus" style="font-size:12px;color:var(--muted);">Starting diagnostic round…</div>
     </div>
@@ -337,6 +371,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 </div>
 
 <!-- SUMMARY OVERLAY -->
+<div class="units-overlay" id="units-overlay">
+  <div class="units-panel" role="dialog" aria-labelledby="units-title">
+    <h2 id="units-title">Choose your units</h2>
+    <p class="sub">Tick the units you've studied so far. Questions only come from these units — and the adaptive engine still targets your weakest areas within them. You can change this any time with the <strong>Units</strong> button.</p>
+    <div class="unit-quick">
+      <button type="button" onclick="unitsSelectAll(true)">Select all</button>
+      <button type="button" onclick="unitsSelectAll(false)">Clear all</button>
+    </div>
+    <div class="unit-list" id="unit-list"></div>
+    <div class="unit-warn" id="unit-warn">Choose at least one unit to start.</div>
+    <div class="unit-foot">
+      <span class="unit-total" id="unit-total"></span>
+      <button class="btn btn-primary" onclick="confirmUnits()">Start practising →</button>
+    </div>
+  </div>
+</div>
+
 <div class="summary-overlay" id="summary-overlay">
   <div class="summary-panel">
     <div class="print-hdr">BIZ-OMICS — Macroeconomics Adaptive MCQ · Session Report</div>
@@ -6320,6 +6371,90 @@ let wrongPool      = [];
 let cumulative     = { total:0, correct:0, sessions:0 };
 let sessionHistory = [];
 
+
+// ── UNIT SELECTION ────────────────────────────────────────────────────────────
+// Students choose which units they've studied. Every part of the adaptive
+// engine (weighting, per-topic difficulty, wrong-answer reinsertion) then works
+// only within the chosen units. Mastery data for other units is kept, not lost.
+const UNITS_KEY = STORAGE_KEY + '_units';
+let activeTopics = Object.keys(TOPICS);
+let unitsChosen  = false;   // has the student ever saved a selection?
+
+function loadUnits() {
+  try {
+    const raw = localStorage.getItem(UNITS_KEY);
+    if (!raw) return false;
+    const arr = JSON.parse(raw).filter(t => TOPICS[t]);
+    if (!arr.length) return false;
+    activeTopics = arr;
+    return true;
+  } catch(e) { return false; }
+}
+function saveUnits() {
+  try { localStorage.setItem(UNITS_KEY, JSON.stringify(activeTopics)); } catch(e) {}
+}
+function isActive(t) { return activeTopics.includes(t); }
+function activeQuestions() {
+  const qs = ALL_QUESTIONS.filter(q => isActive(q.topic));
+  return qs.length ? qs : ALL_QUESTIONS;
+}
+function topicCount(t) { return ALL_QUESTIONS.filter(q => q.topic === t).length; }
+
+function renderUnitList(selected) {
+  document.getElementById('unit-list').innerHTML = Object.keys(TOPICS).map(t => {
+    const on = selected.includes(t);
+    return `<label class="unit-opt${on?' on':''}">
+      <input type="checkbox" value="${t}" ${on?'checked':''} onchange="unitToggled(this)">
+      <span class="uname">${TOPICS[t]}</span>
+      <span class="ucount">${topicCount(t)} Qs</span>
+    </label>`;
+  }).join('');
+  updateUnitTotal();
+}
+function pickerSelection() {
+  return [...document.querySelectorAll('#unit-list input:checked')].map(i => i.value);
+}
+function updateUnitTotal() {
+  const sel = pickerSelection();
+  const n = ALL_QUESTIONS.filter(q => sel.includes(q.topic)).length;
+  document.getElementById('unit-total').textContent =
+    `${sel.length} of ${Object.keys(TOPICS).length} units · ${n} questions`;
+  if (sel.length) document.getElementById('unit-warn').classList.remove('show');
+}
+function unitToggled(cb) {
+  cb.closest('.unit-opt').classList.toggle('on', cb.checked);
+  updateUnitTotal();
+}
+function unitsSelectAll(on) {
+  renderUnitList(on ? Object.keys(TOPICS) : []);
+}
+function openUnits() {
+  if (typeof closeSidebar === 'function') closeSidebar();
+  renderUnitList(unitsChosen ? activeTopics : []);
+  document.getElementById('units-overlay').classList.add('show');
+}
+function confirmUnits() {
+  const sel = pickerSelection();
+  if (!sel.length) { document.getElementById('unit-warn').classList.add('show'); return; }
+  const firstTime = !unitsChosen;
+  activeTopics = sel;
+  unitsChosen = true;
+  saveUnits();
+  document.getElementById('units-overlay').classList.remove('show');
+  recentIds = [];
+  // Serve a fresh question if this is the first pick, if no question is showing,
+  // or if the current (unanswered) question is from a unit that's now switched off.
+  if (firstTime || !currentQ || (!answered && !isActive(currentQ.topic))) nextQuestion();
+  updateSidebar();
+}
+function renderUnitsSummary() {
+  const el = document.getElementById('units-summary');
+  if (!el) return;
+  const all = Object.keys(TOPICS).length;
+  if (activeTopics.length === all) { el.textContent = `All ${all} units`; return; }
+  el.innerHTML = activeTopics.map(t => TOPICS[t]).join('<br>');
+}
+
 function questionRating(d) { return { 1:900, 2:1000, 3:1100 }[d] || 1000; }
 
 function updateElo(topic, isCorrect, difficulty) {
@@ -6358,26 +6493,27 @@ function topicWeight(topic) {
 }
 
 function pickNextQuestion() {
-  if (wrongPool.length > 0 && Math.random() < 0.3) {
-    const idx = Math.floor(Math.random() * wrongPool.length);
+  const activeWrong = wrongPool.map((q,i) => i).filter(i => isActive(wrongPool[i].topic));
+  if (activeWrong.length > 0 && Math.random() < 0.3) {
+    const idx = activeWrong[Math.floor(Math.random() * activeWrong.length)];
     return wrongPool.splice(idx, 1)[0];
   }
   const useDiffFilter = Math.random() < 0.70;
   let pool = [];
-  ALL_QUESTIONS.forEach(q => {
+  activeQuestions().forEach(q => {
     if (recentIds.includes(q.id)) return;
     if (useDiffFilter && q.difficulty !== targetDifficultyForTopic(q.topic)) return;
     const slots = Math.ceil(topicWeight(q.topic));
     for (let i = 0; i < slots; i++) pool.push(q);
   });
   if (!pool.length) {
-    ALL_QUESTIONS.forEach(q => {
+    activeQuestions().forEach(q => {
       if (recentIds.includes(q.id)) return;
       const slots = Math.ceil(topicWeight(q.topic));
       for (let i = 0; i < slots; i++) pool.push(q);
     });
   }
-  if (!pool.length) pool = [...ALL_QUESTIONS];
+  if (!pool.length) pool = [...activeQuestions()];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -6579,7 +6715,8 @@ function renderQuestion(q) {
   const td = targetDifficultyForTopic(q.topic);
   const tdLabel = ['','Foundation','Standard','Stretch'][td];
   document.getElementById('queue-label').textContent =
-    `Adaptive · targeting ${tdLabel} in ${topicLabel} · weak areas prioritised`;
+    `Adaptive · targeting ${tdLabel} in ${topicLabel} · `
+    + (activeTopics.length === Object.keys(TOPICS).length ? 'all units' : `${activeTopics.length} of ${Object.keys(TOPICS).length} units`);
   const opts = q.options.map((o,i) =>
     `<button class="opt" id="opt${i}" onclick="selectAnswer(${i})">
       <span class="ltr">${letters[i]}</span><span>${o}</span>
@@ -6672,8 +6809,9 @@ function updateSidebar() {
     .map(t => ({ t, d: masteryData[t] }))
     .sort((a,b) => a.d.elo - b.d.elo);
 
+  renderUnitsSummary();
   document.getElementById('mastery-list').innerHTML = sorted.map(({t,d}) => {
-    if (!d.total) return `<div class="topic-row">
+    if (!d.total) return `<div class="topic-row${isActive(t)?'':' topic-off'}">
       <span class="badge badge-none"></span>
       <span class="tname" title="${TOPICS[t]}">${TOPICS[t]}</span>
       <div class="pbar"></div>
@@ -6682,7 +6820,7 @@ function updateSidebar() {
     const lbl = eloLabel(d.elo);
     const barPct = Math.round(((d.elo - 600) / 800) * 100);
     const pct = Math.round(d.correct/d.total*100);
-    return `<div class="topic-row">
+    return `<div class="topic-row${isActive(t)?'':' topic-off'}">
       <span class="badge badge-${lbl.cls}"></span>
       <span class="tname" title="${TOPICS[t]}">${TOPICS[t]}</span>
       <div class="pbar"><div class="pfill ${lbl.cls==='good'?'good':lbl.cls==='low'?'low':''}" style="width:${barPct}%"></div></div>
@@ -6713,7 +6851,8 @@ function showSummary() {
   document.getElementById('sum-detail').innerHTML =
     `${sessionStats.correct} correct from ${sessionStats.total} answered &nbsp;&middot;&nbsp; `
     +`Current level: <strong>${tdLabel}</strong><br>`
-    +`${wrongPool.length} question${wrongPool.length!==1?'s':''} in reinsertion pool`;
+    +`${wrongPool.length} question${wrongPool.length!==1?'s':''} in reinsertion pool<br>`
+    +`Units in play: <strong>${activeTopics.length === Object.keys(TOPICS).length ? 'All' : activeTopics.length + ' of ' + Object.keys(TOPICS).length}</strong>`;
 
   // Cumulative stats bar
   const cumPct = cumulative.total > 0 ? Math.round(cumulative.correct/cumulative.total*100) : 0;
@@ -6826,6 +6965,7 @@ function freshSession() {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (function init() {
+  unitsChosen = loadUnits();
   const hasData = loadState();
   if (hasData) {
     const seenTopics = Object.values(masteryData).filter(d => d.total > 0);
@@ -6840,9 +6980,10 @@ function freshSession() {
       document.getElementById('resume-banner').classList.remove('hidden');
     }
   }
-  // Always render a question immediately — banner sits above it
+  // First visit: ask which units they've studied before serving questions.
   updateSidebar();
-  nextQuestion();
+  if (!unitsChosen) openUnits();
+  else nextQuestion();
 })();
 </script>
 </body>
