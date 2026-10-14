@@ -821,6 +821,21 @@ body::before {
 }
 .topic-select:focus, .term-card:focus-visible, .related-tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pb-sub { display:none; }
+
+/* ===== Grouped topic / subtopic picker ===== */
+.tp-scroll { max-height: 300px; overflow-y: auto; padding-right: 4px; }
+.tp-group { margin-bottom: 0.55rem; }
+.tp-parent { padding: 0.36rem 0.85rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted);
+  font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.tp-parent.tp-all { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
+.tp-parent.tp-some { border-color: #8b5cf6; color: var(--text); background: rgba(139,92,246,0.14); }
+.tp-subs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 0 0.9rem; padding-left: 0.6rem; border-left: 2px solid var(--border); }
+.tp-n { opacity: 0.6; font-weight: 500; font-size: 0.85em; }
+.pb-term-list { max-height: 260px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 0.4rem 0.6rem; margin-top: 0.5rem; background: var(--bg); }
+.pb-term-list .pb-term-group { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin: 0.5rem 0 0.2rem; }
+.pb-term-list label { display: flex; gap: 0.45rem; align-items: center; font-size: 0.8rem; padding: 0.15rem 0; color: var(--text); cursor: pointer; }
+.pb-term-list input { accent-color: #8b5cf6; }
+.pb-summary { cursor: pointer; list-style: revert; }
 /* ===== Print booklet button + setup ===== */
 .btn-print {
   padding: 10px 20px; border: none; border-radius: 100px; font-family: 'DM Sans', sans-serif;
@@ -1076,8 +1091,8 @@ body::before {
       <div class="bt-cat-row" id="btCatRow"></div>
     </div>
     <div class="bt-setup-section">
-      <div class="bt-setup-label">Topic <span id="btTopicAllBtn" class="bt-topic-all" onclick="btSelectAllTopics()">select all</span></div>
-      <div class="bt-cat-row" id="btTopicRow"></div>
+      <div class="bt-setup-label">Topics &amp; subtopics <span id="btTopicAllBtn" class="bt-topic-all" onclick="btSelectAllTopics()">select all</span><span class="bt-topic-all" style="margin-right:10px" onclick="btClearTopics()">clear</span></div>
+      <div class="tp-scroll" id="btTopicRow"></div>
     </div>
     <div class="bt-setup-section">
       <div class="bt-setup-label">Direction</div>
@@ -1135,8 +1150,20 @@ body::before {
       <div class="bt-cat-row" id="pbCatRow"></div>
     </div>
     <div class="bt-setup-section">
-      <div class="bt-setup-label">Topics <span class="bt-topic-all" onclick="pbTopics(true)">select all</span><span class="bt-topic-all" style="margin-right:10px" onclick="pbTopics(false)">clear</span></div>
-      <div class="bt-cat-row" id="pbTopicRow"></div>
+      <div class="bt-setup-label">Topics &amp; subtopics <span class="bt-topic-all" onclick="pbTopics(true)">select all</span><span class="bt-topic-all" style="margin-right:10px" onclick="pbTopics(false)">clear</span></div>
+      <div class="tp-scroll" id="pbTopicRow"></div>
+    </div>
+    <div class="bt-setup-section">
+      <details id="pbTermDetails" ontoggle="if(this.open) pbRenderTermList()">
+        <summary class="bt-setup-label pb-summary">Fine-tune: tick individual terms <span id="pbTermSel" style="text-transform:none;letter-spacing:0;color:#8b5cf6"></span></summary>
+        <input class="pb-text" id="pbTermFilter" type="text" placeholder="Filter terms…" oninput="pbRenderTermList()" style="margin-top:0.5rem">
+        <div class="bt-cat-presets" style="margin-top:0.5rem;flex-wrap:wrap">
+          <button class="bt-preset-btn" onclick="pbTermsAll(true)">Tick all shown</button>
+          <button class="bt-preset-btn" onclick="pbTermsAll(false)">Untick all shown</button>
+          <button class="bt-preset-btn" onclick="pbTermsSR()">Only my Review &amp; Learning flashcards</button>
+        </div>
+        <div class="pb-term-list" id="pbTermList"></div>
+      </details>
     </div>
     <div class="bt-setup-section">
       <div class="bt-setup-label">Booklet type</div>
@@ -1180,7 +1207,7 @@ body::before {
     <div class="bt-setup-section">
       <div class="bt-setup-label">Organise by</div>
       <div class="bt-dir-row" id="pbOrderRow">
-        <button class="bt-dir-btn active" data-order="topic" onclick="pbSetOrder('topic',this)">Topic &mdash; one section per topic, A&ndash;Z within</button>
+        <button class="bt-dir-btn active" data-order="topic" onclick="pbSetOrder('topic',this)">Subtopic &mdash; one section per subtopic, A&ndash;Z within</button>
         <button class="bt-dir-btn" data-order="az" onclick="pbSetOrder('az',this)">A&ndash;Z &mdash; one alphabetical list</button>
       </div>
     </div>
@@ -5540,10 +5567,21 @@ function buildFilters() {
 }
 function buildTopicSelect() {
   const sel = document.getElementById('topic-select');
-  const present = new Set(glossaryTerms.filter(t => activeCategory === 'All' || t.category === activeCategory).map(t => t.topic));
-  const topics = BT_TOPIC_ORDER.filter(k => present.has(k));
-  if (activeTopic !== 'All' && !present.has(activeTopic)) activeTopic = 'All';
-  sel.innerHTML = '<option value="All">All topics</option>' + topics.map(k => '<option value="' + k + '"' + (k === activeTopic ? ' selected' : '') + '>' + BT_TOPIC_LABELS[k] + '</option>').join('');
+  const cats = new Set(activeCategory === 'All' ? btAllCategories() : [activeCategory]);
+  const avail = availSubs(cats);
+  const values = new Set(['All']);
+  let h = '<option value="All">All topics</option>';
+  avail.forEach(g => {
+    const total = g.subs.reduce((a, s) => a + g.counts[s], 0);
+    h += '<optgroup label="' + BT_TOPIC_LABELS[g.parent] + '">';
+    h += '<option value="T:' + g.parent + '">' + (g.subs.length > 1 ? 'All ' : '') + BT_TOPIC_LABELS[g.parent] + ' (' + total + ')</option>';
+    values.add('T:' + g.parent);
+    if (g.subs.length > 1) g.subs.forEach(s => { h += '<option value="S:' + s + '">&nbsp;&nbsp;' + SUB_LABEL[s] + ' (' + g.counts[s] + ')</option>'; values.add('S:' + s); });
+    h += '</optgroup>';
+  });
+  if (!values.has(activeTopic)) activeTopic = 'All';
+  sel.innerHTML = h;
+  sel.value = activeTopic;
 }
 function setTopic(k) { activeTopic = k; filterTerms(); }
 
@@ -5575,7 +5613,7 @@ function filterTerms() {
   const query = document.getElementById('search-input').value.toLowerCase().trim();
   filteredTerms = glossaryTerms.filter(t => {
     const matchesCat = activeCategory === 'All' || t.category === activeCategory;
-    const matchesTopic = activeTopic === 'All' || t.topic === activeTopic;
+    const matchesTopic = activeTopic === 'All' || (activeTopic.startsWith('T:') ? t.topic === activeTopic.slice(2) : t.sub === activeTopic.slice(2));
     const aliasHit = query && Object.keys(termAliases).some(a => a.includes(query) && termAliases[a] === t.term);
     const matchesSearch = !query || aliasHit || t.term.toLowerCase().includes(query) || t.technical.toLowerCase().includes(query) || t.simple.toLowerCase().includes(query) || t.category.toLowerCase().includes(query) || t.related.some(r => r.toLowerCase().includes(query));
     return matchesCat && matchesTopic && matchesSearch;
@@ -5726,6 +5764,44 @@ const BT_TOPIC_LABELS = {
 };
 const BT_TOPIC_ORDER = Object.keys(BT_TOPIC_LABELS);
 
+// ---- Subtopics (finer selection for Board Test, printing and the topic filter) ----
+const SUBTOPICS = {"growth": [["g_measure", "Measuring Growth & GDP", ["GDP (Gross Domestic Product)", "Real GDP", "Nominal GDP", "GDP Deflator", "Real GDP per Capita", "Economic Growth (Real GDP Growth)", "National Income", "Shadow Economy (Black Economy)", "Informal Economy", "Sectoral Composition", "Capacity Utilisation"]], ["g_cycle", "Business Cycle", ["Recession", "Business Cycle (Trade Cycle)", "Business Cycle Phases (Boom, Recession, Trough, Recovery)", "Leading Indicators"]], ["g_living", "Living Standards", ["Human Development Index (HDI)", "Median Income", "Income vs Wealth", "Cost of Living", "Purchasing Power", "Dependency Ratio", "Economic Prosperity", "Living Standards", "Economic Welfare"]], ["g_supply", "Supply-Side Policies", ["Supply-Side Policies", "Privatisation", "Interventionist Supply-Side Policies", "Free Market Supply-Side Policies", "Supply-Side Improvements", "Nationalisation", "Public Ownership"]], ["g_prod", "Productivity & Growth Theory", ["Labour Productivity", "Total Factor Productivity (TFP)", "Human Capital", "Endogenous Growth Theory", "Exogenous Growth Theory (Solow Model)", "Catch-Up Effect (Convergence)", "Solow Residual (Total Factor Productivity)"]], ["g_sustain", "Sustainability", ["Sustainable Economic Growth", "Environmental Sustainability", "Sustainable Development", "Intergenerational Equity"]], ["g_dev", "Development Economics", ["International Monetary Fund (IMF)", "World Bank", "Core-Periphery Model", "Harrod-Domar Model", "Lewis Dual-Sector Model", "Microfinance", "Foreign Aid", "Dependency Theory", "Dutch Disease", "Resource Curse", "Prebisch-Singer Hypothesis"]]], "markets": [["m_basics", "The Economic Problem", ["Opportunity Cost", "Scarcity", "Free Good", "Economic Good", "Positive Statement", "Normative Statement", "Production Possibility Frontier (PPF)", "Factors of Production", "Ceteris Paribus", "Rational Choice", "Division of Labour", "Specialisation"]], ["m_ds", "Demand, Supply & Equilibrium", ["Demand", "Supply", "Excess Demand", "Excess Supply", "Market Disequilibrium", "Equilibrium Price (Market Clearing Price)", "Composite Demand", "Derived Demand", "Joint Supply", "Joint Demand (Complementary Goods)", "Substitute Goods", "Shrinkflation"]], ["m_price", "Price Mechanism", ["Price Mechanism", "Signalling Function of Price", "Rationing Function of Price", "Incentive Function of Price", "Price Volatility", "Invisible Hand"]], ["m_consumer", "Consumer Theory", ["Utility Maximization", "Indifference Curves", "Budget Constraint", "Income Effect", "Substitution Effect", "Normal Good", "Inferior Good", "Giffen Good", "Diminishing Marginal Utility"]]], "fiscal": [["f_policy", "Fiscal Policy & Spending", ["Fiscal Policy", "Discretionary Fiscal Policy", "Automatic Stabilisers", "Current Expenditure", "Capital Expenditure", "Transfer Payments", "Crowding Out", "Crowding In", "Balanced Budget Multiplier", "Tax Multiplier", "Ricardian Equivalence", "Policy Lags", "Macroeconomic Policy Trade-offs"]], ["f_tax", "Taxation", ["Fiscal Drag", "Laffer Curve", "Canons of Taxation", "Marginal Tax Rate", "Average Tax Rate", "Regressive Tax", "Tax Wedge", "Hypothecated Tax", "Indirect Tax", "Ability-to-Pay Principle"]], ["f_debt", "Deficits, Debt & Fiscal Rules", ["Budget Deficit", "National Debt", "Debt-to-GDP Ratio", "Structural Deficit", "Cyclical Deficit", "Fiscal Consolidation", "Golden Rule (Fiscal)", "Primary Deficit/Surplus", "Public Sector Net Borrowing (PSNB)", "Office for Budget Responsibility (OBR)", "Debt Spiral"]]], "failure": [["mf_gen", "Market Failure Overview", ["Market Failure", "Misallocation of Resources", "Market Distortions", "Pure (Complete) Market Failure", "Partial Market Failure"]], ["mf_ext", "Externalities", ["Externalities", "Marginal Social Cost (MSC)", "Marginal Social Benefit (MSB)", "Marginal Private Cost (MPC)", "Marginal Private Benefit (MPB)", "Internalizing an Externality", "Social Optimum", "Third Party", "First Party and Second Party", "Environmental Market Failure", "Tragedy of the Commons"]], ["mf_pub", "Public, Merit & Demerit Goods", ["Public Goods", "Merit Goods", "Demerit Goods", "Free-Rider Problem", "Quasi-Public Good", "Non-Rival", "Non-Excludable"]], ["mf_info", "Information Failure", ["Information Asymmetry (Information Failure)", "Imperfect Information (Information Failure)", "Moral Hazard", "Adverse Selection", "Principal-Agent Problem"]]], "banking": [["b_banks", "Banks & Intermediation", ["Commercial Bank (Retail Bank)", "Investment Bank", "Financial Intermediation", "Bank Multiplier (Credit Multiplier)", "Profitability (Banking)", "Liquidity (Financial)", "Capital Ratios", "Liquidity Ratios", "Shadow Banking", "Funding for Lending Scheme"]], ["b_markets", "Financial Markets & Bonds", ["Gilt (Gilt-Edged Securities)", "Bond Yield", "Coupon (Coupon Rate)", "Corporate Bond (Commercial Bond)", "Interbank Lending Rate", "Maturity Date", "Short Position", "Debt", "Equity"]], ["b_risk", "Risk, Crises & Regulation", ["Bank Run", "Systematic Risk", "Contagion", "Systemic Risk", "Too Big to Fail", "Lender of Last Resort", "Prudential Regulation Authority (PRA)", "Financial Policy Committee (FPC)", "Financial Conduct Authority (FCA)"]]], "unemployment": [["u_types", "Types & Causes", ["Unemployment", "Structural Unemployment", "Cyclical Unemployment", "Frictional Unemployment", "Seasonal Unemployment", "Real Wage Unemployment (Classical Unemployment)", "Technological Unemployment", "Voluntary Unemployment", "Involuntary Unemployment", "Hysteresis"]], ["u_measure", "Measuring the Labour Market", ["Economic Inactivity", "Underemployment", "Labour Force Participation Rate", "Claimant Count", "NEET (Not in Education, Employment or Training)", "Full Employment", "Zero-Hours Contracts", "Gig Economy"]], ["u_phillips", "Phillips Curve & NAIRU", ["Phillips Curve", "L-Shaped Phillips Curve", "NAIRU (Non-Accelerating Inflation Rate of Unemployment)"]], ["u_policy", "Wages, Benefits & Job Search", ["Unemployment Trap (Welfare Trap)", "National Minimum Wage (NMW)", "National Living Wage (NLW)", "Replacement Ratio", "Job Search Theory", "Reservation Wage"]]], "structures": [["s_comp", "Competition & Contestability", ["Perfect Competition", "Monopolistic Competition", "Contestable Markets", "Hit-and-Run Competition", "Barriers to Entry", "Barriers to Exit", "Concentration Ratio", "Zombie Firms"]], ["s_mono", "Monopoly", ["Monopoly", "Monopoly Power (Market Power)", "Natural Monopoly", "Marginal Cost Pricing", "Average Cost Pricing"]], ["s_olig", "Oligopoly & Game Theory", ["Oligopoly", "Game Theory", "Kinked Demand Curve", "Nash Equilibrium", "Prisoner's Dilemma", "Price Leadership", "Collusion", "Tacit Collusion", "Cartel", "Price Agreements (Price-Fixing)", "Price Wars", "Limit Pricing", "Predatory Pricing"]]], "costs": [["c_cost", "Costs & Returns", ["Fixed Costs", "Variable Costs", "Total Cost (TC)", "Average Cost (AC / ATC)", "Marginal Cost (MC)", "Sunk Costs", "Diminishing Marginal Returns", "Returns to Scale", "Long Run vs Short Run", "X-Inefficiency"]], ["c_eos", "Economies of Scale", ["Economies of Scale", "Internal Economies of Scale", "External Economies of Scale", "Technical Economies of Scale", "Purchasing (Bulk-Buying) Economies of Scale", "Managerial Economies of Scale", "Financial Economies of Scale", "Marketing Economies of Scale", "Risk-Bearing Economies of Scale", "Network Economies of Scale", "Economies of Agglomeration", "Minimum Efficient Scale (MES)"]], ["c_dis", "Diseconomies of Scale", ["Managerial Diseconomies of Scale", "Communication Diseconomies of Scale", "Motivational Diseconomies of Scale", "Technical Diseconomies of Scale"]]], "trade": [["t_theory", "Trade Theory & Strategy", ["Comparative Advantage", "Absolute Advantage", "Globalisation", "Terms of Trade", "Strategic Trade Theory", "Import Substitution Industrialisation (ISI)", "Export-Led Growth"]], ["t_prot", "Protectionism & the WTO", ["Tariff", "Import Quota", "Export Subsidy", "Import Subsidy", "Dumping", "Infant Industry Argument", "Protectionism", "Commodity Buffer Stock", "Trade Liberalisation", "World Trade Organization (WTO)"]], ["t_blocs", "Trading Blocs", ["Customs Union", "Preferential Trade Agreement (PTA)", "Free Trade Agreement (FTA)", "Single Market", "Currency Union (Monetary Union)", "Trade Creation", "Trade Diversion"]]], "exchange": [["x_bop", "Balance of Payments", ["Balance of Payments", "Current Account Deficit", "Current Account Surplus", "Financial Account", "Capital Account", "Structural Current Account Deficit", "Cyclical Current Account Deficit", "Errors and Omissions", "Balance of Payments Equilibrium", "Foreign Direct Investment (FDI)", "Portfolio Investment", "Hot Money Flows", "Capital Flight"]], ["x_fx", "Exchange Rates", ["Exchange Rate", "Real Exchange Rate", "Marshall-Lerner Condition", "J-Curve Effect", "Devaluation", "Revaluation", "Purchasing Power Parity (PPP)", "Exchange Rate Systems", "Currency Run (Speculative Attack)", "Asymmetric Shock"]]], "labour": [["l_ds", "Labour Demand & Supply", ["Labour Demand Curve (MRPL)", "Labour Supply Curve", "Backward-Sloping Labour Supply Curve", "Marginal Revenue Product of Labour (MRPL)", "Elasticity of Labour Demand", "Marginal Productivity Theory of Labour Demand", "Wage Determination", "Transfer Earnings", "Economic Rent"]], ["l_wage", "Wage Differentials & Discrimination", ["Wage Differentials", "Compensating Wage Differentials", "Wage Discrimination", "Gender Pay Gap Discrimination", "Ethnicity Pay Gap Discrimination", "Non-Competing Groups", "Occupational Immobility", "Geographical Immobility"]], ["l_power", "Unions & Monopsony", ["Trade Unions (Microeconomic Role)", "Monopsony (Monopsonistic Exploitation)", "Bilateral Monopoly"]]], "behavioural": [["be_core", "Rationality & Heuristics", ["Behavioural Economics", "Bounded Rationality", "Heuristics", "Anchoring Bias", "Availability Bias", "Framing Effect"]], ["be_bias", "Biases & Social Influences", ["Loss Aversion", "Present Bias (Hyperbolic Discounting)", "Status Quo Bias", "Confirmation Bias", "Sunk Cost Fallacy", "Optimism Bias", "Endowment Effect", "Mental Accounting", "Overconfidence Bias", "Herding (Herd Behaviour)", "Bandwagon Effect"]], ["be_policy", "Nudges & Choice Architecture", ["Nudge Theory", "Choice Architecture", "Default Option (Opt-in vs Opt-out)"]]], "inflation": [["i_measure", "Measuring Inflation", ["Consumer Price Index (CPI)", "Retail Price Index (RPI)", "Index Numbers", "Weighted Index", "Base Year"]], ["i_causes", "Causes & Types", ["Inflation", "Demand-Pull Inflation", "Cost-Push Inflation", "Wage-Price Spiral", "Stagflation", "Hyperinflation", "Deflation", "Deflationary Spiral", "Price Stability", "Price Stickiness (Price Rigidity)", "Inflation Expectations"]], ["i_money", "Money & Inflation", ["Quantity Theory of Money", "Fisher Equation", "Velocity of Circulation"]]], "monetary": [["mo_policy", "Monetary Policy Tools", ["Monetary Policy", "Quantitative Easing (QE)", "Monetary Policy Transmission Mechanism", "Forward Guidance", "Bank Rate (Base Rate)", "Monetary Policy Committee (MPC)", "Negative Interest Rates", "Helicopter Money", "Repo Rate / Reverse Repo"]], ["mo_limits", "Limits & Crises", ["Liquidity Trap", "Zero Lower Bound (ZLB)", "Credit Crunch", "Asset Price Bubble"]], ["mo_money", "Money", ["Functions of Money", "Characteristics of Money", "Money Supply", "Liquidity Preference"]]], "revenue": [["r_rev", "Revenue, Profit & Loss", ["Total Revenue (TR)", "Average Revenue (AR)", "Marginal Revenue (MR)", "Normal Profit", "Supernormal Profit (Abnormal Profit)", "Loss (Economic Loss)", "Shutdown Point"]], ["r_obj", "Firm Objectives", ["Profit Maximisation", "Revenue Maximisation", "Sales Maximisation", "Satisficing"]], ["r_pd", "Price Discrimination", ["Price Discrimination", "First-Degree Price Discrimination (Perfect Price Discrimination)", "Second-Degree Price Discrimination (Quantity Discrimination)", "Third-Degree Price Discrimination (Market Segmentation)"]]], "intervention": [["gi_tools", "Taxes, Subsidies & Price Controls", ["Tax Incidence", "Subsidy", "Pigouvian Tax", "Maximum Price (Price Ceiling)", "Minimum Price (Price Floor)"]], ["gi_env", "Environment & Property Rights", ["Polluter Pays Principle", "Emissions Trading (Cap and Trade)", "Property Rights", "Coase Theorem"]], ["gi_reg", "Regulation & Government Failure", ["Government Failure (State Failure)", "Regulation", "Regulatory Capture", "Deregulation", "Competition Policy"]]], "adas": [["ad_core", "AD, AS & Output Gaps", ["Aggregate Demand (AD)", "Aggregate Supply (AS)", "Output Gap", "Positive Output Gap", "Negative Output Gap"]], ["ad_shocks", "Economic Shocks", ["Exogenous Shock", "Endogenous Shock", "Demand-Side Shock", "Supply-Side Shock"]], ["ad_conf", "Confidence & Expectations", ["Animal Spirits", "Consumer Confidence", "Business Confidence", "Wealth Effect", "Defensive Investment"]]], "framework": [["fw_flow", "Circular Flow & Income", ["Circular Flow of Income", "Injections", "Leakages (Withdrawals)", "Discretionary Income", "Disposable Income", "Real Income", "Nominal Income", "Savings Ratio (Paradox of Thrift)"]], ["fw_mult", "Multiplier & Accelerator", ["Multiplier Effect", "Marginal Propensity to Consume (MPC)", "Marginal Propensity to Save (MPS)", "Marginal Propensity to Withdraw (MPW)", "Accelerator Theory (Accelerator Effect)"]]]};
+const SUB_LABEL = {}, SUB_PARENT = {}, SUB_ORDER = [], SUB_OF = {}, TOPIC_SUBS = {};
+BT_TOPIC_ORDER.forEach(k => {
+  const list = SUBTOPICS[k] || [[k, BT_TOPIC_LABELS[k], []]];
+  TOPIC_SUBS[k] = list.map(x => x[0]);
+  list.forEach(([key, label, terms]) => { SUB_LABEL[key] = label; SUB_PARENT[key] = k; SUB_ORDER.push(key); terms.forEach(n => { SUB_OF[n] = key; }); });
+});
+glossaryTerms.forEach(t => { t.sub = SUB_OF[t.term] || (TOPIC_SUBS[t.topic] ? TOPIC_SUBS[t.topic][0] : t.topic); });
+function subFullLabel(k) { const p = SUB_PARENT[k]; return TOPIC_SUBS[p].length > 1 ? BT_TOPIC_LABELS[p] + ' · ' + SUB_LABEL[k] : BT_TOPIC_LABELS[p]; }
+// Which subtopics exist for a set of categories, grouped by parent topic, with term counts
+function availSubs(cats) {
+  const counts = {};
+  glossaryTerms.forEach(t => { if (cats.has(t.category)) counts[t.sub] = (counts[t.sub] || 0) + 1; });
+  const out = [];
+  BT_TOPIC_ORDER.forEach(p => { const subs = TOPIC_SUBS[p].filter(s => counts[s]); if (subs.length) out.push({ parent: p, subs, counts }); });
+  return out;
+}
+// Shared grouped picker: parent topic button toggles all its subtopics; subtopic chips toggle individually
+function topicPickerHtml(prefix, avail, selected) {
+  return avail.map(g => {
+    const n = g.subs.filter(s => selected.has(s)).length;
+    const total = g.subs.reduce((a, s) => a + g.counts[s], 0);
+    const state = n === g.subs.length ? 'all' : n ? 'some' : 'none';
+    let h = '<div class="tp-group"><button class="tp-parent tp-' + state + '" onclick="' + prefix + 'ToggleParent(\'' + g.parent + '\')">' + BT_TOPIC_LABELS[g.parent] + ' <span class="tp-n">' + total + '</span></button>';
+    if (g.subs.length > 1) h += '<div class="tp-subs">' + g.subs.map(s =>
+      '<button class="bt-cat-chip' + (selected.has(s) ? ' active' : '') + '" onclick="' + prefix + 'ToggleSub(\'' + s + '\')">' + SUB_LABEL[s] + ' <span class="tp-n">' + g.counts[s] + '</span></button>').join('') + '</div>';
+    return h + '</div>';
+  }).join('');
+}
+function allAvailSubs(avail) { return avail.reduce((a, g) => a.concat(g.subs), []); }
+function toggleParentIn(set, parent, avail) {
+  const g = avail.find(x => x.parent === parent); if (!g) return;
+  const allOn = g.subs.every(s => set.has(s));
+  g.subs.forEach(s => allOn ? set.delete(s) : set.add(s));
+}
+
+
 function btAllCategories() { return [...new Set(glossaryTerms.map(t => t.category))].sort(); }
 function btCatOnlyPool() { return glossaryTerms.filter(t => _btCats.has(t.category)); }
 function btAvailableTopics() {
@@ -5748,41 +5824,29 @@ function renderBtCatChips() {
 function btToggleCat(cat) {
   if (_btCats.has(cat)) { if (_btCats.size > 1) _btCats.delete(cat); }
   else _btCats.add(cat);
+  _btSubs = null;
   renderBtCatChips();
 }
 function btPreset(type) {
   const cats = btAllCategories();
   if (type === 'all') _btCats = new Set(cats);
   else _btCats = new Set(cats.filter(c => c.toLowerCase().startsWith(type)));
+  _btSubs = null;
   renderBtCatChips();
 }
+let _btSubs = null;
 function renderBtTopicChips() {
-  const avail = btAvailableTopics();
-  document.getElementById('btTopicRow').innerHTML = avail.map(k =>
-    '<button class="bt-cat-chip active" data-topic="' + k + '" onclick="btToggleTopic(this)">' + BT_TOPIC_LABELS[k] + '</button>'
-  ).join('');
+  const avail = availSubs(_btCats);
+  if (_btSubs === null) _btSubs = new Set(allAvailSubs(avail));
+  document.getElementById('btTopicRow').innerHTML = topicPickerHtml('bt', avail, _btSubs);
   updateBtPoolInfo();
 }
-function btToggleTopic(btn) {
-  const activeCount = document.querySelectorAll('#btTopicRow .bt-cat-chip.active').length;
-  if (btn.classList.contains('active')) {
-    if (activeCount <= 1) return;
-    btn.classList.remove('active');
-  } else {
-    btn.classList.add('active');
-  }
-  updateBtPoolInfo();
-}
-function btSelectAllTopics() {
-  document.querySelectorAll('#btTopicRow .bt-cat-chip').forEach(b => b.classList.add('active'));
-  updateBtPoolInfo();
-}
-function btSelectedTopics() {
-  return new Set(Array.from(document.querySelectorAll('#btTopicRow .bt-cat-chip.active')).map(b => b.dataset.topic));
-}
+function btToggleParent(p) { toggleParentIn(_btSubs, p, availSubs(_btCats)); renderBtTopicChips(); }
+function btToggleSub(s) { if (_btSubs.has(s)) _btSubs.delete(s); else _btSubs.add(s); renderBtTopicChips(); }
+function btSelectAllTopics() { _btSubs = null; renderBtTopicChips(); }
+function btClearTopics() { _btSubs = new Set(); renderBtTopicChips(); }
 function btCurrentPool() {
-  const topics = btSelectedTopics();
-  return glossaryTerms.filter(t => _btCats.has(t.category) && topics.has(t.topic));
+  return glossaryTerms.filter(t => _btCats.has(t.category) && _btSubs && _btSubs.has(t.sub));
 }
 function updateBtPoolInfo() {
   const n = btCurrentPool().length;
@@ -5838,6 +5902,7 @@ document.addEventListener('keydown', (e) => {
 
 
 // ==================== PRINT BOOKLET ====================
+let _pbExcluded = new Set();
 let _pbCats = new Set(), _pbTopics = null, _pbStyle = 'full', _pbOrder = 'topic';
 
 function pbEsc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -5858,6 +5923,7 @@ function pbRenderCats() {
 }
 function pbToggleCat(cat) {
   if (_pbCats.has(cat)) { if (_pbCats.size > 1) _pbCats.delete(cat); } else _pbCats.add(cat);
+  _pbTopics = null;
   pbRenderCats();
 }
 function pbPreset(type) {
@@ -5866,26 +5932,52 @@ function pbPreset(type) {
   _pbTopics = null;
   pbRenderCats();
 }
-function pbAvailTopics() {
-  const present = new Set(glossaryTerms.filter(t => _pbCats.has(t.category)).map(t => t.topic));
-  return BT_TOPIC_ORDER.filter(k => present.has(k));
-}
 function pbRenderTopics() {
-  const avail = pbAvailTopics();
-  if (_pbTopics === null) _pbTopics = new Set(avail);
-  document.getElementById('pbTopicRow').innerHTML = avail.map(k =>
-    '<button class="bt-cat-chip' + (_pbTopics.has(k) ? ' active' : '') + '" onclick="pbToggleTopic(\'' + k + '\')">' + BT_TOPIC_LABELS[k] + '</button>'
-  ).join('');
+  const avail = availSubs(_pbCats);
+  if (_pbTopics === null) _pbTopics = new Set(allAvailSubs(avail));
+  document.getElementById('pbTopicRow').innerHTML = topicPickerHtml('pb', avail, _pbTopics);
+  pbUpdatePool();
+  if (document.getElementById('pbTermDetails').open) pbRenderTermList();
+}
+function pbToggleParent(p) { toggleParentIn(_pbTopics, p, availSubs(_pbCats)); pbRenderTopics(); }
+function pbToggleSub(s) { if (_pbTopics.has(s)) _pbTopics.delete(s); else _pbTopics.add(s); pbRenderTopics(); }
+function pbTopics(all) { _pbTopics = all ? null : new Set(); pbRenderTopics(); }
+function pbBasePool() { return glossaryTerms.filter(t => _pbCats.has(t.category) && _pbTopics && _pbTopics.has(t.sub)); }
+function pbPool() { return pbBasePool().filter(t => !_pbExcluded.has(t.term)); }
+function pbUpdatePool() {
+  const base = pbBasePool().length, n = pbPool().length;
+  document.getElementById('pbPoolInfo').innerHTML = '<strong>' + n + '</strong> terms will be included' + (n < base ? ' (' + (base - n) + ' unticked)' : '');
+  document.getElementById('pbTermSel').textContent = '· ' + n + ' of ' + base + ' ticked';
+}
+// Individual term list (within the selected subtopics)
+let _pbListCache = [];
+function pbVisibleTerms() {
+  const q = (document.getElementById('pbTermFilter').value || '').toLowerCase().trim();
+  return pbBasePool().filter(t => !q || t.term.toLowerCase().includes(q));
+}
+function pbRenderTermList() {
+  const list = pbVisibleTerms();
+  _pbListCache = [];
+  let h = '', lastSub = '';
+  SUB_ORDER.forEach(k => {
+    list.filter(t => t.sub === k).sort((a, b) => a.term.localeCompare(b.term)).forEach(t => {
+      if (k !== lastSub) { lastSub = k; h += '<div class="pb-term-group">' + subFullLabel(k) + '</div>'; }
+      const i = _pbListCache.push(t) - 1;
+      h += '<label><input type="checkbox" ' + (_pbExcluded.has(t.term) ? '' : 'checked') + ' onchange="pbToggleTerm(' + i + ',this.checked)"> ' + pbEsc(t.term) + '</label>';
+    });
+  });
+  document.getElementById('pbTermList').innerHTML = h || '<div class="pb-note">No terms match.</div>';
   pbUpdatePool();
 }
-function pbToggleTopic(k) { if (_pbTopics.has(k)) _pbTopics.delete(k); else _pbTopics.add(k); pbRenderTopics(); }
-function pbTopics(all) { _pbTopics = all ? new Set(pbAvailTopics()) : new Set(); pbRenderTopics(); }
-function pbPool() {
-  return glossaryTerms.filter(t => _pbCats.has(t.category) && _pbTopics && _pbTopics.has(t.topic));
-}
-function pbUpdatePool() {
-  const n = pbPool().length;
-  document.getElementById('pbPoolInfo').innerHTML = '<strong>' + n + '</strong> terms will be included';
+function pbToggleTerm(i, on) { const t = _pbListCache[i]; if (!t) return; if (on) _pbExcluded.delete(t.term); else _pbExcluded.add(t.term); pbUpdatePool(); }
+function pbTermsAll(on) { pbVisibleTerms().forEach(t => on ? _pbExcluded.delete(t.term) : _pbExcluded.add(t.term)); pbRenderTermList(); }
+function pbTermsSR() {
+  const base = pbBasePool();
+  const keep = base.filter(t => ['review-sr', 'learning'].includes(getSRLevel(t.term)));
+  if (!keep.length) { alert('None of the terms in your chosen topics are marked Review or Learning yet. Use Flashcards mode and press "✗ Review" on the terms you don\'t know, then come back here.'); return; }
+  base.forEach(t => { if (keep.includes(t)) _pbExcluded.delete(t.term); else _pbExcluded.add(t.term); });
+  document.getElementById('pbTermDetails').open = true;
+  pbRenderTermList();
 }
 function pbSetStyle(style, btn) {
   _pbStyle = style;
@@ -5949,12 +6041,12 @@ function buildBooklet(terms, opts) {
   const byAZ = (a, b) => a.term.localeCompare(b.term);
   let groups = [];
   if (opts.order === 'topic') {
-    BT_TOPIC_ORDER.forEach(k => {
-      let list = terms.filter(t => t.topic === k).sort(byAZ);
+    SUB_ORDER.forEach(k => {
+      let list = terms.filter(t => t.sub === k).sort(byAZ);
       if (opts.style !== 'full' && opts.shuffle) list = pbShuffle(list);
-      if (list.length) groups.push({ key: k, label: BT_TOPIC_LABELS[k], terms: list });
+      if (list.length) groups.push({ key: k, label: subFullLabel(k), terms: list });
     });
-    const other = terms.filter(t => !BT_TOPIC_LABELS[t.topic]);
+    const other = terms.filter(t => !SUB_LABEL[t.sub]);
     if (other.length) groups.push({ key: 'other', label: 'Other', terms: other.sort(byAZ) });
   } else {
     let list = terms.slice().sort(byAZ);
@@ -6031,7 +6123,7 @@ function pbSetCardLayout(l, btn) {
   document.querySelectorAll('#pbCardLayoutRow .bt-dir-btn').forEach(b => b.classList.toggle('active', b === btn));
 }
 function pbDefSize(txt) { const n = txt.length; return n < 200 ? 's1' : n < 340 ? 's2' : n < 500 ? 's3' : n < 680 ? 's4' : 's5'; }
-function pbTopicLabel(t) { return BT_TOPIC_LABELS[t.topic] || t.category; }
+function pbTopicLabel(t) { return SUB_LABEL[t.sub] || BT_TOPIC_LABELS[t.topic] || t.category; }
 function pbCardFront(t, n) {
   return '<div class="pr-card"><div class="pr-card-top"><span>' + pbEsc(pbTopicLabel(t)) + '</span><span>#' + n + '</span></div>'
     + '<div class="pr-card-term' + (t.term.length > 34 ? ' long' : '') + '">' + pbEsc(t.term) + '</div>'
@@ -6047,9 +6139,9 @@ function buildCards(terms, opts) {
   const area = document.getElementById('printArea');
   const byAZ = (a, b) => a.term.localeCompare(b.term);
   let list = [];
-  if (opts.order === 'topic') BT_TOPIC_ORDER.forEach(k => { list = list.concat(terms.filter(t => t.topic === k).sort(byAZ)); });
+  if (opts.order === 'topic') SUB_ORDER.forEach(k => { list = list.concat(terms.filter(t => t.sub === k).sort(byAZ)); });
   else list = terms.slice().sort(byAZ);
-  list = list.concat(terms.filter(t => !BT_TOPIC_LABELS[t.topic] && !list.includes(t)));
+  list = list.concat(terms.filter(t => !list.includes(t)));
   const title = pbEsc(opts.title || 'Economics Key Terms');
   const head = (side, i, total) => '<div class="pr-sheet-head"><strong>BIZ-OMICS</strong><span>' + title + ' · Flashcards · ' + side + ' · sheet ' + i + ' of ' + total + '</span></div>';
   const empty = '<div class="pr-card empty"></div>';
