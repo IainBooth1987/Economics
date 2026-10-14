@@ -1300,6 +1300,7 @@ body::before {
     </div>
     <div class="bt-setup-actions">
       <button class="bt-gen-btn" onclick="closePrintBuilder()">Cancel</button>
+      <button class="bt-gen-btn" id="pbWordBtn" style="background:#2b579a;border-color:#2b579a;color:#fff" onclick="pbDownloadWord()" title="Word version students can type into">⬇ Word (type in)</button>
       <button class="bt-gen-btn primary" onclick="printBooklet()">Print / Save PDF</button>
     </div>
   </div>
@@ -1374,7 +1375,8 @@ body::before {
           <span class="tg-total" id="tgTotal"></span>
         </div>
         <div class="tg-actions">
-          <button class="bt-gen-btn word" onclick="tgDownload(false)">⬇ Word &mdash; test</button>
+          <button class="bt-gen-btn word" onclick="tgDownload(false, true)" title="Shaded answer boxes students type into">⬇ Word &mdash; complete on screen</button>
+          <button class="bt-gen-btn word" onclick="tgDownload(false, false)" title="Answer lines for handwriting">⬇ Word &mdash; to print</button>
           <button class="bt-gen-btn word" onclick="tgDownload(true)">⬇ Word &mdash; answers</button>
           <button class="bt-gen-btn" onclick="tgPrint(false)">🖨 Print test</button>
           <button class="bt-gen-btn" onclick="tgPrint(true)">🖨 Print answers</button>
@@ -6149,6 +6151,7 @@ function pbSetStyle(style, btn) {
   document.getElementById('pbIncludeSection').style.display = style === 'full' ? '' : 'none';
   document.getElementById('pbAnswerSection').style.display = (style === 'blank' || style === 'quiz') ? '' : 'none';
   document.getElementById('pbCardSection').style.display = style === 'cards' ? 'block' : 'none';
+  document.getElementById('pbWordBtn').style.display = style === 'cards' ? 'none' : '';
 }
 function pbSetOrder(order, btn) {
   _pbOrder = order;
@@ -6630,7 +6633,23 @@ function tgNameTable() {
   return '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblBorders><w:top ' + b + '/><w:left ' + b + '/><w:bottom ' + b + '/><w:right ' + b + '/><w:insideH ' + b + '/><w:insideV ' + b + '/></w:tblBorders><w:tblCellMar><w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tblCellMar></w:tblPr>'
     + '<w:tblGrid><w:gridCol w:w="1400"/><w:gridCol w:w="8238"/></w:tblGrid>' + row('Name') + row('Class') + row('Date') + '</w:tbl>';
 }
-function tgDocXml(answers) {
+// Shaded answer box students type into (a one-cell table that grows as they type)
+function tgAnswerBox(lines, ind) {
+  ind = ind == null ? 360 : ind;
+  const w = 9638 - ind, bd = 'w:val="single" w:sz="6" w:space="0" w:color="8A9BB5"';
+  return '<w:tbl><w:tblPr><w:tblW w:w="' + w + '" w:type="dxa"/><w:tblInd w:w="' + ind + '" w:type="dxa"/>'
+    + '<w:tblBorders><w:top ' + bd + '/><w:left ' + bd + '/><w:bottom ' + bd + '/><w:right ' + bd + '/></w:tblBorders>'
+    + '<w:tblCellMar><w:top w:w="60" w:type="dxa"/><w:left w:w="140" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:right w:w="140" w:type="dxa"/></w:tblCellMar></w:tblPr>'
+    + '<w:tblGrid><w:gridCol w:w="' + w + '"/></w:tblGrid><w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="' + (lines * 380 + 120) + '" w:hRule="atLeast"/></w:trPr>'
+    + '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="F2F5F9"/></w:tcPr>' + tgPara('', { after: 0 }) + '</w:tc></w:tr></w:tbl>'
+    + tgPara('', { after: 80 });
+}
+const TG_PAGEBREAK = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+function tgWrapDoc(b) {
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + b
+    + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+}
+function tgDocXml(answers, digital) {
   const total = tgTotal(), title = tgTitle();
   let b = '';
   b += tgPara(tgRun('BIZ-OMICS', { b: true, color: '1A2744', sz: 20 }) + TG_TAB + tgRun('A-Level Economics · Key Terms Test' + (answers ? ' · ANSWERS' : ''), { color: '555555', sz: 18 }), { tab: 'right', after: 200 });
@@ -6638,7 +6657,7 @@ function tgDocXml(answers) {
   if (!answers) {
     b += tgNameTable();
     b += tgPara(tgRun(TG.qs.length + ' questions', { sz: 20 }) + TG_TAB + tgRun('Score: ______ / ' + total, { b: true, sz: 24 }), { tab: 'right', before: 200, after: 160 });
-    b += tgPara(tgRun(tgInstructions(), { i: true, sz: 20 }), { after: 240 });
+    b += tgPara(tgRun(tgInstructions() + (digital ? ' Type your answers in the shaded boxes.' : ''), { i: true, sz: 20 }), { after: 240 });
   } else {
     b += tgPara(tgRun(TG.qs.length + ' questions', { sz: 20 }) + TG_TAB + tgRun('Total: ' + total + ' marks', { b: true, sz: 24 }), { tab: 'right', after: 160 });
     if (TG.qs.some(q => tgMarks(q) === 2)) b += tgPara(tgRun('2-mark definitions: award 2 for a precise definition using the key ideas below, 1 for a partially correct answer.', { i: true, sz: 20 }), { after: 240 });
@@ -6650,39 +6669,124 @@ function tgDocXml(answers) {
       b += tgPara(tgRun(tgPlainMask(q.t), { i: true }), { ind: 360, keepNext: true, after: 80 });
       b += answers
         ? tgPara(tgRun('Key term: ', { b: true }) + tgRun(q.t.term), { ind: 360, after: 160 })
+        : digital ? tgPara(tgRun('Key term:', { b: true, sz: 18, color: '1A2744' }), { ind: 360, keepNext: true, after: 40 }) + tgAnswerBox(1)
         : tgPara(tgRun('Key term: ') + TG_TAB, { tab: 'line', ind: 360, before: 120, after: 160 });
     } else {
       b += tgPara(tgRun((i + 1) + '.  ', { b: true }) + tgRun('Define: ') + tgRun(q.t.term, { b: true }) + TG_TAB + tgRun(mkTxt, { b: true, sz: 18 }), { tab: 'right', keepNext: true, before: 160, after: 60 });
       if (answers) b += tgPara(tgRun(q.t.simple), { ind: 360, after: 160 });
+      else if (digital) b += tgAnswerBox(mk === 2 ? 4 : 3);
       else { const n = mk === 2 ? 4 : 3; for (let l = 0; l < n; l++) b += tgPara(TG_TAB, { tab: 'line', ind: 360, keepNext: l < n - 1, before: 120, after: 0, line: 300 }); }
     }
   });
   b += tgPara(tgRun('BIZ-OMICS · biz-omics.co.uk', { color: '888888', sz: 16 }), { before: 360 });
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + b
-    + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  return tgWrapDoc(b);
 }
-function tgDocx(answers) {
+function tgDocx(answers, digital, docXml) {
   const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
   return tgZip([
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
     { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
     { name: 'word/_rels/document.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
     { name: 'word/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles xmlns:w="' + W + '"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>' },
-    { name: 'word/document.xml', data: tgDocXml(answers) }
+    { name: 'word/document.xml', data: docXml || tgDocXml(answers, digital) }
   ]);
 }
-function tgDownload(answers) {
+function tgSaveBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function tgDownload(answers, digital) {
   if (!TG.qs.length) { alert('Generate a test first.'); return; }
   const slug = tgTitle().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'Key-Terms-Test';
+  tgSaveBlob(tgDocx(answers, digital), slug + (answers ? '-ANSWERS' : digital ? '-type-in' : '-print') + '.docx');
+}
+function _unusedDownload() {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(tgDocx(answers));
-  a.download = slug + (answers ? '-ANSWERS' : '') + '.docx';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !document.getElementById('tgOverlay').classList.contains('hidden')) closeTestGen();
 });
+
+
+// ---- Booklet as a Word document (for completing on screen) ----
+function pbPlain(html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
+function pbDocXml(terms, opts) {
+  const byAZ = (a, b) => a.term.localeCompare(b.term);
+  const styleLabel = { full: 'Revision booklet', blank: 'Write-in booklet', quiz: 'Self-test sheet' }[opts.style];
+  const title = opts.title || 'Economics Key Terms';
+  let groups = [];
+  if (opts.order === 'topic') {
+    SUB_ORDER.forEach(k => {
+      let list = terms.filter(t => t.sub === k).sort(byAZ);
+      if (opts.style !== 'full' && opts.shuffle) list = pbShuffle(list);
+      if (list.length) groups.push({ label: subFullLabel(k), terms: list });
+    });
+  } else {
+    let list = terms.slice().sort(byAZ);
+    if (opts.style !== 'full' && opts.shuffle) list = pbShuffle(list);
+    groups.push({ label: 'Key Terms A–Z', terms: list });
+  }
+  const lab = txt => tgPara(tgRun(txt.toUpperCase(), { b: true, sz: 15, color: '1A2744' }), { keepNext: true, before: 80, after: 30 });
+  let b = '';
+  b += tgPara(tgRun('BIZ-OMICS', { b: true, color: '1A2744', sz: 20 }) + TG_TAB + tgRun('A-Level Economics · ' + styleLabel, { color: '555555', sz: 18 }), { tab: 'right', after: 200 });
+  b += tgPara(tgRun(title, { b: true, sz: 36 }), { after: 200 });
+  b += tgNameTable();
+  const howto = {
+    full: 'Read each definition, then cover it and explain the term in your own words. Type R, A or G in the confidence box: Red = can’t explain it yet, Amber = partly, Green = could use it in an exam answer.',
+    blank: 'Type a precise definition for each term in the shaded box without using notes. Then check against the glossary, correct your answer, and type R, A or G in the confidence box.',
+    quiz: 'Read each definition and type the key term it describes in the shaded box.' + (opts.answers ? ' Answers are on the last page — don’t look until you have finished!' : '')
+  }[opts.style];
+  b += tgPara(tgRun(terms.length + ' key terms · ' + groups.map(g => g.label).join(', '), { sz: 18, color: '555555' }), { before: 200, after: 120 });
+  b += tgPara(tgRun('How to use: ', { b: true, sz: 20 }) + tgRun(howto, { i: true, sz: 20 }), { after: 240 });
+  const conf = () => opts.conf || opts.style === 'blank'
+    ? tgPara(tgRun('Confidence (R / A / G):', { b: true, sz: 18, color: '1A2744' }), { keepNext: true, ind: 360, after: 30 }) + tgAnswerBox(1, 360).replace(/w:w="9278"/g, 'w:w="1400"').replace('<w:tblW w:w="1400"', '<w:tblW w:w="1400"')
+    : '';
+  let num = 0;
+  const answers = [];
+  groups.forEach(g => {
+    b += tgPara(tgRun(g.label, { b: true, sz: 30 }), { keepNext: true, before: 320, after: 120 });
+    g.terms.forEach(t => {
+      num++;
+      if (opts.style === 'full') {
+        b += tgPara(tgRun(t.term, { b: true, sz: 24 }) + TG_TAB + tgRun(t.category.toUpperCase(), { sz: 14, color: '777777' }), { tab: 'right', keepNext: true, before: 200, after: 40 });
+        if (opts.tech) b += lab('Technical definition') + tgPara(tgRun(t.technical), { after: 60 });
+        if (opts.simple) b += lab('Simple definition') + tgPara(tgRun(t.simple, { i: true }), { after: 60 });
+        if (opts.usage) b += lab('Used in Economics') + tgPara(tgRun(pbPlain(t.usage)), { after: 60 });
+        if (opts.related && t.related && t.related.length) b += tgPara(tgRun('Related: ', { b: true, sz: 18 }) + tgRun(t.related.join(' · '), { sz: 18 }), { after: 60 });
+        if (opts.conf) b += lab('In my own words') + tgAnswerBox(2, 0) + conf();
+      } else if (opts.style === 'blank') {
+        b += tgPara(tgRun(num + '.  ', { b: true }) + tgRun(t.term, { b: true, sz: 24 }) + TG_TAB + tgRun(t.category.toUpperCase(), { sz: 14, color: '777777' }), { tab: 'right', keepNext: true, before: 200, after: 60 });
+        b += tgAnswerBox(3) + (opts.conf ? conf() : '');
+      } else {
+        b += tgPara(tgRun(num + '.  ', { b: true }) + tgRun('Which key term matches this definition?'), { keepNext: true, before: 200, after: 40 });
+        b += tgPara(tgRun(tgPlainMask(t), { i: true }), { ind: 360, keepNext: true, after: 60 });
+        b += tgPara(tgRun('Key term:', { b: true, sz: 18, color: '1A2744' }), { ind: 360, keepNext: true, after: 30 }) + tgAnswerBox(1);
+        answers.push(num + '. ' + t.term);
+      }
+    });
+  });
+  if (opts.style === 'quiz' && opts.answers) {
+    b += TG_PAGEBREAK + tgPara(tgRun('Answer key', { b: true, sz: 30 }), { after: 160 });
+    answers.forEach(a => { b += tgPara(tgRun(a), { after: 40 }); });
+  }
+  b += tgPara(tgRun('BIZ-OMICS · biz-omics.co.uk', { color: '888888', sz: 16 }), { before: 360 });
+  return tgWrapDoc(b);
+}
+function pbDownloadWord() {
+  const terms = pbPool();
+  if (!terms.length) { alert('Choose at least one topic first.'); return; }
+  const opts = pbReadOpts();
+  if (opts.style === 'cards') return;
+  if (opts.style === 'full' && !opts.tech && !opts.simple && !opts.usage) opts.simple = true;
+  const slug = (opts.title || 'Economics Key Terms').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+  const kind = { full: 'revision', blank: 'write-in', quiz: 'self-test' }[opts.style];
+  tgSaveBlob(tgDocx(false, true, pbDocXml(terms, opts)), slug + '-' + kind + '.docx');
+}
 
 let _pbBuiltByButton = false;
 function printBooklet() {
