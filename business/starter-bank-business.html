@@ -217,6 +217,22 @@
   .present-grid.dense .present-type-hint{display:none;}
   .present-grid.dense .present-face{padding:0.7rem 0.8rem;}
   .present-grid.dense .present-tag{margin-bottom:0.35rem;font-size:0.65rem;}
+  /* Wide strips: each question runs across the screen, label column on the left */
+  .present-meta{display:flex;flex-direction:column;align-items:flex-start;}
+  .present-grid.strips .present-face{flex-direction:row;align-items:stretch;gap:1.6vw;padding:1rem 6.5rem 1rem 1.3rem;}
+  .present-grid.strips .present-meta{flex:0 0 clamp(150px,15vw,250px);justify-content:center;border-right:2px solid #33373f;padding-right:1.2vw;}
+  .present-grid.strips .present-face-a .present-meta{border-right-color:#dcd0ef;}
+  .present-grid.strips .present-tag{margin-bottom:0.45rem;}
+  .present-grid.strips .present-type-hint{margin:0;}
+  .present-grid.strips .present-body{align-self:center;max-height:100%;}
+  .present-grid.strips.two-col .present-meta{flex-basis:clamp(110px,9vw,160px);}
+  .present-grid.strips.two-col .present-type-hint{display:none;}
+  .present-grid.strips.two-col .present-tag{border-radius:6px;line-height:1.25;}
+  @media(max-width:900px){
+    .present-grid.strips .present-face{flex-direction:column;padding:0.8rem 0.9rem;}
+    .present-grid.strips .present-meta{flex:0 0 auto;border-right:none;padding-right:0;}
+    .present-grid.strips .present-body{align-self:stretch;}
+  }
   .present-num{position:absolute;bottom:0.5rem;right:0.7rem;font-family:var(--mono);font-size:0.65rem;color:#565a63;}
   .present-zoom-btn{
     position:absolute;top:0.5rem;right:0.5rem;z-index:3;font-family:var(--mono);font-size:0.68rem;
@@ -1248,14 +1264,14 @@ function renderPresentGrid(){
         '<div class="present-card-inner">' +
           '<div class="present-face present-face-q">' +
             '<button type="button" class="present-zoom-btn" data-action="zoom" data-idx="'+idx+'" title="Enlarge for reading">&#128269; Zoom</button>' +
-            '<span class="present-tag" style="background:'+label.color+'">'+label.text+'</span>' +
-            '<div class="present-type-hint">'+label.hint+'</div>' +
+            '<div class="present-meta"><span class="present-tag" style="background:'+label.color+'">'+label.text+'</span>' +
+            '<div class="present-type-hint">'+label.hint+'</div></div>' +
             '<div class="present-body '+textLenClass(item.q)+'">'+item.q+'</div>' +
             '<span class="present-num">'+(idx+1)+'</span>' +
           '</div>' +
           '<div class="present-face present-face-a">' +
             '<button type="button" class="present-zoom-btn" data-action="zoom" data-idx="'+idx+'" title="Enlarge for reading">&#128269; Zoom</button>' +
-            '<span class="present-tag">Answer</span>' +
+            '<div class="present-meta"><span class="present-tag">Answer</span></div>' +
             '<div class="present-body '+textLenClass(item.a)+'">'+item.a+'</div>' +
           '</div>' +
         '</div>' +
@@ -1291,16 +1307,18 @@ function renderPresentGrid(){
       '<div class="present-grid" id="presentGrid">'+cardsHtml+'</div>' +
     '</div>';
 
-  // Up to 5 cards sit in one row; 6-10 split across two rows, so cards never
-  // get squeezed into ten narrow columns. Narrow screens cap at 2 columns.
+  // Each question is a wide strip running across the screen, stacked down the
+  // board. Up to 5 cards: one full-width column. 6-10: two columns of strips.
   const n = pageIds.length || 1;
   const narrow = window.innerWidth < 900;
-  const cols = narrow ? Math.min(n,2) : (n <= 5 ? n : Math.ceil(n/2));
+  const cols = (narrow || n <= 5) ? 1 : 2;
   const rows = Math.ceil(n/cols);
   const presentGrid = document.getElementById("presentGrid");
   presentGrid.style.gridTemplateColumns = "repeat("+cols+",minmax(0,1fr))";
   presentGrid.style.gridTemplateRows = "repeat("+rows+",minmax(0,1fr))";
-  presentGrid.classList.toggle("dense", rows > 1);
+  presentGrid.classList.add("strips");
+  presentGrid.classList.toggle("two-col", cols > 1);
+  presentGrid.classList.toggle("dense", narrow && rows > 3);
   document.getElementById("presentPageSizeSelect").addEventListener("change", (e)=>{
     changePresentPageSize(Number(e.target.value));
   });
