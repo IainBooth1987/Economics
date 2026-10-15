@@ -846,6 +846,7 @@ body::before {
 .pb-term-list label { display: flex; gap: 0.45rem; align-items: center; font-size: 0.8rem; padding: 0.15rem 0; color: var(--text); cursor: pointer; }
 .pb-term-list input { accent-color: #8b5cf6; }
 .pb-summary { cursor: pointer; list-style: revert; }
+.pb-topicsec.dim { opacity: 0.4; pointer-events: none; }
 
 /* ===== Key Terms Test Generator ===== */
 .btn-testgen {
@@ -1251,6 +1252,17 @@ body::before {
       <input class="pb-text" id="pbTitle" type="text" value="Business Key Terms" maxlength="80">
     </div>
     <div class="bt-setup-section">
+      <div class="bt-setup-label">Pick specific terms <span class="bt-topic-all" onclick="pbClearChosen()">clear</span></div>
+      <input class="pb-text" id="pbSearch" type="text" placeholder="Search all key terms…" oninput="pbRenderSearch()" autocomplete="off">
+      <div class="tg-results" id="pbResults"></div>
+      <div class="pb-note" id="pbChosenLabel"></div>
+      <div class="tg-chosen" id="pbChosen"></div>
+      <div class="tg-radio" id="pbSourceRow" style="display:none">
+        <label class="pb-check"><input type="radio" name="pbSource" value="only" checked onchange="PB.source=this.value; pbUpdatePool()"> Only my chosen terms</label>
+        <label class="pb-check"><input type="radio" name="pbSource" value="add" onchange="PB.source=this.value; pbUpdatePool()"> My chosen terms plus the topics below</label>
+      </div>
+    </div>
+    <div class="bt-setup-section pb-topicsec">
       <div class="bt-setup-label">Categories</div>
       <div class="bt-cat-presets">
         <button class="bt-preset-btn" onclick="pbPreset('all')">All</button>
@@ -1258,11 +1270,11 @@ body::before {
       </div>
       <div class="bt-cat-row" id="pbCatRow"></div>
     </div>
-    <div class="bt-setup-section">
+    <div class="bt-setup-section pb-topicsec">
       <div class="bt-setup-label">Topics &amp; subtopics <span class="bt-topic-all" onclick="pbTopics(true)">select all</span><span class="bt-topic-all" style="margin-right:10px" onclick="pbTopics(false)">clear</span></div>
       <div class="tp-scroll" id="pbTopicRow"></div>
     </div>
-    <div class="bt-setup-section">
+    <div class="bt-setup-section pb-topicsec">
       <details id="pbTermDetails" ontoggle="if(this.open) pbRenderTermList()">
         <summary class="bt-setup-label pb-summary">Fine-tune: tick individual terms <span id="pbTermSel" style="text-transform:none;letter-spacing:0;color:#8b5cf6"></span></summary>
         <input class="pb-text" id="pbTermFilter" type="text" placeholder="Filter terms…" oninput="pbRenderTermList()" style="margin-top:0.5rem">
@@ -11804,6 +11816,7 @@ function openPrintBuilder(style) {
   if (_pbSpecSeen !== activeSpec) { _pbTopics = null; _pbSpecSeen = activeSpec; }
   pbRenderCats();
   if (style) { const b = document.querySelector('#pbStyleRow [data-style="' + style + '"]'); if (b) pbSetStyle(style, b); }
+  pbRenderChosen(); pbRenderSearch();
   document.getElementById('pbOverlay').classList.remove('hidden');
 }
 function closePrintBuilder() { document.getElementById('pbOverlay').classList.add('hidden'); }
@@ -11836,11 +11849,47 @@ function pbToggleParent(p) { toggleParentIn(_pbTopics, p, availSubs(_pbCats)); p
 function pbToggleSub(s) { if (_pbTopics.has(s)) _pbTopics.delete(s); else _pbTopics.add(s); pbRenderTopics(); }
 function pbTopics(all) { _pbTopics = all ? null : new Set(); pbRenderTopics(); }
 function pbBasePool() { return glossaryTerms.filter(t => _pbCats.has(t.category) && _pbTopics && _pbTopics.has(t.sub) && inSpec(t)); }
-function pbPool() { return pbBasePool().filter(t => !_pbExcluded.has(t.term)); }
+const PB = { chosen: [], source: 'only' };
+let _pbSearchCache = [];
+function pbPool() {
+  const topicTerms = pbBasePool().filter(t => !_pbExcluded.has(t.term));
+  if (!PB.chosen.length) return topicTerms;
+  if (PB.source === 'only') return PB.chosen.slice();
+  return PB.chosen.concat(topicTerms.filter(t => !PB.chosen.includes(t)));
+}
+function pbRenderSearch() {
+  const q = document.getElementById('pbSearch').value.toLowerCase().trim();
+  const box = document.getElementById('pbResults');
+  if (q.length < 2) { box.innerHTML = '<div class="pb-note">Type at least two letters to search all ' + glossaryTerms.length + ' terms and add the ones you want.</div>'; return; }
+  const aliasTargets = Object.keys(termAliases).filter(a => a.includes(q)).map(a => termAliases[a]);
+  _pbSearchCache = glossaryTerms.filter(t => t.term.toLowerCase().includes(q) || aliasTargets.includes(t.term))
+    .sort((a, b) => { const as = a.term.toLowerCase().startsWith(q) ? 0 : 1, bs = b.term.toLowerCase().startsWith(q) ? 0 : 1; return as - bs || a.term.localeCompare(b.term); })
+    .slice(0, 40);
+  box.innerHTML = _pbSearchCache.length ? _pbSearchCache.map((t, i) => {
+    const added = PB.chosen.includes(t);
+    return '<div class="tg-result"><div>' + pbEsc(t.term) + '<small>' + pbEsc(subFullLabel(t.sub)) + '</small></div><button class="tg-add" ' + (added ? 'disabled' : '') + ' onclick="pbAdd(' + i + ')">' + (added ? 'Added' : '+ Add') + '</button></div>';
+  }).join('') : '<div class="pb-note">No terms match.</div>';
+}
+function pbAdd(i) { const t = _pbSearchCache[i]; if (t && !PB.chosen.includes(t)) PB.chosen.push(t); pbRenderChosen(); pbRenderSearch(); }
+function pbRemoveChosen(i) { PB.chosen.splice(i, 1); pbRenderChosen(); pbRenderSearch(); }
+function pbClearChosen() { PB.chosen = []; pbRenderChosen(); pbRenderSearch(); }
+function pbRenderChosen() {
+  const n = PB.chosen.length;
+  document.getElementById('pbChosenLabel').textContent = n ? 'Your chosen terms (' + n + '):' : 'Or skip this and choose whole topics below.';
+  document.getElementById('pbChosen').innerHTML = PB.chosen.map((t, i) => '<span class="tg-chip">' + pbEsc(t.term) + '<button onclick="pbRemoveChosen(' + i + ')" aria-label="Remove">✕</button></span>').join('');
+  document.getElementById('pbSourceRow').style.display = n ? '' : 'none';
+  pbUpdatePool();
+}
 function pbUpdatePool() {
-  const base = pbBasePool().length, n = pbPool().length;
-  document.getElementById('pbPoolInfo').innerHTML = '<strong>' + n + '</strong> terms will be included' + (n < base ? ' (' + (base - n) + ' unticked)' : '') + specNote();
-  document.getElementById('pbTermSel').textContent = '· ' + n + ' of ' + base + ' ticked';
+  const base = pbBasePool().length, ticked = pbBasePool().filter(t => !_pbExcluded.has(t.term)).length, n = pbPool().length;
+  const onlyChosen = PB.chosen.length && PB.source === 'only';
+  let msg = '<strong>' + n + '</strong> terms will be included';
+  if (onlyChosen) msg += ' (your chosen terms)';
+  else if (PB.chosen.length) msg += ' (' + PB.chosen.length + ' chosen + topics below)';
+  else if (ticked < base) msg += ' (' + (base - ticked) + ' unticked)';
+  document.getElementById('pbPoolInfo').innerHTML = msg + (onlyChosen ? '' : specNote());
+  document.getElementById('pbTermSel').textContent = '· ' + ticked + ' of ' + base + ' ticked';
+  document.querySelectorAll('#pbOverlay .pb-topicsec').forEach(el => el.classList.toggle('dim', !!onlyChosen));
 }
 // Individual term list (within the selected subtopics)
 let _pbListCache = [];
@@ -12519,7 +12568,7 @@ function pbDownloadWord() {
 let _pbBuiltByButton = false;
 function printBooklet() {
   const terms = pbPool();
-  if (!terms.length) { alert('Choose at least one topic to print.'); return; }
+  if (!terms.length) { alert('Choose some terms or at least one topic to print.'); return; }
   const opts = pbReadOpts();
   if (opts.style === 'full' && !opts.tech && !opts.simple && !opts.usage) { opts.simple = true; }
   if (opts.style === 'cards') buildCards(terms, opts); else buildBooklet(terms, opts);
