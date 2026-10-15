@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('biz-omics-theme');}catch(e){}
+if(!t){t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;})();
+</script>
+<title>Next iPhone Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a patent-sheet stage with numbered reference markers (left), an evidence file for each feature (right) */
+:root{
+  --paper:#f3f4f7; --sheet:#ffffff; --ink:#151821; --muted:#5b6170; --rule:#d8dbe3; --grid:rgba(21,24,33,.055);
+  --accent:#2747d6; --accent-ink:#ffffff; --accent-soft:#e7ebff;
+  --ok:#1d6f47; --ok-bg:#e1f2e8; --warn:#8a5300; --warn-bg:#fbeed5; --bad:#a82638; --bad-bg:#fbe4e7; --info:#2747d6; --info-bg:#e7ebff;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0e1117; --sheet:#161a22; --ink:#e7e9ef; --muted:#9aa1b0; --rule:#2a303c; --grid:rgba(231,233,239,.05);
+  --accent:#8fa3ff; --accent-ink:#0e1117; --accent-soft:#1f2852;
+  --ok:#72d3a3; --ok-bg:#13301f; --warn:#f1b65c; --warn-bg:#35270f; --bad:#ff8d9b; --bad-bg:#3a1820; --info:#8fa3ff; --info-bg:#1f2852;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#0e1117; --sheet:#161a22; --ink:#e7e9ef; --muted:#9aa1b0; --rule:#2a303c; --grid:rgba(231,233,239,.05);
+  --accent:#8fa3ff; --accent-ink:#0e1117; --accent-soft:#1f2852;
+  --ok:#72d3a3; --ok-bg:#13301f; --warn:#f1b65c; --warn-bg:#35270f; --bad:#ff8d9b; --bad-bg:#3a1820; --info:#8fa3ff; --info-bg:#1f2852;
+  color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4.2vw,44px);line-height:1.02;margin:4px 0 6px;text-wrap:balance;letter-spacing:-.01em}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.models{display:flex;gap:6px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:999px;padding:3px;background:var(--sheet);gap:2px;flex-wrap:wrap}
+.seg button{font:500 13px/1 var(--body);color:var(--ink);background:transparent;border:0;border-radius:999px;padding:9px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.seg button:focus-visible,.spot:focus-visible,.feat:focus-visible,.toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px;align-items:start}
+@media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)}}
+
+.stagecol{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage{position:relative;height:clamp(440px,70vh,760px);border:1px solid var(--rule);border-radius:6px;overflow:hidden;touch-action:none;cursor:grab;
+  background-color:var(--sheet);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px}
+.stage.dragging{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fig{position:absolute;top:12px;left:14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+.sheetno{position:absolute;top:12px;right:14px;font-family:var(--mono);font-size:11.5px;color:var(--muted);pointer-events:none;text-align:right}
+.hint{position:absolute;bottom:10px;right:14px;font-size:12px;color:var(--muted);pointer-events:none;background:var(--sheet);padding:2px 6px;border-radius:4px}
+.spots{position:absolute;inset:0;pointer-events:none}
+.spot{position:absolute;left:0;top:0;pointer-events:auto;width:38px;height:24px;border-radius:12px;border:1.5px solid var(--ink);background:var(--sheet);color:var(--ink);
+  font:500 11px/1 var(--mono);cursor:pointer;display:grid;place-items:center;padding:0;transition:opacity .2s,background .2s,color .2s;box-shadow:0 1px 0 var(--rule)}
+.spot.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.spot.off{opacity:0;pointer-events:none}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.toolbar .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:-6px}
+.toggle{font:500 13px/1 var(--body);color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:999px;padding:11px 14px;cursor:pointer}
+.toggle[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule);border-radius:6px;background:var(--sheet);overflow:hidden}
+.facts div{padding:10px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);min-width:0}
+.facts div:nth-child(3n){border-right:0}
+.facts div:nth-last-child(-n+3){border-bottom:0}
+.facts dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:600;font-variant-numeric:tabular-nums}
+
+.card{border:1px solid var(--rule);border-radius:6px;background:var(--sheet);padding:18px 18px 16px}
+.card .num{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.card h2{font-family:var(--display);font-weight:700;font-size:24px;line-height:1.1;margin:2px 0 10px;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.badge{font:500 11.5px/1 var(--mono);padding:6px 8px;border-radius:4px;letter-spacing:.02em}
+.b-patent{background:var(--info-bg);color:var(--info)}
+.b-reports{background:var(--ok-bg);color:var(--ok)}
+.b-single{background:var(--warn-bg);color:var(--warn)}
+.b-disputed{background:var(--bad-bg);color:var(--bad)}
+.b-model{background:transparent;border:1px solid var(--rule);color:var(--muted)}
+.card p{margin:0 0 10px;max-width:65ch}
+.card .why{border-top:1px dashed var(--rule);padding-top:10px;margin-top:4px;color:var(--muted);font-size:14px}
+.card .why b{color:var(--ink);font-weight:600}
+.sources{margin-top:10px;font-size:13px;color:var(--muted)}
+.sources a{color:var(--accent);text-underline-offset:2px}
+.extra{margin:4px 0 12px;border:1px solid var(--rule);border-radius:6px;padding:12px;overflow-x:auto}
+.extra figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:130px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:13px}
+.bar span:last-child{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.bar i{display:block;height:10px;border-radius:2px;background:var(--muted)}
+.bar.hi i{background:var(--accent)}
+
+.list{border:1px solid var(--rule);border-radius:6px;background:var(--sheet);overflow:hidden}
+.list h3{margin:0;padding:10px 14px;font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule)}
+.feat{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--rule);
+  padding:10px 14px;font:inherit;color:var(--ink);cursor:pointer}
+.feat:last-child{border-bottom:0}
+.feat:hover{background:var(--paper)}
+.feat[aria-current="true"]{background:var(--accent-soft)}
+.feat .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.feat .t{font-weight:500;line-height:1.3}
+.dot{width:9px;height:9px;border-radius:50%}
+.d-patent{background:var(--info)}.d-reports{background:var(--ok)}.d-single{background:var(--warn)}.d-disputed{background:var(--bad)}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);padding:10px 14px;border-top:1px solid var(--rule)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+footer{font-size:12.5px;color:var(--muted);max-width:90ch}
+.err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.spot{transition:none}}
+@media print{.toolbar,.hint,.spots,.models,.list .key{display:none}body{background:#fff;color:#000}}
+
+body{margin:0}
+.bk-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-4px}
+.bk-bar a{font:600 13.5px/1 inherit;color:inherit;text-decoration:none;opacity:.75;padding:8px 0}
+.bk-bar a:hover{opacity:1;text-decoration:underline}
+.bk-bar .bk-right{display:flex;gap:8px;align-items:center}
+.bk-print{font:600 13px/1 system-ui,sans-serif;padding:9px 14px;border-radius:7px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+.print-head{display:none}
+@media print{
+  .stage,.stagecol .toolbar,.toolbar,.controls,.bk-bar,.hint,.tabs,.models,.reveal,#qnew,.spots,.legend,.trace{display:none!important}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,"Times New Roman",serif!important}
+  .ans[hidden]{display:block!important}
+  .card,.panel,.compare,.list,.facts,.stats{break-inside:avoid;background:#fff!important;color:#000!important}
+  .app{grid-template-columns:1fr!important}
+  .more,.compare{break-before:page}
+  .print-head{display:block;font:700 14px/1.4 Georgia,serif;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="print-head">BIZ-OMICS · Next iPhone Explorer</div>
+  <nav class="bk-bar" aria-label="Back"><a href="3d-learning.html">← 3D Learning</a><span class="bk-right"><a href="index.html">BIZ-OMICS Business</a><button class="bk-print" onclick="window.print()">Print</button></span></nav>
+  <header>
+    <div>
+      <div class="eyebrow">BIZ-OMICS · Concept model · Spring 2027 line-up</div>
+      <h1>Next iPhone Explorer</h1>
+      <p class="lede">Turn the concept phone and open each numbered marker to see what the patents and leaks say, and how strong the evidence is.</p>
+    </div>
+    <div class="models">
+      <div class="seg" role="group" aria-label="Model">
+        <button id="m-18" data-model="18" aria-pressed="true">iPhone 18</button>
+        <button id="m-air" data-model="air" aria-pressed="false">iPhone Air 2</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <div class="stagecol">
+      <div class="stage" id="stage" aria-label="3D concept phone. Drag to rotate.">
+        <div class="fig" id="fig">FIG. 1 — Front</div>
+        <div class="sheetno" id="sheetno">Sheet 1 of 2</div>
+        <div class="spots" id="spots"></div>
+        <div class="hint">Drag to rotate · scroll or pinch to zoom</div>
+      </div>
+      <div class="toolbar">
+        <span class="lbl">View</span>
+        <div class="seg" role="group" aria-label="View">
+          <button id="v-front" data-view="front">Front</button>
+          <button id="v-back" data-view="back">Back</button>
+          <button id="v-side" data-view="side">Side</button>
+          <button id="v-inside" data-view="inside">Exploded</button>
+        </div>
+        <span class="lbl">Screen</span>
+        <div class="seg" role="group" aria-label="Front sensor layout">
+          <button id="c-pill" data-cut="pill" aria-pressed="true">Today</button>
+          <button id="c-narrow" data-cut="narrow" aria-pressed="false">Narrower</button>
+          <button id="c-udfi" data-cut="udfi" aria-pressed="false">Under-display</button>
+        </div>
+        <button class="toggle" id="spin" aria-pressed="false">Auto-spin</button>
+      </div>
+    </div>
+
+    <aside>
+      <dl class="facts" id="facts"></dl>
+      <article class="card" id="detail" aria-live="polite"></article>
+      <nav class="list" aria-label="Features">
+        <h3 id="listhead">Features on this model</h3>
+        <div id="featlist"></div>
+        <div class="key">
+          <span><i class="dot d-patent"></i>Patent granted</span>
+          <span><i class="dot d-reports"></i>Multiple reports</span>
+          <span><i class="dot d-single"></i>Single source</span>
+          <span><i class="dot d-disputed"></i>Conflicting</span>
+        </div>
+      </nav>
+    </aside>
+  </div>
+
+  <footer>Concept model for teaching. It is not an Apple product rendering and carries no Apple branding. Features are compiled from patents, analyst notes and press reports published up to 15 October 2026; none are confirmed until launch.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const stage=document.getElementById('stage');
+if(!window.THREE){stage.insertAdjacentHTML('beforeend','<div class="err">The 3D library did not load. Check your connection and reload the page.</div>');return;}
+
+/* ---------- Content ---------- */
+const MODELS={
+  '18':{name:'iPhone 18',W:1.43,H:2.99,D:0.158,r:0.24,frame:0xbab3d8,back:0xd9d4ec,wall:'violet',
+    facts:[['Screen','6.3″'],['Chip','A20'],['RAM','9–12GB'],['Rear','2 × 48MP'],['Front','24MP?'],['Launch','Spring 2027']]},
+  'air':{name:'iPhone Air 2',W:1.49,H:3.12,D:0.112,r:0.25,frame:0xd8ccb2,back:0xf0ebe1,wall:'teal',
+    facts:[['Screen','6.5″'],['Chip','A20'],['RAM','12GB'],['Rear','2 × 48MP?'],['Battery','Larger'],['Launch','Spring 2027']]}
+};
+const LEVEL={patent:'Patent granted',reports:'Multiple reports',single:'Single source',disputed:'Conflicting reports'};
+const FEATURES=[
+ {id:'101',title:'Under-display Face ID',level:'patent',models:['18','air'],view:'front',cut:'udfi',
+  body:['Apple holds US patent 12,201,004, filed in March 2020 and granted on 14 January 2025. It removes one sub-pixel from selected pixels so the infrared light Face ID uses can pass through the screen.',
+        'The same patent thins the touch-sensor mesh above the sensors so less of the signal is blocked.',
+        'Reports tie it to the iPhone 18 Pro first, leaving only a small camera hole in the top-left corner. The spring 2027 phones are more likely to keep the Dynamic Island for now.'],
+  why:'A patent protects the idea for up to 20 years, but it does not mean the feature ships. Apple patents many ideas it never uses.',
+  extra:'subpixel',
+  src:[['Tom’s Guide','https://www.tomsguide.com/phones/iphones/iphone-18-could-get-the-design-upgrade-weve-been-waiting-years-for'],['PhoneArena','https://www.phonearena.com/news/patent-allows-under-display-face-id-iphone_id166708'],['Cult of Mac','https://www.cultofmac.com/?p=919722']]},
+ {id:'102',title:'Narrower Dynamic Island',level:'reports',models:['18'],view:'front',cut:'narrow',
+  body:['A leaker cited by Tom’s Guide says the iPhone 18 series cut-out is a slightly narrower pill. Analyst Jeff Pu also lists a smaller Dynamic Island for the Pro models.',
+        'A narrower pill would mean some sensors have moved or shrunk, which is a step towards the under-display design in marker 101.'],
+  why:'Incremental change keeps existing customers comfortable while the bigger redesign is held back for a later model.',
+  src:[['Tom’s Guide','https://www.tomsguide.com/phones/iphones/iphone-18-rumors-everything-we-know-so-far'],['Jang (Jeff Pu note)','https://jang.com.pk/en/57649-apple-iphone-18-series-features-launch-details-leaked-months-ahead-of-release-news']]},
+ {id:'103',title:'24MP front camera',level:'disputed',models:['18','air'],view:'front',
+  body:['One round-up reports a 24MP selfie camera on every model except the 18e, up from 18MP on the iPhone 17.',
+        'Jeff Pu’s specification table lists an 18MP front camera for the Pro models, so the reports do not yet agree.'],
+  why:'When sources disagree, the safest reading is “possible, unconfirmed”.',
+  src:[['Khaleej Times','https://www.khaleejtimes.com/business/tech/iphone-18-rumours-release-date-design-and-what-to-expect-from-apples-next-flagship?amp=1'],['Jang (Jeff Pu note)','https://jang.com.pk/en/57649-apple-iphone-18-series-features-launch-details-leaked-months-ahead-of-release-news']]},
+ {id:'104',title:'Variable-aperture main camera',level:'reports',models:['18'],view:'back',
+  body:['A mechanical iris inside the main lens would let the camera open or close its aperture, like a traditional camera, to control light and depth of field.',
+        'The Information and others report it for the iPhone 18 Pro with a larger sensor. It is expected on Pro models first, so the standard iPhone 18 may not get it.'],
+  why:'Apple often launches new hardware on Pro models first, then moves it down the range a year or two later.',
+  src:[['Cult of Mac','https://www.cultofmac.com/?p=919722'],['PhoneArena','https://www.phonearena.com/news/iphone-18-pro-may-get-a-radical-face-id-overhaul-and-a-nifty-camera-feature_id176670']]},
+ {id:'105',title:'Dual 48MP rear cameras',level:'disputed',models:['air'],view:'back',
+  body:['Leakers Digital Chat Station and Lanzuk both say the Air 2 adds a 48MP ultra-wide camera next to the 48MP main camera, set side by side across the camera plateau.',
+        'Bloomberg’s Mark Gurman is sceptical. He does not expect a second camera on the Air until the parts can be shared with the foldable iPhone.'],
+  why:'The original Air sold poorly, and the single camera was its most criticised feature. A second lens is the obvious fix.',
+  src:[['heise (Digital Chat Station)','https://heise.de/-11069509'],['ETV Bharat (Lanzuk)','https://www.etvbharat.com/en/technology/iphone-air-2-tipped-to-receive-dual-rear-cameras-and-a-chipset-downgrade-enn26062303132'],['Notebookcheck (Gurman)','https://www.notebookcheck.net/Apple-Bloomberg-reveals-what-s-really-going-on-with-the-iPhone-Air-2-and-details-iPhone-18-launch.1164270.0.html']]},
+ {id:'106',title:'A20 chip on 2nm',level:'reports',models:['18','air'],view:'inside',
+  body:['The A20 family is expected to use TSMC’s 2nm process, which fits more transistors in the same space and uses less power.',
+        'The Air 2 is reported to get the standard A20, not the A20 Pro. That is a step down from the original Air, which used a version of the A19 Pro.'],
+  why:'Giving the Air the standard chip draws a clearer line between the cheaper models and the Pro range.',
+  src:[['PhoneArena','https://www.phonearena.com/news/iphone-18-is-coming-next-spring-2nm-chip-and-6-other-hot-upgrades_id179209'],['ETV Bharat','https://www.etvbharat.com/en/technology/iphone-air-2-tipped-to-receive-dual-rear-cameras-and-a-chipset-downgrade-enn26062303132']]},
+ {id:'107',title:'More memory (RAM)',level:'disputed',models:['18','air'],view:'inside',extra:'ram',
+  body:['Analysts agree the base iPhone 18 gets more memory than the iPhone 17’s 8GB, but not on how much. Ming-Chi Kuo says 9GB; Dan Nystedt says 12GB.',
+        'Reports put the Air 2 at 12GB. Kuo also says some iOS 27 Apple Intelligence features need 12GB, which would leave a 9GB iPhone 18 without them.'],
+  why:'Rising memory prices in 2026 make RAM a real cost decision, not just a spec-sheet number.',
+  src:[['Jang (Kuo)','https://jang.com.pk/en/68493-apple-iphone-18-and-iphone-18e-may-miss-out-on-these-ios-27-features-news'],['AppleInsider (Nystedt)','https://appleinsider.com/articles/26/04/24/apples-entry-level-iphone-18-rumored-to-get-50-more-ram']]},
+ {id:'108',title:'Apple C2 modem',level:'reports',models:['18','air'],view:'inside',
+  body:['Apple’s own second-generation 5G modem is expected to replace more Qualcomm parts, with claims of better battery life and stronger signal. AppleInsider expects it to add mmWave 5G.',
+        'Qualcomm’s supply contract runs into 2027, so some models may still use Qualcomm modems.'],
+  why:'Making its own modem lets Apple cut its reliance on a supplier and keep more of the profit on each phone.',
+  src:[['AppleInsider','https://appleinsider.com/inside/iphone-18'],['Tom’s Guide','https://www.tomsguide.com/phones/iphones/iphone-18-rumors-everything-we-know-so-far']]},
+ {id:'109',title:'Larger battery',level:'reports',models:['air'],view:'inside',
+  body:['Battery life was the other big complaint about the original Air. Several reports say the Air 2 gets a higher-capacity battery while keeping the thin body.',
+        'Fitting a bigger cell into a phone this thin is a trade-off against weight, heat and the space needed for a second camera.'],
+  why:'Fixing the two weakest points of the first model is how Apple hopes to rescue weak demand.',
+  src:[['Tom’s Guide','https://www.tomsguide.com/phones/iphones/iphone-air-2-rumors-5-biggest-expected-upgrades'],['TelecomTalk','https://telecomtalk.info/iphone-air2-leak-reveals-battery-dual-cameras/1009651/']]},
+ {id:'110',title:'Camera Control changes',level:'single',models:['18'],view:'side',
+  body:['Apple is reported to be modifying the Camera Control button on the iPhone 18. The details are not yet clear.',
+        'The current control combines a press, a light press and a touch-sensitive swipe for zoom and settings.'],
+  why:'A single, vague report is the weakest kind of evidence in this explorer.',
+  src:[['PhoneArena','https://www.phonearena.com/news/iphone-18-is-coming-next-spring-2nm-chip-and-6-other-hot-upgrades_id179209']]}
+];
+const VIEWS={front:{yaw:-0.32,pitch:0.1,ex:0},back:{yaw:Math.PI-0.32,pitch:0.1,ex:0},side:{yaw:-1.25,pitch:0.08,ex:0},inside:{yaw:-0.95,pitch:0.22,ex:1}};
+
+/* ---------- Three.js setup ---------- */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch(e){stage.insertAdjacentHTML('beforeend','<div class="err">This device could not start 3D graphics.</div>');return;}
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.1,100);camera.position.set(0,0,7.2);
+
+// studio environment for reflections
+(function(){
+  const pm=new THREE.PMREMGenerator(renderer);const env=new THREE.Scene();
+  env.add(new THREE.Mesh(new THREE.SphereGeometry(20,24,16),new THREE.MeshBasicMaterial({color:0x6d717c,side:THREE.BackSide})));
+  const box=(x,y,z,w,h,c)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(c,c,c),side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);env.add(m);};
+  box(0,8,6,12,3,5);box(-9,2,2,3,10,3);box(9,-1,4,3,8,2.2);box(0,-8,-6,10,3,1.4);
+  scene.environment=pm.fromScene(env,0.03).texture;pm.dispose();
+})();
+const key=new THREE.DirectionalLight(0xffffff,1.1);key.position.set(3,5,6);scene.add(key);
+const rim=new THREE.DirectionalLight(0xffffff,0.6);rim.position.set(-5,-2,-4);scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff,0.25));
+
+const pitchG=new THREE.Group(),yawG=new THREE.Group();scene.add(pitchG);pitchG.add(yawG);
+
+function rounded(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;
+  s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);return s;}
+function flat(w,h,r){const g=new THREE.ShapeGeometry(rounded(w,h,r),28);const p=g.attributes.position,uv=g.attributes.uv;
+  for(let i=0;i<p.count;i++)uv.setXY(i,(p.getX(i)+w/2)/w,(p.getY(i)+h/2)/h);uv.needsUpdate=true;return g;}
+function canvasTex(c){const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+function label(text,w,h,bg,fg,size){const c=document.createElement('canvas');c.width=256;c.height=Math.round(256*h/w);const x=c.getContext('2d');
+  x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);x.strokeStyle='rgba(255,255,255,.25)';x.lineWidth=3;x.strokeRect(6,6,c.width-12,c.height-12);
+  x.fillStyle=fg;x.font='600 '+(size||72)+'px "IBM Plex Mono", monospace';x.textAlign='center';x.textBaseline='middle';x.fillText(text,c.width/2,c.height/2);
+  return new THREE.MeshStandardMaterial({map:canvasTex(c),roughness:.5,metalness:.1});}
+
+/* screen artwork */
+const scr=document.createElement('canvas');scr.width=640;scr.height=1336;
+let screenTex=canvasTex(scr);
+function drawScreen(model,cut){
+  const m=MODELS[model],c=scr,x=c.getContext('2d'),W=c.width,H=Math.round(W*m.H/m.W);c.height=H;
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  const b=16,r=74;x.save();x.beginPath();x.roundRect?x.roundRect(b,b,W-2*b,H-2*b,r):x.rect(b,b,W-2*b,H-2*b);x.clip();
+  const g=x.createLinearGradient(0,0,W*0.4,H);
+  if(m.wall==='violet'){g.addColorStop(0,'#5130e8');g.addColorStop(.55,'#1d1f9c');g.addColorStop(1,'#07104a');}
+  else{g.addColorStop(0,'#1fa3a8');g.addColorStop(.5,'#13508f');g.addColorStop(1,'#071a3d');}
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.globalCompositeOperation='screen';
+  const bands=m.wall==='violet'?['#ff6fae','#ff9a5c','#7fd0ff']:['#8af0d2','#5cb8ff','#c9f0ff'];
+  bands.forEach((col,i)=>{x.strokeStyle=col;x.globalAlpha=.35-i*.07;x.lineWidth=150-i*40;x.beginPath();
+    x.moveTo(-80,H*(.32+i*.12));x.bezierCurveTo(W*.5,H*(.18+i*.1),W*.75,H*(.55+i*.06),W+120,H*(.95-i*.05));x.stroke();});
+  x.globalAlpha=1;x.globalCompositeOperation='source-over';
+  // lock screen
+  x.fillStyle='rgba(255,255,255,.92)';x.textAlign='center';
+  x.font='500 30px "IBM Plex Sans", sans-serif';x.fillText('Thursday 15 October',W/2,250);
+  x.font='700 170px "Bricolage Grotesque", "Helvetica Neue", sans-serif';x.fillText('12:11',W/2,420);
+  x.textAlign='left';x.font='600 30px "IBM Plex Sans", sans-serif';x.fillText('12:11',64,96);
+  x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=3;x.strokeRect(W-118,74,48,24);x.fillStyle='rgba(255,255,255,.9)';x.fillRect(W-114,78,32,16);x.fillRect(W-68,81,4,10);
+  // sensors
+  x.fillStyle='#000';const cy=86;
+  if(cut==='pill'||cut==='narrow'){const pw=cut==='pill'?212:160;x.beginPath();x.roundRect?x.roundRect(W/2-pw/2,cy-31,pw,62,31):x.rect(W/2-pw/2,cy-31,pw,62);x.fill();
+    x.fillStyle='#101522';x.beginPath();x.arc(W/2+pw/2-32,cy,13,0,7);x.fill();}
+  else{ // under-display: show where hidden sensors sit, plus top-left hole
+    x.fillStyle='rgba(255,255,255,.10)';for(let i=0;i<22;i++)for(let j=0;j<6;j++)if((i+j)%2===0)x.fillRect(W/2-110+i*10,cy-30+j*10,6,6);
+    x.fillStyle='#000';x.beginPath();x.arc(150,cy,20,0,7);x.fill();x.fillStyle='#101522';x.beginPath();x.arc(150,cy,9,0,7);x.fill();}
+  x.restore();
+  screenTex.needsUpdate=true;
+}
+
+/* phone */
+let phone=null,parts={},spots=[];
+function lens(r,ring){const g=new THREE.Group();
+  const barrel=new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.04,48),new THREE.MeshStandardMaterial({color:ring,metalness:.9,roughness:.25}));barrel.rotation.x=Math.PI/2;barrel.position.z=-0.02;g.add(barrel);
+  const glass=new THREE.Mesh(new THREE.CircleGeometry(r*0.8,48),new THREE.MeshStandardMaterial({color:0x07080c,metalness:.3,roughness:.05}));glass.rotation.y=Math.PI;glass.position.z=-0.041;g.add(glass);
+  const el=new THREE.Mesh(new THREE.CircleGeometry(r*0.36,40),new THREE.MeshStandardMaterial({color:0x26305a,metalness:.6,roughness:.15}));el.rotation.y=Math.PI;el.position.z=-0.0415;g.add(el);
+  return g;}
+function anchor(parent,id,x,y,z,nx,ny,nz,inside){const o=new THREE.Object3D();o.position.set(x,y,z);parent.add(o);spots.push({id,obj:o,n:new THREE.Vector3(nx,ny,nz),inside:!!inside});}
+
+function buildPhone(k){
+  if(phone){yawG.remove(phone);phone.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==screenMat){(Array.isArray(o.material)?o.material:[o.material]).forEach(mm=>{if(mm.map)mm.map.dispose();mm.dispose();});}});}
+  spots=[];const m=MODELS[k],W=m.W,H=m.H,D=m.D,b=Math.min(.03,D*.25);
+  phone=new THREE.Group();yawG.add(phone);
+  const metal=new THREE.MeshStandardMaterial({color:m.frame,metalness:.85,roughness:.3});
+  const frame=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(W-2*b,H-2*b,m.r-b),{depth:D-2*b,bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:6,curveSegments:28}),metal);
+  frame.geometry.translate(0,0,-(D-2*b)/2);phone.add(frame);
+  // buttons
+  const btn=(x,y,h,mat)=>{const s=new THREE.Mesh(new THREE.BoxGeometry(.03,h,D*.42),mat);s.position.set(x,y,0);phone.add(s);};
+  btn(-W/2-.008,H*.31,.15,metal);btn(-W/2-.008,H*.2,.26,metal);btn(-W/2-.008,H*.1,.26,metal);btn(W/2+.008,H*.17,.36,metal);
+  const cc=new THREE.Mesh(new THREE.BoxGeometry(.02,.32,D*.4),new THREE.MeshStandardMaterial({color:0x2a2d36,metalness:.4,roughness:.15}));cc.position.set(W/2+.004,-H*.12,0);phone.add(cc);
+  // front
+  const front=new THREE.Group();phone.add(front);
+  drawScreen(k,state.cut);
+  const sc=new THREE.Mesh(flat(W-.03,H-.03,m.r-.015),screenMat);sc.position.z=D/2+.003;front.add(sc);
+  const fz=D/2+.006,py=H/2-(86/scr.height)*(H-.03)-.015;
+  anchor(front,'101',-.3,py,fz,0,0,1);anchor(front,'103',.3,py,fz,0,0,1);anchor(front,'102',0,py-.17,fz,0,0,1);
+  // internals
+  const inner=new THREE.Group();phone.add(inner);
+  const board=new THREE.Mesh(new THREE.BoxGeometry(W*.8,H*.3,.03),new THREE.MeshStandardMaterial({color:0x1b2b25,roughness:.6,metalness:.2}));board.position.set(0,H*.27,0);inner.add(board);
+  const chip=(t,w,h,x,y,size)=>{const c=new THREE.Mesh(new THREE.BoxGeometry(w,h,.03),new THREE.MeshStandardMaterial({color:0x2b2e35,metalness:.5,roughness:.4}));c.position.set(x,y,.03);inner.add(c);
+    const l=new THREE.Mesh(new THREE.PlaneGeometry(w*.92,h*.92),label(t,w,h,'#2b2e35','#e9ecf2',size));l.position.set(x,y,.046);inner.add(l);};
+  chip('A20',.36,.36,-.17,H*.27+.02,82);chip('RAM',.26,.16,.25,H*.27+.1,64);chip('C2',.2,.2,.25,H*.27-.12,76);
+  anchor(inner,'106',-.17,H*.27+.02,.05,0,0,1,true);anchor(inner,'107',.25,H*.27+.1,.05,0,0,1,true);anchor(inner,'108',.25,H*.27-.12,.05,0,0,1,true);
+  const bat=new THREE.Mesh(new THREE.BoxGeometry(W*.8,H*.52,.05),label('Li-ion',W*.8,H*.52,'#3a3f49','#c9ced8',40));bat.position.set(0,-H*.17,0);inner.add(bat);
+  anchor(inner,'109',0,-H*.17,.03,0,0,1,true);
+  // back
+  const back=new THREE.Group();phone.add(back);
+  const bg=new THREE.Mesh(flat(W-.03,H-.03,m.r-.015),new THREE.MeshStandardMaterial({color:m.back,metalness:.1,roughness:.45}));bg.rotation.y=Math.PI;bg.position.z=-D/2-.003;back.add(bg);
+  const bz=-D/2;
+  if(k==='18'){const bx=W/2-.42,by=H/2-.42;
+    const bump=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(.64,.64,.17),{depth:.022,bevelEnabled:true,bevelThickness:.01,bevelSize:.012,bevelSegments:4,curveSegments:20}),new THREE.MeshStandardMaterial({color:m.back,metalness:.15,roughness:.15}));
+    bump.position.set(bx,by,bz-.032);back.add(bump);
+    const top=bz-.042;
+    const l1=lens(.115,m.frame);l1.position.set(bx,by+.15,top);back.add(l1);const l2=lens(.115,m.frame);l2.position.set(bx,by-.15,top);back.add(l2);
+    const fl=new THREE.Mesh(new THREE.CircleGeometry(.045,32),new THREE.MeshStandardMaterial({color:0xf3eedc,roughness:.3,emissive:0x221f12}));fl.rotation.y=Math.PI;fl.position.set(bx-.19,by+.15,top-.001);back.add(fl);
+    anchor(back,'104',bx,by+.15,top-.045,0,0,-1);
+  }else{const py2=H/2-.37;
+    const plat=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(W-.1,.54,.22),{depth:.03,bevelEnabled:true,bevelThickness:.012,bevelSize:.014,bevelSegments:5,curveSegments:24}),metal);
+    plat.position.set(0,py2,bz-.042);back.add(plat);
+    const top=bz-.054;
+    const l1=lens(.115,m.frame);l1.position.set(W/2-.33,py2,top);back.add(l1);const l2=lens(.115,m.frame);l2.position.set(W/2-.63,py2,top);back.add(l2);
+    const fl=new THREE.Mesh(new THREE.CircleGeometry(.045,32),new THREE.MeshStandardMaterial({color:0xf3eedc,roughness:.3,emissive:0x221f12}));fl.rotation.y=Math.PI;fl.position.set(-W/2+.4,py2,top-.001);back.add(fl);
+    anchor(back,'105',W/2-.48,py2,top-.045,0,0,-1);
+  }
+  anchor(phone,'110',W/2+.02,-H*.12,0,1,0,0);
+  parts={front,inner,back};
+  buildSpots();
+}
+const screenMat=new THREE.MeshStandardMaterial({color:0x000000,emissive:0xffffff,emissiveMap:screenTex,roughness:.08,metalness:0});
+
+/* ---------- State & UI ---------- */
+const state={model:'18',cut:'pill',sel:'101',yaw:-0.32,pitch:0.1,tYaw:-0.32,tPitch:0.1,ex:0,tEx:0,dist:7.2,tDist:7.2,spin:false};
+const spotsEl=document.getElementById('spots');
+function feats(){return FEATURES.filter(f=>f.models.includes(state.model));}
+function buildSpots(){spotsEl.innerHTML='';const ids=feats().map(f=>f.id);
+  spots=spots.filter(s=>ids.includes(s.id));
+  spots.forEach(s=>{const f=FEATURES.find(x=>x.id===s.id);const b=document.createElement('button');b.className='spot';b.textContent=s.id;b.setAttribute('aria-label',s.id+' '+f.title);
+    b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',()=>select(s.id,true));spotsEl.appendChild(b);s.el=b;});
+  markActive();}
+function markActive(){spots.forEach(s=>s.el&&s.el.classList.toggle('active',s.id===state.sel));
+  document.querySelectorAll('.feat').forEach(b=>b.setAttribute('aria-current',b.dataset.id===state.sel?'true':'false'));}
+function renderFacts(){document.getElementById('facts').innerHTML=MODELS[state.model].facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');}
+function renderList(){const fs=feats();document.getElementById('listhead').textContent=fs.length+' features on '+MODELS[state.model].name;
+  document.getElementById('featlist').innerHTML=fs.map(f=>`<button class="feat" data-id="${f.id}"><span class="n">${f.id}</span><span class="t">${f.title}</span><i class="dot d-${f.level}" title="${LEVEL[f.level]}"></i></button>`).join('');
+  document.querySelectorAll('.feat').forEach(b=>b.addEventListener('click',()=>select(b.dataset.id,true)));}
+function extraHTML(f){
+  if(f.extra==='subpixel'){const px=(ox,cut)=>{let s='';for(let r=0;r<4;r++)for(let c=0;c<4;c++){const x=ox+c*22,y=r*22;const hole=cut&&((r+c)%2===0);
+      s+=`<rect x="${x}" y="${y}" width="9" height="9" fill="#e5484d"/><rect x="${x+11}" y="${y}" width="9" height="9" fill="#2fa36b"/><rect x="${x}" y="${y+11}" width="9" height="9" fill="#2fa36b"/>`;
+      s+=hole?`<rect x="${x+11.5}" y="${y+11.5}" width="8" height="8" fill="none" stroke="currentColor" stroke-dasharray="2 2"/>`:`<rect x="${x+11}" y="${y+11}" width="9" height="9" fill="#3b6cf0"/>`;}return s;};
+    return `<figure class="extra" style="margin:0 0 12px"><svg viewBox="0 0 230 112" width="100%" style="max-width:320px;display:block;color:var(--muted)" role="img" aria-label="Normal pixels compared with pixels that have one sub-pixel removed">
+      ${px(0,false)}${px(132,true)}<text x="0" y="106" font-family="IBM Plex Mono,monospace" font-size="9" fill="currentColor">Normal pixels</text><text x="132" y="106" font-family="IBM Plex Mono,monospace" font-size="9" fill="currentColor">Over Face ID</text></svg>
+      <figcaption>Each pixel has red, green, green and blue sub-pixels. Over the sensors, one is left out so infrared light passes through the gap.</figcaption></figure>`;}
+  if(f.extra==='ram'){const rows=[['iPhone 17 (today)',8,0],['iPhone 18: Kuo',9,1],['iPhone 18: Nystedt',12,1],['Air 2 (reported)',12,1]];
+    return `<figure class="extra" style="margin:0 0 12px"><div class="bars">${rows.map(([n,v,h])=>`<div class="bar ${h?'hi':''}"><span>${n}</span><i style="width:${v/12*100}%"></i><span>${v}GB</span></div>`).join('')}</div><figcaption>Two analysts, two different answers for the same phone.</figcaption></figure>`;}
+  return '';}
+function renderDetail(){const f=FEATURES.find(x=>x.id===state.sel);const d=document.getElementById('detail');
+  if(!f||!f.models.includes(state.model)){d.innerHTML='<div class="num">—</div><h2>Choose a marker</h2><p>Click any numbered marker on the phone, or pick a feature from the list below.</p>';return;}
+  const models=f.models.map(k=>`<span class="badge b-model">${MODELS[k].name}</span>`).join('');
+  d.innerHTML=`<div class="num">Ref. ${f.id}</div><h2>${f.title}</h2><div class="meta"><span class="badge b-${f.level}">${LEVEL[f.level]}</span>${models}</div>
+    ${f.body.slice(0,1).map(p=>`<p>${p}</p>`).join('')}${extraHTML(f)}${f.body.slice(1).map(p=>`<p>${p}</p>`).join('')}
+    <p class="why"><b>Why it matters:</b> ${f.why}</p>
+    <div class="sources">Sources: ${f.src.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(' · ')}</div>`;}
+function setCut(c){state.cut=c;document.querySelectorAll('[data-cut]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cut===c?'true':'false'));drawScreen(state.model,c);}
+function nearest(a,cur){const t=Math.PI*2;return a+Math.round((cur-a)/t)*t;}
+function goView(v){const p=VIEWS[v];state.tYaw=nearest(p.yaw,state.yaw);state.tPitch=p.pitch;state.tEx=p.ex;state.tDist=p.ex?10.5:7.2;state.spin=false;syncSpin();}
+function select(id,focus){state.sel=id;const f=FEATURES.find(x=>x.id===id);markActive();renderDetail();
+  if(focus&&f){goView(f.view);if(f.cut)setCut(f.cut);else if(f.view==='front'&&state.cut==='udfi'&&id!=='101')setCut('pill');}}
+function setModel(k){state.model=k;document.querySelectorAll('[data-model]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.model===k?'true':'false'));
+  if(k==='air'&&state.cut==='narrow')setCut('pill');
+  buildPhone(k);renderFacts();renderList();if(!feats().some(f=>f.id===state.sel))state.sel=feats()[0].id;markActive();renderDetail();}
+function syncSpin(){document.getElementById('spin').setAttribute('aria-pressed',state.spin?'true':'false');}
+
+document.querySelectorAll('[data-model]').forEach(b=>b.addEventListener('click',()=>setModel(b.dataset.model)));
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+document.querySelectorAll('[data-cut]').forEach(b=>b.addEventListener('click',()=>{setCut(b.dataset.cut);goView('front');}));
+document.getElementById('spin').addEventListener('click',()=>{state.spin=!state.spin;if(state.spin){state.tEx=0;state.tDist=7.2;}syncSpin();});
+
+/* ---------- Interaction ---------- */
+const ptrs=new Map();let pinch0=0,dist0=0,last=null;
+stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.classList.add('dragging');state.spin=false;syncSpin();
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=state.tDist;}last={x:e.clientX,y:e.clientY};});
+stage.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)state.tDist=Math.min(14,Math.max(4.2,dist0*pinch0/d));return;}
+  const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
+  state.tYaw+=dx*0.009;state.tPitch=Math.max(-1.1,Math.min(1.1,state.tPitch+dy*0.007));state.yaw=state.tYaw;state.pitch=state.tPitch;});
+const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)stage.classList.remove('dragging');const r=[...ptrs.values()][0];if(r)last=r;};
+stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+stage.addEventListener('wheel',e=>{e.preventDefault();state.tDist=Math.min(14,Math.max(4.2,state.tDist*(1+e.deltaY*0.0012)));},{passive:false});
+
+/* ---------- Loop ---------- */
+const fig=document.getElementById('fig'),sheet=document.getElementById('sheetno');
+const v=new THREE.Vector3(),n=new THREE.Vector3(),c=new THREE.Vector3();
+let w=1,h=1;
+new ResizeObserver(()=>{w=stage.clientWidth;h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
+  camera.position.z=state.dist;camera.updateProjectionMatrix();}).observe(stage);
+let lastFig='';
+function tick(){
+  const k=reduce?1:0.12;
+  if(state.spin&&!reduce)state.tYaw+=0.006;
+  state.yaw+=(state.tYaw-state.yaw)*k;state.pitch+=(state.tPitch-state.pitch)*k;
+  state.ex+=(state.tEx-state.ex)*(reduce?1:0.09);state.dist+=(state.tDist-state.dist)*k;
+  yawG.rotation.y=state.yaw;pitchG.rotation.x=state.pitch;
+  // narrow screens: pull camera back so the phone fits
+  const fit=w/h<0.75?1.25:1;camera.position.z=state.dist*fit;
+  const e=state.ex;
+  if(parts.front){parts.front.position.z=1.7*e;parts.inner.position.z=0.9*e;parts.back.position.z=-1.0*e;}
+  renderer.render(scene,camera);
+  spots.forEach(s=>{if(!s.el)return;s.obj.getWorldPosition(v);n.copy(s.n).transformDirection(s.obj.parent.matrixWorld);c.copy(camera.position).sub(v);
+    let vis=n.dot(c.normalize())>0.12;if(s.inside)vis=vis&&e>0.6;
+    v.project(camera);const x=(v.x*.5+.5)*w,y=(-v.y*.5+.5)*h;s.el.style.transform=`translate(${x-19}px,${y-12}px)`;s.el.classList.toggle('off',!vis);s.el.tabIndex=vis?0:-1;});
+  const cy=Math.cos(state.yaw);let t=e>0.5?'FIG. 2 — Exploded view':cy>0.55?'FIG. 1 — Front':cy<-0.55?'FIG. 1 — Back':'FIG. 1 — Side';
+  t+=' · '+MODELS[state.model].name;if(t!==lastFig){fig.textContent=t;sheet.textContent=e>0.5?'Sheet 2 of 2':'Sheet 1 of 2';lastFig=t;}
+  requestAnimationFrame(tick);
+}
+setModel('18');setCut('pill');
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>drawScreen(state.model,state.cut));
+tick();
+})();
+</script>
+</body>
+</html>

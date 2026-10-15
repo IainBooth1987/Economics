@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('biz-omics-theme');}catch(e){}
+if(!t){t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;})();
+</script>
+<title>Organisational Structures 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an architect's model table (3D stage, left) beside a revision sheet (right); a comparison table closes the page */
+:root{
+  --bg:#edf0f3; --surface:#ffffff; --ink:#19202b; --muted:#566070; --rule:#d5dbe3; --tint:#f5f7f9;
+  --link:#2459c9; --path:#e8a800; --path-ink:#3a2a00;
+  --mkt:#d9486b; --ops:#1f9e89; --fin:#3a7bd5; --hr:#8a5cd0; --lead:#55657e; --ceo:#2a303b;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff; --path:#ffc533; --path-ink:#2a1f00;
+  --ceo:#c9d0db; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff; --path:#ffc533; --path-ink:#2a1f00;
+  --ceo:#c9d0db; color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 44px}
+.wrap{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-stretch:118%;font-weight:800;font-size:clamp(28px,4.4vw,46px);line-height:1;margin:6px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:66ch}
+header{display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:700 14px/1 var(--body);color:var(--ink);background:var(--surface);border:1.5px solid var(--rule);border-radius:8px;padding:12px 16px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:150px}
+.tab small{font:400 12px/1.2 var(--body);color:var(--muted)}
+.tab[aria-selected="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ink)}
+.tab:focus-visible,button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:18px;align-items:start}
+@media (max-width:960px){.app{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;height:clamp(460px,68vh,740px);background:var(--surface);border:1px solid var(--rule);border-radius:8px;overflow:hidden;touch-action:none;cursor:grab}
+.stage.dragging{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.trace{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;pointer-events:none;font-size:13.5px}
+.trace .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chip{background:var(--tint);border:1px solid var(--rule);border-radius:6px;padding:4px 8px;font-weight:700}
+.chip.on{background:var(--path);border-color:var(--path);color:var(--path-ink)}
+.arrow{color:var(--muted)}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;color:var(--muted);pointer-events:none;max-width:calc(100% - 24px)}
+.legend span{display:inline-flex;align-items:center;gap:6px;background:var(--surface);padding:1px 4px;border-radius:4px}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.hint{position:absolute;right:12px;bottom:34px;font-size:12px;color:var(--muted);background:var(--surface);padding:1px 6px;border-radius:4px;pointer-events:none}
+@media (max-width:600px){.hint{display:none}}
+
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:18px}
+.panel h2{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:26px;line-height:1.05;margin:0 0 8px}
+.panel p{margin:0 0 10px}
+.case{background:var(--tint);border-radius:6px;padding:10px 12px;font-size:14.5px}
+.case b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;font-weight:500;margin-bottom:2px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.stats div{background:var(--surface);padding:10px 12px}
+.stats dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stats dd{margin:2px 0 0;font-family:var(--display);font-stretch:110%;font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.pc{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.pc h3{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px}
+.pc ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.pros h3{color:var(--ops)} .cons h3{color:var(--mkt)}
+.suits{margin-top:12px;border-top:1px dashed var(--rule);padding-top:10px;font-size:14.5px}
+.why h3{font-family:var(--display);font-stretch:110%;font-weight:700;font-size:18px;margin:0 0 10px}
+.q{border-top:1px solid var(--rule);padding-block:10px}
+.q:first-of-type{border-top:0;padding-top:0}
+.q p{margin:0 0 8px;font-weight:700}
+.reveal{font:700 13px/1 var(--body);background:transparent;color:var(--link);border:1.5px solid var(--link);border-radius:6px;padding:9px 12px;cursor:pointer}
+.ans{margin-top:8px;background:var(--tint);border-left:3px solid var(--path);padding:8px 10px;border-radius:0 6px 6px 0;font-size:14.5px}
+
+.compare{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:18px}
+.compare h2{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:22px;margin:0 0 10px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--rule)}
+th{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+tbody th{font-family:var(--body);font-size:14.5px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:700}
+tr.cur{background:var(--tint)}
+.err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+footer{font-size:12.5px;color:var(--muted)}
+
+body{margin:0}
+.bk-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-4px}
+.bk-bar a{font:600 13.5px/1 inherit;color:inherit;text-decoration:none;opacity:.75;padding:8px 0}
+.bk-bar a:hover{opacity:1;text-decoration:underline}
+.bk-bar .bk-right{display:flex;gap:8px;align-items:center}
+.bk-print{font:600 13px/1 system-ui,sans-serif;padding:9px 14px;border-radius:7px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+.print-head{display:none}
+@media print{
+  .stage,.stagecol .toolbar,.toolbar,.controls,.bk-bar,.hint,.tabs,.models,.reveal,#qnew,.spots,.legend,.trace{display:none!important}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,"Times New Roman",serif!important}
+  .ans[hidden]{display:block!important}
+  .card,.panel,.compare,.list,.facts,.stats{break-inside:avoid;background:#fff!important;color:#000!important}
+  .app{grid-template-columns:1fr!important}
+  .more,.compare{break-before:page}
+  .print-head{display:block;font:700 14px/1.4 Georgia,serif;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="print-head">BIZ-OMICS · Organisational Structures 3D</div>
+  <nav class="bk-bar" aria-label="Back"><a href="3d-learning.html">← 3D Learning</a><span class="bk-right"><a href="index.html">BIZ-OMICS Business</a><button class="bk-print" onclick="window.print()">Print</button></span></nav>
+  <header>
+    <div>
+      <div class="eyebrow">BIZ-OMICS · 3D Learning · Organisational structure</div>
+      <h1>Organisational Structures 3D</h1>
+      <p class="lede">Kestrel Outdoor makes footwear, clothing and camping gear and sells in three regions. See the same business organised four different ways, then click any team to trace who it reports to.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Structure">
+      <button class="tab" role="tab" id="t-functional" data-s="functional" aria-selected="true">Functional<small>Grouped by job</small></button>
+      <button class="tab" role="tab" id="t-product" data-s="product" aria-selected="false">Product-based<small>Grouped by product</small></button>
+      <button class="tab" role="tab" id="t-regional" data-s="regional" aria-selected="false">Regional<small>Grouped by place</small></button>
+      <button class="tab" role="tab" id="t-matrix" data-s="matrix" aria-selected="false">Matrix<small>Function + project</small></button>
+    </div>
+  </header>
+
+  <div class="app">
+    <div class="stage" id="stage" aria-label="3D organisation chart. Drag to rotate, click a team to trace its chain of command.">
+      <div class="trace" id="trace"></div>
+      <div class="hint">Drag to rotate · scroll or pinch to zoom · click a block</div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--mkt)"></i>Marketing</span>
+        <span><i class="sw" style="background:var(--ops)"></i>Operations</span>
+        <span><i class="sw" style="background:var(--fin)"></i>Finance</span>
+        <span><i class="sw" style="background:var(--hr)"></i>HR</span>
+        <span><i class="sw" style="background:var(--lead)"></i>Division or project lead</span>
+        <span><i class="sw" style="background:var(--path)"></i>Chain of command</span>
+      </div>
+    </div>
+
+    <aside>
+      <dl class="stats" id="stats"></dl>
+      <section class="panel" id="info" aria-live="polite"></section>
+      <section class="panel why" id="why"></section>
+    </aside>
+  </div>
+
+  <section class="compare">
+    <h2>Side by side</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Structure</th><th>Grouped by</th><th>Bosses per worker</th><th>Main strength</th><th>Main weakness</th><th>Best suited to</th></tr></thead>
+        <tbody>
+          <tr data-row="functional"><th>Functional</th><td>Specialist job (marketing, operations, finance, HR)</td><td>1</td><td>Specialisation and no duplication</td><td>Departments become silos and coordinate poorly</td><td>Smaller firms with one main product and market</td></tr>
+          <tr data-row="product"><th>Product-based</th><td>Product range</td><td>1</td><td>Focus on each product’s customers; divisions as profit centres</td><td>Functions duplicated in every division</td><td>Large firms with distinct product ranges</td></tr>
+          <tr data-row="regional"><th>Regional</th><td>Geographical area</td><td>1</td><td>Adapts to local tastes, laws and time zones</td><td>Duplication and an inconsistent brand</td><td>Multinationals selling into different markets</td></tr>
+          <tr data-row="matrix"><th>Matrix</th><td>Function and project at the same time</td><td>2</td><td>Cross-functional teamwork and flexible use of experts</td><td>Two bosses can give conflicting instructions</td><td>Project work: product development, engineering, consultancy</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <footer>Kestrel Outdoor is a fictional company used to compare the four structures on equal terms.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const stage=document.getElementById('stage');
+if(!window.THREE){stage.insertAdjacentHTML('beforeend','<div class="err">The 3D library did not load. Check your connection and reload the page.</div>');return;}
+
+/* ---------- Content ---------- */
+const FUN=[{k:'mkt',n:'Marketing',c:0xd9486b},{k:'ops',n:'Operations',c:0x1f9e89},{k:'fin',n:'Finance',c:0x3a7bd5},{k:'hr',n:'HR',c:0x8a5cd0}];
+const TEAMS={mkt:['Brand','Digital','Research'],ops:['Production','Buying','Logistics'],fin:['Accounts','Budgets','Credit'],hr:['Hiring','Training','Payroll']};
+const PRODUCTS=['Footwear','Clothing','Camping gear'],REGIONS=['UK & Europe','North America','Asia-Pacific'];
+const LEAD=0x55657e,CEO=0x2a303b;
+const hex=n=>'#'+n.toString(16).padStart(6,'0');
+
+const INFO={
+ functional:{name:'Functional structure',
+  def:'Staff are grouped by the job they do. Each function (marketing, operations, finance and HR) is a department with its own director.',
+  kestrel:'One Marketing department handles footwear, clothing and camping gear in every region.',
+  pros:['Specialists work side by side, share expertise and get better at their jobs.','Clear lines of authority: everyone knows who their manager is.','No duplication. Each function exists once, which keeps costs down.'],
+  cons:['Departments can turn into silos that chase their own targets rather than the firm’s.','Cross-department work, such as a product launch, is slow to coordinate.','Struggles when the firm sells very different products or trades in many countries.'],
+  suits:'Smaller and medium-sized firms with one main product range in one main market.',
+  stats:[['Grouped by','Function'],['Marketing teams','1'],['Bosses per worker','1'],['Duplication','Low']],
+  qs:[['Why might a functional structure slow down a new product launch?','A launch needs marketing, operations and finance to act together, but each reports up its own chain. Coordinating them may need a decision from the CEO, which adds time.'],
+      ['Why does a functional structure usually cost less to run than a product-based one?','Each function exists only once, so there are no duplicated managers, teams or systems. The department’s costs are spread across the whole business.']]},
+ product:{name:'Product-based structure',
+  def:'The business is split into divisions, one for each product range. Every division has its own marketing, operations, finance and HR.',
+  kestrel:'Footwear, Clothing and Camping gear each run as a separate division with its own managing director.',
+  pros:['Each division focuses on its own customers and competitors, so it responds quickly.','Divisions can be run as profit centres, so performance is easy to measure and managers are accountable.','A product range can be added or sold off without reorganising the rest of the firm.'],
+  cons:['Functions are duplicated. Kestrel now has three marketing teams, which raises costs.','Divisions may compete for resources instead of cooperating.','Expertise is spread thinly and good ideas are not always shared between divisions.'],
+  suits:'Large firms whose product ranges serve quite different customers.',
+  stats:[['Grouped by','Product'],['Marketing teams','3'],['Bosses per worker','1'],['Duplication','High']],
+  qs:[['Kestrel now has three marketing teams. Why might the CEO accept that extra cost?','Each team understands its own product’s customers and can act without waiting for a central department. The CEO accepts the cost if faster, better-targeted decisions add more revenue than the duplication costs.'],
+      ['Why do product divisions make it easier to judge a manager’s performance?','Each division is a profit centre with its own revenue and costs. Its profit can be measured, so its managing director can be held responsible for the result.']]},
+ regional:{name:'Regional structure',
+  def:'The business is split into divisions by geographical area. Each region has its own functional teams and makes many decisions locally.',
+  kestrel:'UK & Europe, North America and Asia-Pacific each run as a separate division.',
+  pros:['Each region adapts to local tastes, culture, laws and currency.','Decisions are made close to customers, which suits decentralised management.','Teams work in their customers’ time zones and know local competitors.'],
+  cons:['Functions are duplicated in every region, raising costs.','Regions may make different decisions, which weakens a consistent brand.','Head office has less direct control over what each region does.'],
+  suits:'Multinationals selling into markets with different customer needs or rules.',
+  stats:[['Grouped by','Region'],['Marketing teams','3'],['Bosses per worker','1'],['Duplication','High']],
+  qs:[['Why might a regional structure suit a firm selling outdoor clothing around the world?','Customers in different regions face different climates and seasons. A regional team can adapt the range, pricing and promotion to local conditions and timing.'],
+      ['Why might head office worry about a regional structure?','Regions may take different decisions, which can confuse the brand and duplicate costs. Head office also has less direct control over each region.']]},
+ matrix:{name:'Matrix structure',
+  def:'Staff stay in their functional department but are also placed in a product or project team, so each person reports to two managers.',
+  kestrel:'A marketing specialist answers to the Marketing Director and to the Footwear project manager.',
+  pros:['Cross-functional teams share knowledge, which helps innovation and problem-solving.','Specialists can be moved between projects as the work needs them.','The firm keeps functional expertise while giving each product a clear focus.'],
+  cons:['Two bosses can give conflicting instructions, which confuses staff and causes stress.','Functional and project managers may compete for staff and power.','More managers and meetings raise costs and can slow decisions.'],
+  suits:'Project-based work such as product development, engineering and consultancy.',
+  stats:[['Grouped by','Function + project'],['Marketing teams','1, shared'],['Bosses per worker','2'],['Duplication','Low']],
+  qs:[['Why might a worker in a matrix structure feel stressed?','They have two managers who may set conflicting priorities and deadlines, and it is not always clear whose instruction comes first.'],
+      ['Why is a matrix structure useful when developing a new product?','The project team includes marketing, operations, finance and HR from the start, so problems are spotted early and decisions do not wait on separate departments.']]}
+};
+
+/* ---------- Structure builders ---------- */
+function functional(){const N=[];N.push({id:'ceo',label:'CEO',full:'Chief Executive',color:CEO,pos:[0,3.2,0],lvl:0,size:'ceo',parents:[]});
+  FUN.forEach((f,i)=>{const x=(i-1.5)*4.4;N.push({id:'h-'+f.k,label:f.n+' Director',color:f.c,pos:[x,1.4,0],lvl:1,size:'head',parents:['ceo']});
+    TEAMS[f.k].forEach((t,j)=>N.push({id:f.k+'-'+j,label:t,full:t+' team',color:f.c,pos:[x+(j-1)*1.38,-0.5,0],lvl:2,size:'team',parents:['h-'+f.k]}));});
+  return {nodes:N,center:[0,1.2,0],view:{yaw:-0.22,pitch:0.26,dist:21},def:'mkt-1'};}
+function divisional(list,tag){const N=[];N.push({id:'ceo',label:'CEO',full:'Chief Executive',color:CEO,pos:[0,3.2,0],lvl:0,size:'ceo',parents:[]});
+  list.forEach((d,i)=>{const x=(i-1)*5.4;const id='d'+i;N.push({id,label:d+(tag==='product'?' Division':''),full:d+' managing director',color:LEAD,pos:[x,1.4,0],lvl:1,size:'head',parents:['ceo']});
+    FUN.forEach((f,j)=>N.push({id:id+'-'+f.k,label:f.n,full:d+' '+f.n.toLowerCase()+' team',color:f.c,pos:[x+(j-1.5)*1.25,-0.5,0],lvl:2,size:'team',parents:[id]}));});
+  return {nodes:N,center:[0,1.2,0],view:{yaw:-0.22,pitch:0.26,dist:20},def:tag==='product'?'d1-mkt':'d1-ops'};}
+function matrix(){const N=[];const ZB=-3.6,HY=1.7,SY=-0.3,PX=-6.6;
+  N.push({id:'ceo',label:'CEO',full:'Chief Executive',color:CEO,pos:[-1.4,3.6,ZB],lvl:0,size:'ceo',parents:[]});
+  FUN.forEach((f,i)=>N.push({id:'h-'+f.k,label:f.n+' Director',color:f.c,pos:[(i-1.5)*2.9+0.4,HY,ZB],lvl:1,size:'head',parents:['ceo']}));
+  PRODUCTS.forEach((p,j)=>N.push({id:'p'+j,label:p+' project',full:p+' project manager',color:LEAD,pos:[PX,HY,-0.6+j*2.3],lvl:1,size:'head',parents:['ceo']}));
+  PRODUCTS.forEach((p,j)=>FUN.forEach((f,i)=>N.push({id:'s'+j+'-'+f.k,label:'',full:f.n+' specialist on the '+p+' project',color:f.c,pos:[(i-1.5)*2.9+0.4,SY,-0.6+j*2.3],lvl:2,size:'staff',parents:['h-'+f.k,'p'+j]})));
+  return {nodes:N,center:[-1.2,1.3,0],view:{yaw:-0.62,pitch:0.42,dist:21},def:'s0-mkt',matrix:true};}
+const BUILD={functional,product:()=>divisional(PRODUCTS,'product'),regional:()=>divisional(REGIONS,'regional'),matrix};
+
+/* ---------- Three.js ---------- */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch(e){stage.insertAdjacentHTML('beforeend','<div class="err">This device could not start 3D graphics.</div>');return;}
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,0.1,200);
+scene.add(new THREE.HemisphereLight(0xffffff,0x8892a0,0.9));
+const dl=new THREE.DirectionalLight(0xffffff,0.75);dl.position.set(4,8,6);scene.add(dl);
+const pitchG=new THREE.Group(),yawG=new THREE.Group();scene.add(pitchG);pitchG.add(yawG);
+const grid=new THREE.GridHelper(30,30,0x8a94a3,0x8a94a3);grid.material.transparent=true;grid.material.opacity=.22;grid.position.y=-1.3;yawG.add(grid);
+
+const SIZES={ceo:[1.2,.58,.58],head:[.95,.44,.44],team:[.62,.34,.34],staff:[.62,.42,.42]};
+const LH={ceo:.4,head:.32,team:.24,staff:0};
+function textSprite(text,bg,fg,h){const c=document.createElement('canvas'),x=c.getContext('2d');const fs=40;
+  x.font=`700 ${fs}px "Atkinson Hyperlegible", system-ui, sans-serif`;const tw=Math.ceil(x.measureText(text).width);
+  c.width=tw+36;c.height=64;x.font=`700 ${fs}px "Atkinson Hyperlegible", system-ui, sans-serif`;
+  x.fillStyle=bg;const r=14;x.beginPath();x.moveTo(r,0);x.arcTo(c.width,0,c.width,c.height,r);x.arcTo(c.width,c.height,0,c.height,r);x.arcTo(0,c.height,0,0,r);x.arcTo(0,0,c.width,0,r);x.fill();
+  x.fillStyle=fg;x.textBaseline='middle';x.fillText(text,18,c.height/2+2);
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false}));s.scale.set(h*c.width/c.height,h,1);return s;}
+function seg(p,q,mat,r){const a=new THREE.Vector3(...p),b=new THREE.Vector3(...q),d=b.clone().sub(a),len=d.length();if(len<1e-4)return null;
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),mat);m.position.copy(a).add(b).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return m;}
+
+let cur=null; // {key,group,nodes:Map,edges:[],data,t0}
+const state={key:'functional',sel:null,yaw:-0.22,pitch:0.26,tYaw:-0.22,tPitch:0.26,dist:21,tDist:21};
+
+function build(key){
+  if(cur){yawG.remove(cur.group);cur.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});}
+  const data=BUILD[key](),group=new THREE.Group();group.position.set(-data.center[0],-data.center[1],-data.center[2]);yawG.add(group);
+  grid.position.set(0,-1.3-data.center[1]+0.3,0);
+  const nodes=new Map(),edges=[],picks=[];
+  data.nodes.forEach(n=>{const g=new THREE.Group();g.position.set(...n.pos);group.add(g);
+    const [w,h,d]=SIZES[n.size];const mat=new THREE.MeshStandardMaterial({color:n.color,roughness:.5,metalness:.05,transparent:true});
+    const box=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);box.userData.id=n.id;g.add(box);picks.push(box);
+    let label=null;
+    if(n.label){const team=n.size==='team';label=team?textSprite(n.label,'#ffffff',hex(n.color),LH.team):textSprite(n.label,hex(n.color),'#ffffff',LH[n.size]);
+      label.position.y=team?-(h/2+.22):(h/2+.28);g.add(label);}
+    nodes.set(n.id,{n,g,mat,label});});
+  data.nodes.forEach(n=>n.parents.forEach(pid=>{const p=nodes.get(pid).n,a=n.pos,b=p.pos;let pts;
+    if(data.matrix&&n.size==='staff'){pts=pid.startsWith('h-')?[a,[a[0],b[1],a[2]],b]:[a,[b[0],a[1],a[2]],b];}
+    else{const m=(a[1]+b[1])/2+ (n.size==='team'?0.15:0);pts=[a,[a[0],m,a[2]],[b[0],m,b[2]],b];}
+    const base=pid.startsWith('p')||(p.color===LEAD)?LEAD:(n.size==='staff'||n.size==='team'?n.color:p.color);
+    const mat=new THREE.MeshBasicMaterial({color:base,transparent:true});const meshes=[];
+    for(let i=0;i<pts.length-1;i++){const s=seg(pts[i],pts[i+1],mat,.028);if(s){group.add(s);meshes.push(s);}}
+    edges.push({child:n.id,parent:pid,mat,base,meshes,lvl:n.lvl});}));
+  cur={key,group,nodes,edges,picks,data,t0:performance.now()};
+  const v=data.view;state.tYaw=v.yaw;state.tPitch=v.pitch;state.tDist=v.dist;
+  select(data.def);
+}
+function ancestors(id){const s=new Set([id]);const st=[id];while(st.length){const n=cur.nodes.get(st.pop()).n;n.parents.forEach(p=>{if(!s.has(p)){s.add(p);st.push(p);}});}return s;}
+
+/* ---------- UI ---------- */
+const traceEl=document.getElementById('trace');
+function nameOf(id){const n=cur.nodes.get(id).n;return n.full||n.label;}
+function select(id){state.sel=id&&cur.nodes.has(id)?id:null;
+  if(!state.sel){traceEl.innerHTML='<span class="k">Click any block to trace its chain of command</span>';return;}
+  const n=cur.nodes.get(state.sel).n;let html='<span class="k">Reports to</span><span class="chip on">'+nameOf(state.sel)+'</span>';
+  if(n.parents.length){html+='<span class="arrow">→</span>'+n.parents.map(p=>'<span class="chip on">'+nameOf(p)+'</span>').join('<span class="arrow">and</span>');
+    const gp=new Set();n.parents.forEach(p=>cur.nodes.get(p).n.parents.forEach(g=>gp.add(g)));
+    if(gp.size)html+='<span class="arrow">→</span>'+[...gp].map(g=>'<span class="chip on">'+nameOf(g)+'</span>').join('');
+    if(n.parents.length>1)html+='<span class="chip">Two bosses</span>';}
+  else html+='<span class="chip">Top of the structure</span>';
+  traceEl.innerHTML=html;}
+function renderPanel(key){const d=INFO[key];
+  document.getElementById('stats').innerHTML=d.stats.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  document.getElementById('info').innerHTML=`<h2>${d.name}</h2><p>${d.def}</p><div class="case"><b>At Kestrel Outdoor</b>${d.kestrel}</div>
+    <div class="pc"><div class="pros"><h3>Advantages</h3><ul>${d.pros.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="cons"><h3>Disadvantages</h3><ul>${d.cons.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
+    <div class="suits"><b>Best suited to:</b> ${d.suits}</div>`;
+  document.getElementById('why').innerHTML=`<h3>Tell me why</h3>`+d.qs.map(([q,a],i)=>`<div class="q"><p>${q}</p><button class="reveal" id="rv-${key}-${i}" aria-expanded="false">Reveal answer</button><div class="ans" hidden>${a}</div></div>`).join('');
+  document.querySelectorAll('.reveal').forEach(b=>b.addEventListener('click',()=>{const a=b.nextElementSibling;a.hidden=!a.hidden;b.setAttribute('aria-expanded',String(!a.hidden));b.textContent=a.hidden?'Reveal answer':'Hide answer';}));
+  document.querySelectorAll('tr[data-row]').forEach(r=>r.classList.toggle('cur',r.dataset.row===key));}
+function setStructure(key){state.key=key;document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.s===key?'true':'false'));build(key);renderPanel(key);}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setStructure(t.dataset.s)));
+
+/* ---------- Interaction ---------- */
+const ptrs=new Map();let pinch0=0,dist0=0,last=null,downAt=null;
+const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.classList.add('dragging');
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=state.tDist;downAt=null;}else downAt={x:e.clientX,y:e.clientY};last={x:e.clientX,y:e.clientY};});
+stage.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)state.tDist=Math.min(40,Math.max(8,dist0*pinch0/d));return;}
+  const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};
+  state.tYaw+=dx*.008;state.tPitch=Math.max(-.2,Math.min(1.25,state.tPitch+dy*.006));state.yaw=state.tYaw;state.pitch=state.tPitch;});
+const up=e=>{if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)stage.classList.remove('dragging');
+  if(downAt&&Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y)<6&&cur){const r=renderer.domElement.getBoundingClientRect();
+    mv.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mv,camera);const hit=ray.intersectObjects(cur.picks)[0];select(hit?hit.object.userData.id:null);}
+  downAt=null;const rest=[...ptrs.values()][0];if(rest)last=rest;};
+stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+stage.addEventListener('wheel',e=>{e.preventDefault();state.tDist=Math.min(40,Math.max(8,state.tDist*(1+e.deltaY*.0012)));},{passive:false});
+
+/* ---------- Loop ---------- */
+let w=1,h=1;
+new ResizeObserver(()=>{w=stage.clientWidth;h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}).observe(stage);
+const ease=t=>t<=0?0:t>=1?1:1-Math.pow(1-t,3);
+function tick(now){
+  const k=reduce?1:.1;
+  state.yaw+=(state.tYaw-state.yaw)*k;state.pitch+=(state.tPitch-state.pitch)*k;state.dist+=(state.tDist-state.dist)*k;
+  yawG.rotation.y=state.yaw;pitchG.rotation.x=state.pitch;
+  const aspectFit=w/h<1?Math.min(2.1,1.15/(w/h)):1;camera.position.set(0,0,state.dist*aspectFit);camera.lookAt(0,0,0);
+  if(cur){const el=reduce?99:(now-cur.t0)/1000;const path=state.sel?ancestors(state.sel):null;
+    cur.nodes.forEach(({n,g,mat,label})=>{const s=ease((el-n.lvl*.16)/.42);g.scale.setScalar(Math.max(s,.001));
+      const on=!path||path.has(n.id);mat.opacity=on?1:.22;mat.emissive.setHex(path&&n.id===state.sel?0x3a2a00:0);if(label)label.material.opacity=on?1:.25;});
+    cur.edges.forEach(e=>{const a=ease((el-.3-e.lvl*.16)/.4);const on=path&&path.has(e.child)&&path.has(e.parent);
+      e.mat.color.setHex(on?0xf0b000:e.base);e.mat.opacity=a*(path?(on?1:.12):.85);e.meshes.forEach(m=>{const r=on?2:1;m.scale.x=r;m.scale.z=r;});});}
+  renderer.render(scene,camera);requestAnimationFrame(tick);}
+setStructure('functional');
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{const s=state.sel;build(state.key);if(s)select(s);});
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

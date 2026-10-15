@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('biz-omics-theme');}catch(e){}
+if(!t){t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;})();
+</script>
+<title>Just-in-Time 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: factory floor model (3D stage) with run controls beneath; a two-column scoreboard beside it; stock chart and revision cards below */
+:root{
+  --bg:#edf0f3; --surface:#ffffff; --ink:#19202b; --muted:#566070; --rule:#d5dbe3; --tint:#f5f7f9;
+  --link:#2459c9; --jit:#1f6fd1; --jic:#a8662a; --stop:#c62f3f; --go:#1d8a55; --amber:#d99a00;
+  --ok:#1d7a4e; --ok-bg:#e1f2e8; --bad:#b0293b; --bad-bg:#fbe4e7; --warn:#8a5300; --warn-bg:#fbeed5;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff;
+  --jit:#6fa8ff; --jic:#e0a060; --stop:#ff7b88; --go:#6fd3a0; --amber:#ffc533;
+  --ok:#72d3a3; --ok-bg:#13301f; --bad:#ff8d9b; --bad-bg:#3a1820; --warn:#f1b65c; --warn-bg:#35270f; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff;
+  --jit:#6fa8ff; --jic:#e0a060; --stop:#ff7b88; --go:#6fd3a0; --amber:#ffc533;
+  --ok:#72d3a3; --ok-bg:#13301f; --bad:#ff8d9b; --bad-bg:#3a1820; --warn:#f1b65c; --warn-bg:#35270f; color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 44px}
+.wrap{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-stretch:118%;font-weight:800;font-size:clamp(28px,4.4vw,46px);line-height:1;margin:6px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:70ch}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:18px;align-items:start}
+@media (max-width:1000px){.app{grid-template-columns:minmax(0,1fr)}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* stage: a lit factory interior in both themes */
+.stage{position:relative;height:clamp(420px,60vh,660px);border-radius:8px;overflow:hidden;touch-action:none;cursor:grab;
+  background:radial-gradient(ellipse at 50% 0%,#4a5466 0%,#2a313d 55%,#1b2029 100%);border:1px solid var(--rule)}
+.stage.dragging{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;top:12px;left:12px;right:12px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.pill{font:500 12px/1 var(--mono);letter-spacing:.03em;padding:7px 9px;border-radius:5px;background:rgba(10,14,22,.66);color:#eef1f6}
+.pill b{font-weight:500;color:#ffd166}
+.pill.red{background:#b0293b;color:#fff}
+.pill.blue{background:#1f6fd1;color:#fff} .pill.brown{background:#8f5520;color:#fff}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:#eef1f6;background:rgba(10,14,22,.5);padding:2px 7px;border-radius:4px;pointer-events:none}
+
+.controls{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:86px}
+.btn{font:700 13px/1 var(--body);color:var(--ink);background:var(--tint);border:1.5px solid var(--rule);border-radius:6px;padding:11px 13px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.event{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.seg{display:inline-flex;border:1.5px solid var(--rule);border-radius:7px;overflow:hidden}
+.seg button{font:700 13px/1 var(--body);color:var(--ink);background:var(--surface);border:0;border-right:1.5px solid var(--rule);padding:11px 13px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:18px}
+.card h3{font-family:var(--display);font-stretch:110%;font-weight:700;font-size:18px;margin:0 0 8px}
+.dayline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.dayline .v{font-family:var(--display);font-stretch:120%;font-weight:800;font-size:46px;line-height:.9;font-variant-numeric:tabular-nums}
+.dayline .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.today{font-size:14px;color:var(--muted);margin-top:8px}
+.today b{color:var(--ink)}
+table.score{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+.score th,.score td{padding:7px 6px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums}
+.score th:first-child,.score td:first-child{text-align:left}
+.score thead th{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.score thead th.jit{color:var(--jit)} .score thead th.jic{color:var(--jic)}
+.score td{font-family:var(--mono);font-size:13px}
+.score td:first-child{font-family:var(--body);font-size:14px}
+.score tr.total td{font-weight:500;border-bottom:0;font-size:14px;padding-top:10px}
+.score tr.total td:first-child{font-weight:700}
+.win{background:var(--ok-bg);color:var(--ok);border-radius:4px}
+.verdict{margin:10px 0 0;font-size:14px}
+.chart svg{display:block;width:100%;height:auto}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:6px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+.more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:1000px){.more{grid-template-columns:minmax(0,1fr)}}
+.card h4{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+.card p{margin:0 0 10px}
+.q{border-top:1px solid var(--rule);padding-block:10px}
+.q:first-of-type{border-top:0;padding-top:0}
+.q p{margin:0 0 8px;font-weight:700}
+.reveal{font:700 13px/1 var(--body);background:transparent;color:var(--link);border:1.5px solid var(--link);border-radius:6px;padding:9px 12px;cursor:pointer}
+.ans{margin-top:8px;background:var(--tint);border-left:3px solid var(--amber);padding:8px 10px;border-radius:0 6px 6px 0;font-size:14.5px}
+.case{background:var(--tint);border-radius:6px;padding:10px 12px;font-size:14.5px;margin-top:10px}
+.err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#eef1f6}
+footer{font-size:12.5px;color:var(--muted)}
+
+body{margin:0}
+.bk-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-4px}
+.bk-bar a{font:600 13.5px/1 inherit;color:inherit;text-decoration:none;opacity:.75;padding:8px 0}
+.bk-bar a:hover{opacity:1;text-decoration:underline}
+.bk-bar .bk-right{display:flex;gap:8px;align-items:center}
+.bk-print{font:600 13px/1 system-ui,sans-serif;padding:9px 14px;border-radius:7px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+.print-head{display:none}
+@media print{
+  .stage,.stagecol .toolbar,.toolbar,.controls,.bk-bar,.hint,.tabs,.models,.reveal,#qnew,.spots,.legend,.trace{display:none!important}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,"Times New Roman",serif!important}
+  .ans[hidden]{display:block!important}
+  .card,.panel,.compare,.list,.facts,.stats{break-inside:avoid;background:#fff!important;color:#000!important}
+  .app{grid-template-columns:1fr!important}
+  .more,.compare{break-before:page}
+  .print-head{display:block;font:700 14px/1.4 Georgia,serif;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="print-head">BIZ-OMICS · Just-in-Time 3D</div>
+  <nav class="bk-bar" aria-label="Back"><a href="3d-learning.html">← 3D Learning</a><span class="bk-right"><a href="index.html">BIZ-OMICS Business</a><button class="bk-print" onclick="window.print()">Print</button></span></nav>
+  <header>
+    <div class="eyebrow">BIZ-OMICS · 3D Learning · Operations</div>
+    <h1>Just-in-Time 3D</h1>
+    <p class="lede">Volta Bikes builds about ten bikes a day, and every bike needs one crate of parts. Run the factory with just-in-time or just-in-case stock, then hit it with a supplier delay, a demand surge or a model change. Both systems face exactly the same days, so the scoreboard is a fair test.</p>
+  </header>
+
+  <div class="app">
+    <div class="left">
+      <div class="stage" id="stage" aria-label="3D factory. Crates on the racks are stock. Drag to rotate.">
+        <div class="hud" id="hud"></div>
+        <div class="hint">Drag to rotate · scroll or pinch to zoom</div>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <span class="lbl">Watch</span>
+          <div class="seg" role="group" aria-label="System shown in 3D">
+            <button id="m-jit" data-mode="jit" aria-pressed="true">Just-in-time</button>
+            <button id="m-jic" data-mode="jic" aria-pressed="false">Just-in-case</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">Run</span>
+          <button class="btn primary" id="play">Play</button>
+          <button class="btn" id="step">Next day</button>
+          <button class="btn" id="reset">Reset</button>
+          <div class="seg" role="group" aria-label="Speed">
+            <button data-speed="1600" aria-pressed="false">Slow</button>
+            <button data-speed="900" aria-pressed="true">Normal</button>
+            <button data-speed="400" aria-pressed="false">Fast</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">Disrupt</span>
+          <button class="btn event" id="ev-delay">Supplier delay (4 days)</button>
+          <button class="btn event" id="ev-surge">Demand surge (5 days)</button>
+          <button class="btn event" id="ev-model">New model: old parts obsolete</button>
+        </div>
+        <p class="note" id="log">Press Play to start the month. Try a disruption once both systems have settled.</p>
+      </div>
+    </div>
+
+    <aside>
+      <section class="card">
+        <div class="dayline"><div><div class="k">Day</div><div class="v" id="day">0</div></div><div id="status"></div></div>
+        <div class="today" id="today">No bikes built yet.</div>
+      </section>
+      <section class="card">
+        <h3>Scoreboard</h3>
+        <table class="score">
+          <thead><tr><th></th><th class="jit">JIT</th><th class="jic">JIC</th></tr></thead>
+          <tbody id="score"></tbody>
+        </table>
+        <p class="verdict" id="verdict"></p>
+      </section>
+    </aside>
+  </div>
+
+  <section class="card chart">
+    <h3>Crates in stock each day</h3>
+    <div id="chart"></div>
+    <div class="key"><span><i class="sw" style="background:var(--jit)"></i>Just-in-time</span><span><i class="sw" style="background:var(--jic)"></i>Just-in-case</span><span><i class="sw" style="background:var(--stop);height:8px;width:8px;border-radius:50%"></i>Day with lost sales</span></div>
+  </section>
+
+  <div class="more">
+    <section class="card">
+      <h3>The two approaches</h3>
+      <p><b>Just-in-time (JIT)</b> means stock arrives just as it is needed, so the business holds little or no buffer. Each time a bin of parts is used, a kanban card signals the supplier to send exactly that amount. JIT is a key part of lean production, made famous by Toyota.</p>
+      <p><b>Just-in-case (JIC)</b> means holding buffer stock so production can continue if deliveries are late or demand jumps. Stock is reordered in large batches when it falls to a reorder level.</p>
+      <div class="case">After the 2011 earthquake in Japan, Toyota began keeping extra stock of hard-to-source parts such as semiconductors. When chip shortages hit carmakers in 2021, that buffer helped it keep building for longer than many rivals.</div>
+    </section>
+    <section class="card">
+      <h3>Weighing up JIT</h3>
+      <h4 style="color:var(--ok)">Advantages</h4>
+      <ul>
+        <li>Lower holding costs: less warehouse space, insurance and security.</li>
+        <li>Less cash tied up in stock, which helps cash flow.</li>
+        <li>Less waste from damaged, stolen or out-of-date stock.</li>
+        <li>Problems in the process are exposed quickly, which pushes up quality.</li>
+      </ul>
+      <h4 style="color:var(--bad)">Disadvantages</h4>
+      <ul>
+        <li>Production stops if a supplier is late, so reliability is vital.</li>
+        <li>Hard to meet a sudden rise in demand.</li>
+        <li>Many small deliveries cost more, and bulk-buying discounts are lost.</li>
+        <li>Needs close supplier relationships and good communication.</li>
+      </ul>
+      <h4>JIT works best when</h4>
+      <ul>
+        <li>Suppliers are reliable and close by.</li>
+        <li>Demand is stable and easy to forecast.</li>
+        <li>Staff are flexible and multi-skilled.</li>
+      </ul>
+    </section>
+    <section class="card" id="why"></section>
+  </div>
+  <footer>Volta Bikes and its costs are fictional. Holding cost £3 per crate per day · delivery £40 each · lost profit £90 per bike not built · obsolete parts written off at £50 per crate. JIT orders each day’s usage for next-day delivery. JIC orders 60 crates when stock (including any on order) falls to 35, with a 3-day lead time.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+/* ---------- Simulation ---------- */
+const P={hold:3,deliv:40,lost:90,obs:50,base:10,cap:96,jitStart:12,jicStart:70,rop:35,q:60,jicLead:3,jitLead:1};
+let rng,S;
+function seeded(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};}
+function newSim(mode){return{mode,stock:mode==='jit'?P.jitStart:P.jicStart,pipe:[],made:0,lost:0,holding:0,delivCost:0,deliveries:0,writeoff:0,stockSum:0,hist:[],arrived:0,produced:0,lostToday:0,scrapped:0};}
+function reset(){rng=seeded(20261015);S={day:0,demand:0,surge:0,delayUntil:0,sims:{jit:newSim('jit'),jic:newSim('jic')},events:[]};}
+reset();
+function inTransit(sim){return sim.pipe.reduce((a,o)=>a+o.qty,0);}
+function stepDay(){
+  S.day++;let d=P.base+Math.round(rng()*6-3);if(S.surge>0){d=Math.round(d*1.8);S.surge--;}S.demand=d;
+  ['jit','jic'].forEach(k=>{const s=S.sims[k];s.arrived=0;s.scrapped=0;
+    const ready=S.day>=S.delayUntil;
+    s.pipe=s.pipe.filter(o=>{if(o.arrive<=S.day&&ready){s.stock+=o.qty;s.arrived+=o.qty;s.deliveries++;s.delivCost+=P.deliv;return false;}return true;});
+    const make=Math.min(d,s.stock);s.stock-=make;s.made+=make;s.produced=make;s.lostToday=d-make;s.lost+=d-make;
+    if(k==='jit')s.pipe.push({arrive:S.day+P.jitLead,qty:d});
+    else if(s.stock+inTransit(s)<=P.rop)s.pipe.push({arrive:S.day+P.jicLead,qty:P.q});
+    s.stock=Math.min(s.stock,P.cap+20);
+    s.holding+=s.stock*P.hold;s.stockSum+=s.stock;s.hist.push({stock:s.stock,lost:s.lostToday});});
+  render();
+}
+function total(s){return s.holding+s.delivCost+s.lost*P.lost+s.writeoff;}
+const gbp=n=>'£'+Math.round(n).toLocaleString('en-GB');
+
+/* ---------- Events ---------- */
+function logMsg(t){$('log').textContent=t;}
+$('ev-delay').addEventListener('click',()=>{S.delayUntil=S.day+5;S.events.push({day:S.day,t:'Delay'});logMsg(`Day ${S.day}: the supplier’s lorries are held up. No deliveries until day ${S.delayUntil}.`);render();});
+$('ev-surge').addEventListener('click',()=>{S.surge=5;S.events.push({day:S.day,t:'Surge'});logMsg(`Day ${S.day}: a cycling influencer posts about Volta. Demand jumps by about 80% for five days.`);render();});
+$('ev-model').addEventListener('click',()=>{['jit','jic'].forEach(k=>{const s=S.sims[k];s.writeoff+=s.stock*P.obs;s.scrapped=s.stock;s.stock=0;});
+  S.events.push({day:S.day,t:'Model'});const a=S.sims.jit.scrapped,b=S.sims.jic.scrapped;
+  logMsg(`Day ${S.day}: the new model needs different parts. JIT scraps ${a} crates (${gbp(a*P.obs)}); JIC scraps ${b} crates (${gbp(b*P.obs)}).`);render();if(window.__fac)window.__fac.sync(true);});
+
+/* ---------- Rendering: panel ---------- */
+let mode='jit';
+function render(){
+  const s=S.sims[mode];$('day').textContent=S.day;
+  const stopped=S.day>0&&s.produced===0,partial=S.day>0&&s.lostToday>0&&!stopped;
+  $('status').innerHTML=S.day===0?'':`<span class="pill ${stopped?'red':''}" style="${stopped?'':partial?'background:var(--warn-bg);color:var(--warn)':'background:var(--ok-bg);color:var(--ok)'}">${stopped?'Line stopped':partial?'Short of parts':'Line running'}</span>`;
+  $('today').innerHTML=S.day===0?'No bikes built yet.':`Today (${mode==='jit'?'JIT':'JIC'}): demand <b>${S.demand}</b> · built <b>${s.produced}</b> · lost <b>${s.lostToday}</b> · crates delivered <b>${s.arrived}</b> · in stock <b>${s.stock}</b>`;
+  const J=S.sims.jit,C=S.sims.jic,n=Math.max(S.day,1);
+  const rows=[['Average stock held',J.stockSum/n,C.stockSum/n,v=>v.toFixed(1),'low'],['Deliveries',J.deliveries,C.deliveries,v=>v,'low'],['Bikes built',J.made,C.made,v=>v,'high'],['Bikes lost',J.lost,C.lost,v=>v,'low'],
+    ['Holding cost',J.holding,C.holding,gbp,'low'],['Delivery cost',J.delivCost,C.delivCost,gbp,'low'],['Lost profit',J.lost*P.lost,C.lost*P.lost,gbp,'low'],['Write-offs',J.writeoff,C.writeoff,gbp,'low']];
+  const cell=(a,b,good)=>{if(S.day===0||a===b)return['',''];const better=good==='low'?a<b:a>b;return better?['win','']:['','win'];};
+  let h=rows.map(([k,a,b,f,g])=>{const [ca,cb]=cell(a,b,g);return`<tr><td>${k}</td><td class="${ca}">${f(a)}</td><td class="${cb}">${f(b)}</td></tr>`;}).join('');
+  const ta=total(J),tb=total(C),[ca,cb]=cell(ta,tb,'low');
+  h+=`<tr class="total"><td>Total cost</td><td class="${ca}">${gbp(ta)}</td><td class="${cb}">${gbp(tb)}</td></tr>`;$('score').innerHTML=h;
+  $('verdict').textContent=S.day===0?'Run the factory to compare the two systems.':ta<tb?`So far JIT is ${gbp(tb-ta)} cheaper.`:ta>tb?`So far JIC is ${gbp(ta-tb)} cheaper.`:'Both systems have cost the same so far.';
+  const delayed=S.day<S.delayUntil&&s.pipe.length;
+  const hud=[`<span class="pill ${mode==='jit'?'blue':'brown'}">${mode==='jit'?'Just-in-time':'Just-in-case'}</span>`,`<span class="pill">Day <b>${S.day}</b></span>`,`<span class="pill">Stock <b>${s.stock}</b> crates</span>`];
+  if(delayed)hud.push('<span class="pill red">Delivery delayed</span>');if(S.surge>0)hud.push(`<span class="pill red">Demand surge · ${S.surge} days left</span>`);
+  $('hud').innerHTML=hud.join('');
+  drawChart();if(window.__fac)window.__fac.sync();
+}
+function drawChart(){
+  const W=900,H=220,L=40,R=12,T=12,B=40,days=Math.max(30,S.day),ymax=110;
+  const X=d=>L+(d-1)/(days-1)*(W-L-R),Y=v=>T+(1-Math.min(v,ymax)/ymax)*(H-T-B-14);
+  let g='';[0,25,50,75,100].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rule)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${v}</text>`);
+  for(let d=5;d<=days;d+=5)g+=`<text x="${X(d)}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${d}</text>`;
+  S.events.forEach(e=>{if(e.day>=1)g+=`<line x1="${X(e.day+.5)}" x2="${X(e.day+.5)}" y1="${T}" y2="${H-B-14}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="${X(e.day+.5)+4}" y="${T+10}" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">${e.t}</text>`;});
+  const line=(k,col)=>{const h=S.sims[k].hist;if(!h.length)return'';return`<polyline fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" points="${h.map((p,i)=>X(i+1).toFixed(1)+','+Y(p.stock).toFixed(1)).join(' ')}"/>`;};
+  const dots=(k,y,col)=>S.sims[k].hist.map((p,i)=>p.lost>0?`<circle cx="${X(i+1)}" cy="${y}" r="3.5" fill="var(--stop)"/>`:'').join('');
+  const yb=H-B-2;
+  $('chart').innerHTML=`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="min-width:560px" role="img" aria-label="Crates in stock each day for JIT and JIC">${g}
+    <text x="${L}" y="${yb-6}" font-size="10" fill="var(--jit)" font-family="JetBrains Mono,monospace" text-anchor="end" dx="-6" dy="3">JIT</text>
+    <text x="${L}" y="${yb+8}" font-size="10" fill="var(--jic)" font-family="JetBrains Mono,monospace" text-anchor="end" dx="-6" dy="3">JIC</text>
+    ${dots('jit',yb-6)}${dots('jic',yb+8)}${line('jic','var(--jic)')}${line('jit','var(--jit)')}</svg></div>`;
+}
+
+/* ---------- Controls ---------- */
+let timer=null,speed=900;
+function play(on){if(on===undefined)on=!timer;clearInterval(timer);timer=null;if(on){timer=setInterval(()=>{if(S.day>=60){play(false);logMsg('Day 60 reached. Reset to run again.');return;}stepDay();},speed);}$('play').textContent=timer?'Pause':'Play';}
+$('play').addEventListener('click',()=>play());
+$('step').addEventListener('click',()=>{play(false);stepDay();});
+$('reset').addEventListener('click',()=>{play(false);reset();logMsg('Factory reset to day 0.');render();if(window.__fac)window.__fac.sync(true);});
+document.querySelectorAll('[data-speed]').forEach(b=>b.addEventListener('click',()=>{speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));if(timer)play(true);}));
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));render();if(window.__fac)window.__fac.sync(true);}));
+
+/* ---------- Tell me why ---------- */
+const QS=[
+ ['Why does JIT keep holding costs so low?','It holds only about a day of stock, so it needs less warehouse space, insurance and security, and less cash is tied up in parts sitting on shelves.'],
+ ['During the supplier delay, why did the JIT line stop while JIC kept going?','JIT only had about one day of parts. Once deliveries stopped, it ran out. JIC’s buffer stock covered the missing deliveries for several days.'],
+ ['Why does JIT spend more on deliveries?','It takes a small delivery every day, and each delivery has a fixed cost. JIC orders in large batches, so it pays for far fewer deliveries and may also get bulk discounts.'],
+ ['Why does a new model hurt JIC more than JIT?','JIC is holding a large stock of old parts that can no longer be used, so it must write them off. JIT has very little stock to throw away.']];
+$('why').innerHTML='<h3>Tell me why</h3>'+QS.map(([q,a],i)=>`<div class="q"><p>${q}</p><button class="reveal" id="rv${i}" aria-expanded="false">Reveal answer</button><div class="ans" hidden>${a}</div></div>`).join('');
+$('why').querySelectorAll('.reveal').forEach(b=>b.addEventListener('click',()=>{const a=b.nextElementSibling;a.hidden=!a.hidden;b.setAttribute('aria-expanded',String(!a.hidden));b.textContent=a.hidden?'Reveal answer':'Hide answer';}));
+
+/* ---------- 3D factory ---------- */
+const stage=$('stage');
+function start3D(){
+  if(!window.THREE){stage.insertAdjacentHTML('beforeend','<div class="err">The 3D library did not load. The simulation and scoreboard still work.</div>');return;}
+  let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch(e){stage.insertAdjacentHTML('beforeend','<div class="err">This device could not start 3D graphics. The simulation still works.</div>');return;}
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;stage.prepend(renderer.domElement);
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,.1,300);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x5a6070,.8));
+  const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(6,18,10);scene.add(sun);
+  const pitchG=new THREE.Group(),yawG=new THREE.Group();scene.add(pitchG);pitchG.add(yawG);const W=new THREE.Group();yawG.add(W);W.position.set(-1,-2,0);
+  const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.75,metalness:.05},o||{}));
+  const box=(w,h,d,mat,x,y,z,parent)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);(parent||W).add(m);return m;};
+  function label(text,bg,h){const c=document.createElement('canvas'),x=c.getContext('2d');x.font='700 40px "Atkinson Hyperlegible", system-ui, sans-serif';const tw=Math.ceil(x.measureText(text).width);
+    c.width=tw+36;c.height=64;x.font='700 40px "Atkinson Hyperlegible", system-ui, sans-serif';x.fillStyle=bg;x.beginPath();x.moveTo(14,0);x.arcTo(c.width,0,c.width,c.height,14);x.arcTo(c.width,c.height,0,c.height,14);x.arcTo(0,c.height,0,0,14);x.arcTo(0,0,c.width,0,14);x.fill();
+    x.fillStyle='#fff';x.textBaseline='middle';x.fillText(text,18,34);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;
+    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthWrite:false}));s.scale.set(h*c.width/c.height,h,1);return s;}
+  // floor
+  box(36,.2,20,M(0x6b7380,{roughness:.95}),0,-.1,0);
+  const lane=M(0xe8b400,{roughness:.6});
+  box(30,.02,.12,lane,0,.01,3.4);box(30,.02,.12,lane,0,.01,-5.6);
+  box(9,.02,9,M(0x58606c,{roughness:.95}),-12.5,.012,-1);
+  // goods-in dock
+  const lblIn=label('Goods in','#2a313d',.7);lblIn.position.set(-12.5,3.4,-5.2);W.add(lblIn);
+  // racks: 4 units × 6 columns × 4 levels = 96 slots
+  const rackMat=M(0x2f5fb3,{metalness:.4,roughness:.5}),shelfMat=M(0xd06a1a,{metalness:.3,roughness:.5});
+  const slots=[];const RZ=[-6.2,-3.6,-1,1.6];
+  RZ.forEach(z=>{for(let c=0;c<=6;c+=6)box(.1,3.8,1.1,rackMat,-8+c*1.0-.0,1.9,z);
+    for(let l=0;l<4;l++)box(6.1,.08,1.1,shelfMat,-5,.06+l*.92,z);
+  });
+  for(let l=0;l<4;l++)RZ.forEach(z=>{for(let c=0;c<6;c++)slots.push([-7.5+c,.06+l*.92+.38,z]);});
+  // order: bottom level first, front rack first
+  slots.sort((a,b)=>a[1]-b[1]||b[2]-a[2]||a[0]-b[0]);
+  const crates=slots.map(([x,y,z])=>{const m=box(.82,.66,.86,M(0xb07a40),x,y,z);m.scale.setScalar(.001);m.userData.cur=0;return m;});
+  const lblStock=label('Stock','#2a313d',.7);lblStock.position.set(-5,4.6,-2.3);W.add(lblStock);
+  // assembly line
+  const belt=box(13,.5,1.4,M(0x2b2f36,{roughness:.5}),6.5,.55,-2.3);
+  box(13,.08,1.6,M(0x8b929c,{metalness:.5}),6.5,.84,-2.3);
+  for(let i=0;i<5;i++)box(.2,.5,1.5,M(0x8b929c),0.5+i*3,.25,-2.3);
+  const lblLine=label('Assembly line','#2a313d',.7);lblLine.position.set(6.5,3.6,-2.3);W.add(lblLine);
+  // bikes
+  const bikes=[];const tyre=M(0x111111,{roughness:.6});
+  const frameCols=[0x1f9e89,0xd9486b,0x3a7bd5,0xe8b400];
+  for(let i=0;i<7;i++){const g=new THREE.Group();const w1=new THREE.Mesh(new THREE.TorusGeometry(.32,.06,8,24),tyre);w1.position.set(-.42,.34,0);g.add(w1);
+    const w2=w1.clone();w2.position.x=.42;g.add(w2);const fm=M(frameCols[i%4],{metalness:.4,roughness:.35});
+    const f1=new THREE.Mesh(new THREE.BoxGeometry(.9,.07,.07),fm);f1.position.set(0,.55,0);f1.rotation.z=.12;g.add(f1);
+    const f2=new THREE.Mesh(new THREE.BoxGeometry(.07,.5,.07),fm);f2.position.set(-.1,.55,0);f2.rotation.z=.35;g.add(f2);
+    g.position.set(0.5+i*1.9,.88,-2.3);W.add(g);bikes.push(g);}
+  // andon light
+  box(.12,3.2,.12,M(0x8b929c),.2,1.6,-3.3);
+  const andonMat=new THREE.MeshStandardMaterial({color:0x1d8a55,emissive:0x1d8a55,emissiveIntensity:1});
+  const andon=new THREE.Mesh(new THREE.SphereGeometry(.35,20,14),andonMat);andon.position.set(.2,3.4,-3.3);W.add(andon);
+  const stopLbl=label('Line stopped: no parts','#c62f3f',.6);stopLbl.position.set(6.5,2.6,-2.3);stopLbl.visible=false;W.add(stopLbl);
+  // dispatch
+  box(2.4,1.4,2.4,M(0x4a5466),15.2,.7,-2.3);const lblOut=label('Customers','#2a313d',.6);lblOut.position.set(15.2,2.3,-2.3);W.add(lblOut);
+  // lorry
+  const lorry=new THREE.Group();W.add(lorry);
+  const cab=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.7,2),M(0xd0d4da,{metalness:.2}));cab.position.set(0,1.15,0);lorry.add(cab);
+  const box1=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),M(0xf2f3f5));lorry.add(box1);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(.05,.6,1.7),M(0x223040,{roughness:.2}));glass.position.set(.82,1.45,0);lorry.add(glass);
+    const wheels=[];for(let i=0;i<4;i++){const w=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.3,16),tyre);w.rotation.x=Math.PI/2;lorry.add(w);wheels.push(w);}
+  const lateLbl=label('Delayed','#c62f3f',.6);lateLbl.position.set(-1.5,3.4,0);lateLbl.visible=false;lorry.add(lateLbl);
+  lorry.rotation.y=0;let lorryState={t:1,active:false};
+  function shapeLorry(big){const L=big?5.2:2.2;box1.scale.set(L,big?2.2:1.5,big?2.2:1.8);box1.position.set(-.8-L/2,big?1.5:1.15,0);
+    box1.material.color.setHex(big?0xe9e1d2:0xdfe9f7);
+    const xs=big?[-1.2-L*.85,-1.2-L*.15]:[-1.6,-.2];wheels.forEach((w,i)=>{w.position.set(i<2?xs[0]:(i<4?xs[1]:0),.35,i%2?-.9:.9);});
+    wheels[2].position.x=.2;wheels[3].position.x=.2;}
+  // camera & interaction
+  const view={yaw:.55,pitch:.62,tYaw:.55,tPitch:.62,dist:36,tDist:36};
+  const ptrs=new Map();let pinch0=0,dist0=0,last=null;
+  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.classList.add('dragging');if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=view.tDist;}last={x:e.clientX,y:e.clientY};});
+  stage.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)view.tDist=Math.min(70,Math.max(14,dist0*pinch0/d));return;}
+    const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};view.tYaw+=dx*.008;view.tPitch=Math.max(.05,Math.min(1.35,view.tPitch+dy*.006));view.yaw=view.tYaw;view.pitch=view.tPitch;});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)stage.classList.remove('dragging');const r=[...ptrs.values()][0];if(r)last=r;};
+  stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+  stage.addEventListener('wheel',e=>{e.preventDefault();view.tDist=Math.min(70,Math.max(14,view.tDist*(1+e.deltaY*.0012)));},{passive:false});
+  let w=1,h=1;new ResizeObserver(()=>{w=stage.clientWidth;h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}).observe(stage);
+
+  let target={stock:0,rate:1,stopped:false,delayed:false,colour:0xb07a40};
+  function sync(snap){const s=S.sims[mode];
+    target.stock=Math.min(s.stock,crates.length);
+    target.rate=S.day===0?0.6:(S.demand?s.produced/Math.max(S.demand,1):0);target.stopped=S.day>0&&s.produced===0;
+    target.delayed=S.day<S.delayUntil&&s.pipe.length>0;
+    const col=mode==='jit'?0x2f78d6:0xb07a40;if(col!==target.colour||snap){target.colour=col;crates.forEach(c=>c.material.color.setHex(col));}
+    shapeLorry(mode==='jic');
+    if(snap)crates.forEach((c,i)=>{c.userData.cur=i<target.stock?1:0;});
+    if(s.arrived>0&&!target.delayed)lorryState={t:0,active:true};
+  }
+  window.__fac={sync};
+  const ease=t=>t<0?0:t>1?1:t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  let prev=performance.now(),beltPos=0;
+  function tick(now){const dt=Math.min(.05,(now-prev)/1000);prev=now;
+    const k=reduce?1:.1;view.yaw+=(view.tYaw-view.yaw)*k;view.pitch+=(view.tPitch-view.pitch)*k;view.dist+=(view.tDist-view.dist)*k;
+    yawG.rotation.y=view.yaw;pitchG.rotation.x=view.pitch;const fit=w/h<1?Math.min(2,1.1/(w/h)):1;camera.position.set(0,0,view.dist*fit);camera.lookAt(0,0,0);
+    crates.forEach((c,i)=>{const t=i<target.stock?1:0;c.userData.cur+=(t-c.userData.cur)*(reduce?1:.18);c.scale.setScalar(Math.max(c.userData.cur,.001));});
+    // conveyor
+    const r=target.stopped?0:Math.max(.25,Math.min(1.4,target.rate));beltPos=(beltPos+dt*1.6*r)%13.3;
+    bikes.forEach((b,i)=>{b.position.x=.5+((i*1.9+beltPos)%13.3);b.visible=b.position.x<13.2;});
+    andonMat.color.setHex(target.stopped?0xc62f3f:target.rate<1?0xe8a800:0x1d8a55);andonMat.emissive.copy(andonMat.color);
+    andonMat.emissiveIntensity=target.stopped?(.6+.4*Math.sin(now/180)):1;stopLbl.visible=target.stopped;
+    // lorry
+    if(target.delayed){lorry.position.set(-19,0,-1);lateLbl.visible=true;}
+    else{lateLbl.visible=false;if(lorryState.active){lorryState.t+=dt/Math.max(.6,speed/1000*1.4);
+      const t=lorryState.t;const x=t<.45?-30+(-9.6+30)*ease(t/.45):t<.6?-9.6:-9.6+(-30+14.2)*ease((t-.6)/.4);lorry.position.set(x,0,-1);if(t>=1)lorryState.active=false;}
+      else lorry.position.set(-30,0,-1);}
+    renderer.render(scene,camera);requestAnimationFrame(tick);}
+  sync(true);requestAnimationFrame(tick);
+}
+render();start3D();render();
+})();
+</script>
+</body>
+</html>

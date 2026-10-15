@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('biz-omics-theme');}catch(e){}
+if(!t){t=window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;})();
+</script>
+<title>Capacity Utilisation 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dusk hotel model (3D stage) with booking controls beneath; a live calculation sheet and cost curve beside it; revision cards close the page */
+:root{
+  --bg:#edf0f3; --surface:#ffffff; --ink:#19202b; --muted:#566070; --rule:#d5dbe3; --tint:#f5f7f9;
+  --link:#2459c9; --lamp:#e8a800; --lamp-ink:#3a2a00;
+  --ok:#1d7a4e; --ok-bg:#e1f2e8; --warn:#8a5300; --warn-bg:#fbeed5; --bad:#b0293b; --bad-bg:#fbe4e7;
+  --curve:#2459c9; --price:#b0293b;
+  --display:"Archivo","Arial Narrow",Arial,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff; --lamp:#ffc533; --lamp-ink:#2a1f00;
+  --ok:#72d3a3; --ok-bg:#13301f; --warn:#f1b65c; --warn-bg:#35270f; --bad:#ff8d9b; --bad-bg:#3a1820; --curve:#8db0ff; --price:#ff8d9b;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#171c24; --ink:#e6e9ee; --muted:#9aa3b2; --rule:#2a313c; --tint:#1c222c; --link:#8db0ff; --lamp:#ffc533; --lamp-ink:#2a1f00;
+  --ok:#72d3a3; --ok-bg:#13301f; --warn:#f1b65c; --warn-bg:#35270f; --bad:#ff8d9b; --bad-bg:#3a1820; --curve:#8db0ff; --price:#ff8d9b;
+  color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 44px}
+.wrap{max-width:1300px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-stretch:118%;font-weight:800;font-size:clamp(28px,4.4vw,46px);line-height:1;margin:6px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);max-width:68ch}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:18px;align-items:start}
+@media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+/* the stage is a deliberate dusk scene in both themes */
+.stage{position:relative;height:clamp(420px,62vh,680px);border-radius:8px;overflow:hidden;touch-action:none;cursor:grab;
+  background:linear-gradient(180deg,#1a2340 0%,#3b3f6b 48%,#c9826b 86%,#e9a77e 100%);border:1px solid var(--rule)}
+.stage.dragging{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.night{position:absolute;top:12px;left:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.pill{font:500 12px/1 var(--mono);letter-spacing:.04em;padding:7px 9px;border-radius:5px;background:rgba(10,14,26,.62);color:#eef1f6}
+.pill b{color:#ffd166;font-weight:500}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:#eef1f6;background:rgba(10,14,26,.5);padding:2px 7px;border-radius:4px;pointer-events:none}
+
+.controls{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:92px}
+.slider{display:flex;align-items:center;gap:12px;flex:1;min-width:220px}
+input[type=range]{flex:1;accent-color:var(--lamp);height:28px}
+.qty{font-family:var(--display);font-stretch:110%;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums;min-width:96px;text-align:right}
+.btn{font:700 13px/1 var(--body);color:var(--ink);background:var(--tint);border:1.5px solid var(--rule);border-radius:6px;padding:10px 12px;cursor:pointer}
+.btn small{font-weight:400;color:var(--muted)}
+.seg{display:inline-flex;border:1.5px solid var(--rule);border-radius:7px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:700 13px/1 var(--body);color:var(--ink);background:var(--surface);border:0;border-right:1.5px solid var(--rule);padding:10px 12px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.note{font-size:13.5px;color:var(--muted);margin:0}
+
+aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:18px}
+.big{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.big .v{font-family:var(--display);font-stretch:120%;font-weight:800;font-size:58px;line-height:.9;font-variant-numeric:tabular-nums}
+.big .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.zone{font:700 13px/1 var(--body);padding:7px 10px;border-radius:5px}
+.z-ok{background:var(--ok-bg);color:var(--ok)} .z-warn{background:var(--warn-bg);color:var(--warn)} .z-bad{background:var(--bad-bg);color:var(--bad)}
+.meter{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--warn-bg) 0 70%,var(--ok-bg) 70% 90%,var(--bad-bg) 90% 100%);margin:14px 0 4px}
+.meter i{position:absolute;top:-4px;width:4px;height:20px;border-radius:2px;background:var(--ink);transform:translateX(-2px);transition:left .25s}
+.scale{display:flex;justify-content:space-between;font:400 11px/1 var(--mono);color:var(--muted)}
+.calc{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.calc div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;border-top:1px solid var(--rule);padding-top:9px}
+.calc dt{font-weight:700}
+.calc dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;font-weight:500}
+.calc .w{grid-column:1/-1;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.pos{color:var(--ok)} .neg{color:var(--bad)}
+.chart h3,.card h3{font-family:var(--display);font-stretch:110%;font-weight:700;font-size:18px;margin:0 0 6px}
+.chart p{margin:0 0 8px;font-size:14px;color:var(--muted)}
+.chart svg{display:block;width:100%;height:auto}
+
+.more{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:980px){.more{grid-template-columns:minmax(0,1fr)}}
+.q{border-top:1px solid var(--rule);padding-block:10px}
+.q:first-of-type{border-top:0;padding-top:0}
+.q p{margin:0 0 8px;font-weight:700}
+.reveal{font:700 13px/1 var(--body);background:transparent;color:var(--link);border:1.5px solid var(--link);border-radius:6px;padding:9px 12px;cursor:pointer}
+.ans{margin-top:8px;background:var(--tint);border-left:3px solid var(--lamp);padding:8px 10px;border-radius:0 6px 6px 0;font-size:14.5px}
+.ans code{font-family:var(--mono);font-size:13px}
+.fix h4{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:12px 0 6px}
+.fix h4:first-of-type{margin-top:4px}
+.fix ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+.formula{font-family:var(--mono);font-size:13.5px;background:var(--tint);border-radius:6px;padding:10px 12px;margin:0 0 12px;overflow-x:auto}
+.err{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:#eef1f6}
+footer{font-size:12.5px;color:var(--muted)}
+
+body{margin:0}
+.bk-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:-4px}
+.bk-bar a{font:600 13.5px/1 inherit;color:inherit;text-decoration:none;opacity:.75;padding:8px 0}
+.bk-bar a:hover{opacity:1;text-decoration:underline}
+.bk-bar .bk-right{display:flex;gap:8px;align-items:center}
+.bk-print{font:600 13px/1 system-ui,sans-serif;padding:9px 14px;border-radius:7px;border:1.5px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+.print-head{display:none}
+@media print{
+  .stage,.stagecol .toolbar,.toolbar,.controls,.bk-bar,.hint,.tabs,.models,.reveal,#qnew,.spots,.legend,.trace{display:none!important}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,"Times New Roman",serif!important}
+  .ans[hidden]{display:block!important}
+  .card,.panel,.compare,.list,.facts,.stats{break-inside:avoid;background:#fff!important;color:#000!important}
+  .app{grid-template-columns:1fr!important}
+  .more,.compare{break-before:page}
+  .print-head{display:block;font:700 14px/1.4 Georgia,serif;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="print-head">BIZ-OMICS · Capacity Utilisation 3D</div>
+  <nav class="bk-bar" aria-label="Back"><a href="3d-learning.html">← 3D Learning</a><span class="bk-right"><a href="index.html">BIZ-OMICS Business</a><button class="bk-print" onclick="window.print()">Print</button></span></nav>
+  <header>
+    <div class="eyebrow">BIZ-OMICS · 3D Learning · Operations</div>
+    <h1>Capacity Utilisation 3D</h1>
+    <p class="lede">The Harbour Hotel has 60 bedrooms. Change how many are sold tonight and watch the windows light up, the utilisation rate change and the cost of each room night fall as fixed costs are spread more thinly.</p>
+  </header>
+
+  <div class="app">
+    <div class="left">
+      <div class="stage" id="stage" aria-label="3D hotel. Lit windows are occupied rooms. Drag to rotate.">
+        <div class="night">
+          <span class="pill">Tonight: <b id="p-sold">39</b> of <b id="p-cap">60</b> rooms sold</span>
+          <span class="pill" id="p-closed" hidden>Top floor closed</span>
+        </div>
+        <div class="hint">Drag to rotate · scroll or pinch to zoom</div>
+      </div>
+      <div class="controls">
+        <div class="row">
+          <span class="lbl">Rooms sold</span>
+          <div class="slider"><input type="range" id="sold" min="0" max="60" value="39" aria-label="Rooms sold tonight"><span class="qty" id="soldv">39 rooms</span></div>
+        </div>
+        <div class="row">
+          <span class="lbl">Try a night</span>
+          <button class="btn" data-pct="0.3">January Tuesday <small>30%</small></button>
+          <button class="btn" data-pct="0.65">Typical weekday <small>65%</small></button>
+          <button class="btn" data-pct="0.92">Summer Saturday <small>92%</small></button>
+          <button class="btn" data-pct="1">Festival weekend <small>100%</small></button>
+        </div>
+        <div class="row">
+          <span class="lbl">Capacity</span>
+          <div class="seg" role="group" aria-label="Capacity decision">
+            <button id="cfg-close" data-cfg="close" aria-pressed="false">Close top floor</button>
+            <button id="cfg-base" data-cfg="base" aria-pressed="true">As built</button>
+            <button id="cfg-add" data-cfg="add" aria-pressed="false">Add a floor</button>
+          </div>
+        </div>
+        <p class="note" id="cfgnote">5 bedroom floors · 60 rooms · fixed costs £4,400 a night</p>
+      </div>
+    </div>
+
+    <aside>
+      <section class="card" aria-live="polite">
+        <div class="big"><div><div class="k">Capacity utilisation</div><div class="v" id="cu">65%</div></div><span class="zone z-warn" id="zone">Under-utilised</span></div>
+        <div class="meter"><i id="needle" style="left:65%"></i></div>
+        <div class="scale"><span>0%</span><span>70%</span><span>90%</span><span>100%</span></div>
+        <dl class="calc" id="calc"></dl>
+      </section>
+      <section class="card chart">
+        <h3>Average cost per room night</h3>
+        <p>As utilisation rises, fixed costs are shared by more rooms, so each room costs less to provide.</p>
+        <div id="chart"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="more">
+    <section class="card">
+      <h3>The formula</h3>
+      <p class="formula">Capacity utilisation = current output ÷ maximum possible output × 100</p>
+      <h3 style="margin-top:6px">Quick calc</h3>
+      <div id="quiz"></div>
+    </section>
+    <section class="card" id="why"></section>
+    <section class="card fix">
+      <h3>What can the manager do?</h3>
+      <h4 style="color:var(--warn)">If utilisation is too low</h4>
+      <ul>
+        <li>Promote off-peak deals or cut prices on quiet nights.</li>
+        <li>Find new customers, such as conferences or business travellers.</li>
+        <li>Rationalise: close or sell spare capacity, such as a floor.</li>
+        <li>Rent spare space to other businesses.</li>
+      </ul>
+      <h4 style="color:var(--bad)">If it is close to 100% too often</h4>
+      <ul>
+        <li>Increase capacity, for example by building an extension.</li>
+        <li>Subcontract: send overflow guests to a partner hotel.</li>
+        <li>Raise prices at peak times to manage demand.</li>
+        <li>Plan maintenance and refurbishment for quieter weeks.</li>
+      </ul>
+    </section>
+  </div>
+  <footer>The Harbour Hotel and its costs are fictional. Room price £140 a night; variable cost £30 per occupied room (cleaning, laundry, toiletries, energy).</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+/* ---------- Economics ---------- */
+const PRICE=140,VC=30;
+const CFG={
+  close:{floors:5,closed:true,cap:48,fc:3900,note:'Top floor closed · 48 rooms · fixed costs £3,900 a night (heating, cleaning and staffing for one floor saved)'},
+  base:{floors:5,closed:false,cap:60,fc:4400,note:'5 bedroom floors · 60 rooms · fixed costs £4,400 a night'},
+  add:{floors:6,closed:false,cap:72,fc:5200,note:'Extension built · 72 rooms · fixed costs £5,200 a night (extra staff, loan repayments, upkeep)'}};
+const state={cfg:'base',sold:39};
+const fmt=(n,d=2)=>'£'+n.toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});
+const gbp=n=>(n<0?'−':'')+'£'+Math.abs(Math.round(n)).toLocaleString('en-GB');
+const $=id=>document.getElementById(id);
+
+function zone(p){if(p>=100)return['Full: no spare capacity','z-bad'];if(p>90)return['Near full: risk of over-utilisation','z-bad'];if(p>=70)return['Healthy range','z-ok'];return['Under-utilised','z-warn'];}
+function update(){
+  const c=CFG[state.cfg],q=state.sold,cu=c.cap?q/c.cap*100:0;
+  $('sold').max=c.cap;$('sold').value=q;$('soldv').textContent=q+(q===1?' room':' rooms');
+  $('p-sold').textContent=q;$('p-cap').textContent=c.cap;$('p-closed').hidden=!c.closed;
+  $('cu').textContent=(Math.round(cu*10)/10).toString().replace(/\.0$/,'')+'%';$('needle').style.left=cu+'%';
+  const [zt,zc]=zone(cu);$('zone').textContent=zt;$('zone').className='zone '+zc;
+  const fcu=q?c.fc/q:Infinity,ac=fcu+VC,profit=(PRICE-VC)*q-c.fc;
+  $('calc').innerHTML=`
+   <div><dt>Capacity utilisation</dt><dd>${(Math.round(cu*10)/10)}%</dd><span class="w">${q} ÷ ${c.cap} × 100</span></div>
+   <div><dt>Fixed cost per room</dt><dd>${q?fmt(fcu):'—'}</dd><span class="w">£${c.fc.toLocaleString('en-GB')} ÷ ${q}</span></div>
+   <div><dt>Average cost per room</dt><dd>${q?fmt(ac):'—'}</dd><span class="w">fixed cost per room + £${VC} variable cost</span></div>
+   <div><dt>Profit tonight</dt><dd class="${profit>=0?'pos':'neg'}">${gbp(profit)}</dd><span class="w">(£${PRICE} − £${VC}) × ${q} − £${c.fc.toLocaleString('en-GB')}</span></div>`;
+  $('cfgnote').textContent=c.note;
+  drawChart();
+  if(window.__hotel)window.__hotel.setSold(q);
+}
+function drawChart(){
+  const c=CFG[state.cfg],W=380,H=230,L=46,R=12,T=12,B=34,ymax=450,x0=20;
+  const X=p=>L+(p-x0)/(100-x0)*(W-L-R),Y=v=>T+(1-Math.min(v,ymax)/ymax)*(H-T-B);
+  let d='';for(let p=x0;p<=100;p+=1){const q=c.cap*p/100,v=c.fc/q+VC;d+=(p===x0?'M':'L')+X(p).toFixed(1)+' '+Y(v).toFixed(1);}
+  const be=c.fc/(PRICE-VC),bep=be/c.cap*100;
+  let g='';[0,150,300,450].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--rule)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">£${v}</text>`);
+  [20,40,60,80,100].forEach(p=>g+=`<text x="${X(p)}" y="${H-B+16}" text-anchor="middle" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">${p}%</text>`);
+  const q=state.sold,cu=q/c.cap*100,showM=cu>=x0&&q>0,mv=q?c.fc/q+VC:0;
+  const beTxt=bep<=100?`<line x1="${X(bep)}" x2="${X(bep)}" y1="${Y(PRICE)}" y2="${H-B}" stroke="var(--price)" stroke-dasharray="2 3"/><text x="${X(bep)+4}" y="${H-B-6}" font-size="10.5" fill="var(--price)" font-family="JetBrains Mono,monospace">break-even ${Math.round(bep)}%</text>`:'';
+  $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average cost per room falls as capacity utilisation rises">
+   ${g}<line x1="${L}" x2="${W-R}" y1="${Y(PRICE)}" y2="${Y(PRICE)}" stroke="var(--price)" stroke-width="1.5" stroke-dasharray="6 4"/>
+   <text x="${W-R}" y="${Y(PRICE)-6}" text-anchor="end" font-size="11" fill="var(--price)" font-family="JetBrains Mono,monospace">room price £${PRICE}</text>
+   ${beTxt}<path d="${d}" fill="none" stroke="var(--curve)" stroke-width="2.5"/>
+   ${showM?`<circle cx="${X(cu)}" cy="${Y(mv)}" r="6.5" fill="var(--lamp)" stroke="var(--ink)" stroke-width="1.5"/>`:''}
+   <text x="${W-R}" y="${H-4}" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">capacity utilisation</text></svg>`;
+}
+
+/* ---------- Tell me why + quick calc ---------- */
+const QS=[
+ ['Why does the cost of each room fall as more rooms are sold?','Fixed costs such as salaried staff, loan repayments and maintenance stay the same however many rooms are sold. Selling more rooms spreads those fixed costs over more units, so the average cost per room falls.'],
+ ['Why might the manager not want 100% utilisation every night?','There is no slack. Rooms cannot be taken out for repairs, staff are under pressure, quality can slip and loyal customers may be turned away, which can damage the hotel’s reputation.'],
+ ['Closing the top floor raises utilisation even though no extra guests arrive. Why?','Maximum capacity falls from 60 to 48 rooms, so the same number of guests is a bigger share of what the hotel can hold. It also saves some fixed costs, but the hotel can take fewer guests on busy nights.'],
+ ['Why might the hotel sell a January room for less than its average cost?','Any price above the £30 variable cost makes a contribution towards fixed costs that must be paid anyway. An empty room contributes nothing.']];
+$('why').innerHTML='<h3>Tell me why</h3>'+QS.map(([q,a],i)=>`<div class="q"><p>${q}</p><button class="reveal" id="rv${i}" aria-expanded="false">Reveal answer</button><div class="ans" hidden>${a}</div></div>`).join('');
+function wire(root){root.querySelectorAll('.reveal').forEach(b=>b.addEventListener('click',()=>{const a=b.nextElementSibling;a.hidden=!a.hidden;b.setAttribute('aria-expanded',String(!a.hidden));b.textContent=a.hidden?'Reveal answer':'Hide answer';}));}
+wire($('why'));
+const PLACES=[['hotel','rooms','room'],['cinema','seats','seat'],['bakery','loaves a day','loaf'],['car factory','cars a week','car'],['gym','members','member']];
+function newQuiz(){
+  const [biz,unit,one]=PLACES[Math.floor(Math.random()*PLACES.length)];
+  const caps={hotel:[40,80,120,150],cinema:[200,250,400],bakery:[500,800,1200],'car factory':[1000,2000,2500],gym:[600,800,1500]}[biz];
+  const cap=caps[Math.floor(Math.random()*caps.length)];const pct=[40,45,55,60,64,72,75,85,88,95][Math.floor(Math.random()*10)];
+  const out=Math.round(cap*pct/100),fc=[2000,3600,4800,6000,12000][Math.floor(Math.random()*5)];
+  const cu=out/cap*100,fpu=fc/out;
+  $('quiz').innerHTML=`<div class="q"><p>A ${biz} can handle ${cap.toLocaleString('en-GB')} ${unit}. Current output is ${out.toLocaleString('en-GB')}. Fixed costs are £${fc.toLocaleString('en-GB')}. Calculate (a) capacity utilisation and (b) fixed cost per ${one}.</p>
+   <button class="reveal" id="qr" aria-expanded="false">Reveal answer</button>
+   <div class="ans" hidden>(a) <code>${out.toLocaleString('en-GB')} ÷ ${cap.toLocaleString('en-GB')} × 100 = ${(Math.round(cu*10)/10)}%</code><br>(b) <code>£${fc.toLocaleString('en-GB')} ÷ ${out.toLocaleString('en-GB')} = ${fmt(fpu)}</code></div></div>
+   <button class="btn" id="qnew" style="margin-top:4px">New question</button>`;
+  wire($('quiz'));$('qnew').addEventListener('click',newQuiz);}
+newQuiz();
+
+/* ---------- Controls ---------- */
+$('sold').addEventListener('input',e=>{state.sold=+e.target.value;update();});
+document.querySelectorAll('[data-pct]').forEach(b=>b.addEventListener('click',()=>{state.sold=Math.round(CFG[state.cfg].cap*+b.dataset.pct);update();}));
+document.querySelectorAll('[data-cfg]').forEach(b=>b.addEventListener('click',()=>{
+  const old=CFG[state.cfg],nu=CFG[b.dataset.cfg];state.cfg=b.dataset.cfg;state.sold=Math.min(state.sold,nu.cap);
+  document.querySelectorAll('[data-cfg]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+  if(window.__hotel)window.__hotel.rebuild();update();}));
+
+/* ---------- 3D hotel ---------- */
+const stage=$('stage');
+function start3D(){
+  if(!window.THREE){stage.insertAdjacentHTML('beforeend','<div class="err">The 3D library did not load. The figures still work.</div>');return;}
+  let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch(e){stage.insertAdjacentHTML('beforeend','<div class="err">This device could not start 3D graphics. The figures still work.</div>');return;}
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;stage.prepend(renderer.domElement);
+  const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x3b3f6b,40,90);
+  const camera=new THREE.PerspectiveCamera(34,1,.1,200);
+  scene.add(new THREE.HemisphereLight(0x8fa0d8,0x3a2a2a,.75));
+  const moon=new THREE.DirectionalLight(0xd8e0ff,.55);moon.position.set(-8,14,10);scene.add(moon);
+  const warm=new THREE.PointLight(0xffb86b,.8,18);warm.position.set(0,1.5,5);scene.add(warm);
+  const pitchG=new THREE.Group(),yawG=new THREE.Group();scene.add(pitchG);pitchG.add(yawG);
+  const world=new THREE.Group();yawG.add(world);
+
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandardMaterial({color:0x2b2f3d,roughness:1}));ground.rotation.x=-Math.PI/2;world.add(ground);
+  const pave=new THREE.Mesh(new THREE.BoxGeometry(16,.08,4),new THREE.MeshStandardMaterial({color:0x5b5f6b,roughness:.9}));pave.position.set(0,.04,4.2);world.add(pave);
+  // trees
+  [[-7.2,3.6],[7.2,3.6],[-7.6,-1],[7.6,-1]].forEach(([x,z])=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,.9,8),new THREE.MeshStandardMaterial({color:0x4a3a2c}));t.position.set(x,.45,z);world.add(t);
+    const c=new THREE.Mesh(new THREE.SphereGeometry(.6,14,10),new THREE.MeshStandardMaterial({color:0x1f4a3a,roughness:.9}));c.position.set(x,1.25,z);world.add(c);});
+
+  function canvasPlane(w,h,draw,emiss){const c=document.createElement('canvas');c.width=512;c.height=Math.round(512*h/w);draw(c.getContext('2d'),c.width,c.height);
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,emissive:emiss?0xffffff:0,emissiveMap:emiss?t:null,emissiveIntensity:emiss?.9:0,roughness:.6,transparent:true}));m.userData.c=c;m.userData.t=t;return m;}
+
+  const ROOMS=12,FH=.92,RW=.8,BW=ROOMS*RW+.6,BD=3.2,LOBBY=1.3;
+  let hotel=null,windows=[],order=[],vacSign=null,closedBanner=null;
+  const pop=[];
+  function rand(seed){return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};}
+  function rebuild(){
+    if(hotel){world.remove(hotel);hotel.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});}
+    const cfg=CFG[state.cfg];hotel=new THREE.Group();world.add(hotel);windows=[];pop.length=0;
+    const wall=new THREE.MeshStandardMaterial({color:0xd9d2c3,roughness:.85}),trim=new THREE.MeshStandardMaterial({color:0x8d8676,roughness:.7});
+    const lob=new THREE.Mesh(new THREE.BoxGeometry(BW,LOBBY,BD),new THREE.MeshStandardMaterial({color:0x6d6a63,roughness:.6}));lob.position.y=LOBBY/2;hotel.add(lob);
+    const glass=new THREE.Mesh(new THREE.PlaneGeometry(BW-1.2,LOBBY-.3),new THREE.MeshStandardMaterial({color:0x2a2418,emissive:0xffcf8a,emissiveIntensity:.55,roughness:.2}));glass.position.set(0,LOBBY/2,BD/2+.01);hotel.add(glass);
+    const canopy=new THREE.Mesh(new THREE.BoxGeometry(3.2,.1,1.2),trim);canopy.position.set(0,LOBBY-.05,BD/2+.6);hotel.add(canopy);
+    for(let f=0;f<cfg.floors;f++){
+      const fg=new THREE.Group();fg.position.y=LOBBY+f*FH;hotel.add(fg);pop.push({g:fg,delay:f});
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(BW,FH,BD),wall);slab.position.y=FH/2;fg.add(slab);
+      const band=new THREE.Mesh(new THREE.BoxGeometry(BW+.06,.06,BD+.06),trim);band.position.y=.03;fg.add(band);
+      const closed=cfg.closed&&f===cfg.floors-1;
+      for(let r=0;r<ROOMS;r++){
+        const x=-BW/2+.3+RW/2+r*RW;
+        const mat=closed?new THREE.MeshStandardMaterial({color:0x6b5a46,roughness:.9}):new THREE.MeshStandardMaterial({color:0x1b2333,emissive:0xffc66b,emissiveIntensity:0,roughness:.25,metalness:.1});
+        const win=new THREE.Mesh(new THREE.PlaneGeometry(.5,.56),mat);win.position.set(x,FH/2+.04,BD/2+.012);fg.add(win);
+        const sill=new THREE.Mesh(new THREE.BoxGeometry(.58,.04,.08),trim);sill.position.set(x,FH/2-.26,BD/2+.04);fg.add(sill);
+        if(!closed)windows.push({mat,cur:0});
+      }
+      if(closed){closedBanner=canvasPlane(3.4,.5,(x,w,h)=>{x.fillStyle='#b0293b';x.fillRect(0,0,w,h);x.fillStyle='#fff';x.font='700 52px "Archivo", Arial, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('FLOOR CLOSED',w/2,h/2+3);},false);
+        closedBanner.position.set(0,FH/2,BD/2+.05);fg.add(closedBanner);}
+    }
+    const top=LOBBY+cfg.floors*FH;
+    const roof=new THREE.Mesh(new THREE.BoxGeometry(BW+.2,.16,BD+.2),trim);roof.position.y=top+.08;hotel.add(roof);
+    const sign=canvasPlane(5.2,.8,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#ffe2a8';x.font='800 70px "Archivo", Arial, sans-serif';x.textAlign='center';x.textBaseline='middle';x.shadowColor='#ffb347';x.shadowBlur=18;x.fillText('HARBOUR HOTEL',w/2,h/2+4);},true);
+    sign.position.set(0,top+.62,BD/2-.4);hotel.add(sign);
+    vacSign=canvasPlane(1.9,.42,()=>{},true);vacSign.position.set(BW/2-1.3,LOBBY-.32,BD/2+.03);hotel.add(vacSign);vacSign.userData.state=null;
+    // stable random fill order
+    const rnd=rand(7+cfg.cap);order=windows.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    hotel.userData.t0=performance.now();hotel.userData.top=top;
+    setSold(state.sold);
+  }
+  function setVac(full){if(!vacSign||vacSign.userData.state===full)return;vacSign.userData.state=full;const c=vacSign.userData.c,x=c.getContext('2d');
+    x.clearRect(0,0,c.width,c.height);x.fillStyle='#10131a';x.fillRect(0,0,c.width,c.height);x.fillStyle=full?'#ff4d5e':'#4dff9a';x.shadowColor=x.fillStyle;x.shadowBlur=14;
+    x.font='700 '+(full?62:72)+'px "Archivo", Arial, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(full?'NO VACANCIES':'VACANCIES',c.width/2,c.height/2+3);vacSign.userData.t.needsUpdate=true;}
+  function setSold(q){const on=new Set(order.slice(0,q));windows.forEach((w,i)=>w.target=on.has(i)?1:0);setVac(q>=CFG[state.cfg].cap);}
+  window.__hotel={setSold,rebuild};
+
+  const view={yaw:.42,pitch:.12,tYaw:.42,tPitch:.12,dist:21,tDist:21};
+  const ptrs=new Map();let pinch0=0,dist0=0,last=null;
+  stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.classList.add('dragging');
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=view.tDist;}last={x:e.clientX,y:e.clientY};});
+  stage.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0)view.tDist=Math.min(40,Math.max(9,dist0*pinch0/d));return;}
+    const dx=e.clientX-last.x,dy=e.clientY-last.y;last={x:e.clientX,y:e.clientY};view.tYaw+=dx*.008;view.tPitch=Math.max(-.05,Math.min(1.1,view.tPitch+dy*.006));view.yaw=view.tYaw;view.pitch=view.tPitch;});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=0;if(!ptrs.size)stage.classList.remove('dragging');const r=[...ptrs.values()][0];if(r)last=r;};
+  stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+  stage.addEventListener('wheel',e=>{e.preventDefault();view.tDist=Math.min(40,Math.max(9,view.tDist*(1+e.deltaY*.0012)));},{passive:false});
+
+  let w=1,h=1;new ResizeObserver(()=>{w=stage.clientWidth;h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}).observe(stage);
+  const ease=t=>t<=0?0:t>=1?1:1-Math.pow(1-t,3);
+  function tick(now){
+    const k=reduce?1:.1;view.yaw+=(view.tYaw-view.yaw)*k;view.pitch+=(view.tPitch-view.pitch)*k;view.dist+=(view.tDist-view.dist)*k;
+    yawG.rotation.y=view.yaw;pitchG.rotation.x=view.pitch;
+    const top=hotel?hotel.userData.top:6;world.position.y=-top/2-.4;
+    const fit=w/h<1?Math.min(2,1.1/(w/h)):1;camera.position.set(0,0,view.dist*fit);camera.lookAt(0,0,0);
+    if(hotel){const el=reduce?99:(now-hotel.userData.t0)/1000;pop.forEach(p=>{const s=ease((el-p.delay*.08)/.4);p.g.scale.set(1,Math.max(s,.001),1);});}
+    windows.forEach((wd,i)=>{const t=wd.target||0;wd.cur+=(t-wd.cur)*(reduce?1:.14);wd.mat.emissiveIntensity=wd.cur*1.15;wd.mat.color.setHex(wd.cur>.5?0x3a2a12:0x1b2333);});
+    renderer.render(scene,camera);requestAnimationFrame(tick);}
+  rebuild();requestAnimationFrame(tick);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>rebuild());
+}
+update();start3D();update();
+})();
+</script>
+</body>
+</html>
