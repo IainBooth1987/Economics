@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chains of Reasoning Generator — BIZ-OMICS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2744; --navy-mid: #243366; --navy-light: #2e3f7a;
+    --gold: #c9a227; --gold-light: #e8c35a; --gold-pale: #fdf5e0;
+    --white: #ffffff; --off-white: #f8f7f4; --text: #1a2744; --text-muted: #5a6380;
+    --border: #dde0ea; --green: #1a7a4a; --green-pale: #edf7f2; --red: #b83232; --red-pale: #fdf0f0;
+    --shadow: 0 4px 24px rgba(26,39,68,0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--navy); min-height: 100vh; color: var(--text); }
+  body.no-scroll { overflow: hidden; }
+
+  /* Top bar */
+  .topbar { background: var(--navy); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid rgba(201,162,39,0.25); }
+  .topbar-brand { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo { width: 38px; height: 38px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', Georgia, serif; font-weight: 900; color: var(--navy); font-size: 14px; letter-spacing: -1px; }
+  .topbar-name { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 1.15rem; color: var(--white); letter-spacing: 0.5px; }
+  .topbar-name span { color: var(--gold); }
+  .topbar-links { display: flex; gap: 20px; }
+  .topbar-links a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.82rem; font-weight: 500; }
+  .topbar-links a:hover { color: var(--gold); }
+
+  /* Hero */
+  .hero { background: var(--navy); padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid rgba(201,162,39,0.15); }
+  .hero-eyebrow { display: inline-block; background: rgba(201,162,39,0.15); color: var(--gold); font-size: 0.75rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(201,162,39,0.3); margin-bottom: 14px; }
+  .hero h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 2.4rem; font-weight: 700; color: var(--white); line-height: 1.2; margin-bottom: 10px; }
+  .hero h1 em { font-style: normal; color: var(--gold); }
+  .hero-sub { color: rgba(255,255,255,0.65); font-size: 0.95rem; max-width: 620px; margin: 0 auto; line-height: 1.6; }
+
+  /* Layout */
+  .main-content { background: var(--off-white); padding: 32px 16px 60px; }
+  .container { max-width: 940px; margin: 0 auto; }
+  .card { background: var(--white); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 24px; overflow: hidden; border: 1px solid var(--border); }
+  .card-header { background: var(--navy); padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card-header h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.1rem; font-weight: 700; color: var(--white); }
+  .header-badge { background: rgba(201,162,39,0.2); color: var(--gold); font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(201,162,39,0.3); }
+  .card-body { padding: 22px; }
+  .label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
+
+  /* Unit / sub-section selector */
+  .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+  .unit-block { border: 1.5px solid var(--border); border-radius: 9px; background: var(--off-white); transition: border-color .2s, background .2s; }
+  .unit-block.has-sel { border-color: var(--navy); background: #eef1fa; }
+  .unit-head { display: flex; align-items: center; gap: 9px; padding: 10px 10px 10px 12px; }
+  .unit-head input { width: 17px; height: 17px; accent-color: var(--navy); cursor: pointer; flex-shrink: 0; }
+  .unit-title { flex: 1; font-weight: 600; font-size: 0.86rem; line-height: 1.3; }
+  .unit-toggle { border: 1px solid var(--border); background: var(--white); cursor: pointer; color: var(--navy); font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; font-family: inherit; white-space: nowrap; }
+  .unit-toggle:hover { border-color: var(--navy); }
+  .sub-list { display: none; padding: 0 12px 10px 14px; border-top: 1px dashed var(--border); }
+  .unit-block.open .sub-list { display: block; }
+  .sub-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0 0; font-size: 0.8rem; cursor: pointer; line-height: 1.35; }
+  .sub-item input { margin-top: 2px; accent-color: var(--navy); flex-shrink: 0; }
+  .sub-code { font-weight: 800; color: var(--navy); min-width: 40px; }
+  .unit-chip { font-size: 0.62rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+  .unit-chip.as { background: rgba(26,39,68,0.1); color: var(--navy); }
+  .unit-chip.al { background: rgba(201,162,39,0.22); color: #7a5c06; }
+  .quick-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .btn-xs { padding: 6px 14px; font-family: inherit; font-size: 0.8rem; font-weight: 600; border: 1.5px solid var(--navy); border-radius: 6px; background: transparent; color: var(--navy); cursor: pointer; }
+  .btn-xs:hover { background: var(--navy); color: var(--white); }
+  .sel-status { margin-top: 12px; font-size: 0.84rem; color: var(--text-muted); }
+  .sel-status.warn { color: var(--red); font-weight: 700; }
+
+  .generate-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .btn-primary { flex: 1; min-width: 200px; padding: 13px 20px; font-family: inherit; font-size: 0.95rem; font-weight: 700; border: none; border-radius: 9px; cursor: pointer; transition: transform .15s, background .2s; }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-navy { background: var(--navy); color: var(--white); box-shadow: 0 3px 12px rgba(26,39,68,0.3); }
+  .btn-navy:hover { background: var(--navy-mid); }
+  .btn-gold { background: var(--gold); color: var(--navy); box-shadow: 0 3px 12px rgba(201,162,39,0.35); }
+  .btn-gold:hover { background: var(--gold-light); }
+
+  /* Result cards */
+  .result-card { display: none; animation: slideUp .35s ease; }
+  .result-card.active { display: block; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .code-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .code-chip { background: var(--navy); color: var(--gold-light); font-size: 0.76rem; font-weight: 700; padding: 5px 12px; border-radius: 16px; }
+  .context-box { background: #eef1fa; border-left: 4px solid var(--navy); border-radius: 0 9px 9px 0; padding: 13px 16px; margin-bottom: 16px; font-size: 0.97rem; line-height: 1.6; }
+  .context-box strong { color: var(--navy); }
+  .terms-box { background: var(--off-white); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .terms-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .term-tag { background: var(--white); border: 1.5px solid var(--navy); color: var(--navy); padding: 8px 16px; border-radius: 7px; font-weight: 700; font-size: 0.92rem; box-shadow: 0 2px 6px rgba(26,39,68,0.08); transition: all .2s; }
+  .term-tag.used { background: var(--green-pale); border-color: var(--green); color: var(--green); }
+  .term-tag.used::before { content: '✓ '; }
+  .task-line { font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px; }
+
+  textarea.answer { width: 100%; min-height: 170px; padding: 14px; font-family: inherit; font-size: 0.95rem; line-height: 1.65; color: var(--text); border: 1.5px solid var(--border); border-radius: 10px; resize: vertical; background: var(--white); }
+  textarea.answer:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(26,39,68,0.1); }
+  .checker { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+  .check-pill { font-size: 0.78rem; font-weight: 700; padding: 5px 11px; border-radius: 14px; background: var(--off-white); border: 1px solid var(--border); color: var(--text-muted); }
+  .check-pill.ok { background: var(--green-pale); border-color: var(--green); color: var(--green); }
+
+  /* Scaffold / exemplar */
+  .scaffold-box { background: var(--gold-pale); border: 1.5px solid var(--gold); border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; }
+  .box-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .box-title { font-size: 0.87rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .scaffold-box .box-title { color: #7a5c06; }
+  .scaffold-body { display: none; margin-top: 14px; }
+  .scaffold-body.visible { display: block; }
+  .scaffold-steps { display: flex; flex-direction: column; gap: 8px; }
+  .scaffold-step { display: flex; gap: 12px; align-items: flex-start; background: var(--white); border-radius: 8px; padding: 10px 14px; border-left: 3px solid var(--gold); }
+  .step-num { font-size: 0.72rem; font-weight: 800; color: var(--gold); background: var(--navy); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .step-text { font-size: 0.88rem; line-height: 1.55; }
+  .starters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .starter-chip { background: rgba(26,39,68,0.07); color: var(--navy); font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 5px; font-style: italic; }
+  .exemplar-box { background: var(--off-white); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+  .exemplar-text { display: none; margin-top: 14px; font-size: 0.95rem; line-height: 1.8; }
+  .exemplar-text.visible { display: block; }
+  .ex-term { font-weight: 700; color: var(--navy); background: var(--gold-pale); padding: 0 3px; border-radius: 3px; }
+  .ex-link { font-weight: 600; text-decoration: underline; text-decoration-color: var(--gold); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .legend { font-size: 0.76rem; color: var(--text-muted); margin-top: 10px; }
+  .btn-reveal { padding: 7px 14px; font-family: inherit; font-size: 0.8rem; font-weight: 700; border-radius: 7px; cursor: pointer; background: transparent; white-space: nowrap; }
+  .btn-reveal-gold { border: 1.5px solid var(--gold); color: #7a5c06; }
+  .btn-reveal-gold:hover { background: var(--gold); color: var(--navy); }
+  .btn-reveal-navy { border: 1.5px solid var(--navy); color: var(--navy); }
+  .btn-reveal-navy:hover { background: var(--navy); color: var(--white); }
+
+  /* Question */
+  .question-box { background: #eef1fa; border: 1.5px solid var(--navy); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
+  .q-scenario { font-size: 0.97rem; line-height: 1.65; margin-bottom: 10px; }
+  .q-text { font-size: 1.05rem; font-weight: 700; color: var(--navy); line-height: 1.6; }
+  .q-marks { display: inline-block; background: var(--navy); color: var(--gold); font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; margin-top: 10px; }
+  .ms-toggle-btn { width: 100%; padding: 12px 16px; background: var(--off-white); border: 1.5px solid var(--border); border-radius: 9px; font-family: inherit; font-size: 0.88rem; font-weight: 700; color: var(--navy); cursor: pointer; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+  .ms-toggle-btn:hover { background: #eef1fa; border-color: var(--navy); }
+  .ms-toggle-btn .arrow { transition: transform .25s; }
+  .ms-toggle-btn.open .arrow { transform: rotate(180deg); }
+  .ms-body { display: none; padding: 18px; border: 1.5px solid var(--border); border-top: none; border-radius: 0 0 9px 9px; }
+  .ms-body.open { display: block; }
+  .ms-section { margin-bottom: 18px; }
+  .ao-note { background: var(--off-white); border: 1.5px solid var(--border); border-radius: 9px; padding: 12px 14px; font-size: 0.86rem; line-height: 1.6; }
+  .levels-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .levels-table th { background: var(--navy); color: var(--white); padding: 9px 12px; text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .levels-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  .levels-table tr:nth-child(even) td { background: var(--off-white); }
+  .ms-source { font-size: 0.74rem; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+  .chain { background: var(--off-white); border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; padding: 11px 14px; margin-bottom: 9px; font-size: 0.88rem; line-height: 1.6; }
+  .chain strong { display: block; color: var(--navy); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+  .key-terms-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .key-term-pill { background: var(--navy); color: var(--gold-light); font-size: 0.78rem; font-weight: 600; padding: 4px 12px; border-radius: 12px; }
+  .examiner-note { background: var(--gold-pale); border: 1.5px solid var(--gold); border-radius: 9px; padding: 13px 15px; font-size: 0.86rem; line-height: 1.6; }
+
+  /* Actions */
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .btn-action { padding: 9px 16px; font-family: inherit; font-size: 0.84rem; font-weight: 700; border-radius: 8px; cursor: pointer; border: 1.5px solid transparent; }
+  .btn-print { background: var(--navy); color: var(--white); }
+  .btn-print:hover { background: var(--navy-mid); }
+  .btn-teacher { background: var(--gold); color: var(--navy); }
+  .btn-teacher:hover { background: var(--gold-light); }
+  .btn-plain { background: var(--off-white); color: var(--navy); border-color: var(--border); }
+  .btn-plain:hover { background: #eef1fa; border-color: var(--navy); }
+
+  /* Present mode */
+  .present-exit { display: none; background: var(--gold); color: var(--navy); border: none; font-family: inherit; font-weight: 800; font-size: 0.85rem; padding: 7px 14px; border-radius: 7px; cursor: pointer; }
+  .card.presenting { position: fixed; inset: 0; z-index: 1000; margin: 0; border-radius: 0; overflow: auto; }
+  .card.presenting .present-exit { display: inline-block; }
+  .card.presenting .card-body { max-width: 1150px; margin: 0 auto; padding: 30px 24px 60px; zoom: 1.3; }
+  .card.presenting .action-row { display: none; }
+
+  /* Print-only */
+  .print-header, .print-answer { display: none; }
+  .name-box { display: flex; gap: 10px; margin: 12px 0 16px; }
+  .name-box div { flex: 1; border: 1.5px solid var(--navy); background: #fff; color: var(--navy); padding: 6px 10px; font-weight: 700; font-size: 0.85rem; height: 42px; }
+  .writing-line { border-bottom: 1px solid #999; height: 28px; }
+  .pa-label { font-weight: 700; margin: 16px 0 6px; }
+  .pa-text { border: 1px solid #999; padding: 10px; line-height: 1.6; }
+
+  footer { background: var(--navy); padding: 20px 32px; text-align: center; }
+  footer p { color: rgba(255,255,255,0.55); font-size: 0.82rem; }
+  footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+  @media (max-width: 600px) {
+    .topbar { padding: 14px 16px; }
+    .topbar-links { display: none; }
+    .hero { padding: 30px 16px 26px; }
+    .hero h1 { font-size: 1.7rem; }
+    .card-body { padding: 16px; }
+    .btn-primary { min-width: 100%; }
+    .card.presenting .card-body { zoom: 1; }
+  }
+
+  @media print {
+    @page { margin: 1.5cm; }
+    body { background: #fff !important; color: #000 !important; font-family: Georgia, 'Times New Roman', serif; }
+    .topbar, .hero, footer, .controls-card, .action-row, .btn-reveal, textarea.answer, .checker,
+    .ms-toggle-btn, .present-exit, .card-header, .legend, .no-print { display: none !important; }
+    .main-content { background: #fff !important; padding: 0 !important; }
+    .card { box-shadow: none !important; border: none !important; margin: 0 !important; position: static !important; }
+    .card-body { padding: 0 !important; zoom: 1 !important; }
+    .result-card { display: none !important; }
+    body:not([data-print]) .result-card.active { display: block !important; }
+    body[data-print^="terms"] #termsCard, body[data-print^="q"] #questionCard { display: block !important; }
+    .print-header, .print-answer { display: block !important; }
+    .scaffold-body, .exemplar-text, .ms-body { display: block !important; }
+    .teacher-only { display: none !important; }
+    body[data-print$="teacher"] .teacher-only { display: block !important; }
+    body[data-print$="teacher"] .student-only { display: none !important; }
+    .ph-brand { font-size: 10pt; letter-spacing: 1px; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 4px; }
+    .ph-title { font-size: 16pt; font-weight: 700; margin: 8px 0 2px; }
+    .ph-mode { font-size: 10pt; font-style: italic; }
+    .name-box { display: flex !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .context-box, .question-box, .terms-box, .scaffold-box, .exemplar-box, .chain, .ao-note, .examiner-note, .scaffold-step {
+      background: #fff !important; border: 1px solid #888 !important; color: #000 !important; }
+    .term-tag, .code-chip, .key-term-pill, .starter-chip, .q-marks, .step-num { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; box-shadow: none !important; }
+    .term-tag.used::before { content: ''; }
+    .ex-term { background: none !important; color: #000 !important; }
+    .ex-link { text-decoration-color: #000 !important; }
+    .levels-table th { background: #fff !important; color: #000 !important; border-bottom: 2px solid #000; }
+    .levels-table td { background: #fff !important; }
+    .q-text, .box-title, .label { color: #000 !important; }
+    .exemplar-box, .ms-body, .scaffold-box { break-inside: avoid; }
+    .ms-body { border: none !important; padding: 0 !important; }
+    .teacher-break { break-before: page; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">B·O</div>
+    <span class="topbar-name">BIZ-<span>OMICS</span></span>
+  </div>
+  <div class="topbar-links">
+    <a href="https://biz-omics.co.uk" target="_blank" rel="noopener">Website</a>
+    <a href="https://www.youtube.com/@biz-omics8348" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://www.tiktok.com/@biz_omics" target="_blank" rel="noopener">TikTok</a>
+    <a href="https://www.instagram.com/biz_omics" target="_blank" rel="noopener">Instagram</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-eyebrow">AQA A-level Business · 7132</div>
+  <h1>Chains of <em>Reasoning</em> Generator</h1>
+  <p class="hero-sub">Connect key terms into a chain of reasoning about a real-feeling business, then tackle 9-mark Analyse questions with question-specific indicative content.</p>
+</div>
+
+<div class="main-content">
+<div class="container">
+
+  <!-- CONTROLS -->
+  <div class="card controls-card">
+    <div class="card-header">
+      <h2>Choose What You've Taught</h2>
+      <span class="header-badge">Step 1</span>
+    </div>
+    <div class="card-body">
+      <div class="label">Tick a whole unit, or open it (▾) to pick individual sub-sections</div>
+      <div class="unit-grid" id="unitGrid"></div>
+      <div class="quick-row">
+        <button class="btn-xs" onclick="setSel(() => true)">Select all</button>
+        <button class="btn-xs" onclick="setSel(() => false)">Clear all</button>
+        <button class="btn-xs" onclick="setSel(c => AS_UNITS.has(unitOf(c)))">AS content (3.1–3.6)</button>
+        <button class="btn-xs" onclick="setSel(c => !AS_UNITS.has(unitOf(c)))">A-level only (3.7–3.10)</button>
+        <button class="btn-xs" onclick="toggleAllOpen()">Expand / collapse all</button>
+      </div>
+      <div class="sel-status" id="selStatus"></div>
+      <div class="generate-row">
+        <button class="btn-primary btn-navy" onclick="generateTerms()">🔗 Connect the Terms</button>
+        <button class="btn-primary btn-gold" onclick="generateQuestion()">📋 9-Mark Analyse Question</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERMS CARD -->
+  <div class="card result-card" id="termsCard">
+    <div class="card-header">
+      <h2>Chain of Reasoning — Connect the Terms</h2>
+      <button class="present-exit" onclick="exitPresent()">✕ Exit present</button>
+    </div>
+    <div class="card-body">
+      <div class="print-header">
+        <div class="ph-brand">BIZ-OMICS · AQA A-level Business (7132)</div>
+        <div class="ph-title">Chain of Reasoning — Connect the Terms</div>
+        <div class="ph-mode teacher-only">Teacher copy — includes exemplar paragraph</div>
+        <div class="name-box student-only"><div>Name</div><div>Class</div><div>Date</div></div>
+      </div>
+
+      <div class="code-chips" id="termsCodes"></div>
+      <div class="context-box"><strong>Context:</strong> <span id="termsContext"></span></div>
+
+      <div class="terms-box">
+        <div class="label">Use all of these terms in one chain of reasoning</div>
+        <div class="terms-list" id="termsList"></div>
+      </div>
+      <p class="task-line"><strong>Task:</strong> Write one analytical paragraph about this business that links every term above. Each step should explain <em>why</em> it leads to the next. Aim for 120–150 words and at least three chain links.</p>
+
+      <textarea class="answer" id="termsAnswer" placeholder="Write your paragraph here… the checker below updates as you type." oninput="checkTerms()"></textarea>
+      <div class="checker">
+        <span class="check-pill" id="chkTerms">Terms used: 0/4</span>
+        <span class="check-pill" id="chkLinks">Chain links: 0 (aim 3+)</span>
+        <span class="check-pill" id="chkWords">Words: 0 (aim 120–150)</span>
+      </div>
+      <div class="print-answer student-only" id="termsPrintAnswer"></div>
+
+      <div class="scaffold-box">
+        <div class="box-head">
+          <span class="box-title">💡 Chain scaffold</span>
+          <button class="btn-reveal btn-reveal-gold" id="termsScaffoldBtn" onclick="toggleBox('termsScaffold', this, 'Show hint', 'Hide hint')">▼ Show hint</button>
+        </div>
+        <div class="scaffold-body" id="termsScaffold">
+          <div class="scaffold-steps" id="termsSteps"></div>
+          <div class="starters" id="termsStarters"></div>
+        </div>
+      </div>
+
+      <div class="exemplar-box teacher-only">
+        <div class="box-head">
+          <span class="box-title">📝 Exemplar paragraph</span>
+          <button class="btn-reveal btn-reveal-navy" id="exemplarBtn" onclick="revealExemplar()">👁️ Reveal exemplar</button>
+        </div>
+        <div class="exemplar-text" id="exemplarText"></div>
+        <div class="legend exemplar-text" id="exemplarLegend"><span class="ex-term">Highlighted</span> = key term · <span class="ex-link">underlined</span> = chain link. Compare: where does your chain jump a step?</div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-action btn-print" onclick="printMode('terms-student')">🖨️ Print student worksheet</button>
+        <button class="btn-action btn-teacher" onclick="printMode('terms-teacher')">🖨️ Print teacher copy</button>
+        <button class="btn-action btn-plain" onclick="present('termsCard')">🖥️ Present</button>
+        <button class="btn-action btn-plain" onclick="generateTerms()">↻ New set</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTION CARD -->
+  <div class="card result-card" id="questionCard">
+    <div class="card-header">
+      <h2>9-Mark Analyse Question</h2>
+      <button class="present-exit" onclick="exitPresent()">✕ Exit present</button>
+    </div>
+    <div class="card-body">
+      <div class="print-header">
+        <div class="ph-brand">BIZ-OMICS · AQA A-level Business (7132)</div>
+        <div class="ph-title">9-Mark Analyse Question</div>
+        <div class="ph-mode teacher-only">Teacher copy — includes mark scheme and indicative content</div>
+        <div class="name-box student-only"><div>Name</div><div>Class</div><div>Date</div></div>
+      </div>
+
+      <div class="code-chips" id="qCodes"></div>
+      <div class="question-box">
+        <p class="q-text" id="qText"></p>
+        <span class="q-marks">[9 marks] · about 11 minutes</span>
+      </div>
+
+      <div class="scaffold-box">
+        <div class="box-head">
+          <span class="box-title">💡 Planning scaffold</span>
+          <button class="btn-reveal btn-reveal-gold" id="qScaffoldBtn" onclick="toggleBox('qScaffold', this, 'Show planning hint', 'Hide planning hint')">▼ Show planning hint</button>
+        </div>
+        <div class="scaffold-body" id="qScaffold">
+          <div class="scaffold-steps">
+            <div class="scaffold-step"><div class="step-num">1</div><div class="step-text"><strong>Know it (AO1):</strong> Identify the one or two concepts the question is really about and show you understand them — briefly, not a glossary dump.</div></div>
+            <div class="scaffold-step"><div class="step-num">2</div><div class="step-text"><strong>Use it (AO2):</strong> Apply to the type of business or situation in the question (e.g. a plc, a healthcare producer) with realistic examples. If a sentence would fit any business at all, sharpen it.</div></div>
+            <div class="scaffold-step"><div class="step-num">3</div><div class="step-text"><strong>Chain it (AO3):</strong> Build two developed chains: cause → effect → effect → consequence for the business. Two deep chains beat four shallow points.</div></div>
+            <div class="scaffold-step"><div class="step-num">4</div><div class="step-text"><strong>No verdict needed:</strong> "Analyse" does not reward a final judgement or conclusion — spend the time deepening the chains instead.</div></div>
+          </div>
+          <div class="starters">
+            <span class="starter-chip">"This means that…"</span>
+            <span class="starter-chip">"…because…"</span>
+            <span class="starter-chip">"As a result…"</span>
+            <span class="starter-chip">"This leads to…"</span>
+            <span class="starter-chip">"For [business], this is significant because…"</span>
+            <span class="starter-chip">"In turn…"</span>
+          </div>
+        </div>
+      </div>
+
+      <textarea class="answer" id="qAnswer" placeholder="Write your answer here…" oninput="checkQuestion()"></textarea>
+      <div class="checker">
+        <span class="check-pill" id="qChkLinks">Chain links: 0</span>
+        <span class="check-pill" id="qChkWords">Words: 0 (aim 200–250)</span>
+      </div>
+      <div class="print-answer student-only" id="qPrintAnswer"></div>
+
+      <div class="teacher-only teacher-break">
+        <button class="ms-toggle-btn" id="msToggleBtn" onclick="toggleMarkScheme()">📋 Mark scheme &amp; indicative content <span class="arrow">▼</span></button>
+        <div class="ms-body" id="msBody">
+          <div class="ms-section">
+            <div class="label">What this question assesses</div>
+            <div class="ao-note"><strong>AO1</strong> knowledge · <strong>AO2</strong> application · <strong>AO3</strong> analysis. There is no AO4 credit in an Analyse question, so a conclusion or judgement earns nothing extra. Marks come from the quality and development of the chains, not the number of points.</div>
+          </div>
+          <div class="ms-section">
+            <div class="label">Levels of response</div>
+            <table class="levels-table">
+              <thead><tr><th>Level</th><th>Marks</th><th>Descriptor</th></tr></thead>
+              <tbody id="levelsBody"></tbody>
+            </table>
+            <div class="ms-source" id="msSource"></div>
+          </div>
+          <div class="ms-section">
+            <div class="label">Indicative content — chains a strong answer might develop</div>
+            <div id="qChains"></div>
+          </div>
+          <div class="ms-section">
+            <div class="label">Key terms to look for</div>
+            <div class="key-terms-row" id="qKeyTerms"></div>
+          </div>
+          <div class="examiner-note"><strong>⚠️ Examiner's note:</strong> Credit any valid chain, not only those listed. Watch for answers that define well but never apply to the type of business or situation in the question (capped by weak AO2), and for "list" answers that name many effects without explaining how one leads to the next (capped by weak AO3).</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-action btn-print" onclick="printMode('q-student')">🖨️ Print student worksheet</button>
+        <button class="btn-action btn-teacher" onclick="printMode('q-teacher')">🖨️ Print teacher copy</button>
+        <button class="btn-action btn-plain" onclick="present('questionCard')">🖥️ Present</button>
+        <button class="btn-action btn-plain" onclick="generateQuestion()">↻ New question</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <p>Created by <a href="https://biz-omics.co.uk" target="_blank" rel="noopener">BIZ-OMICS</a> | AQA A-level Business (7132) resource | <a href="https://www.youtube.com/@biz-omics8348" target="_blank" rel="noopener">YouTube</a> · <a href="https://www.tiktok.com/@biz_omics" target="_blank" rel="noopener">TikTok</a> · <a href="https://www.instagram.com/biz_omics" target="_blank" rel="noopener">Instagram</a></p>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   MARK SCHEME — edit this object to match the official AQA wording.
+   ════════════════════════════════════════════════════════════════════ */
+const MARK_SCHEME = {
+  source: "BIZ-OMICS guidance levels for a 9-mark Analyse question (AO1–AO3).",
+  levels: [
+    { lv: 3, marks: "7–9", text: "Good knowledge and understanding of relevant concepts, applied to the type of business or situation in the question. Well-developed chains of reasoning: each link explains why the next follows, and the chains reach a clear consequence for the business." },
+    { lv: 2, marks: "4–6", text: "Reasonable knowledge, with some application to the context in the question. Some chains of reasoning, but links are partly asserted or the chain stops before reaching a consequence for the business." },
+    { lv: 1, marks: "1–3", text: "Limited knowledge, largely generic with little reference to the context in the question. Points are listed or asserted rather than developed." }
+  ]
+};
+
+/* ── SPEC STRUCTURE (AQA 7132, v2.0) ─────────────────────────────── */
+const UNITS = [
+  { u: "3.1", t: "What is business?", lv: "AS", subs: [
+    ["3.1.1", "Understanding the nature and purpose of business"],
+    ["3.1.2", "Understanding different business forms"],
+    ["3.1.3", "Businesses operate within an external environment"]]},
+  { u: "3.2", t: "Managers, leadership and decision making", lv: "AS", subs: [
+    ["3.2.1", "Management, leadership and decision making"],
+    ["3.2.2", "Management decision making"],
+    ["3.2.3", "The role and importance of stakeholders"]]},
+  { u: "3.3", t: "Marketing management", lv: "AS", subs: [
+    ["3.3.1", "Setting marketing objectives"],
+    ["3.3.2", "Understanding markets and customers"],
+    ["3.3.3", "Segmentation, targeting, positioning"],
+    ["3.3.4", "Using the marketing mix"]]},
+  { u: "3.4", t: "Operational management", lv: "AS", subs: [
+    ["3.4.1", "Setting operational objectives"],
+    ["3.4.2", "Analysing operational performance"],
+    ["3.4.3", "Increasing efficiency and productivity"],
+    ["3.4.4", "Improving quality"],
+    ["3.4.5", "Managing inventory and supply chains"]]},
+  { u: "3.5", t: "Financial management", lv: "AS", subs: [
+    ["3.5.1", "Setting financial objectives"],
+    ["3.5.2", "Analysing financial performance"],
+    ["3.5.3", "Sources of finance"],
+    ["3.5.4", "Improving cash flow and profits"]]},
+  { u: "3.6", t: "Human resource management", lv: "AS", subs: [
+    ["3.6.1", "Setting human resource objectives"],
+    ["3.6.2", "Analysing human resource performance"],
+    ["3.6.3", "Organisational design and human resource flow"],
+    ["3.6.4", "Improving motivation and engagement"],
+    ["3.6.5", "Improving employer–employee relations"]]},
+  { u: "3.7", t: "Analysing the strategic position of a business", lv: "A-level", subs: [
+    ["3.7.1", "Mission, corporate objectives and strategy"],
+    ["3.7.2", "Financial ratio analysis"],
+    ["3.7.3", "Overall performance"],
+    ["3.7.4", "Political and legal change"],
+    ["3.7.5", "Economic change"],
+    ["3.7.6", "Social and technological change"],
+    ["3.7.7", "The competitive environment"],
+    ["3.7.8", "Investment appraisal"]]},
+  { u: "3.8", t: "Choosing strategic direction", lv: "A-level", subs: [
+    ["3.8.1", "Which markets and products (Ansoff)"],
+    ["3.8.2", "Strategic positioning: how to compete"]]},
+  { u: "3.9", t: "Strategic methods: how to pursue strategies", lv: "A-level", subs: [
+    ["3.9.1", "Assessing a change in scale"],
+    ["3.9.2", "Assessing innovation"],
+    ["3.9.3", "Globalisation and internationalisation"],
+    ["3.9.4", "Greater use of digital technology"]]},
+  { u: "3.10", t: "Managing strategic change", lv: "A-level", subs: [
+    ["3.10.1", "Managing change"],
+    ["3.10.2", "Managing organisational culture"],
+    ["3.10.3", "Managing strategic implementation"],
+    ["3.10.4", "Problems with strategy and why strategies fail"]]}
+];
+
+/* ── TERM SETS ───────────────────────────────────────────────────────
+   c = spec sub-sections (set appears only when ALL are selected)
+   x = context   t = terms ("Display|alias|alias" — aliases help the checker)
+   e = exemplar paragraph                                               */
+const SETS = [
+  { c: ["3.1.1"], x: "Hollow Oak is an independent bakery in York, eight months after opening.",
+    t: ["Mission", "Business objectives|objective", "Survival", "Profit"],
+    e: "Hollow Oak's mission — to bake everything from scratch using local flour — sets the direction for its business objectives, but in its first year the most pressing objective is survival rather than profit. Because the bakery has high fixed costs, such as rent and oven leases, it needs a minimum level of revenue every week just to cover total costs. This means that, in the short term, decisions are likely to focus on bringing cash in, for example extending opening hours, rather than maximising profit per loaf. However, if the bakery cuts corners on ingredients to survive, it could undermine the mission that differentiates it, which would reduce customer loyalty and therefore make long-term profit harder to achieve. As a result, the objectives must be consistent with the mission or they will work against each other." },
+  { c: ["3.1.2"], x: "Priya runs a growing phone repair business as a sole trader and wants to open a second shop.",
+    t: ["Sole trader", "Unlimited liability", "Private limited company|limited company|Ltd", "Ordinary share capital|share capital"],
+    e: "As a sole trader, Priya has unlimited liability, which means her personal assets, such as her house, could be used to pay the business's debts if the second shop failed. This raises the personal risk of expansion, so she may be reluctant to borrow the money needed. Converting to a private limited company would separate her personal finances from the business, because shareholders' liability is limited to the amount they have invested. As a result, she could raise ordinary share capital from family or a business partner without taking on more debt, which reduces the interest burden on the new shop. However, selling shares means sharing future profits and some control, so the benefit depends on how much Priya values keeping full ownership against reducing her personal risk." },
+  { c: ["3.1.2"], x: "Greystone Foods plc has announced that its annual profit has fallen by 30%.",
+    t: ["Dividends|dividend", "Share price", "Market capitalisation|market cap", "Shareholders|shareholder"],
+    e: "Shareholders buy shares in Greystone Foods for two returns: dividends and a rising share price. A 30% fall in profit means there is less profit available to distribute, so the board may cut the dividend. Because many investors hold shares for income, this makes the shares less attractive, which leads to more shareholders selling than buying and therefore pushes the share price down. As market capitalisation is the share price multiplied by the number of shares issued, a falling share price directly reduces the company's market value. This matters because a lower market capitalisation can make Greystone a cheaper target for a takeover and makes it harder to raise new finance by issuing shares. However, if investors believe the fall is temporary, for example caused by a one-off cost, the share price may fall far less." },
+  { c: ["3.1.3"], x: "Velo Republic sells premium road bikes, many of which customers buy on finance.",
+    t: ["Interest rates|interest rate", "Incomes|income", "Demand", "Costs|cost"],
+    e: "When the Bank of England raises interest rates, Velo Republic is affected through both demand and costs. Because many customers buy bikes on finance, higher interest rates increase monthly repayments, which reduces the income customers have left to spend, so demand for premium bikes is likely to fall. At the same time, if Velo Republic has a bank loan or overdraft, its interest payments rise, which increases its costs. As a result, the business faces a squeeze on profit from both sides: falling revenue and rising costs. The impact depends on incomes, however: if Velo's customers are high earners whose incomes are rising, they may be less sensitive to the change, whereas customers on average incomes may delay purchases altogether." },
+  { c: ["3.2.1"], x: "A new manager has taken over a busy hotel restaurant and is deciding how much to involve staff in decisions.",
+    t: ["Tannenbaum Schmidt continuum|Tannenbaum Schmidt|Tannenbaum", "Autocratic leadership|autocratic", "Democratic leadership|democratic", "Motivation|motivated|motivate"],
+    e: "The Tannenbaum Schmidt continuum shows that leadership ranges from the manager deciding alone to the team deciding within set limits. During a busy service, an autocratic style may be effective because decisions must be made instantly and there is no time to consult, which keeps service fast. However, if the manager also uses this style when planning menus or rotas, staff with useful experience are ignored, which is likely to reduce their motivation. A more democratic leadership style outside service would involve chefs and waiting staff in decisions, which increases their sense of ownership and therefore their effort. This suggests the best position on the continuum depends on the situation: autocratic when speed matters, more democratic when the quality of the decision benefits from staff knowledge." },
+  { c: ["3.2.2"], x: "A toy manufacturer must choose between launching a new product range and upgrading an existing one.",
+    t: ["Decision tree", "Expected value", "Risk", "Opportunity cost"],
+    e: "A decision tree allows the manufacturer to set out both options, the probability of each outcome and its financial result. By calculating the expected value of each option, managers can compare them as weighted averages, which makes the decision more objective than relying on intuition alone. For example, the new range may have a higher expected value but a wider spread of outcomes, which means it carries more risk because there is a real chance of a large loss. Choosing one option also has an opportunity cost: the net gain from the option not chosen. However, the expected values are only as reliable as the probabilities used, so if these are estimates based on limited market research, the decision tree may give managers false confidence in a risky choice." },
+  { c: ["3.2.3"], x: "A quarry company plans to extend its site closer to a village.",
+    t: ["Stakeholder mapping", "Power", "Interest", "Consultation|consult"],
+    e: "Stakeholder mapping places each group according to its power to affect the decision and its interest in it. Local residents have very high interest because the extension affects noise and traffic, and their power may be greater than expected because they can object to the planning application. This means the quarry company needs to manage them closely through consultation, for example public meetings that explain how dust and lorry movements will be controlled. As a result, objections may be reduced, which makes planning approval more likely and avoids costly delays. However, if consultation is seen as a public relations exercise and nothing changes, residents may become more organised and gain more power, which could block the extension entirely." },
+  { c: ["3.3.1"], x: "A craft soft-drinks brand holds 4% of the UK premium soft-drinks market.",
+    t: ["Marketing objectives|marketing objective", "Market share", "Sales growth", "Brand loyalty"],
+    e: "Setting a marketing objective, such as increasing market share from 4% to 6% within two years, gives the brand a clear target against which to measure its marketing activity. Because the premium market is itself growing, the business could achieve sales growth without gaining market share, so a market share objective is a better test of whether it is winning customers from rivals. To achieve this, the brand may focus on building brand loyalty, as loyal customers make repeat purchases and are less likely to switch when competitors run promotions. This leads to more predictable sales, which helps the business plan production. However, building loyalty takes time and marketing spending, so a short-term objective for sales growth may conflict with a longer-term objective for loyalty." },
+  { c: ["3.3.2"], x: "A cinema chain is considering raising ticket prices by 10%.",
+    t: ["Price elasticity of demand|price elastic|price elasticity|PED", "Revenue", "Substitutes|substitute", "Income elasticity of demand|income elastic|income elasticity|YED"],
+    e: "If demand for cinema tickets is price elastic, a 10% price rise will lead to a larger percentage fall in quantity demanded, which means total revenue will fall. Demand is likely to be more elastic where there are close substitutes, such as streaming services, because customers can easily switch to watching at home. As a result, the chain may lose revenue from tickets and also from snacks, which are bought by customers who attend. However, if the price rise coincides with rising incomes, the effect could be offset: if cinema trips have a positive income elasticity of demand, rising incomes increase demand, which partly cancels the fall caused by the higher price. So the impact on revenue depends on both elasticities, not just the price change." },
+  { c: ["3.3.3"], x: "A sportswear start-up wants to compete with large global brands.",
+    t: ["Segmentation|segment", "Niche marketing|niche", "Market mapping|market map", "Positioning|position"],
+    e: "Segmentation allows the start-up to divide the market, for example by behaviour, into groups such as casual gym users, runners and climbers. Because it cannot match global brands' marketing budgets, a niche marketing approach targeting one segment, such as climbers, means it competes where the large brands are less focused. Using market mapping, for example on axes of price and technical performance, the start-up can identify a gap, such as high-performance kit at a mid-range price. This leads to clearer positioning, so customers in the niche see a distinct reason to choose the brand. However, a niche limits the size of the market, which means sales growth may stall, and if the niche proves profitable, larger brands may enter it." },
+  { c: ["3.3.4"], x: "A smartphone accessories firm's best-selling charger was launched five years ago.",
+    t: ["Product life cycle|life cycle", "Extension strategy|extension strategies", "Boston Matrix", "Cash cow"],
+    e: "The charger is likely to be in the maturity stage of the product life cycle, where sales are high but growth has slowed. In the Boston Matrix it may be a cash cow: high market share in a low-growth market, which means it generates more cash than it needs. This cash can be used to fund question marks, such as new wireless products, which need investment to build market share. To keep the cash flowing, the firm may use an extension strategy, such as a faster-charging version, which delays the decline stage. However, if technology changes, such as phones moving to a new connector type, the charger could move into decline very quickly, so relying on one cash cow is risky." },
+  { c: ["3.3.4"], x: "A new oat-milk brand is launching into UK supermarkets.",
+    t: ["Penetration pricing|penetration", "Social media", "Viral marketing|viral", "Multichannel distribution|multichannel"],
+    e: "Using penetration pricing, the brand sets a low initial price to encourage shoppers to try it instead of established rivals, which helps it gain market share quickly. Low prices reduce the margin per carton, so promotion needs to be cheap: social media allows the brand to target younger, health-conscious consumers directly at low cost. If content is shared widely, viral marketing can build awareness far faster than paid advertising, which means sales volume grows quickly enough to compensate for the low margin. Multichannel distribution, through supermarkets, cafés and its own website, makes the product easy to buy wherever awareness is created. However, if the brand later raises prices, customers attracted by the low price may switch, so the strategy relies on building brand loyalty during the launch." },
+  { c: ["3.4.1"], x: "A furniture maker produces sofas to order and wants to improve its operations.",
+    t: ["Operational objectives|operational objective", "Quality", "Speed of response", "Added value"],
+    e: "Setting operational objectives gives the furniture maker targets, such as delivery within four weeks and fewer than 1% of sofas returned. A speed of response objective matters because customers buying made-to-order sofas compare waiting times, so faster delivery can win orders from rivals. However, speeding up production may put pressure on quality, as rushed upholstery leads to more defects, which increases returns and costs. Because the business makes sofas to order, high quality allows it to charge a premium price, which increases added value: the difference between the selling price and the cost of bought-in materials. This suggests the objectives need to be balanced, as pursuing speed at the expense of quality could reduce added value instead of increasing it." },
+  { c: ["3.4.2"], x: "A brewery produces 6,000 barrels a month but has the capacity to produce 10,000.",
+    t: ["Capacity utilisation", "Fixed costs|fixed cost", "Unit costs|unit cost", "Labour productivity"],
+    e: "The brewery's capacity utilisation is 60%, calculated as 6,000 divided by 10,000 multiplied by 100. Because fixed costs, such as rent and equipment leases, do not change with output, they are spread across only 6,000 barrels, which means unit costs are higher than they would be at full capacity. If the brewery increased output to 9,000 barrels, the same fixed costs would be spread over more barrels, so unit costs would fall, which improves profit margins or allows lower prices. Higher output with the same workforce would also raise labour productivity, further reducing the labour cost per barrel. However, raising utilisation only helps if the extra beer can be sold; producing more without demand would simply increase inventory and tie up cash." },
+  { c: ["3.4.3"], x: "A car parts supplier relies on components shipped from Asia.",
+    t: ["Lean production|lean", "Just in Time|JIT", "Just in Case|JIC", "Cash flow"],
+    e: "Lean production aims to reduce waste, and Just in Time means components arrive only when they are needed instead of being stored. This reduces the money tied up in inventory, which improves cash flow and lowers storage costs. However, because the supplier's components come from Asia, lead times are long and shipping can be disrupted, which means a single delay could stop production completely. If production stops, the supplier may fail to deliver to car manufacturers, damaging its reputation and leading to lost contracts. As a result, the business might prefer a Just in Case approach, holding extra inventory as protection. This increases costs, but it reduces the risk of a stoppage, so the best choice depends on how reliable the supply chain is." },
+  { c: ["3.4.4"], x: "A meal-kit company has seen a rise in complaints about missing ingredients.",
+    t: ["Quality control", "Quality assurance", "Reputation", "Costs|cost"],
+    e: "Under quality control, boxes are inspected at the end of packing, which means errors are found after they happen and some missing ingredients will still slip through. Moving to quality assurance builds quality into every stage, for example by giving each packer a checklist and responsibility for their own station, so errors are prevented instead of detected. This matters because poor quality is costly for a meal-kit company: a missing ingredient ruins the meal, which leads to refunds and online complaints that damage its reputation. As customers subscribe, a damaged reputation leads to cancellations, reducing future revenue. However, quality assurance requires training and changes to processes, which increase costs in the short run, so the benefit depends on how quickly complaints and refunds fall." },
+  { c: ["3.4.5"], x: "A garden centre sells large volumes of barbecue charcoal in summer.",
+    t: ["Lead time", "Buffer inventory|buffer", "Re-order level|reorder level", "Choice of supplier|supplier"],
+    e: "The re-order level is the inventory level at which the garden centre places a new order, and it depends on the lead time — how long the supplier takes to deliver. If the lead time is two weeks and summer demand is high, the re-order level must be high enough to cover two weeks of sales. A buffer inventory adds extra protection, because a heatwave could cause demand to jump unexpectedly, which would otherwise lead to empty shelves and lost sales to rivals. However, holding more buffer inventory ties up cash and space in a seasonal product that may not sell if the weather turns. This makes the choice of supplier important: a local supplier with a shorter lead time would allow a lower re-order level and less buffer inventory, even if its unit price is higher." },
+  { c: ["3.5.1"], x: "A wedding photography business is profitable but often struggles to pay its bills.",
+    t: ["Cash flow", "Profit", "Receivables", "Cash flow objective|cash flow objectives"],
+    e: "Profit is revenue minus total costs over a period, whereas cash flow is the timing of money coming in and going out. The photographer can be profitable but short of cash because clients often pay the final balance weeks after the wedding, so receivables are high while costs such as equipment and travel must be paid immediately. This creates a gap, which means the business may need an overdraft, adding interest costs that reduce profit. Setting a cash flow objective, such as never falling below a minimum bank balance, would focus the business on the timing of payments, for example by taking larger deposits before the wedding. However, demanding bigger deposits could put some clients off, so improving cash flow might reduce bookings." },
+  { c: ["3.5.2"], x: "A food truck sells burritos at £8 each, with variable costs of £3 per burrito.",
+    t: ["Contribution per unit|contribution", "Fixed costs|fixed cost", "Break-even output|break-even|break even", "Margin of safety"],
+    e: "Each burrito has a contribution per unit of £5, the selling price minus variable cost, which goes towards paying fixed costs such as the pitch fee and van lease. If fixed costs are £2,000 a month, break-even output is 400 burritos, calculated as fixed costs divided by contribution per unit. If the truck sells 600 a month, the margin of safety is 200 burritos, which means sales could fall by a third before it makes a loss. This is important because the food truck's sales depend on weather and events, so a large margin of safety reduces the risk of a loss-making month. However, if the pitch fee rises, fixed costs increase and break-even output rises, which shrinks the margin of safety unless the price is raised." },
+  { c: ["3.5.2"], x: "A regional bus company has overspent its fuel budget this quarter.",
+    t: ["Budget", "Variance analysis", "Adverse variance", "Profit from operations"],
+    e: "A budget sets a financial target, such as £500,000 spent on fuel this quarter, against which actual results can be compared. Variance analysis shows fuel spending has been higher than planned, which is an adverse variance because it reduces profit. This matters because fuel is a major cost for a bus company, so an overspend directly reduces profit from operations. Variance analysis helps managers investigate the cause: if it is due to rising fuel prices, it is outside their control and they may need to revise the budget or fares, whereas if it is caused by inefficient driving or old buses, they can act, for example through driver training. As a result, the value of the variance depends on managers investigating why it happened, not just recording it." },
+  { c: ["3.5.3"], x: "A software start-up needs £2 million to develop its product but has not yet made a profit.",
+    t: ["Retained profits|retained profit", "Loans|loan", "Venture capital", "Share capital"],
+    e: "Because the start-up has no profits yet, it has no retained profits to reinvest, which means it must use external finance. A bank loan is unlikely because the business has few assets to offer as security and no track record, so the risk to the bank is high. Venture capital is more suitable, as venture capitalists invest in high-risk, high-growth businesses in exchange for share capital. This means the start-up does not have to make repayments, which protects its cash flow during development. However, venture capitalists often take a significant stake and want influence over decisions, so the founders lose some control. The suitability therefore depends on whether the founders value fast growth more than ownership." },
+  { c: ["3.5.4"], x: "A garden furniture retailer, which sells to trade customers on credit, wants to improve both cash flow and profitability.",
+    t: ["Debt factoring|factoring", "Cash flow", "Profitability", "Variable costs|variable cost"],
+    e: "Debt factoring would improve cash flow quickly because the retailer sells its receivables to a factor and receives most of the money immediately instead of waiting for trade customers to pay. However, the factor charges a fee, which reduces profit, so improving cash flow in this way can worsen profitability. To improve profitability, the retailer could reduce variable costs, for example by negotiating cheaper timber from suppliers, which increases the gross profit on each sale. Because this improves the margin on every item sold, it raises profit without needing extra sales. However, cheaper timber may be lower quality, which could increase returns and damage reputation, so the difficulty is improving one measure without harming another." },
+  { c: ["3.6.1"], x: "A national call-centre operator is reviewing how it manages its staff.",
+    t: ["Hard HRM|hard", "Soft HRM|soft", "Employee engagement|engagement|engaged", "Training"],
+    e: "A hard HRM approach treats employees as a resource to be used efficiently, for example tightly monitored call times and minimal training, which keeps costs low in the short term. However, call-centre work is repetitive, so this approach is likely to reduce employee engagement, which leads to poorer customer service and higher labour turnover. A soft HRM approach treats employees as assets to be developed, for example through training and career progression, which increases engagement because staff feel valued. Engaged employees are more likely to resolve customer problems first time, which improves customer satisfaction and reduces repeat calls. However, soft HRM increases costs, so its value depends on whether the operator competes on low price or on service quality." },
+  { c: ["3.6.2"], x: "A care home has a labour turnover of 35% a year.",
+    t: ["Labour turnover", "Recruitment|recruit", "Training", "Employee costs as a percentage of turnover|employee costs"],
+    e: "A labour turnover of 35% means that over a third of the care home's staff leave each year, so it must recruit and train large numbers of replacements. Because recruitment costs, such as advertising and agency fees, and training costs are repeated constantly, employee costs as a percentage of turnover rise, which reduces profit. High turnover also affects quality, because new staff take time to learn residents' needs, which can lead to poorer care and complaints from families. As a result, the care home's reputation may suffer, reducing demand for places. However, the data only shows the size of the problem, not the cause: managers need to know whether staff are leaving because of pay, workload or management before they can choose a solution." },
+  { c: ["3.6.3"], x: "A fashion retailer with 200 stores is considering removing a layer of regional managers.",
+    t: ["Hierarchy", "Span of control", "Delegation|delegate", "Decentralisation|decentralised"],
+    e: "Removing regional managers flattens the hierarchy, which means area managers will each have a wider span of control, supervising more stores. Because area managers cannot closely supervise so many stores, they will need to use more delegation, giving store managers authority over decisions such as staffing and displays. This leads to greater decentralisation, which allows stores to respond faster to local customers, for example adjusting stock to suit local tastes. It may also motivate store managers, who gain responsibility. However, if store managers lack experience, wider spans of control may lead to inconsistent standards across the chain, which could damage the brand. The outcome depends on whether store managers are trained to handle the extra authority." },
+  { c: ["3.6.4"], x: "A warehouse pays its pickers a piece rate for every order picked.",
+    t: ["Taylor", "Piece rate", "Herzberg", "Job enrichment"],
+    e: "Paying a piece rate reflects Taylor's view that workers are motivated mainly by money, so paying per order picked should increase output. This is likely to raise labour productivity in the short term because pickers earn more by working faster. However, rushing increases picking errors, which leads to returns and extra costs. Herzberg would argue that pay is a hygiene factor: poor pay causes dissatisfaction, but higher pay does not create lasting motivation. To motivate pickers, the warehouse might use job enrichment, giving them more responsible tasks such as checking quality or training new staff, which provides recognition and achievement. However, warehouse picking offers limited scope for enrichment, so a combination of fair pay and some enriched roles may be most effective." },
+  { c: ["3.6.5"], x: "An engineering firm plans to introduce new shift patterns.",
+    t: ["Trade unions|trade union|union", "Works council", "Employee involvement|involvement|involve", "Communication|communicate"],
+    e: "Introducing new shift patterns directly affects employees' lives, so the way the firm manages employee involvement will affect how the change is received. If staff are represented by trade unions, negotiating with union representatives allows the firm to agree changes with the workforce collectively, which reduces the risk of industrial action. A works council, made up of employer and employee representatives, provides a regular channel for communication, so concerns about childcare or travel can be raised early. This means the shift patterns can be adjusted before they are introduced, which increases acceptance and reduces absenteeism later. However, consultation takes time and may lead to compromises, so the final shifts may not deliver all the efficiency gains the firm wanted." },
+  { c: ["3.7.1"], x: "A listed supermarket chain is under pressure from shareholders to raise this year's profits.",
+    t: ["Corporate objectives|corporate objective", "Short termism|short-termism", "Strategy", "Functional objectives|functional objective"],
+    e: "Corporate objectives, such as raising profit by 10%, set the direction for the whole business, and the strategy is the long-term plan to achieve them. Because the supermarket is a public limited company, pressure from shareholders can create short termism, where managers focus on this year's profit at the expense of long-term investment. This affects functional objectives: for example, the operations function may be set a cost-cutting target, leading to reduced spending on store refurbishments. As a result, profit may rise in the short term, but tired stores make shopping less pleasant, so customers may switch to rivals over time. The extent of this risk depends on how competitive the market is: in a highly competitive market, cutting investment is likely to cost market share quickly." },
+  { c: ["3.7.2"], x: "A housebuilder's latest accounts show its gearing has risen from 30% to 55%.",
+    t: ["Gearing", "ROCE|return on capital employed", "Inventory turnover", "Current ratio"],
+    e: "A rise in gearing from 30% to 55% means that over half of the housebuilder's capital employed now comes from long-term borrowing, which increases its interest payments and financial risk. If ROCE is higher than the interest rate on the borrowing, the extra debt is worthwhile because the returns from new developments exceed the cost of finance. However, housebuilders hold large amounts of land and unfinished homes, so inventory turnover is slow, which means cash is tied up for long periods. If the current ratio is also low, the business may struggle to meet short-term debts while waiting for homes to sell. As a result, a housing market slowdown could be dangerous: slower sales reduce ROCE while interest still has to be paid." },
+  { c: ["3.7.3"], x: "An outdoor clothing company is known for highly durable jackets and offers a free repair service.",
+    t: ["Core competences|core competence", "Elkington's Triple Bottom Line|Triple Bottom Line|Elkington", "Short-term performance|short term", "Long-term performance|long term"],
+    e: "The company's core competence is designing and making durable, repairable jackets, which is difficult for competitors to copy and supports premium prices. Measuring its performance using Elkington's Triple Bottom Line considers profit, people and planet, so the repair service may look costly in profit terms but scores well on planet because it reduces waste. Focusing only on short-term performance might lead managers to cut the repair service to raise profit. However, the repair service strengthens the brand's reputation for sustainability, which builds customer loyalty and supports long-term performance. As a result, judging the business on a single profit measure could lead to decisions that weaken its core competence and its competitive advantage." },
+  { c: ["3.7.4"], x: "A water company is regulated by Ofwat and faces stricter environmental legislation on sewage discharges.",
+    t: ["Regulators|regulator", "Environmental legislation|legislation", "Infrastructure", "Strategic decisions|strategic decision"],
+    e: "Ofwat, the regulator, limits how much the water company can raise customer bills, which restricts its revenue. At the same time, stricter environmental legislation requires the company to invest heavily in infrastructure, such as storm tanks and treatment works. Because revenue is capped while costs rise, profit margins are squeezed, which influences strategic decisions such as cutting dividends or raising debt to fund investment. If the company fails to comply, it faces fines and reputational damage, which may lead the regulator to impose tighter controls. However, if the regulator allows bills to rise to fund the investment, the impact on profit will be smaller, so the effect depends on how the regulator balances customers' bills against environmental improvements." },
+  { c: ["3.7.5"], x: "A Scottish whisky distiller exports 70% of its output to the USA.",
+    t: ["Exchange rates|exchange rate", "Protectionism|protectionist|tariff", "Inflation", "Demand"],
+    e: "If the exchange rate changes so that the pound rises against the dollar, each bottle exported to the USA must either cost more in dollars or earn the distiller fewer pounds. Because 70% of output is exported, a stronger pound reduces the distiller's price competitiveness or its profit margin, so demand or profit is likely to fall. Protectionism adds to this risk: if the USA introduces a tariff on whisky, the price to American consumers rises further, which reduces demand. UK inflation also matters, because rising energy and barley costs increase production costs, which further squeezes margins if prices cannot be raised abroad. However, whisky is a premium product with strong brand loyalty, so demand may be relatively price inelastic, which would reduce the impact of these changes." },
+  { c: ["3.7.6"], x: "A fast-fashion retailer faces criticism over working conditions in its supply chain.",
+    t: ["Shareholder concept", "Stakeholder concept", "Carroll's CSR pyramid|Carroll", "Corporate Social Responsibility|CSR"],
+    e: "Under the shareholder concept, the retailer's main responsibility is to maximise returns for its owners, so spending on supply-chain audits is a cost that reduces profit. Under the stakeholder concept, it should consider all groups affected, including factory workers, which leads to a stronger case for improving conditions. Carroll's CSR pyramid suggests the retailer must first meet its economic and legal responsibilities, but the criticism shows its ethical responsibilities are being questioned. Taking Corporate Social Responsibility seriously, for example by auditing suppliers, increases costs, but it reduces the risk of boycotts and negative publicity among younger customers who care about ethics. This means CSR may protect long-term profit, although customers who buy mainly on price may not reward the extra spending." },
+  { c: ["3.7.7"], x: "A UK budget airline operates in a market with several large rivals.",
+    t: ["Barriers to entry|barrier to entry|entry threat", "Rivalry", "Buyer power", "Supplier power"],
+    e: "Barriers to entry in the airline industry are high, because new entrants need aircraft, airport slots and safety approval, which protects existing airlines from new competition. However, rivalry between the existing budget airlines is intense, which means fares are driven down and profit margins are thin. Buyer power is also high because passengers can easily compare prices online and switch at no cost, so airlines struggle to raise fares. Supplier power adds pressure, as there are only two major aircraft manufacturers and airports with limited slots can charge high fees. As a result, the five forces suggest low industry profitability, which explains why budget airlines focus on keeping costs as low as possible. However, an airline with strong slots at popular airports faces less rivalry on those routes." },
+  { c: ["3.7.8"], x: "A gym chain is deciding whether to invest £3 million in a new site.",
+    t: ["Payback", "Average rate of return|ARR", "Net present value|NPV", "Uncertainty|uncertain"],
+    e: "Payback shows how long it takes for the new gym's net cash inflows to repay the £3 million, which matters if the chain has limited cash and wants to reduce risk. The average rate of return measures average annual profit as a percentage of the investment, so the chain can compare it with the return it could earn elsewhere. Net present value goes further by discounting future cash flows, which recognises that money received in year five is worth less than money received today. However, all three methods rely on forecasts of membership numbers, which face uncertainty, for example a rival opening nearby. As a result, the chain should also consider non-financial factors, such as whether the site fits its brand, instead of relying only on the numbers." },
+  { c: ["3.8.1"], x: "A UK coffee chain is considering opening stores in Spain.",
+    t: ["Ansoff matrix|Ansoff", "Market development", "Market penetration", "Risk"],
+    e: "In the Ansoff matrix, opening stores in Spain is market development: selling existing products in a new market. This allows the chain to grow when the UK market is saturated, where further market penetration would mean winning customers from rivals in an intense price battle. However, market development carries more risk than market penetration, because the chain has less knowledge of Spanish customers, who have a strong local café culture and may prefer different products. This means sales could be lower than forecast, so the chain may need to adapt its menu, which increases costs. The level of risk depends on how well the chain researches the market: a small trial in one city would reduce risk before a larger commitment." },
+  { c: ["3.8.2"], x: "A mid-sized chocolate maker competes with large global confectionery brands.",
+    t: ["Low cost strategy|low cost|low-cost", "Differentiation|differentiate", "Focus", "Competitive advantage"],
+    e: "A low cost strategy is unlikely to work for the chocolate maker, because global brands have economies of scale that allow them to produce at lower unit costs. Instead, a differentiation strategy, such as ethically sourced cocoa and distinctive flavours, would allow it to charge a premium price. Combining this with a focus on a specific segment, such as premium gift buyers, means it competes where the global brands are less specialised. This creates a competitive advantage because customers value the product's uniqueness, so they are less sensitive to price. However, maintaining a competitive advantage is difficult, as large brands can launch their own premium ranges, so the maker must keep innovating to stay distinct." },
+  { c: ["3.9.1"], x: "A regional bakery chain has grown from 10 to 60 shops in three years.",
+    t: ["Organic growth", "Economies of scale", "Diseconomies of scale", "Overtrading"],
+    e: "Through organic growth, the chain has gained purchasing economies of scale, as buying flour in bulk lowers the unit cost of each loaf. However, rapid growth can lead to diseconomies of scale: with 60 shops, communication between head office and stores becomes slower, so quality and service standards may slip. Growing so quickly also risks overtrading, where the business expands faster than its cash flow allows, because it must pay for new shops, equipment and stock before they generate revenue. This means it could run out of cash despite growing sales. The chain's success therefore depends on managing the pace of growth: slowing expansion may sacrifice some economies of scale but protect cash flow and quality." },
+  { c: ["3.9.1"], x: "A supermarket chain is considering a takeover of one of its main fresh-produce suppliers.",
+    t: ["Takeover", "Backward vertical integration|vertical integration", "Supply chain", "Synergy"],
+    e: "Taking over a fresh-produce supplier is backward vertical integration, as the supermarket gains control of an earlier stage of its supply chain. This gives it control over quality and supply, which reduces the risk of shortages and allows it to remove the supplier's profit margin, lowering the cost of produce. These benefits create synergy, where the combined business should be worth more than the two firms separately. However, synergy is often harder to achieve than forecast: the supermarket may lack experience of farming, and managing a very different business may lead to inefficiencies. In addition, other supermarkets that bought from the supplier may take their business elsewhere, which reduces the supplier's revenue and the value of the takeover." },
+  { c: ["3.9.2"], x: "A UK kitchen-appliance maker is losing market share to more innovative rivals.",
+    t: ["Research and development|R&D", "Patents|patent", "Kaizen", "Intrapreneurship|intrapreneur"],
+    e: "Investing in research and development would allow the appliance maker to create new products, and protecting them with patents prevents rivals from copying them for a period, which allows the business to earn higher margins. Alongside this, Kaizen encourages continuous small improvements from employees, such as reducing assembly time, which lowers costs and improves quality. Intrapreneurship would give selected employees time and resources to develop their own ideas within the business, which can produce innovations that a traditional R&D department might miss. However, R&D is expensive and uncertain, so many projects will not lead to profitable products. The value of innovation therefore depends on whether the business can afford the investment and turn ideas into products quickly." },
+  { c: ["3.9.3"], x: "A UK cosmetics brand wants to enter the Indian market.",
+    t: ["Emerging economies|emerging economy", "Direct investment", "Pressures for local responsiveness|local responsiveness", "Pressures for cost reduction|cost reduction"],
+    e: "India is an emerging economy with a growing middle class, which means demand for premium cosmetics is likely to rise quickly. Entering through direct investment, such as opening its own stores, gives the brand full control over how products are sold, but it requires high investment and carries more risk than exporting. The brand faces pressures for local responsiveness, because customers may need products suited to different skin tones and climates, which means adapting the range and increasing costs. At the same time, pressures for cost reduction exist because local rivals sell at lower prices, so adapting too much makes it harder to compete on cost. The balance between these pressures will determine how profitable the expansion is." },
+  { c: ["3.9.4"], x: "An online grocery retailer collects data on every customer order.",
+    t: ["E-commerce|ecommerce", "Big data", "Data mining", "Automation|automated"],
+    e: "As an e-commerce business, the retailer collects big data on what, when and how often customers buy. Data mining can find patterns in this data, such as which products are bought together, which allows the retailer to personalise offers and increase the average order value. The data also helps forecast demand more accurately, which reduces food waste and inventory costs. Automation in its warehouses, such as robotic picking, uses these forecasts to pick orders quickly and with fewer errors, which reduces labour costs. However, automation requires large upfront investment, and the use of customer data raises privacy concerns, so if customers feel monitored, trust may fall and they may switch to rivals." },
+  { c: ["3.10.1"], x: "A high-street bank is closing branches and moving staff into digital services.",
+    t: ["Disruptive change", "Lewin's force field analysis|force field|Lewin", "Resistance to change", "Kotter and Schlesinger|Kotter"],
+    e: "The growth of mobile banking is disruptive change, forcing the bank to rethink its branch network. Lewin's force field analysis would identify driving forces, such as lower costs and customer demand for apps, and restraining forces, such as staff fear of job losses. Because many branch staff fear redundancy, resistance to change is likely, which could slow the move to digital services and damage morale. Kotter and Schlesinger suggest that where resistance comes from self-interest, methods such as negotiation, for example offering retraining and redeployment, can reduce it. This means the change can be introduced with less disruption. However, if the bank must cut costs quickly, it may use more coercive methods, which achieve speed but risk long-term damage to staff trust." },
+  { c: ["3.10.1"], x: "A marketing agency faces unpredictable demand from its clients.",
+    t: ["Flexible organisation|flexible", "Flexible employment contracts|flexible contracts", "Delayering", "Organic structure|organic"],
+    e: "Because client demand is unpredictable, the agency benefits from being a flexible organisation that can respond quickly. Using flexible employment contracts, such as freelancers for large campaigns, means it can increase staff when work arrives without carrying high fixed salary costs in quiet periods. Delayering removes management layers, which speeds up decision making because fewer people need to approve work. An organic structure, with teams formed around projects instead of fixed departments, allows staff to move to where they are needed. As a result, the agency can win and deliver work faster than rivals. However, relying on freelancers may reduce loyalty and consistency, so clients may notice a fall in quality if key people are not available." },
+  { c: ["3.10.2"], x: "A family-owned engineering firm, run by its founder for 40 years, has been bought by a private equity group.",
+    t: ["Handy|Handy's", "Power culture", "Role culture", "Changing organisational culture|changing culture|organisational culture"],
+    e: "Using Handy's models, the firm is likely to have a power culture, where decisions flow from the founder and depend on personal relationships. The private equity owners may want a role culture, with clear procedures and job descriptions, because this makes performance easier to measure and control. Changing organisational culture is difficult, because employees are used to taking direction from the founder and may see new procedures as unnecessary bureaucracy, which leads to resistance and falling morale. This could slow decision making in the short term and lead experienced staff to leave, taking knowledge with them. However, if the new owners explain the reasons and involve long-serving staff, the change is more likely to succeed." },
+  { c: ["3.10.3"], x: "A retailer is building a new distribution centre that must open before the Christmas peak.",
+    t: ["Network analysis", "Critical path", "Total float|float", "Communication|communicate"],
+    e: "Network analysis breaks the project into activities and shows which depend on others, so managers can see the order in which tasks must happen. The critical path is the sequence of activities with zero total float, which means any delay to one of them delays the opening of the whole distribution centre. Because missing Christmas would mean lost sales, managers can focus resources on critical activities, for example moving workers from activities with total float to those on the critical path. Clear communication of the plan to contractors is also important, as each must know their deadlines. However, network analysis relies on estimated durations, so if the estimates are too optimistic, the project may still be late." },
+  { c: ["3.10.4"], x: "A once-dominant DVD rental chain failed to respond to the growth of streaming.",
+    t: ["Strategic drift", "Planned strategy|planned", "Emergent strategy|emergent", "Contingency planning|contingency plan"],
+    e: "Strategic drift occurs when a business's strategy gradually falls out of line with its environment. The chain kept following its planned strategy of opening stores, which had worked well in the past, while customers moved to streaming. Because managers saw early losses as temporary, they failed to adopt an emergent strategy, responding to the market as it changed. This meant the gap between the chain's offer and customer needs widened each year, leading to falling revenue and eventually closure. Contingency planning, such as preparing for a scenario in which streaming became mainstream, might have prompted earlier action. However, changing strategy would have required abandoning profitable stores, which shows why businesses that have been successful often find it hardest to change." },
+
+  /* ── Synoptic sets (appear when all listed sub-sections are selected) ── */
+  { c: ["3.4.2", "3.5.2"], x: "A printing firm has seen its capacity utilisation fall and is considering cutting prices to win work.",
+    t: ["Capacity utilisation", "Unit costs|unit cost", "Contribution per unit|contribution", "Break-even output|break-even|break even"],
+    e: "When the printing firm's capacity utilisation falls, its fixed costs, such as machinery leases, are spread over fewer jobs, which increases unit costs. If it responds by cutting prices to win work, the contribution per unit on each job falls, because the price falls while variable costs such as paper and ink stay the same. This means the firm must print more jobs to cover its fixed costs, so its break-even output rises. As a result, cutting prices to fill capacity could leave the business further from break-even instead of closer. However, if the price cut attracts enough extra orders, utilisation rises, unit costs fall and total contribution may increase, so the outcome depends on how price sensitive its customers are." },
+  { c: ["3.4.2", "3.6.4"], x: "A hotel gives its housekeeping team authority to organise its own work.",
+    t: ["Empowerment|empower", "Motivation|motivated|motivate", "Labour productivity", "Quality"],
+    e: "Empowering the housekeeping team means staff decide how to allocate rooms and organise their shifts instead of following a supervisor's list. This increases motivation because staff feel trusted, which in turn leads them to work more efficiently, so labour productivity rises as more rooms are cleaned per hour. Because staff take ownership of their rooms, quality is also likely to improve, leading to fewer guest complaints. However, empowerment only works if staff are trained and willing to take responsibility; some may prefer clear instructions, and without supervision, standards may vary. The hotel would therefore need to monitor quality during the change so that productivity gains are not achieved by cutting corners." },
+  { c: ["3.7.5", "3.9.3"], x: "A UK clothing brand manufactures in Bangladesh, pays suppliers in US dollars and sells mainly in the UK.",
+    t: ["Off-shoring|offshoring", "Exchange rates|exchange rate", "Unit costs|unit cost", "Re-shoring|reshoring"],
+    e: "Off-shoring production to Bangladesh gives the brand lower unit costs, because wages are much lower than in the UK. However, the brand pays its suppliers in dollars, so if the pound falls against the dollar, the cost of each garment rises in pounds, which reduces its profit margin. Long shipping times also mean it cannot respond quickly to changing fashion trends. As a result, some brands are re-shoring part of their production to the UK, which raises labour costs but reduces exposure to exchange rates and allows faster restocking of best-selling lines. Whether re-shoring makes sense depends on how much customers value speed and 'made in the UK' branding compared with low prices." },
+  { c: ["3.2.2", "3.7.8"], x: "A hotel group is deciding whether to build a new hotel next to a planned railway station.",
+    t: ["Net present value|NPV", "Decision tree", "Expected value", "Uncertainty|uncertain"],
+    e: "Net present value can show whether the hotel's forecast cash flows, discounted to today's value, exceed the cost of building it. However, the cash flows depend on whether the railway station opens on time, so a decision tree can include different outcomes, such as the station opening on schedule or being delayed, each with a probability. Calculating the expected value of each option combines these outcomes, which gives managers a single figure to compare with not building. This is more realistic than a single NPV forecast. However, the probabilities are themselves estimates, and the timing of government infrastructure projects involves genuine uncertainty, so managers may still need to judge how much risk they will accept." },
+  { c: ["3.3.3", "3.8.2"], x: "A pet-food start-up makes fresh, vet-designed meals for dogs.",
+    t: ["Segmentation|segment", "Niche marketing|niche", "Focus", "Competitive advantage"],
+    e: "Segmentation lets the start-up identify owners willing to pay more for premium nutrition, such as high-income owners who treat their dogs as family members. Targeting this group through niche marketing means it does not compete directly with large brands selling dry food at low prices. This is a focus strategy: concentrating on a narrow segment with a differentiated product. As a result, the start-up can build a competitive advantage based on freshness and expert design, which justifies premium prices and builds loyalty. However, the niche may be limited in size and vulnerable to economic downturns, as owners may switch back to cheaper food when incomes fall." },
+  { c: ["3.9.1", "3.10.1", "3.10.2"], x: "Two rival software companies with very different cultures are merging.",
+    t: ["Merger|merge", "Synergy", "Organisational culture|culture", "Resistance to change"],
+    e: "The merger is intended to create synergy, for example by combining sales teams and cutting duplicate costs, so that the combined business is more profitable than the two separately. However, if one company has a task culture with flexible project teams and the other a role culture with clear procedures, integrating their organisational culture is difficult. Staff may resist new ways of working, which leads to resistance to change, falling morale and key employees leaving. This matters because in software, staff knowledge is the main asset, so losing developers reduces the value of the merger. As a result, the forecast synergies may not be achieved. The outcome depends on how carefully managers communicate the change and whether they respect the strengths of both cultures." }
+];
+
+/* ── 9-MARK ANALYSE QUESTIONS ────────────────────────────────────────
+   c = spec sub-sections   q = question (AQA style: no case study)
+   ch = indicative chains  k = key terms                              */
+const QS = [
+  { c: ["3.1.1"], q: "Analyse why a newly formed business might set survival, rather than profit, as its main objective.",
+    ch: ["New businesses face high start-up costs and little brand awareness → revenue is low and uncertain → priority is covering costs and staying solvent → survival objective focuses decisions on cash and costs.",
+         "Pursuing profit too early (e.g. high prices) → fewer customers in a market where the business is unknown → weaker customer base → greater risk of failure; once established, objectives can shift to profit or growth."],
+    k: ["Business objectives", "Survival", "Profit", "Cash flow"] },
+  { c: ["3.1.2"], q: "Analyse the possible effects on a private limited company of becoming a public limited company.",
+    ch: ["Shares can be sold to the public on a stock exchange → large amounts of ordinary share capital raised → expansion funded without debt → no interest payments, protecting cash flow.",
+         "Anyone can buy shares → original owners may lose control → new shareholders pressure for dividends and a rising share price → short-term focus may conflict with the original mission and objectives."],
+    k: ["Public limited company", "Ordinary share capital", "Dividends", "Share price", "Market capitalisation"] },
+  { c: ["3.1.3"], q: "Analyse how a rise in interest rates might affect the costs and demand of a business that sells luxury cars.",
+    ch: ["Many cars are bought on finance → higher interest rates raise monthly repayments → lower disposable income → demand for luxury cars falls → lower revenue.",
+         "Business may have loans or overdrafts → higher interest payments → higher costs → profit squeezed from both sides; effect smaller if customers are wealthy and buy outright."],
+    k: ["Interest rates", "Demand", "Costs", "Incomes"] },
+  { c: ["3.2.1"], q: "Analyse why an autocratic leadership style might be appropriate for a business facing a crisis.",
+    ch: ["A crisis needs fast decisions → autocratic leader decides without lengthy consultation → quicker response → damage (e.g. lost sales, reputational harm) limited.",
+         "Clear instructions from one leader → less confusion about who is responsible → co-ordinated action across the business; but if used for too long, employee motivation may fall."],
+    k: ["Autocratic leadership", "Decision making", "Tannenbaum Schmidt continuum", "Motivation"] },
+  { c: ["3.2.2"], q: "Analyse the value of decision trees to a business deciding whether to launch a new product.",
+    ch: ["Sets out options, probabilities and financial outcomes → expected values calculated → options compared objectively → less reliance on intuition.",
+         "Forces managers to estimate probabilities of success and failure → reveals the risk of a large loss → but the result is only as reliable as the probability and payoff estimates."],
+    k: ["Decision tree", "Expected value", "Risk", "Uncertainty", "Net gain"] },
+  { c: ["3.2.3"], q: "Analyse why a business planning to build a new factory should consider the needs of its stakeholders.",
+    ch: ["Local residents have high interest and power through planning objections → ignoring them → objections and delays → higher costs and later opening.",
+         "Consultation with employees, residents and the local council → concerns addressed early → greater support → smoother approval and a better reputation, helping future recruitment."],
+    k: ["Stakeholder mapping", "Power", "Interest", "Consultation", "Stakeholder conflict"] },
+  { c: ["3.3.1"], q: "Analyse the value to a business of setting marketing objectives.",
+    ch: ["Clear, measurable targets (e.g. market share) → marketing mix decisions co-ordinated towards them → progress monitored → problems spotted early.",
+         "Objectives give a benchmark for judging marketing spend → resources directed to activities that work → better return on marketing budget; value depends on targets being realistic."],
+    k: ["Marketing objectives", "Market share", "Sales growth", "Brand loyalty"] },
+  { c: ["3.3.2"], q: "Analyse how price and income elasticity of demand data could help a business that sells premium holidays.",
+    ch: ["Price elasticity → shows how sales respond to price changes → if demand is inelastic, a price rise increases revenue → informs pricing decisions.",
+         "Premium holidays likely to be income elastic → demand falls sharply in a recession → business can plan cheaper packages or cut capacity when incomes fall; data may be outdated."],
+    k: ["Price elasticity of demand", "Income elasticity of demand", "Revenue", "Marketing data"] },
+  { c: ["3.3.3"], q: "Analyse the benefits to a small business of targeting a niche market.",
+    ch: ["Niche has specific needs → product and promotion tailored → stronger appeal than mass-market products → customer loyalty.",
+         "Fewer large competitors → less price competition → premium pricing possible → higher margins despite low volumes; but small market limits growth."],
+    k: ["Niche marketing", "Segmentation", "Targeting", "Positioning"] },
+  { c: ["3.3.4"], q: "Analyse how a business could use extension strategies for a product in the maturity stage of its life cycle.",
+    ch: ["New features, flavours or packaging → renewed interest from existing customers → sales rise again → decline delayed and cash generation extended.",
+         "Targeting new segments or markets → new revenue streams → but extension costs may outweigh returns if decline is caused by changing tastes or technology."],
+    k: ["Product life cycle", "Extension strategies", "Boston Matrix", "Cash cow"] },
+  { c: ["3.4.1"], q: "Analyse why a manufacturing business might set environmental objectives for its operations.",
+    ch: ["Targets to cut energy use and waste → lower operating costs → lower unit costs → higher margins.",
+         "Consumers and investors value sustainability → meeting environmental targets → improved reputation → stronger demand; also helps avoid future fines from tighter legislation."],
+    k: ["Operational objectives", "Environmental objectives", "Costs", "Added value"] },
+  { c: ["3.4.2"], q: "Analyse how an increase in capacity utilisation might affect a business's unit costs.",
+    ch: ["Higher output with the same fixed costs → fixed costs spread over more units → unit costs fall → higher margin or scope to lower prices.",
+         "Near full capacity → overtime, machine breakdowns, no time for maintenance → variable costs per unit may rise → unit costs could increase; also less flexibility for new orders."],
+    k: ["Capacity utilisation", "Unit costs", "Fixed costs", "Efficiency"] },
+  { c: ["3.4.3"], q: "Analyse the difficulties a business might face in introducing lean production.",
+    ch: ["Just in Time relies on reliable suppliers → any delay → production stops → orders missed and reputation damaged.",
+         "Requires a trained, flexible workforce and culture of continuous improvement → training costs and time → employees may resist new working practices → benefits slow to appear."],
+    k: ["Lean production", "Just in Time", "Just in Case", "Efficiency"] },
+  { c: ["3.4.4"], q: "Analyse the possible consequences of poor quality for a business providing a service.",
+    ch: ["Poor service → negative online reviews → damaged reputation → customers choose rivals → falling revenue.",
+         "Complaints, refunds and repeat work → higher costs → lower profit; staff morale may fall, further reducing quality."],
+    k: ["Quality", "Consequences of poor quality", "Reputation", "Quality assurance"] },
+  { c: ["3.4.5"], q: "Analyse the factors that might influence a retailer's choice of suppliers.",
+    ch: ["Price → cheaper supplies reduce cost of sales → higher gross profit margin.",
+         "Reliability and lead time → reliable, quick deliveries → lower buffer inventory needed → less cash tied up and fewer stock-outs; quality and ethical standards also affect reputation."],
+    k: ["Choice of supplier", "Lead time", "Buffer inventory", "Supply chain"] },
+  { c: ["3.5.1"], q: "Analyse why a business might be profitable but still experience cash flow problems.",
+    ch: ["Sales made on credit → revenue counted when the sale is made but cash received later → high receivables → not enough cash to pay bills.",
+         "Spending on inventory or expansion → cash leaves before goods are sold → cash shortage despite profit; shows the distinction between cash flow and profit."],
+    k: ["Cash flow", "Profit", "Receivables", "Payables"] },
+  { c: ["3.5.2"], q: "Analyse the value of budgeting to a business.",
+    ch: ["Budgets set spending and revenue targets → managers know limits → spending controlled → costs kept in line with plans.",
+         "Variance analysis compares actual with budget → adverse variances highlighted → causes investigated → corrective action taken earlier; value depends on realistic budgets."],
+    k: ["Budget", "Variance analysis", "Adverse variance", "Favourable variance"] },
+  { c: ["3.5.3"], q: "Analyse why a public limited company might prefer to use share capital as a source of finance, rather than a bank loan.",
+    ch: ["Share capital does not have to be repaid and has no interest → no fixed repayments → protects cash flow and profit, especially if returns from the investment are uncertain.",
+         "Avoids raising gearing → lower financial risk → easier to borrow in future and less exposure to interest rate rises; but new shares dilute ownership and shareholders expect dividends."],
+    k: ["Share capital", "Loans", "Gearing", "Dividends", "Public limited company"] },
+  { c: ["3.5.4"], q: "Analyse the difficulties a business might face in trying to improve its profitability.",
+    ch: ["Raising prices → if demand is price elastic, sales volume falls → revenue and profit may fall instead of rising.",
+         "Cutting costs (e.g. cheaper materials, fewer staff) → quality or service falls → reputation damaged → lower future sales; some costs, such as rent, are fixed in the short run."],
+    k: ["Profitability", "Costs", "Price elasticity of demand", "Variable costs"] },
+  { c: ["3.6.1"], q: "Analyse the benefits to a business of using a soft approach to human resource management.",
+    ch: ["Employees treated as assets → investment in training and development → higher skills and employee engagement → better productivity and service.",
+         "Staff feel valued → higher motivation and loyalty → lower labour turnover → lower recruitment and training costs; benefits take time and cost money upfront."],
+    k: ["Soft HRM", "Hard HRM", "Employee engagement", "Training", "Labour turnover"] },
+  { c: ["3.6.2"], q: "Analyse how a business might use labour turnover data in its decision making.",
+    ch: ["High labour turnover identified → investigation of causes (pay, management, workload) → targeted action → staff retained and recruitment costs fall.",
+         "Data compared over time or with rivals → judge whether HR policies are working → informs workforce planning and recruitment budgets; data shows the size of the problem, not its cause."],
+    k: ["Labour turnover", "Recruitment", "Workforce planning", "Retention"] },
+  { c: ["3.6.3"], q: "Analyse the possible benefits to a retailer with many stores of decentralising decision making.",
+    ch: ["Store managers make local decisions → faster response to local customer needs → stock and staffing better matched to demand → higher sales.",
+         "Authority delegated to store managers → greater responsibility → higher motivation; senior managers freed for strategic decisions; but risk of inconsistent standards across stores."],
+    k: ["Decentralisation", "Delegation", "Authority", "Span of control"] },
+  { c: ["3.6.4"], q: "Analyse how job enrichment might improve the motivation of employees.",
+    ch: ["More challenging tasks and responsibility → employees use more skills → sense of achievement (Herzberg's motivators) → higher motivation and effort.",
+         "Greater variety and recognition → esteem and self-actualisation needs met (Maslow) → engaged employees → higher productivity and lower labour turnover; depends on employees wanting responsibility."],
+    k: ["Job enrichment", "Herzberg", "Maslow", "Motivation", "Employee engagement"] },
+  { c: ["3.6.5"], q: "Analyse the value to a business of good employer–employee relations.",
+    ch: ["Good relations → disputes resolved through negotiation → industrial action avoided → output and customer service maintained.",
+         "Trust and two-way communication → employees accept change more readily → new technology or working practices introduced faster → productivity gains."],
+    k: ["Employer–employee relations", "Trade unions", "Works councils", "Communication"] },
+  { c: ["3.7.1"], q: "Analyse how pressures for short termism might affect the corporate objectives of a public limited company.",
+    ch: ["Shareholders want quick returns → objectives focus on short-term profit and dividends → investment in R&D and training cut → long-term competitiveness weakened.",
+         "Share price closely watched → managers' bonuses linked to short-term targets → decisions distorted (e.g. delaying investment); effect depends on the type of shareholders."],
+    k: ["Corporate objectives", "Short termism", "Strategy", "Business ownership"] },
+  { c: ["3.7.2"], q: "Analyse why a rise in gearing might be a concern for a business's shareholders.",
+    ch: ["Higher gearing → more of capital employed comes from borrowing → higher interest payments → less profit available for dividends.",
+         "Fixed interest must be paid whatever happens → if profits fall, risk of being unable to meet payments → higher financial risk → share price may fall; but borrowing is beneficial if ROCE exceeds the interest rate."],
+    k: ["Gearing", "ROCE", "Interest", "Dividends"] },
+  { c: ["3.7.3"], q: "Analyse the value to a business of assessing its performance using Elkington's Triple Bottom Line.",
+    ch: ["Measures people and planet as well as profit → wider view of performance → reputation with ethically minded customers and investors strengthened.",
+         "Highlights trade-offs and long-term risks (e.g. environmental damage) that profit alone hides → better-balanced decisions; people and planet are harder to measure consistently."],
+    k: ["Elkington's Triple Bottom Line", "Long-term performance", "Short-term performance", "Core competences"] },
+  { c: ["3.7.4"], q: "Analyse how stricter environmental legislation might affect a business that manufactures cars.",
+    ch: ["Tighter emissions limits → investment in new engines or electric models → higher costs and R&D spending → lower short-term profit.",
+         "Non-compliance → fines and reputational damage; but early compliance → competitive advantage as demand shifts to low-emission vehicles."],
+    k: ["Environmental legislation", "Costs", "Innovation", "Competitive advantage"] },
+  { c: ["3.7.5"], q: "Analyse how a government changing its fiscal policy might affect a business which produces healthcare products.",
+    ch: ["Increased government spending on the NHS → more orders for healthcare products → higher revenue and capacity utilisation.",
+         "Higher taxes (e.g. corporation tax or income tax) → lower post-tax profit or lower consumer disposable income → reduced demand for over-the-counter products; effect depends on whether products are essentials."],
+    k: ["Fiscal policy", "Government spending", "Taxation", "Demand"] },
+  { c: ["3.7.6"], q: "Analyse the reasons why a business might adopt a policy of corporate social responsibility.",
+    ch: ["Consumers increasingly value ethical behaviour → CSR improves reputation → stronger brand loyalty → higher sales.",
+         "Socially responsible employer → easier to recruit and retain staff; reduces risk of regulation, boycotts or fines; but CSR adds costs, which the shareholder concept would question."],
+    k: ["Corporate Social Responsibility", "Stakeholder concept", "Shareholder concept", "Carroll's CSR pyramid"] },
+  { c: ["3.7.7"], q: "Analyse how high barriers to entry might affect the profitability of businesses in a market.",
+    ch: ["Barriers (high capital costs, economies of scale, patents) → fewer new entrants → less competition → existing firms can charge higher prices → higher profits.",
+         "Profitability also depends on the other forces: intense rivalry, high buyer power or strong suppliers can still squeeze margins despite high barriers."],
+    k: ["Porter's five forces", "Barriers to entry", "Rivalry", "Buyer power"] },
+  { c: ["3.7.8"], q: "Analyse the factors, other than financial forecasts, that might influence a business's investment decision.",
+    ch: ["Risk and uncertainty → forecasts depend on future demand and costs → if conditions change, returns fall → cautious firms may reject investments with long payback.",
+         "Non-financial factors → impact on employees, reputation and the environment, fit with corporate objectives; investment criteria such as a minimum ARR set by the board."],
+    k: ["Investment appraisal", "Investment criteria", "Non-financial factors", "Risk", "Uncertainty"] },
+  { c: ["3.8.1"], q: "Analyse why diversification is often considered the riskiest strategy in the Ansoff matrix.",
+    ch: ["New products and new markets → business lacks knowledge of both customers and production → higher chance of mistakes → investment may be lost.",
+         "Faces established competitors with experience → hard to gain market share; but diversification can spread risk if existing markets are in decline."],
+    k: ["Ansoff matrix", "Diversification", "Risk", "Market development", "New product development"] },
+  { c: ["3.8.2"], q: "Analyse the difficulties a business might face in maintaining a competitive advantage based on low cost.",
+    ch: ["Requires the lowest unit costs in the market → larger rivals with greater economies of scale can undercut → advantage lost.",
+         "Rising input costs affect all firms → hard to stay cheapest; low-cost methods can be copied; price-sensitive customers show little loyalty."],
+    k: ["Low cost strategy", "Competitive advantage", "Economies of scale", "Differentiation"] },
+  { c: ["3.9.1"], q: "Analyse the benefits to a business of growing through franchising.",
+    ch: ["Franchisees provide the capital for new outlets → rapid growth without borrowing → lower financial risk.",
+         "Franchisees are owner-managers → motivated to succeed → good local management; franchisor earns fees and royalties; but less control over standards → brand risk."],
+    k: ["Franchising", "Organic growth", "External growth", "Economies of scale"] },
+  { c: ["3.9.2"], q: "Analyse how adopting an innovation strategy might affect the human resources function of a business.",
+    ch: ["Innovation needs new skills (e.g. R&D, digital) → HR must recruit specialists and train existing staff → higher recruitment and training costs.",
+         "Culture of creativity needed → HR may introduce empowerment, intrapreneurship schemes and rewards for ideas → higher motivation; but some staff may resist change or fear job losses from process innovation."],
+    k: ["Innovation", "Intrapreneurship", "Recruitment", "Training", "Kaizen"] },
+  { c: ["3.9.3"], q: "Analyse the reasons why a UK business might choose to re-shore its production.",
+    ch: ["Rising wages and shipping costs overseas → cost advantage of off-shoring falls → UK production becomes relatively competitive.",
+         "Shorter supply chain → faster response to changes in demand and better quality control → less inventory needed; 'made in the UK' may appeal to customers."],
+    k: ["Re-shoring", "Off-shoring", "Supply chain", "Unit costs"] },
+  { c: ["3.9.4"], q: "Analyse the value of big data to a business that sells online.",
+    ch: ["Data mining of customer purchases → patterns identified → personalised offers and recommendations → higher sales per customer.",
+         "Better demand forecasting → inventory matched to demand → fewer stock-outs and less waste → lower costs; requires investment and raises privacy concerns."],
+    k: ["Big data", "Data mining", "E-commerce", "Digital technology"] },
+  { c: ["3.10.1"], q: "Analyse why employees might resist changes introduced by a business.",
+    ch: ["Self-interest → change may threaten jobs, pay or status → employees resist to protect themselves (Kotter and Schlesinger).",
+         "Misunderstanding and lack of trust → reasons for change poorly communicated → staff assume the worst → resistance; low tolerance for change also makes uncertainty stressful."],
+    k: ["Resistance to change", "Kotter and Schlesinger", "Communication", "Lewin's force field analysis"] },
+  { c: ["3.10.2"], q: "Analyse the problems a business might face when trying to change its organisational culture.",
+    ch: ["Culture is built on shared values and long-standing habits → employees resist new ways of working → change is slow → strategy delayed.",
+         "Culture embedded in structure, rewards and recruitment → all need changing → time and cost; managers who benefit from the existing culture (e.g. power culture) may block change."],
+    k: ["Organisational culture", "Handy", "Power culture", "Role culture", "Task culture"] },
+  { c: ["3.10.3"], q: "Analyse the importance of communication in the successful implementation of a strategy.",
+    ch: ["Clear communication of the strategy → employees understand the reasons and their role → commitment rather than resistance.",
+         "Communication between functions → activities co-ordinated (e.g. operations ready for marketing launch) → fewer delays; poor communication → confusion, rumours and falling morale."],
+    k: ["Strategic implementation", "Communication", "Leadership", "Organisational structure"] },
+  { c: ["3.10.4"], q: "Analyse why a previously successful business might experience strategic drift.",
+    ch: ["Past success → managers assume existing strategy will keep working → slow to notice changes in technology or tastes → strategy drifts from the market.",
+         "Strong culture and heavy investment in existing assets → change seen as costly and risky → only incremental changes → gap with the market widens."],
+    k: ["Strategic drift", "Planned strategy", "Emergent strategy", "Incremental change"] },
+
+  /* ── Synoptic questions ── */
+  { c: ["3.4.3", "3.5.4"], q: "Analyse how introducing Just in Time production might affect a manufacturer's cash flow.",
+    ch: ["Less inventory held → less cash tied up in stock → cash flow improves and storage costs fall.",
+         "More frequent, smaller deliveries → higher ordering costs and loss of bulk discounts → profit may fall; risk of stock-outs causing lost sales."],
+    k: ["Just in Time", "Cash flow", "Inventory", "Lean production"] },
+  { c: ["3.4.2", "3.6.4"], q: "Analyse how introducing team working might affect a business's labour productivity.",
+    ch: ["Teams share skills and cover for each other → fewer bottlenecks → more output per worker.",
+         "Social needs met (Maslow) → higher motivation → more effort and fewer errors; but slower decisions and possible conflict within teams."],
+    k: ["Team working", "Labour productivity", "Motivation", "Maslow"] },
+  { c: ["3.3.4", "3.5.2"], q: "Analyse how using price skimming for a new product might affect its break-even output.",
+    ch: ["High price → high contribution per unit → fewer units needed to cover fixed costs → lower break-even output.",
+         "High price limits sales volume → margin of safety may be small; heavy launch promotion raises fixed costs → raises break-even output."],
+    k: ["Price skimming", "Contribution per unit", "Break-even output", "Margin of safety"] },
+  { c: ["3.7.5", "3.9.3"], q: "Analyse how a fall in the value of the pound might affect a UK business that produces its goods overseas.",
+    ch: ["Weaker pound → overseas production costs more in pounds → higher unit costs → margins squeezed unless prices rise.",
+         "UK production becomes relatively cheaper → stronger case for re-shoring and a shorter supply chain; but UK labour costs remain higher."],
+    k: ["Exchange rates", "Off-shoring", "Re-shoring", "Unit costs"] },
+  { c: ["3.9.1", "3.10.2"], q: "Analyse why differences in organisational culture might prevent a merger from achieving synergy.",
+    ch: ["Different cultures (e.g. task vs role) → conflicting ways of working → integration slow → cost savings delayed.",
+         "Uncertainty and culture clash → staff resistance and loss of key employees → knowledge lost → value of the merger falls."],
+    k: ["Merger", "Synergy", "Organisational culture", "Handy"] },
+  { c: ["3.2.2", "3.7.8"], q: "Analyse why a business might use both investment appraisal and decision trees when making a major investment decision.",
+    ch: ["Net present value → shows whether discounted cash flows exceed the cost → judges financial viability.",
+         "Decision tree → builds in probabilities of different outcomes → expected values reflect risk → more realistic; both rely on estimated data."],
+    k: ["Net present value", "Decision tree", "Expected value", "Uncertainty"] }
+];
+
+/* ── HELPERS ─────────────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const unitOf = c => c.split(".").slice(0, 2).join(".");
+const SUB_TITLE = {};
+UNITS.forEach(u => u.subs.forEach(([c, t]) => SUB_TITLE[c] = t));
+const AS_UNITS = new Set(UNITS.filter(u => u.lv === "AS").map(u => u.u));
+const LINKS = ["because", "therefore", "which means", "this means", "meaning that", "leads to", "leading to", "led to", "as a result", "so", "results in", "resulting in", "consequently", "causing", "in turn"];
+
+const display = term => term.split("|")[0].trim();
+function aliases(term) {
+  const out = [];
+  term.split("|").map(a => a.trim()).filter(Boolean).forEach(a => {
+    out.push(a);
+    if (/s$/i.test(a) && a.length > 4) out.push(a.slice(0, -1));
+  });
+  return out.sort((a, b) => b.length - a.length);
+}
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const pat = a => { let p = reEsc(a).replace(/[\s\-–]+/g, "[\\s\\-–]+"); if (/[a-z]$/i.test(a)) p += "s?"; return p; };
+const termRe = term => new RegExp(`(?<![A-Za-z])(?:${aliases(term).map(pat).join("|")})(?![A-Za-z])`, "i");
+const LINK_PAT = [...LINKS].sort((a, b) => b.length - a.length).map(l => reEsc(l).replace(/\s+/g, "\\s+")).join("|");
+const linkCount = txt => (txt.match(new RegExp(`(?<![A-Za-z])(?:${LINK_PAT})(?![A-Za-z])`, "gi")) || []).length;
+const wordCount = txt => txt.trim() ? txt.trim().split(/\s+/).length : 0;
+
+function highlight(text, terms) {
+  const termPat = terms.flatMap(aliases).sort((a, b) => b.length - a.length).map(pat).join("|");
+  const re = new RegExp(`(?<![A-Za-z])(?:(${termPat})|(${LINK_PAT}))(?![A-Za-z])`, "gi");
+  let out = "", i = 0, m;
+  while ((m = re.exec(text))) {
+    out += esc(text.slice(i, m.index));
+    out += m[1] !== undefined ? `<span class="ex-term">${esc(m[0])}</span>` : `<span class="ex-link">${esc(m[0])}</span>`;
+    i = re.lastIndex;
+  }
+  return out + esc(text.slice(i));
+}
+
+/* ── SELECTOR ────────────────────────────────────────────────────── */
+function buildUnits() {
+  const grid = $("unitGrid");
+  grid.innerHTML = UNITS.map(u => `
+    <div class="unit-block" data-unit="${u.u}">
+      <div class="unit-head">
+        <input type="checkbox" class="unit-cb" aria-label="Select all of unit ${u.u}">
+        <span class="unit-chip ${u.lv === "AS" ? "as" : "al"}">${u.lv === "AS" ? "AS" : "A2"}</span>
+        <span class="unit-title">${u.u} — ${esc(u.t)}</span>
+        <button type="button" class="unit-toggle" aria-expanded="false" title="Choose sub-sections">▾ ${u.subs.length}</button>
+      </div>
+      <div class="sub-list">${u.subs.map(([c, t]) => `
+        <label class="sub-item"><input type="checkbox" class="sub-cb" value="${c}"><span class="sub-code">${c}</span><span>${esc(t)}</span></label>`).join("")}
+      </div>
+    </div>`).join("");
+  grid.addEventListener("change", e => {
+    if (e.target.classList.contains("unit-cb")) {
+      e.target.closest(".unit-block").querySelectorAll(".sub-cb").forEach(cb => cb.checked = e.target.checked);
+    }
+    syncUnits();
+  });
+  grid.addEventListener("click", e => {
+    const b = e.target.closest(".unit-toggle");
+    if (!b) return;
+    const blk = b.closest(".unit-block");
+    blk.classList.toggle("open");
+    b.setAttribute("aria-expanded", blk.classList.contains("open"));
+  });
+}
+function syncUnits() {
+  document.querySelectorAll(".unit-block").forEach(blk => {
+    const subs = [...blk.querySelectorAll(".sub-cb")];
+    const n = subs.filter(s => s.checked).length;
+    const ucb = blk.querySelector(".unit-cb");
+    ucb.checked = n === subs.length;
+    ucb.indeterminate = n > 0 && n < subs.length;
+    blk.classList.toggle("has-sel", n > 0);
+  });
+  updateStatus();
+}
+function toggleAllOpen() {
+  const blocks = [...document.querySelectorAll(".unit-block")];
+  const open = !blocks.every(b => b.classList.contains("open"));
+  blocks.forEach(b => { b.classList.toggle("open", open); b.querySelector(".unit-toggle").setAttribute("aria-expanded", open); });
+}
+const selected = () => new Set([...document.querySelectorAll(".sub-cb:checked")].map(c => c.value));
+function setSel(pred) { document.querySelectorAll(".sub-cb").forEach(cb => cb.checked = pred(cb.value)); syncUnits(); }
+const pool = arr => { const s = selected(); return arr.map((_, i) => i).filter(i => arr[i].c.every(c => s.has(c))); };
+function updateStatus(msg) {
+  const el = $("selStatus"), s = selected();
+  el.classList.toggle("warn", !!msg);
+  if (msg) { el.textContent = msg; return; }
+  el.textContent = s.size
+    ? `${s.size} sub-section${s.size > 1 ? "s" : ""} selected · ${pool(SETS).length} term sets · ${pool(QS).length} questions available`
+    : "Nothing selected yet — tick whole units, or open a unit (▾) to choose individual sub-sections.";
+}
+function pick(arr, last) {
+  const p = pool(arr);
+  if (!p.length) return -1;
+  const c = p.length > 1 ? p.filter(i => i !== last) : p;
+  return c[Math.floor(Math.random() * c.length)];
+}
+const codeChips = codes => codes.map(c => `<span class="code-chip">${c} · ${esc(SUB_TITLE[c] || "")}</span>`).join("");
+
+/* ── TERMS EXERCISE ──────────────────────────────────────────────── */
+let lastSet = -1, currentSet = null, exemplarShown = false;
+function generateTerms() {
+  if (!selected().size) { updateStatus("Select at least one unit or sub-section first."); return; }
+  const i = pick(SETS, lastSet);
+  if (i < 0) { updateStatus("No term sets match this selection — try adding more sub-sections."); return; }
+  lastSet = i; currentSet = SETS[i];
+  const terms = currentSet.t.map(display);
+  $("termsCodes").innerHTML = codeChips(currentSet.c);
+  $("termsContext").textContent = currentSet.x;
+  $("termsList").innerHTML = terms.map((t, j) => `<span class="term-tag" data-i="${j}">${esc(t)}</span>`).join("");
+  $("termsAnswer").value = "";
+  $("exemplarText").innerHTML = highlight(currentSet.e, currentSet.t);
+  setExemplar(false);
+  buildTermsScaffold(terms);
+  closeBox("termsScaffold", $("termsScaffoldBtn"), "Show hint");
+  checkTerms();
+  showCard("termsCard");
+}
+function buildTermsScaffold(t) {
+  const steps = [
+    `<strong>Start with the business:</strong> what is happening here? Bring in <em>${esc(t[0])}</em> and show what it means <em>for this business</em>.`,
+    `<strong>Link to <em>${esc(t[1])}</em>:</strong> explain <em>why</em> the first idea affects it — use "because" or "which means", not "also".`,
+    `<strong>Extend to <em>${esc(t[2])}</em> and <em>${esc(t[3])}</em>:</strong> keep every step tied to the business and push the chain to a consequence (revenue, costs, profit, reputation…).`,
+    `<strong>Optional finish:</strong> show a limit to the chain ("However, if…"). Useful practice for longer answers — a 9-mark Analyse question does not need a judgement.`
+  ];
+  $("termsSteps").innerHTML = steps.map((s, i) => `<div class="scaffold-step"><div class="step-num">${i + 1}</div><div class="step-text">${s}</div></div>`).join("");
+  const starters = [`"${t[0]} means that, for this business…"`, `"…which leads to…"`, `"This is because…"`, `"As a result, ${t[t.length - 1].toLowerCase()}…"`, `"In turn…"`, `"However, if…"`];
+  $("termsStarters").innerHTML = starters.map(s => `<span class="starter-chip">${esc(s)}</span>`).join("");
+}
+function checkTerms() {
+  if (!currentSet) return;
+  const txt = $("termsAnswer").value;
+  let used = 0;
+  currentSet.t.forEach((t, j) => {
+    const ok = termRe(t).test(txt);
+    const tag = document.querySelector(`#termsList [data-i="${j}"]`);
+    if (tag) tag.classList.toggle("used", ok);
+    if (ok) used++;
+  });
+  const n = currentSet.t.length, links = linkCount(txt), words = wordCount(txt);
+  setPill("chkTerms", `Terms used: ${used}/${n}`, used === n);
+  setPill("chkLinks", `Chain links: ${links} (aim 3+)`, links >= 3);
+  setPill("chkWords", `Words: ${words} (aim 120–150)`, words >= 120);
+}
+function setPill(id, text, ok) { const p = $(id); p.textContent = text; p.classList.toggle("ok", ok); }
+function revealExemplar() {
+  if (!exemplarShown && wordCount($("termsAnswer").value) < 40 &&
+      !confirm("Have a go first? Comparing your own chain with the exemplar is where the learning happens.\n\nPress OK to reveal it anyway.")) return;
+  setExemplar(!exemplarShown);
+}
+function setExemplar(show) {
+  exemplarShown = show;
+  $("exemplarText").classList.toggle("visible", show);
+  $("exemplarLegend").classList.toggle("visible", show);
+  $("exemplarBtn").textContent = show ? "🙈 Hide exemplar" : "👁️ Reveal exemplar";
+}
+
+/* ── 9-MARK QUESTION ─────────────────────────────────────────────── */
+let lastQ = -1;
+function generateQuestion() {
+  if (!selected().size) { updateStatus("Select at least one unit or sub-section first."); return; }
+  const i = pick(QS, lastQ);
+  if (i < 0) { updateStatus("No questions match this selection — try adding more sub-sections."); return; }
+  lastQ = i;
+  const q = QS[i];
+  $("qCodes").innerHTML = codeChips(q.c);
+  $("qText").textContent = q.q;
+  $("qChains").innerHTML = q.ch.map((c, j) => `<div class="chain"><strong>Chain ${j + 1}</strong>${esc(c)}</div>`).join("");
+  $("qKeyTerms").innerHTML = q.k.map(t => `<span class="key-term-pill">${esc(t)}</span>`).join("");
+  $("qAnswer").value = "";
+  checkQuestion();
+  closeBox("qScaffold", $("qScaffoldBtn"), "Show planning hint");
+  $("msBody").classList.remove("open");
+  $("msToggleBtn").classList.remove("open");
+  showCard("questionCard");
+}
+function checkQuestion() {
+  const txt = $("qAnswer").value, links = linkCount(txt), words = wordCount(txt);
+  setPill("qChkLinks", `Chain links: ${links} (aim 6+ across two chains)`, links >= 6);
+  setPill("qChkWords", `Words: ${words} (aim 200–250)`, words >= 200);
+}
+function toggleMarkScheme() { $("msBody").classList.toggle("open"); $("msToggleBtn").classList.toggle("open"); }
+function renderMarkScheme() {
+  $("levelsBody").innerHTML = MARK_SCHEME.levels.map(l => `<tr><td><strong>${l.lv}</strong></td><td><strong>${esc(l.marks)}</strong></td><td>${esc(l.text)}</td></tr>`).join("");
+  $("msSource").textContent = MARK_SCHEME.source;
+}
+
+/* ── SHARED UI ───────────────────────────────────────────────────── */
+function showCard(id) {
+  const card = $(id);
+  card.classList.remove("active"); void card.offsetWidth; card.classList.add("active");
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+  updateStatus();
+}
+function toggleBox(id, btn, showLabel, hideLabel) {
+  const open = $(id).classList.toggle("visible");
+  btn.textContent = (open ? "▲ " : "▼ ") + (open ? hideLabel : showLabel);
+}
+function closeBox(id, btn, showLabel) { $(id).classList.remove("visible"); btn.textContent = "▼ " + showLabel; }
+
+function present(id) {
+  const card = $(id);
+  card.classList.add("presenting");
+  document.body.classList.add("no-scroll");
+  if (card.requestFullscreen) card.requestFullscreen().catch(() => {});
+}
+function exitPresent() {
+  document.querySelectorAll(".presenting").forEach(c => c.classList.remove("presenting"));
+  document.body.classList.remove("no-scroll");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) exitPresent(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && document.querySelector(".presenting")) exitPresent(); });
+
+function printMode(mode) {
+  const isTerms = mode.startsWith("terms");
+  const txt = $(isTerms ? "termsAnswer" : "qAnswer").value.trim();
+  $(isTerms ? "termsPrintAnswer" : "qPrintAnswer").innerHTML =
+    `<div class="pa-label">${isTerms ? "Your paragraph" : "Your answer"}</div>` +
+    (txt ? `<div class="pa-text">${esc(txt).replace(/\n/g, "<br>")}</div>` : '<div class="writing-line"></div>'.repeat(isTerms ? 16 : 24));
+  document.body.dataset.print = mode;
+  window.print();
+}
+window.addEventListener("afterprint", () => { delete document.body.dataset.print; });
+
+buildUnits();
+renderMarkScheme();
+updateStatus();
+</script>
+</body>
+</html>
