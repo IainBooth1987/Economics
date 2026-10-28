@@ -64,11 +64,26 @@ h1 em{font-style:normal;color:var(--amber);}
 .back-section p{font-size:0.78rem;line-height:1.45;}
 .back-section ul{font-size:0.78rem;line-height:1.45;padding-left:1.1rem;}
 
+/* ── VIDEO ── */
+.video-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin:0 0 1rem;}
+.video-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.9rem;}
+.video-title{font-weight:800;font-size:1.05rem;}
+.video-title span{color:var(--amber);}
+.video-meta{font-family:var(--ff-mono);font-size:0.66rem;color:var(--muted);letter-spacing:0.06em;}
+.video-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;}
+.video-frame video{width:100%;height:100%;display:block;}
+.chapters{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.9rem;}
+.chap{font-family:var(--ff-mono);font-size:0.68rem;padding:0.4rem 0.7rem;border-radius:100px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;transition:all 0.18s;}
+.chap:hover,.chap.active{border-color:var(--amber);color:var(--amber);}
+.chap b{color:var(--muted);font-weight:400;margin-right:0.35rem;}
+.video-tip{font-size:0.8rem;color:var(--muted);margin-top:0.8rem;line-height:1.5;}
+@media (max-width:640px){.video-block{padding:0.8rem;}header{padding:1rem 1.2rem;}.page-wrap{padding:2rem 1rem 4rem;}.logo{white-space:nowrap;}}
+
 .placeholder-card .flip-card-front{display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:0.8rem;padding:1rem;}
 
 /* ── PRINT ── */
 @media print{
-  header,.flip-hint,.print-btn,.theme-toggle,.home-link,.intro{display:none!important;}
+  header,.flip-hint,.print-btn,.theme-toggle,.home-link,.intro,.video-block,.video-label{display:none!important;}
   body{background:white;color:black;}
   .page-wrap{padding:0;max-width:100%;}
   .card-grid{display:block;}
@@ -103,6 +118,22 @@ h1 em{font-style:normal;color:var(--amber);}
   <div class="eyebrow">Oxbridge Economics Hub</div>
   <h1>Many Different Schools<br><em>of Economics</em></h1>
   <p class="intro">At least nine major schools of economic thought — plus several smaller traditions — shape how economists interpret the same events differently. Click a card to flip it and explore each school's origins, key ideas, and how to use it in an interview or essay answer.</p>
+
+  <div class="grp-label video-label">Watch first: the big eight in ten minutes</div>
+  <section class="video-block" aria-label="Schools of Economic Thought video">
+    <div class="video-head">
+      <div class="video-title">Schools of <span>Economic Thought</span> — whiteboard explainer</div>
+      <div class="video-meta">10 MIN 29 S · 8 SCHOOLS · MUSIC, NO VOICEOVER</div>
+    </div>
+    <div class="video-frame">
+      <video id="sot-video" controls preload="metadata" playsinline poster="images/schools/schools-video-poster.jpg">
+        <source src="videos/schools-of-thought.mp4" type="video/mp4">
+        Your browser can't play this video.
+      </video>
+    </div>
+    <div class="chapters" id="chapters"></div>
+    <p class="video-tip">Jump to a school with the buttons above. Pause on each board to read it, then flip the matching card below for the fuller detail and exam angle.</p>
+  </section>
 
   <div class="grp-label">Major Schools</div>
   <div class="card-grid" id="major-grid"></div>
@@ -303,6 +334,31 @@ function renderCards(){
   });
 }
 renderCards();
+
+// ── video chapters ──
+const CHAPTERS = [
+  ['Intro', 0], ['Three questions', 13.3], ['Classical', 31.4], ['Marxist', 91.9], ['Neoclassical', 150.0],
+  ['Austrian', 208.0], ['Keynesian', 271.2], ['Monetarist', 331.2], ['Behavioural', 392.2],
+  ['Post-Keynesian & MMT', 453.3], ['Where do they sit?', 518.5], ['Side by side', 547.3],
+  ['Pause & think', 580.6], ['Exam tip', 616.2]
+];
+(function initChapters(){
+  const v = document.getElementById('sot-video'), box = document.getElementById('chapters');
+  if (!v || !box) return;
+  const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  const btns = CHAPTERS.map(([name, t]) => {
+    const b = document.createElement('button');
+    b.className = 'chap'; b.type = 'button';
+    b.innerHTML = `<b>${fmt(t)}</b>${name}`;
+    b.onclick = () => { v.currentTime = t + 0.05; v.play().catch(() => {}); };
+    box.appendChild(b); return b;
+  });
+  v.addEventListener('timeupdate', () => {
+    let idx = 0;
+    CHAPTERS.forEach(([, t], i) => { if (v.currentTime >= t) idx = i; });
+    btns.forEach((b, i) => b.classList.toggle('active', i === idx));
+  });
+})();
 
 function toggleTheme(){
   const html = document.documentElement;
