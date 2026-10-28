@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank Runs | BIZ-OMICS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --navy:#0b1f3a; --navy2:#16325c; --gold:#d4a017; --gold2:#f3d27a;
+  --bg:#f3f5fa; --card:#ffffff; --ink:#14213d; --muted:#5b6478; --line:#dfe4ee;
+  --green:#1f9d55; --amber:#e08a00; --red:#d64545; --blue:#2f6fe0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.topbar{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.06em;font-size:14px;background:var(--gold);color:var(--navy);padding:4px 10px;border-radius:6px}
+.topbar h1{font-size:20px;margin:0;font-weight:700;flex:1;min-width:200px}
+.topbar h1 small{display:block;font-weight:400;font-size:12.5px;color:#c9d4ea}
+.btn{border:0;border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;background:var(--navy2);color:#fff;transition:transform .08s, filter .15s}
+.btn:hover{filter:brightness(1.12)}.btn:active{transform:scale(.97)}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.red{background:var(--red)}.btn.green{background:var(--green)}.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none;transform:none}
+.tabs{display:flex;gap:6px;padding:10px 20px 0;background:var(--navy);flex-wrap:wrap}
+.tab-btn{border:0;background:#24406b;color:#dfe7f6;padding:10px 18px;border-radius:10px 10px 0 0;font-weight:700;font-size:14.5px}
+.tab-btn.active{background:var(--bg);color:var(--navy)}
+.tab{display:none;padding:18px 20px 30px;max-width:1500px;margin:0 auto}
+.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 1px 3px rgba(11,31,58,.05)}
+.card h3{margin:0 0 8px;font-size:15.5px;color:var(--navy)}
+.muted{color:var(--muted)}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eef2fa;color:var(--navy2)}
+
+/* ---------- 3D explorer ---------- */
+.explore-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}
+@media (max-width:1050px){.explore-grid{grid-template-columns:1fr}}
+.stage-wrap{position:relative;border-radius:16px;overflow:hidden;background:#bfe0f5;height:min(680px,78vh);min-height:460px;border:1px solid var(--line);align-self:start;position:sticky;top:10px}
+#stage{position:absolute;inset:0}
+#stage canvas{display:block;touch-action:none}
+.hud{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:10px;flex-wrap:wrap;pointer-events:none}
+.hud .chip{background:rgba(11,31,58,.86);color:#fff;border-radius:10px;padding:7px 11px;font-size:13px;min-width:120px}
+.hud .chip b{display:block;font-size:18px}
+.meter{height:7px;border-radius:5px;background:rgba(255,255,255,.2);margin-top:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--green);transition:width .3s, background .3s}
+.hint{position:absolute;bottom:12px;left:12px;right:12px;background:rgba(255,255,255,.92);border-radius:10px;padding:8px 12px;font-size:13px;pointer-events:none}
+.banner{position:absolute;inset:auto 0 0 0;top:0;display:none;align-items:center;justify-content:center;background:rgba(11,31,58,.55);padding:20px}
+.banner.show{display:flex}
+.banner .card{max-width:520px;text-align:center}
+.banner h2{margin:0 0 8px}
+.nogl{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--navy)}
+.side{display:flex;flex-direction:column;gap:14px}
+.ctrl{margin:10px 0}
+.ctrl label{display:flex;justify-content:space-between;font-weight:600;font-size:13.5px}
+.ctrl input[type=range]{width:100%;accent-color:var(--navy2)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.preset-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.preset-row .btn{font-size:12.5px;padding:7px 8px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:13px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.bs-mini{display:flex;height:22px;border-radius:6px;overflow:hidden;margin:6px 0 2px;font-size:11px;font-weight:700;color:#fff}
+.bs-mini div{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;transition:flex .3s}
+.why{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fbfcff}
+.why p{margin:0;font-weight:600;font-size:14px}
+.why .ans{display:none;margin-top:8px;font-size:13.5px;color:#22314f;border-left:3px solid var(--gold);padding-left:10px}
+.why.open .ans{display:block}
+.why button{margin-top:7px;font-size:12px;padding:5px 10px}
+.below{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.below .card p{margin:6px 0;font-size:14px}
+
+/* ---------- Game ---------- */
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:12px}
+.scen{cursor:pointer;transition:transform .12s, box-shadow .12s;display:flex;flex-direction:column}
+.scen:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(11,31,58,.12)}
+.scen .top{font-size:34px}
+.scen .pill{align-self:flex-start;margin-bottom:4px}
+.scen h3{font-size:18px;margin:4px 0}
+.scen p{font-size:14px;margin:6px 0;flex:1}
+.stars{color:var(--gold);letter-spacing:2px}
+.game-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.game-head h2{margin:0;font-size:20px;color:var(--navy)}
+.round-pill{background:var(--navy);color:#fff;border-radius:999px;padding:5px 14px;font-weight:700}
+.ap{display:flex;gap:5px;align-items:center;font-weight:700;font-size:13px}
+.ap i{width:16px;height:16px;border-radius:50%;background:var(--gold);display:inline-block;border:2px solid var(--navy)}
+.ap i.used{background:#d9dee8;border-color:#b4bccb}
+.game-grid{display:grid;grid-template-columns:300px minmax(0,1fr) 360px;gap:14px}
+@media (max-width:1200px){.game-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.game-grid{grid-template-columns:1fr}}
+.gauge-wrap{text-align:center}
+.gauge-num{font-size:34px;font-weight:800;margin-top:-34px}
+.news{border-left:5px solid var(--gold);background:#fffaf0}
+.news .tag{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--amber)}
+.news h4{margin:4px 0;font-size:16px}
+.news p{margin:4px 0;font-size:14px}
+.heat{display:flex;gap:4px;margin-top:6px}
+.heat i{flex:1;height:10px;border-radius:3px;background:#e6e9f0}
+.heat i.on{background:linear-gradient(90deg,#ff9a3c,#e2331b)}
+.bs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bs h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stack{height:260px;border-radius:10px;overflow:hidden;display:flex;flex-direction:column-reverse;border:1px solid var(--line);background:#f7f8fb}
+.stack div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;text-align:center;transition:flex .35s;overflow:hidden;line-height:1.15;padding:0 4px}
+.bs-key{font-size:12.5px;margin-top:6px}
+.bs-key div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:2px 0}
+.equity-line{display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px}
+.forecast{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.forecast b{font-size:20px}
+.cover{font-weight:800;padding:4px 10px;border-radius:8px;color:#fff}
+.queue-strip{font-size:20px;line-height:1.2;min-height:28px;letter-spacing:1px;word-break:break-all}
+.actions{display:flex;flex-direction:column;gap:9px}
+.act{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.act .t{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.act .d{font-size:12.5px;color:var(--muted);margin:4px 0 7px}
+.act .chips{display:flex;gap:6px;flex-wrap:wrap}
+.act .chips .btn{font-size:12.5px;padding:6px 10px}
+.act.disabled{opacity:.5}
+.log{max-height:220px;overflow:auto;font-size:13px}
+.log div{padding:5px 0;border-bottom:1px solid #eef1f6}
+.log .r{font-weight:700;color:var(--navy2)}
+.end-row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.overlay{position:fixed;inset:0;background:rgba(11,31,58,.6);display:none;align-items:flex-start;justify-content:center;z-index:50;overflow:auto;padding:30px 14px}
+.overlay.show{display:flex}
+.overlay .card{max-width:760px;width:100%}
+.result-title{font-size:26px;margin:0 0 4px}
+.lesson{background:#f5f8ff;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;border-left:4px solid var(--navy2)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:10px 0}
+.statgrid div{background:#f3f5fa;border-radius:10px;padding:8px 10px;font-size:12.5px}
+.statgrid b{display:block;font-size:19px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;z-index:60;transition:transform .3s;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.print-only{display:none}
+.caveat{margin-top:8px;font-size:12.5px;border:1px dashed #c9d1e0;border-radius:8px;padding:6px 10px;background:#fafbfe}
+.caveat summary{cursor:pointer;font-weight:700;color:var(--navy2)}
+.caveat p,.caveat ul{margin:6px 0 2px;color:#33405c}.caveat ul{padding-left:18px}
+.ledger{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}.ledger th,.ledger td{padding:5px 6px;border-bottom:1px solid #e6e9f0;text-align:left}.ledger th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.up{color:#1f9d55;font-weight:700}.dn{color:#d64545;font-weight:700}.flat{color:#8a93a6}
+.debrief{background:#fff8e6;border:2px solid var(--gold);border-radius:12px;padding:12px 14px;margin:12px 0}
+
+/* ---------- Print ---------- */
+@media print{
+  @page{margin:16mm}
+  body{background:#fff;color:#000;font-family:Georgia,"Times New Roman",serif;font-size:11.5pt}
+  .topbar,.tabs,.tab,.overlay,.toast,.no-print{display:none !important}
+  .print-only{display:block !important}
+  #print-notes h1{font-size:20pt;margin:0}
+  #print-notes h2{font-size:14pt;border-bottom:1px solid #000;padding-bottom:3px;margin-top:18px}
+  #print-notes .pb{page-break-before:always}
+  #print-notes .spot{border:1px solid #000;padding:8px 10px;margin:8px 0}
+  #print-notes *{color:#000 !important;background:#fff !important}
+  .print-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+  .write-lines{border-bottom:1px solid #999;height:22px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="brand">BIZ-OMICS</span>
+  <h1>Bank Runs <small>Liquidity, confidence and the lender of last resort · A-Level Economics &amp; Business</small></h1>
+  <button class="btn gold" onclick="window.print()">🖨 Print</button>
+</header>
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="explore">🏦 3D Bank Run Explorer</button>
+  <button class="tab-btn" data-tab="game">🎮 Run the Bank — Survival Game</button>
+</nav>
+
+<!-- ======================= 3D TAB ======================= -->
+<section class="tab active" id="tab-explore">
+  <div class="explore-grid">
+    <div class="stage-wrap">
+      <div id="stage"></div>
+      <div class="hud">
+        <div class="chip">Confidence<b id="h-conf">100%</b><div class="meter"><i id="h-conf-bar" style="width:100%"></i></div></div>
+        <div class="chip">Cash in vault<b id="h-res">9</b><span id="h-res-sub" style="font-size:11.5px;opacity:.8">of 60 deposited</span></div>
+        <div class="chip">In the queue<b id="h-q">0</b><span style="font-size:11.5px;opacity:.8">depositors</span></div>
+        <div class="chip">Owed to Bank of England<b id="h-cb">£0</b><span id="h-cb-sub" style="font-size:11.5px;opacity:.8">collateral left £38</span></div>
+        <div class="chip">Status<b id="h-status">Calm</b></div>
+      </div>
+      <div class="hint" id="hint">🖱 Drag to orbit · scroll to zoom · <b>click any person</b> to start a rumour with them · click the vault, the houses or the Bank of England to learn more.</div>
+      <div class="banner" id="banner"><div class="card"><h2 id="banner-h">Bank failed</h2><p id="banner-p"></p><button class="btn gold" onclick="X.reset()">Reset the town</button></div></div>
+      <div class="nogl" id="nogl"><div><h2>3D view unavailable</h2><p>The 3D library couldn't load (it needs an internet connection the first time) or this device doesn't support WebGL. The game tab still works fully.</p></div></div>
+    </div>
+
+    <aside class="side">
+      <div class="card">
+        <h3>⚙️ Set up the bank</h3>
+        <div class="ctrl">
+          <label>Cash reserves held <span id="v-res">15%</span></label>
+          <input type="range" id="s-res" min="5" max="100" step="5" value="15">
+          <div class="bs-mini"><div id="mini-res" style="flex:15;background:#c9971a">Reserves</div><div id="mini-loan" style="flex:85;background:#4a6fa5">Loans (illiquid)</div></div>
+          <span class="muted" style="font-size:12px">Simplified funding model: the bank holds £60 of deposits, keeps part as cash in the vault and holds the rest as long-term loans.</span>
+          <details class="caveat"><summary>⚠️ Do banks just lend out savers' money?</summary><p>Not quite. In the modern economy, when a bank makes a loan it <b>creates a new deposit</b> in the borrower's account; it does not simply hand out money that savers paid in (Bank of England, <i>Money creation in the modern economy</i>, 2014). But banks still need <b>liquid assets</b> (cash and central bank reserves) to meet withdrawals and payments to other banks. A run drains exactly that liquidity, which is what this model shows.</p></details>
+        </div>
+        <div class="ctrl">
+          <label>Depositors with deposit insurance <span id="v-ins">0%</span></label>
+          <input type="range" id="s-ins" min="0" max="100" step="5" value="0">
+          <span class="muted" style="font-size:12px">Insured savers (blue ring) are covered up to the limit if the bank fails, so they are much less likely to panic, though not immune.</span>
+        </div>
+        <div class="preset-row">
+          <button class="btn ghost" data-preset="1866">1866: no insurance</button>
+          <button class="btn ghost" data-preset="rock">Northern Rock 2007</button>
+          <button class="btn ghost" data-preset="svb">SVB 2023</button>
+          <button class="btn ghost" data-preset="uk">UK today (FSCS)</button>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn red" id="b-rumour">🗣 Start a rumour</button>
+          <button class="btn green" id="b-lolr">🚚 Lender of last resort</button>
+          <button class="btn ghost" id="b-reset">↺ Reset</button>
+        </div>
+        <p class="muted" id="preset-note" style="font-size:12.5px;margin:10px 0 0"></p>
+        <details class="caveat"><summary>📐 Model assumptions</summary><ul><li>Panic spreads to nearby people with a fixed chance each moment. Insured savers are about 15× less likely to catch it, but not immune.</li><li>Each depositor withdraws £1; the bank pays one person at a time.</li><li>The Bank of England lends in £20 deliveries, only up to the value of eligible collateral: the bank's loans after a 25% haircut. Once collateral runs out, it cannot lend more.</li><li>These are illustrative settings to show the mechanism, not estimates of real behaviour.</li></ul></details>
+      </div>
+
+      <div class="card">
+        <h3>👀 What you're looking at</h3>
+        <div class="legend">
+          <span>🙂 No marker = calm</span>
+          <span><i class="dot" style="background:#e09a00"></i><b>?</b> = worried</span>
+          <span><i class="dot" style="background:#d63b3b"></i><b>!</b> = panicking / queuing</span>
+          <span><i class="dot" style="background:#d4a017"></i>Gold bag = withdrew cash</span>
+          <span><i class="dot" style="background:#3b82f6"></i>Blue ring = insured</span>
+          <span><i class="dot" style="background:#c9971a;border-radius:2px"></i>Gold bar = £1 in vault</span>
+        </div>
+        <p class="muted" style="font-size:13px;margin:8px 0 0">Across the side street are the bank's <b>loans</b> — terraced-house mortgages and a building site. That money is real but can't be recalled quickly. To the right is the <b>Bank of England</b>.</p>
+      </div>
+
+      <div class="card">
+        <h3>🧠 Tell me why…</h3>
+        <div id="why-3d"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="below">
+    <div class="card"><h3>1 · Banks borrow short and lend long</h3>
+      <p>Deposits can be withdrawn <b>on demand</b>, but mortgages and business loans run for years. This <b>maturity transformation</b> is what banks are for, and it means no bank holds enough cash to repay everyone at once. <i>Note:</i> lending itself creates new deposits rather than passing on existing ones, but banks still need liquid reserves to meet withdrawals and payments.</p></div>
+    <div class="card"><h3>2 · Illiquid is not the same as insolvent</h3>
+      <p><b>Insolvent:</b> assets are worth less than liabilities. <b>Illiquid:</b> assets exceed liabilities but can't be turned into cash fast enough. A run can kill a perfectly solvent bank — watch the loans sitting untouched while the vault empties.</p></div>
+    <div class="card"><h3>3 · A self-fulfilling prophecy</h3>
+      <p>Diamond and Dybvig (1983) showed a bank has two equilibria. If everyone trusts it, nobody runs. If you think others will run, it's <b>rational</b> to run first, because withdrawals are paid first-come, first-served. Belief creates the failure.</p></div>
+    <div class="card"><h3>4 · The two fixes</h3>
+      <p><b>Deposit insurance</b> (UK FSCS: up to £120,000 per eligible depositor, per authorised firm, since 1 Dec 2025; brands sharing one banking licence share one limit) greatly <b>reduces the incentive</b> to run, though it does not remove it entirely. The <b>lender of last resort</b> lends cash against good collateral. Walter Bagehot's 1873 rule: lend freely, at a high rate, against good collateral.</p></div>
+  </div>
+</section>
+
+<!-- ======================= GAME TAB ======================= -->
+<section class="tab" id="tab-game">
+  <div id="g-pick">
+    <div class="card">
+      <h3 style="font-size:19px">🎮 Run the Bank: can you survive the run?</h3>
+      <p style="margin:4px 0">You are the CEO. Each round brings news that moves <b>depositor confidence</b>. You get <b>2 action points</b> a round to raise cash or calm nerves — then the depositors decide. Run out of cash and you fail (illiquid). Let equity fall below zero and you fail (insolvent). Survive every round to win.</p>
+      <p style="margin:6px 0;font-size:13.5px"><b>Think as you play:</b> does each action improve <b>liquidity</b>, <b>solvency</b> or <b>confidence</b>, or one at the expense of another? The debrief at the end will ask you.</p>
+      <p class="muted" style="margin:4px 0;font-size:13px">Balance sheets are scaled so total assets start at 100bn, making the three banks easy to compare. Events are simplified versions of what really happened.</p>
+      <details class="caveat"><summary>📐 Model assumptions: these numbers are teaching settings, not real data</summary><ul><li>Withdrawal rates rise with falling confidence. Uninsured depositors withdraw roughly 8× faster than insured ones, and social-media "heat" speeds this up.</li><li>Central bank lending costs a 2% fee. You can borrow against bonds (market value less a 5% haircut) and loans (65% of book value). Each loan has a 35–60% chance of leaking to the press, depending on the scenario.</li><li>Bonds sell at market value less 1% (worse with each extra sale that round). Loans fire-sell at 60p in the £.</li><li>Confidence penalties for leaks, losses, failed share sales and statements are fixed rules of thumb chosen to create interesting decisions.</li><li>Real banks have many more options and much more complex balance sheets. Use the game to reason about <i>trade-offs</i>, not to predict real outcomes.</li></ul></details>
+    </div>
+    <div class="scen-grid" id="scen-grid"></div>
+  </div>
+
+  <div id="g-play" style="display:none">
+    <div class="game-head">
+      <h2 id="g-name">Bank</h2>
+      <span class="round-pill" id="g-round">Day 1 / 8</span>
+      <span class="ap" id="g-ap"></span>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="g-quit">← Choose another scenario</button>
+    </div>
+
+    <div class="game-grid">
+      <!-- left -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card gauge-wrap">
+          <h3>Depositor confidence</h3>
+          <svg viewBox="0 0 200 110" width="100%" style="max-width:240px">
+            <path d="M15 100 A85 85 0 0 1 185 100" fill="none" stroke="#e6e9f0" stroke-width="18" stroke-linecap="round"/>
+            <path id="g-arc" d="M15 100 A85 85 0 0 1 185 100" fill="none" stroke="#1f9d55" stroke-width="18" stroke-linecap="round" pathLength="100" stroke-dasharray="70 100"/>
+          </svg>
+          <div class="gauge-num" id="g-conf">70</div>
+          <div class="muted" style="font-size:12.5px" id="g-conf-word">Steady</div>
+          <div style="text-align:left;margin-top:10px;font-size:12.5px;font-weight:700">📱 Rumour speed (social media heat)</div>
+          <div class="heat" id="g-heat"></div>
+        </div>
+        <div class="card news" id="g-news">
+          <div class="tag">BREAKING</div><h4></h4><p></p>
+        </div>
+        <div class="card">
+          <h3>🧍 Outside the branch yesterday</h3>
+          <div class="queue-strip" id="g-queue">—</div>
+          <div class="muted" style="font-size:12px" id="g-queue-sub"></div>
+        </div>
+      </div>
+
+      <!-- middle -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <h3>📒 Balance sheet <span class="muted" style="font-weight:400;font-size:12.5px" id="g-unit">(bn)</span></h3>
+          <div class="bs">
+            <div><h4>Assets</h4><div class="stack" id="g-assets"></div><div class="bs-key" id="g-assets-key"></div></div>
+            <div><h4>Liabilities + equity</h4><div class="stack" id="g-liabs"></div><div class="bs-key" id="g-liabs-key"></div></div>
+          </div>
+          <div class="equity-line"><span>Book equity (solvency)</span><b id="g-eq"></b></div>
+          <div class="equity-line"><span>Equity if bonds valued at market prices</span><b id="g-mtm"></b></div>
+        </div>
+        <div class="card">
+          <h3>🔮 Forecast withdrawals at the end of this round</h3>
+          <div class="forecast">
+            <div><span class="muted" style="font-size:12.5px">Likely outflow</span><br><b id="g-fc"></b></div>
+            <div><span class="muted" style="font-size:12.5px">Cash on hand</span><br><b id="g-cash"></b></div>
+            <span class="cover" id="g-cover">Covered</span>
+          </div>
+          <div class="muted" style="font-size:12.5px;margin-top:6px" id="g-fc-note"></div>
+          <div class="end-row">
+            <button class="btn gold" id="g-end" style="font-size:16px;padding:11px 20px">End round ➜ depositors decide</button>
+          </div>
+        </div>
+        <div class="card"><h3>📜 Crisis log</h3><div class="log" id="g-log"></div></div>
+      </div>
+
+      <!-- right -->
+      <div class="card">
+        <h3>🎯 Actions <span class="muted" style="font-weight:400;font-size:12.5px">(each costs 1 action point)</span></h3>
+        <div class="actions" id="g-actions"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="overlay" id="g-over"><div class="card" id="g-over-card"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ======================= PRINT NOTES ======================= -->
+<section id="print-notes" class="print-only">
+  <div class="print-head"><strong>BIZ-OMICS</strong><span>Bank Runs — Student Notes</span></div>
+  <h1>Bank Runs</h1>
+  <p>Name: ______________________ &nbsp; Class: ________ &nbsp; Date: ____________</p>
+
+  <h2>Key concepts</h2>
+  <p><b>Bank run:</b> a large number of depositors try to withdraw their money at the same time because they fear the bank will fail.</p>
+  <p><b>Liquid reserves:</b> banks hold only a small fraction of their deposits as cash and central bank reserves. No bank can repay all depositors at once.</p>
+  <p><b>How lending really works:</b> the models in this resource simplify by showing deposits being "lent out". In practice, when a bank makes a loan it creates a new deposit for the borrower (Bank of England, 2014). Banks still need enough liquidity to meet withdrawals and payments to other banks, and a run drains that liquidity.</p>
+  <p><b>Maturity transformation:</b> banks borrow short-term (deposits repayable on demand) and lend long-term (mortgages, business loans). This creates a liquidity mismatch.</p>
+  <p><b>Liquidity vs solvency:</b> a bank is <i>insolvent</i> if its assets are worth less than its liabilities (negative equity). It is <i>illiquid</i> if it is solvent but cannot turn assets into cash quickly enough to meet withdrawals. Runs can bring down solvent banks.</p>
+  <p><b>Liquidity vs profitability trade-off:</b> cash reserves earn little; loans earn more. Banks that hold too little cash are more profitable in calm times but more fragile.</p>
+  <p><b>Self-fulfilling expectations (Diamond–Dybvig, 1983):</b> because withdrawals are paid first-come, first-served, it is individually rational to run if you expect others to run — even if the bank is sound.</p>
+  <p><b>Fire sale:</b> selling assets quickly, at below their true value, to raise cash. Fire sales turn liquidity problems into losses that can make a bank insolvent.</p>
+  <p><b>Contagion and systemic risk:</b> a run on one bank can spread to others perceived to be similar, threatening the whole financial system.</p>
+  <div class="spot"><b>Policy responses.</b> <b>Deposit insurance</b> — in the UK the FSCS protects up to £120,000 per eligible depositor, per authorised firm (raised from £85,000 on 1 December 2025). The limit applies per banking licence, so brands that share a licence (for example Halifax and Bank of Scotland) share one £120,000 limit. Joint accounts are covered up to £120,000 for each holder. Insurance greatly <i>reduces</i> the incentive to run, but does not remove it: savers above the limit, businesses, and people who fear delays in getting their money may still withdraw. <b>Lender of last resort</b> — the central bank lends to solvent but illiquid banks. Bagehot's rule (Lombard Street, 1873): lend freely, at a penalty rate, against good collateral. <b>Liquidity regulation</b> — Basel III's Liquidity Coverage Ratio requires banks to hold enough high-quality liquid assets to survive 30 days of stressed outflows. <b>Moral hazard</b> — insurance and bailouts can encourage riskier behaviour by banks and less monitoring by depositors.</div>
+
+  <h2 class="pb">Case study 1: Northern Rock, 2007</h2>
+  <p>Northern Rock funded around three-quarters of its mortgage lending by borrowing in wholesale money markets rather than from retail deposits. When BNP Paribas froze funds exposed to US sub-prime mortgages on 9 August 2007, interbank lending dried up. On 13 September the BBC reported the bank had sought support from the Bank of England, which announced emergency liquidity support on 14 September. Queues formed outside branches from 14 to 17 September — the first UK bank run in roughly 150 years. Deposit protection at the time covered 100% of the first £2,000 and 90% of the next £33,000, so savers still had reason to run. On 17 September Chancellor Alistair Darling guaranteed all existing deposits and the queues stopped. Northern Rock was nationalised in February 2008.</p>
+  <h2>Case study 2: Silicon Valley Bank, 2023</h2>
+  <p>SVB's deposits came largely from tech start-ups and venture-capital funds, and around 94% were above the US $250,000 insurance limit. It invested heavily in long-dated government bonds when yields were low. As the Federal Reserve raised rates through 2022, those bonds fell in value. On 8 March 2023 SVB announced it had sold $21bn of securities at a $1.8bn loss and planned to raise $2.25bn in new capital. Venture-capital investors told portfolio companies to move their money; about $42bn was withdrawn on 9 March, with more queued for the next day. Regulators closed the bank on 10 March. On 12 March US authorities guaranteed all SVB deposits, and on 13 March HSBC bought SVB UK for £1. The run was faster than Northern Rock's because depositors were concentrated, uninsured, connected by group chats and able to withdraw on their phones.</p>
+
+  <h2 class="pb">Tell me why… (answers)</h2>
+  <div id="print-why"></div>
+
+  <div class="spot"><b>About the models.</b> The 3D explorer and the game use simplified, illustrative settings (withdrawal rates, confidence penalties, fire-sale discounts, collateral haircuts). They show how the mechanisms work, not real-world estimates. The SVB scenario is an alternative-history challenge: the real SVB was closed on Friday 10 March 2023.</div>
+  <h2>Discussion</h2>
+  <p>Pick one action you took in <i>Run the Bank</i>. Did it improve <b>liquidity</b>, <b>solvency</b>, <b>confidence</b>, or one at the expense of another? Was the trade-off worth it at that point in the crisis?</p>
+  <div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div>
+
+  <h2>Exam practice</h2>
+  <p>1. Explain the difference between a bank being illiquid and being insolvent. <b>[4 marks]</b></p>
+  <div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div>
+  <p>2. Using an example, explain why a bank run can be described as a self-fulfilling prophecy. <b>[6 marks]</b></p>
+  <div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div>
+  <p>3. Evaluate whether raising the deposit insurance limit is the best way to prevent bank runs. <b>[15 marks]</b></p>
+  <div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div><div class="write-lines"></div>
+</section>
+
+<script>
+/* ======================= shared ======================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600); }
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+$$('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  $$('.tab-btn').forEach(x=>x.classList.toggle('active',x===b));
+  $$('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+b.dataset.tab));
+  if(window.X) X.setActive(b.dataset.tab==='explore');
+}));
+
+const WHY = [
+  ["Why can a bank with plenty of assets still collapse in a run?",
+   "Its assets are mostly long-term loans that can't be turned into cash quickly. Deposits are repayable on demand. If too many depositors withdraw at once, the bank runs out of cash even though its loans are still worth more than its deposits — it is illiquid, not insolvent. Selling loans in a hurry (a fire sale) can then create real losses and make it insolvent too."],
+  ["Why is it rational to join the queue even if you believe the bank is sound?",
+   "Withdrawals are paid first-come, first-served. If you expect others to run, the cash will run out before your turn, so waiting means losing your money. Each person acting rationally produces a collectively disastrous outcome — a self-fulfilling prophecy (Diamond–Dybvig, 1983)."],
+  ["Why does raising the insured share shrink the queue in the 3D model?",
+   "Insured depositors expect to get their money back even if the bank fails, so they have much less incentive to rush. Fewer people panic, fewer join the queue, and the panic spreads more slowly. Notice it is not zero: in the model a few insured savers still panic, just as in reality some people worry about delays, balances above the limit or simply follow the crowd. Insurance makes the 'bad equilibrium' much less likely rather than impossible."],
+  ["Why did the run on SVB happen so much faster than the run on Northern Rock?",
+   "About 94% of SVB's deposits were uninsured, its depositors were a tight network of tech firms advised by the same venture-capital investors, and they could withdraw instantly by phone. Rumours spread through group chats and social media, so $42bn left in a single day. Northern Rock's savers were mostly retail and had to queue in person."],
+  ["Why does Bagehot say the central bank should lend at a HIGH (penalty) rate?",
+   "A penalty rate means only banks that genuinely need emergency cash will borrow, and it discourages banks from deliberately holding too little liquidity in the expectation of cheap rescue. It limits moral hazard while still stopping the run."],
+  ["Why might deposit insurance create moral hazard?",
+   "If depositors know they will be repaid anyway, they stop checking how risky their bank is, and banks can take bigger risks to earn higher returns without losing deposits. Regulators respond with capital and liquidity rules and by capping the insured amount (in the UK, £120,000 per eligible depositor, per authorised firm)."],
+  ["Why can a run on one bank threaten banks that have done nothing wrong?",
+   "Depositors may assume similar banks have similar problems (contagion), banks lend to each other so one failure causes losses elsewhere, and fire sales push down asset prices for everyone. This systemic risk is why central banks step in."],
+  ["Why don't banks just hold 100% of deposits as cash?",
+   "Cash earns almost nothing. Lending is how banks pay interest to savers and make profit, and how households and firms get credit. Banks face a liquidity vs profitability trade-off — the 100% reserve setting is safe but would make banking far less useful and profitable."]
+];
+function renderWhy(container, list){
+  container.innerHTML = list.map((q,i)=>`<div class="why"><p>${i+1}. ${q[0]}</p><button class="btn ghost">Reveal</button><div class="ans">${q[1]}</div></div>`).join('');
+  container.querySelectorAll('.why button').forEach(b=>b.addEventListener('click',()=>{
+    const w=b.parentElement; w.classList.toggle('open'); b.textContent=w.classList.contains('open')?'Hide':'Reveal';
+  }));
+}
+renderWhy($('#why-3d'), WHY);
+$('#print-why').innerHTML = WHY.map((q,i)=>`<p><b>${i+1}. ${q[0]}</b><br>${q[1]}</p>`).join('');
+
+/* ======================= 3D EXPLORER ======================= */
+window.X = (function(){
+  const T = window.THREE;
+  const stage = $('#stage');
+  const api = { setActive(){}, reset(){} };
+  if(!T){ $('#nogl').style.display='flex'; return api; }
+  let R;
+  try { R = new T.WebGLRenderer({antialias:true}); } catch(e){ $('#nogl').style.display='flex'; return api; }
+  R.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  stage.appendChild(R.domElement);
+  const S = new T.Scene();
+  S.background = new T.Color(0xc9d5e2);
+  S.fog = new T.Fog(0xc9d5e2, 95, 230);
+  const C = new T.PerspectiveCamera(42,1,0.1,700);
+  const clock = new T.Clock();
+  let active = true;
+
+  S.add(new T.HemisphereLight(0xf4f7fb, 0x8a857b, 0.9));
+  const sun = new T.DirectionalLight(0xfff3df, 0.75); sun.position.set(35,70,45); S.add(sun);
+  const fill = new T.DirectionalLight(0xdfe8ff, 0.25); fill.position.set(-40,25,-30); S.add(fill);
+
+  /* ---------- helpers ---------- */
+  const mcache={};
+  const mat=(c,o)=>{ const k=c+'|'+JSON.stringify(o||{}); return mcache[k]||(mcache[k]=new T.MeshStandardMaterial(Object.assign({color:c,roughness:.85},o||{}))); };
+  const add=o=>{ S.add(o); return o; };
+  function box(w,h,d,m,x,y,z){ const o=new T.Mesh(new T.BoxGeometry(w,h,d),m); o.position.set(x,y,z); return add(o); }
+  function cyl(rt,rb,h,seg,m,x,y,z){ const o=new T.Mesh(new T.CylinderGeometry(rt,rb,h,seg),m); o.position.set(x,y,z); return add(o); }
+  function canvasTex(w,h,draw){ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; draw(cv.getContext('2d'),w,h); const t=new T.CanvasTexture(cv); t.wrapS=t.wrapT=T.RepeatWrapping; t.anisotropy=4; return t; }
+
+  function sash(c,x,y,w,h,frame,glass){ c.fillStyle=glass; c.fillRect(x,y,w,h); c.strokeStyle=frame; c.lineWidth=3; c.strokeRect(x,y,w,h); c.beginPath(); c.moveTo(x,y+h/2); c.lineTo(x+w,y+h/2); c.moveTo(x+w/2,y); c.lineTo(x+w/2,y+h); c.stroke(); }
+  const FACADE={
+    stone:(c,w,h)=>{ c.fillStyle='#e7e0cf'; c.fillRect(0,0,w,h); c.fillStyle='#d9d0bb'; c.fillRect(0,h-7,w,7);
+      c.fillStyle='#d2c8b1'; c.fillRect(13,10,38,7); sash(c,17,20,30,58,'#f6f2e8','#2e3542'); },
+    portland:(c,w,h)=>{ c.fillStyle='#ece6d7'; c.fillRect(0,0,w,h); c.strokeStyle='#d8d0bd'; c.lineWidth=1; for(let y=12;y<h;y+=12){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+      c.fillStyle='#2b3240'; c.beginPath(); c.moveTo(18,82); c.lineTo(18,36); c.arc(32,36,14,Math.PI,0); c.lineTo(46,82); c.fill();
+      c.strokeStyle='#f6f2e8'; c.lineWidth=2.5; c.stroke(); c.beginPath(); c.moveTo(32,22); c.lineTo(32,82); c.moveTo(18,56); c.lineTo(46,56); c.stroke(); },
+    brick:(c,w,h)=>{ c.fillStyle='#b98b5e'; c.fillRect(0,0,w,h); c.strokeStyle='rgba(90,60,35,.35)'; c.lineWidth=1;
+      for(let y=0;y<h;y+=6){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); for(let x=(y/6%2)*8;x<w;x+=16){ c.beginPath(); c.moveTo(x,y); c.lineTo(x,y+6); c.stroke(); } }
+      c.fillStyle='#efe9dc'; c.fillRect(14,14,36,5); sash(c,18,20,28,58,'#f7f3ea','#2a303b'); },
+    redbrick:(c,w,h)=>{ c.fillStyle='#9c4a36'; c.fillRect(0,0,w,h); c.strokeStyle='rgba(60,25,15,.35)'; c.lineWidth=1;
+      for(let y=0;y<h;y+=6){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+      c.fillStyle='#e8dcc6'; c.fillRect(14,15,36,5); c.fillRect(14,78,36,4); sash(c,18,21,28,56,'#f7f3ea','#262b35'); },
+    glass:(c,w,h)=>{ const g=c.createLinearGradient(0,0,w,h); g.addColorStop(0,'#7f97ad'); g.addColorStop(1,'#4d6377'); c.fillStyle=g; c.fillRect(0,0,w,h);
+      c.fillStyle='rgba(255,255,255,.18)'; c.fillRect(4,6,26,36); c.fillStyle='#c4ccd5'; c.fillRect(0,0,w,3); c.fillRect(0,48,w,3); c.fillRect(0,0,3,h); c.fillRect(32,0,2,h); },
+    dark:(c,w,h)=>{ c.fillStyle='#38424f'; c.fillRect(0,0,w,h); c.fillStyle='#93a7bb'; for(let y=6;y<h;y+=16) c.fillRect(4,y,w-8,9); c.fillStyle='#252c35'; c.fillRect(0,0,4,h); c.fillRect(w-4,0,4,h); }
+  };
+  const base={}; for(const k in FACADE) base[k]=canvasTex(64,96,FACADE[k]);
+  function fTex(style,rx,ry){ const t=base[style].clone(); t.needsUpdate=true; t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(Math.max(1,rx),Math.max(1,ry)); return t; }
+  function building(x,z,w,d,h,style){
+    const bay=style==='glass'||style==='dark'?2.6:3.2, fl=style==='glass'||style==='dark'?3.2:3.8;
+    const front=new T.MeshStandardMaterial({map:fTex(style,Math.round(w/bay),Math.round(h/fl)),roughness:.9,metalness:style==='glass'?.25:0});
+    const side=new T.MeshStandardMaterial({map:fTex(style,Math.round(d/bay),Math.round(h/fl)),roughness:.9,metalness:style==='glass'?.25:0});
+    const top=mat(0x6f7480);
+    const m=new T.Mesh(new T.BoxGeometry(w,h,d),[side,side,top,top,front,front]); m.position.set(x,h/2,z); add(m);
+    if(style!=='glass'&&style!=='dark') box(w+.5,.5,d+.5,mat(0xd9d1be),x,h+.1,z);
+    else box(w*.5,1.6,d*.4,mat(0x6a7380),x,h+.8,z);
+    return m;
+  }
+
+  /* ---------- ground, streets ---------- */
+  const ground=new T.Mesh(new T.PlaneGeometry(500,500), mat(0x8e8b84)); ground.rotation.x=-Math.PI/2; add(ground);
+  const slabs=canvasTex(128,128,(c,w,h)=>{ c.fillStyle='#d2cbbd'; c.fillRect(0,0,w,h); c.strokeStyle='#b5ad9c'; c.lineWidth=2;
+    for(let i=0;i<=4;i++){ c.beginPath(); c.moveTo(0,i*32); c.lineTo(w,i*32); c.stroke(); }
+    for(let r=0;r<4;r++) for(let i=0;i<=2;i++){ const x=i*64+(r%2)*32; c.beginPath(); c.moveTo(x,r*32); c.lineTo(x,r*32+32); c.stroke(); } });
+  function paved(x0,x1,z0,z1,y=0.02){ const t=slabs.clone(); t.needsUpdate=true; t.repeat.set((x1-x0)/4,(z1-z0)/4);
+    const m=new T.Mesh(new T.PlaneGeometry(x1-x0,z1-z0),new T.MeshStandardMaterial({map:t,roughness:.95})); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,y,(z0+z1)/2); return add(m); }
+  function tarmac(x0,x1,z0,z1){ const m=new T.Mesh(new T.PlaneGeometry(x1-x0,z1-z0),mat(0x45484d)); m.rotation.x=-Math.PI/2; m.position.set((x0+x1)/2,0.015,(z0+z1)/2); return add(m); }
+  paved(-19,32,-4,13);          // the plaza in front of the bank
+  paved(-90,-19,11,13); paved(32,90,11,13);  // north pavement
+  paved(-90,90,20,22.5);        // south pavement
+  paved(-25.5,-23,-90,11); paved(-19,-18,-90,-4);  // side street pavements
+  tarmac(-90,90,13,20);         // main road (the City)
+  tarmac(-23,-19,-90,13);       // side road
+  const white=mat(0xf2f2f2), yellow=mat(0xe8c21c);
+  for(let x=-88;x<88;x+=6){ if(Math.abs(x)>5) box(3,.03,.18,white,x,.03,16.5); }
+  [13.25,19.75].forEach(z=>{ box(180,.03,.08,yellow,0,.03,z-.06); box(180,.03,.08,yellow,0,.03,z+.06); });
+  for(let i=0;i<7;i++) box(4,.035,.55,white,0,.035,13.6+i*1.0);   // zebra crossing
+  [[-2.6,12.6],[2.6,20.4]].forEach(([x,z])=>{ for(let i=0;i<6;i++) cyl(.07,.07,.5,8,mat(i%2?0xffffff:0x111111),x,.25+i*.5,z); const b=new T.Mesh(new T.SphereGeometry(.28,14,10),new T.MeshStandardMaterial({color:0xffa31a,emissive:0xff8800,emissiveIntensity:.5})); b.position.set(x,3.2,z); add(b); });
+  [12.85,20.15].forEach(z=>box(180,.16,.3,mat(0xb3ada1),0,.08,z)); // kerbs
+  // street lamps
+  for(let x=-80;x<=80;x+=12){ if(Math.abs(x)<4) continue; [12.6,20.4].forEach(z=>{ cyl(.09,.12,5,8,mat(0x1d2228),x,2.5,z); box(.5,.6,.5,mat(0x262b30,{emissive:0xffe2a0,emissiveIntensity:.25}),x,5.2,z); }); }
+  // red phone box & benches
+  box(1.1,2.7,1.1,mat(0xc4161c),-15.5,1.35,9); box(1.2,.2,1.2,mat(0xc4161c),-15.5,2.8,9);
+  const pbGlass=canvasTex(32,64,(c,w,h)=>{ c.fillStyle='#c4161c'; c.fillRect(0,0,w,h); c.fillStyle='#e9eef2'; for(let r=0;r<4;r++) for(let k=0;k<2;k++) c.fillRect(5+k*12,12+r*12,9,9); });
+  const pb=new T.Mesh(new T.PlaneGeometry(.9,2.1),new T.MeshStandardMaterial({map:pbGlass})); pb.position.set(-15.5,1.4,9.56); add(pb);
+  [[-8,10.4],[8,10.4]].forEach(([x,z])=>{ box(2.4,.12,.6,mat(0x5b3a22),x,.55,z); box(.15,.55,.5,mat(0x222222),x-1,.27,z); box(.15,.55,.5,mat(0x222222),x+1,.27,z); });
+  // plane trees in planters on the plaza (clearly trees: trunk + round crown)
+  [[-15,2],[24,9],[-15,-2]].forEach(([x,z])=>{ box(1.6,.6,1.6,mat(0x9c958a),x,.3,z); cyl(.2,.25,3,8,mat(0x6e5a44),x,2,z); const cr=new T.Mesh(new T.SphereGeometry(1.9,14,10),mat(0x4f7d3a)); cr.position.set(x,4.6,z); cr.scale.y=.85; add(cr); });
+
+  function makeLabel(text, opt={}){
+    const size=opt.size||44, bg=opt.bg||'rgba(11,31,58,0.88)', fg=opt.fg||'#ffffff';
+    const cv=document.createElement('canvas'), ctx=cv.getContext('2d');
+    ctx.font=`bold ${size}px Segoe UI, Arial`;
+    const w=ctx.measureText(text).width+size*1.1;
+    cv.width=Math.ceil(w); cv.height=Math.ceil(size*1.7);
+    ctx.font=`bold ${size}px Segoe UI, Arial`;
+    const r=size*0.45, W=cv.width, H=cv.height;
+    ctx.fillStyle=bg; ctx.beginPath();
+    ctx.moveTo(r,0); ctx.lineTo(W-r,0); ctx.quadraticCurveTo(W,0,W,r); ctx.lineTo(W,H-r); ctx.quadraticCurveTo(W,H,W-r,H);
+    ctx.lineTo(r,H); ctx.quadraticCurveTo(0,H,0,H-r); ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.fill();
+    ctx.fillStyle=fg; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(text,W/2,H/2+2);
+    const tex=new T.CanvasTexture(cv); tex.minFilter=T.LinearFilter;
+    const sp=new T.Sprite(new T.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+    const h=opt.h||1.1; sp.scale.set(h*W/H,h,1); sp.renderOrder=10;
+    return add(sp);
+  }
+
+  /* ---------- the bank (neoclassical, City of London style) ---------- */
+  const stone=mat(0xe9e2d1), stoneD=mat(0xddd4c0);
+  box(22,1.2,14,stoneD,0,.6,-11);                                         // plinth
+  for(let k=0;k<4;k++){ const hk=1.2-0.3*k; box(12,hk,1,stone,0,hk/2,-3.5+k); }   // steps
+  [-6.6,6.6].forEach(x=>{ box(1.2,1.5,4,stoneD,x,.75,-2); box(1.6,.9,1.6,stoneD,x,1.95,-0.6); });
+  const bankBody=new T.Mesh(new T.BoxGeometry(20,10,10),[
+    new T.MeshStandardMaterial({map:fTex('portland',3,3)}),new T.MeshStandardMaterial({map:fTex('portland',3,3)}),
+    stoneD,stoneD,new T.MeshStandardMaterial({map:fTex('portland',6,3)}),new T.MeshStandardMaterial({map:fTex('portland',6,3)})]);
+  bankBody.position.set(0,6.2,-12); add(bankBody);
+  box(20.8,.7,10.8,stoneD,0,11.5,-12);                                    // cornice
+  box(20.4,1.2,10.4,mat(0xe3dccb),0,12.4,-12);                            // attic storey
+  for(let i=0;i<8;i++){ const x=-7+i*2;
+    box(1.15,.4,1.15,stoneD,x,1.4,-4.7);
+    cyl(.42,.48,6.2,18,stone,x,4.7,-4.7);
+    box(1.2,.5,1.2,stoneD,x,8.05,-4.7); }
+  box(17.4,1.4,3.3,stoneD,0,9.0,-5.45);                                   // entablature
+  const tri=new T.Shape(); tri.moveTo(-8.9,0); tri.lineTo(8.9,0); tri.lineTo(0,3.0); tri.lineTo(-8.9,0);
+  const ped=new T.Mesh(new T.ExtrudeGeometry(tri,{depth:3.3,bevelEnabled:false}),stone); ped.position.set(0,9.7,-7.1); add(ped);
+  box(18.2,.35,3.6,stoneD,0,9.82,-5.45);
+  // frieze inscription
+  const friezeCv=document.createElement('canvas'); friezeCv.width=1024; friezeCv.height=80;
+  const friezeTex=new T.CanvasTexture(friezeCv);
+  function setFrieze(text,closed){ const c=friezeCv.getContext('2d'); c.fillStyle=closed?'#a8231f':'#ddd4c0'; c.fillRect(0,0,1024,80);
+    c.fillStyle=closed?'#fff':'#5c5345'; c.font='bold 54px Georgia, serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(text,512,44); friezeTex.needsUpdate=true; }
+  setFrieze('K I R K G A T E   B A N K');
+  const frieze=new T.Mesh(new T.PlaneGeometry(15,1.15),new T.MeshBasicMaterial({map:friezeTex})); frieze.position.set(0,9.0,-3.78); add(frieze);
+  // copper dome
+  cyl(4.6,4.6,2.4,32,stoneD,0,14.2,-12);
+  const dome=new T.Mesh(new T.SphereGeometry(4.75,32,16,0,Math.PI*2,0,Math.PI/2),mat(0x7fb09c,{roughness:.6})); dome.position.set(0,15.4,-12); add(dome);
+  cyl(.7,.9,1.6,12,stoneD,0,20.9,-12); const fin=new T.Mesh(new T.SphereGeometry(.45,12,8),mat(0xd4a017,{metalness:.7,roughness:.3})); fin.position.set(0,22,-12); add(fin);
+  // doors
+  const doorMat=new T.MeshStandardMaterial({color:0x6b4a22,metalness:.4,roughness:.5});
+  box(2.8,4.4,.2,doorMat,0,3.4,-6.95);
+  [-4,4].forEach(x=>box(1.6,3,.15,mat(0x2a3140),x,3.6,-6.95));
+  const closedSign=makeLabel('CLOSED',{bg:'rgba(176,32,32,0.95)',h:1.5}); closedSign.position.set(0,6.2,-3); closedSign.visible=false;
+
+  /* ---------- the street around it ---------- */
+  building(-15,-11,7,12,16,'stone'); building(16.75,-11,10.5,12,19,'brick');
+  [[-40,-14,14,14,22,'stone'],[-60,-14,14,14,18,'redbrick'],[-8,-28,16,10,24,'glass'],[10,-28,14,10,28,'dark'],[28,-30,14,12,22,'stone'],
+   [-35,-34,12,12,26,'glass'],[45,-34,14,12,20,'brick'],[62,-14,12,14,17,'portland']].forEach(a=>building(...a));
+  // across the road
+  [[-62,28,14,10,10,'brick'],[-46,28,14,10,9,'stone'],[-30,28,14,10,8,'redbrick'],[-14,28,14,10,9,'brick'],[2,28,14,10,8,'stone'],
+   [18,28,14,10,9,'redbrick'],[34,28,14,10,10,'brick'],[50,28,14,10,8,'redbrick'],[66,28,14,10,10,'stone']].forEach(a=>building(...a));
+  // skyline
+  const gherkinTex=canvasTex(64,64,(c,w,h)=>{ c.fillStyle='#2f5263'; c.fillRect(0,0,w,h); c.strokeStyle='#8fb3c2'; c.lineWidth=5; c.beginPath(); c.moveTo(-10,h); c.lineTo(w,-10); c.moveTo(22,h+10); c.lineTo(w+20,10); c.stroke(); c.strokeStyle='rgba(255,255,255,.25)'; c.lineWidth=1; for(let y=0;y<h;y+=8){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); } });
+  gherkinTex.repeat.set(10,14);
+  const prof=[]; for(let i=0;i<=24;i++){ const t=i/24; prof.push(new T.Vector2(Math.max(0.3,8.5*Math.sin(Math.PI*(0.18+t*0.8))*(t>0.92?(1-t)/0.08*0.6+0.4:1)),t*48)); }
+  const gher=new T.Mesh(new T.LatheGeometry(prof,40),new T.MeshStandardMaterial({map:gherkinTex,roughness:.4,metalness:.3})); gher.position.set(-22,0,-80); add(gher);
+  const shard=new T.Mesh(new T.ConeGeometry(11,92,4),new T.MeshStandardMaterial({map:fTex('glass',12,30),roughness:.3,metalness:.4})); shard.position.set(48,46,-120); shard.rotation.y=Math.PI/4; add(shard);
+  const wtG=new T.BoxGeometry(15,42,11,1,8,1); const pa=wtG.attributes.position;
+  for(let i=0;i<pa.count;i++){ const f=1+0.45*Math.pow((pa.getY(i)+21)/42,2); pa.setX(i,pa.getX(i)*f); pa.setZ(i,pa.getZ(i)*(1+(f-1)*.4)); }
+  wtG.computeVertexNormals();
+  const wt=new T.Mesh(wtG,new T.MeshStandardMaterial({map:fTex('glass',8,14),roughness:.35,metalness:.35})); wt.position.set(22,21,-70); add(wt);
+  [[-50,-75,12,42],[-5,-95,14,58],[8,-70,10,36],[70,-80,14,48],[-75,-100,16,40],[35,-100,12,62]].forEach(([x,z,w,h])=>building(x,z,w,w,h,Math.random()<.5?'glass':'dark'));
+
+  /* ---------- vault (cash reserves) ---------- */
+  box(7.6,.5,5.6,mat(0x6b7480,{metalness:.2,roughness:.5}),13,.25,-1);
+  const glass=new T.Mesh(new T.BoxGeometry(7,3.4,5), new T.MeshStandardMaterial({color:0xaee3ff,transparent:true,opacity:.18,roughness:.1}));
+  glass.position.set(13,2.2,-1); add(glass);
+  const glassEdge=new T.LineSegments(new T.EdgesGeometry(glass.geometry), new T.LineBasicMaterial({color:0x3b4552})); glassEdge.position.copy(glass.position); add(glassEdge);
+  [[0,-2.6,7.4,.3],[0,2.6,7.4,.3]].forEach(([dx,dz,w,d])=>box(w,.3,d,mat(0x6b7480,{metalness:.2,roughness:.5}),13+dx,4.05,-1+dz)); [-3.6,3.6].forEach(dx=>box(.3,.3,5.4,mat(0x6b7480,{metalness:.2,roughness:.5}),13+dx,4.05,-1));
+  const vd=new T.Mesh(new T.CylinderGeometry(1.4,1.4,.45,28),mat(0xb8c0c8,{metalness:.3,roughness:.35})); vd.rotation.z=Math.PI/2; vd.rotation.y=-.7; vd.position.set(17.4,1.9,1.4); add(vd);
+  const MAXBARS=72;
+  const bars=new T.InstancedMesh(new T.BoxGeometry(.9,.4,.5), new T.MeshStandardMaterial({color:0xd4a017,metalness:.6,roughness:.35}), MAXBARS);
+  { const m=new T.Matrix4(); let k=0;
+    for(let l=0;l<3;l++) for(let r=0;r<4;r++) for(let c=0;c<6;c++){ m.makeTranslation(13-2.5+c*1.0, .72+l*.42, -1-1.35+r*.9); bars.setMatrixAt(k++,m); } }
+  add(bars);
+  makeLabel('VAULT: cash reserves',{h:.9}).position.set(13,5.6,-1);
+
+  /* ---------- loans: terraced houses + a building site ---------- */
+  const loanMeshes=[];
+  const terr=canvasTex(128,128,(c,w,h)=>{ c.fillStyle='#a8603f'; c.fillRect(0,0,w,h); c.strokeStyle='rgba(60,25,15,.3)'; for(let y=0;y<h;y+=7){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+    sash(c,18,16,30,36,'#fff','#2a303b'); sash(c,78,16,30,36,'#fff','#2a303b'); sash(c,18,70,30,40,'#fff','#2a303b');
+    c.fillStyle=['#1d3557','#2a6f4f','#8b1e2d'][Math.floor(Math.random()*3)]; c.fillRect(80,72,24,56); c.fillStyle='#d4a017'; c.fillRect(98,100,3,3); });
+  for(let i=0;i<7;i++){ const z=-20+i*3.8, x=-33;
+    const front=new T.MeshStandardMaterial({map:terr}); const brk=mat(0xa8603f);
+    const h=new T.Mesh(new T.BoxGeometry(8,7,3.8),[front,brk,brk,brk,brk,brk]); h.position.set(x,3.5,z); add(h); loanMeshes.push(h);
+    const rf=new T.Mesh(new T.CylinderGeometry(2.4,2.4,3.8,3),mat(0x4a4f57)); rf.rotation.x=Math.PI/2; rf.rotation.z=Math.PI/2; rf.position.set(x,7.6,z); rf.scale.set(1,1,1); add(rf);
+    box(.8,1.4,.8,mat(0x8a4a33),x-1.5,8.6,z+1.2); }
+  // building site with crane (a business loan)
+  box(14,.3,12,mat(0x8a7a5e),-46,.15,-6);
+  for(let y=0;y<4;y++) box(10,.4,8,mat(0xb6b0a4),-46,1+y*3,-6);
+  for(let y=0;y<4;y++) [[-50.6,-9.6],[-41.4,-9.6],[-50.6,-2.4],[-41.4,-2.4]].forEach(([x,z])=>box(.35,3,.35,mat(0x9a948a),x,1.5+y*3,z));
+  const yel=mat(0xf2b705); box(1,30,1,yel,-38,15,-12); box(26,.8,.8,yel,-45,29.6,-12); box(3,2,1.6,mat(0x555b63),-35.5,28.8,-12);
+  cyl(.04,.04,10,4,mat(0x222222),-52,24.6,-12); box(1.4,.8,1.4,mat(0x777777),-52,19.3,-12);
+  makeLabel('LOANS: mortgages & business loans',{h:.95}).position.set(-38,14,-6);
+  makeLabel("money tied up for years — can't be recalled today",{h:.7,bg:'rgba(255,255,255,0.92)',fg:'#0b1f3a'}).position.set(-38,12.8,-6);
+
+  /* ---------- central bank ---------- */
+  const boeWall=canvasTex(64,64,(c,w,h)=>{ c.fillStyle='#e4ddcc'; c.fillRect(0,0,w,h); c.strokeStyle='#cfc6b0'; c.lineWidth=2; for(let y=8;y<h;y+=16){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); } c.fillStyle='#d5ccb6'; c.fillRect(20,6,24,52); });
+  boeWall.repeat.set(8,1);
+  const bw=new T.MeshStandardMaterial({map:boeWall});
+  const boe=new T.Mesh(new T.BoxGeometry(20,9,16),[bw,bw,mat(0x7a7f88),mat(0x7a7f88),bw,bw]); boe.position.set(38,4.5,-14); add(boe);
+  box(20.8,.8,16.8,stoneD,38,9.2,-14);
+  for(let i=0;i<6;i++) cyl(.45,.5,7,14,stone,31+i*2.8,3.5,-5.4);
+  box(16,.9,1.4,stoneD,38,7.4,-5.4);
+  makeLabel('BANK OF ENGLAND — lender of last resort',{h:.95}).position.set(38,12,-8);
+
+  /* ---------- armoured cash van ---------- */
+  const truck=new T.Group();
+  const tb=new T.Mesh(new T.BoxGeometry(4,2.2,2.1),mat(0x2f3a4a)); tb.position.y=1.5; truck.add(tb);
+  const tc=new T.Mesh(new T.BoxGeometry(1.5,1.6,2.0),mat(0x26303d)); tc.position.set(-2.7,1.2,0); truck.add(tc);
+  const ts=new T.Mesh(new T.BoxGeometry(4.02,.35,2.12),mat(0xd4a017)); ts.position.y=1.9; truck.add(ts);
+  [[-2.6,1],[-2.6,-1],[1.2,1],[1.2,-1]].forEach(([x,z])=>{ const w=new T.Mesh(new T.CylinderGeometry(.45,.45,.3,12),mat(0x111111)); w.rotation.x=Math.PI/2; w.position.set(x,.45,z); truck.add(w); });
+  const truckHome=new T.Vector3(38,0,1.5), truckDock=new T.Vector3(20.5,0,1.5);
+  truck.position.copy(truckHome); add(truck);
+
+  /* ---------- traffic ---------- */
+  const busTex=canvasTex(256,96,(c,w,h)=>{ c.fillStyle='#c8102e'; c.fillRect(0,0,w,h); c.fillStyle='#1d232b'; c.fillRect(10,10,236,26); c.fillRect(30,52,216,22); c.fillStyle='#e9e2d0'; c.fillRect(0,44,w,4); c.fillStyle='#1d232b'; c.fillRect(8,52,16,40); });
+  const cabTex=canvasTex(64,32,(c,w,h)=>{ c.fillStyle='#111'; c.fillRect(0,0,w,h); c.fillStyle='#5d7286'; c.fillRect(4,6,24,20); c.fillRect(34,6,24,20); });
+  const vehicles=[];
+  function wheels(g,xs,zz){ xs.forEach(x=>[-zz,zz].forEach(z=>{ const w=new T.Mesh(new T.CylinderGeometry(.5,.5,.35,12),mat(0x111111)); w.rotation.x=Math.PI/2; w.position.set(x,.5,z); g.add(w); })); }
+  function bus(x,dir){ const g=new T.Group(); const bm=new T.MeshStandardMaterial({map:busTex}); const red=mat(0xc8102e);
+    const b=new T.Mesh(new T.BoxGeometry(10.5,4.3,2.5),[red,red,red,red,bm,bm]); b.position.y=2.55; g.add(b); wheels(g,[-3.5,3.3],1.1);
+    g.position.set(x,0,dir>0?15:18.3); g.rotation.y=dir>0?0:Math.PI; add(g); vehicles.push({g,dir,speed:7}); }
+  function cab(x,dir){ const g=new T.Group(); const blk=mat(0x141414,{roughness:.4,metalness:.3}); const cm=new T.MeshStandardMaterial({map:cabTex});
+    const b=new T.Mesh(new T.BoxGeometry(4.4,1.1,1.9),blk); b.position.y=.95; g.add(b);
+    const t=new T.Mesh(new T.BoxGeometry(2.6,.9,1.8),[blk,blk,blk,blk,cm,cm]); t.position.set(-.3,1.9,0); g.add(t);
+    const lamp=new T.Mesh(new T.BoxGeometry(.5,.18,.3),new T.MeshStandardMaterial({color:0xffb000,emissive:0xff9900,emissiveIntensity:.6})); lamp.position.set(-.1,2.45,0); g.add(lamp);
+    wheels(g,[-1.4,1.4],.8); g.position.set(x,0,dir>0?14.7:18.6); g.rotation.y=dir>0?0:Math.PI; add(g); vehicles.push({g,dir,speed:rnd(9,12)}); }
+  bus(-40,1); bus(30,-1); cab(-5,1); cab(45,1); cab(-60,-1); cab(10,-1);
+
+  /* ---------- people ---------- */
+  const SUIT=[0x1f2a44,0x2b2b2b,0x4b5160,0x8a6e4b,0x3e4a3f,0x6b2737,0x30475e,0xa38e6a,0x5b6b7c];
+  const SKIN=[0xf1c27d,0xe0ac69,0xc68642,0x8d5524,0xffdbac,0xa86b3c];
+  const HAIR=[0x1b1b1b,0x3d2b1f,0x6b4a2b,0xc9a86a,0x8c8c8c];
+  const TROU=[0x1c1c1c,0x2d3340,0x3a3a3a,0x2a2f3a,0x4a4038];
+  const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+  const legG=new T.BoxGeometry(.18,.86,.2); legG.translate(0,-.43,0);
+  const shoeG=new T.BoxGeometry(.19,.1,.32); shoeG.translate(0,-.88,.05);
+  const armG=new T.BoxGeometry(.13,.62,.15); armG.translate(0,-.31,0);
+  const handG=new T.SphereGeometry(.075,8,6); handG.translate(0,-.66,0);
+  const torsoG=new T.BoxGeometry(.52,.66,.28), coatG=new T.BoxGeometry(.56,.98,.32);
+  const headG=new T.SphereGeometry(.16,14,12), hairG=new T.SphereGeometry(.168,14,8,0,Math.PI*2,0,Math.PI*0.55);
+  const neckG=new T.CylinderGeometry(.065,.065,.12,8);
+  const hatG=new T.CylinderGeometry(.13,.15,.16,14), brimG=new T.CylinderGeometry(.25,.25,.025,16), crownG=new T.SphereGeometry(.15,12,6,0,Math.PI*2,0,Math.PI/2);
+  const bagG=new T.BoxGeometry(.26,.2,.13); bagG.translate(0,-.78,0);
+  const ringG=new T.RingGeometry(.42,.56,22);
+  const ringM=new T.MeshBasicMaterial({color:0x3b82f6,side:T.DoubleSide});
+  function markerMat(ch,bg){ const t=canvasTex(64,64,(c,w,h)=>{ c.fillStyle=bg; c.beginPath(); c.arc(32,32,29,0,7); c.fill(); c.strokeStyle='#fff'; c.lineWidth=4; c.stroke(); c.fillStyle='#fff'; c.font='bold 42px Arial'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(ch,32,35); }); return new T.SpriteMaterial({map:t,depthTest:false}); }
+  const MK={worried:markerMat('?','#e09a00'),panic:markerMat('!','#d63b3b')};
+  const N=60, people=[], clickables=[];
+  function randPt(){ const r=Math.random();
+    if(r<0.55) return new T.Vector3(rnd(-10,10),0,rnd(1.5,10.5));
+    if(r<0.75) return new T.Vector3(rnd(9,26),0,rnd(4,10.5));
+    return new T.Vector3(rnd(-17,30),0,rnd(11.3,12.6)); }
+  function groundY(x,z){ if(Math.abs(x)<6&&z>=-4&&z<0) return 1.2-0.3*Math.floor(z+4); if(Math.abs(x)<11&&z<-4&&z>-18) return 1.2; return 0; }
+  for(let i=0;i<N;i++){
+    const g=new T.Group(), body=new T.Group(); g.add(body);
+    const suit=mat(pickOne(SUIT)), skin=mat(pickOne(SKIN)), trou=mat(pickOne(TROU)), shoe=mat(0x141414), hair=mat(pickOne(HAIR));
+    const coat=Math.random()<.35;
+    const legs=[-.12,.12].map(x=>{ const pv=new T.Group(); pv.position.set(x,.9,0); const l=new T.Mesh(legG,trou); const s=new T.Mesh(shoeG,shoe); pv.add(l,s); body.add(pv); clickables.push(l); l.userData.pid=i; return pv; });
+    const torso=new T.Mesh(coat?coatG:torsoG,suit); torso.position.y=coat?1.08:1.22; body.add(torso); clickables.push(torso); torso.userData.pid=i;
+    if(!coat){ const tie=new T.Mesh(new T.BoxGeometry(.08,.4,.02),mat(pickOne([0x9b1c1c,0x1c3f9b,0xd4a017,0xe8e8e8]))); tie.position.set(0,1.32,.15); body.add(tie); }
+    const arms=[-.33,.33].map(x=>{ const pv=new T.Group(); pv.position.set(x,1.5,0); pv.add(new T.Mesh(armG,suit), new T.Mesh(handG,skin)); body.add(pv); return pv; });
+    const bag=new T.Mesh(bagG,mat(0xd4a017,{metalness:.5,roughness:.4})); bag.visible=false; arms[1].add(bag);
+    const neck=new T.Mesh(neckG,skin); neck.position.y=1.6; body.add(neck);
+    const head=new T.Mesh(headG,skin); head.position.y=1.76; body.add(head); clickables.push(head); head.userData.pid=i;
+    if(Math.random()<.22){ const hat=new T.Group(); hat.add(new T.Mesh(brimG,mat(0x151515)), Object.assign(new T.Mesh(crownG,mat(0x151515)),{})); hat.children[1].position.y=.01; hat.position.y=1.88; body.add(hat); }
+    else { const hr=new T.Mesh(hairG,hair); hr.position.y=1.77; hr.rotation.x=-.25; body.add(hr); }
+    const ring=new T.Mesh(ringG,ringM); ring.rotation.x=-Math.PI/2; ring.position.y=.04; g.add(ring);
+    const marker=new T.Sprite(MK.worried); marker.scale.set(.6,.6,1); marker.position.y=2.45; marker.visible=false; marker.renderOrder=11; g.add(marker);
+    const s=1+rnd(-.06,.06); body.scale.set(s,s,s);
+    add(g);
+    people.push({g,body,legs,arms,bag,marker,ring,state:'calm',target:randPt(),speed:rnd(1.2,1.7),insured:false,phase:Math.random()*6});
+  }
+
+  /* ---------- simulation ---------- */
+  const sim={reserves:9,res0:9,queue:[],runStarted:false,failed:false,ended:false,lolr:false,truck:null,acc:0,serveAcc:0,calmTimer:0,lolrUses:0,cbOwed:0,cbCap:0};
+  const resS=$('#s-res'), insS=$('#s-ins');
+  function setState(p,s){ p.state=s;
+    p.marker.visible=(s==='worried'||s==='panic'||s==='queue');
+    if(p.marker.visible) p.marker.material=(s==='worried'?MK.worried:MK.panic);
+    p.bag.visible=(s==='served'); }
+  function queueSlot(i){ if(i<8) return new T.Vector3(0,0,-6.2+i*0.72);
+    const j=i-8, row=Math.floor(j/12), col=j%12; return new T.Vector3(((row%2===0)?col:11-col)*0.8-4.4,0,0.7+row*0.9); }
+  function setBars(){ bars.count=clamp(Math.round(sim.reserves),0,MAXBARS); bars.instanceMatrix.needsUpdate=true; }
+  function exitPt(p){ return new T.Vector3(p.g.position.x>4?75:-75,0,rnd(11.4,12.6)); }
+
+  function reset(){
+    const rr=+resS.value/100, ins=+insS.value/100;
+    $('#v-res').textContent=resS.value+'%'; $('#v-ins').textContent=insS.value+'%';
+    $('#mini-res').style.flex=resS.value; $('#mini-loan').style.flex=100-resS.value;
+    sim.reserves=sim.res0=Math.round(N*rr); sim.queue=[]; sim.runStarted=false; sim.failed=false; sim.ended=false; sim.lolr=false; sim.truck=null; sim.calmTimer=0; sim.lolrUses=0; sim.cbOwed=0; sim.cbCap=Math.floor((N-sim.res0)*0.75);
+    truck.position.copy(truckHome); truck.rotation.y=0;
+    const idx=[...Array(N).keys()].sort(()=>Math.random()-.5), nIns=Math.round(N*ins);
+    people.forEach((p,i)=>{ p.insured=idx.indexOf(i)<nIns; p.ring.visible=p.insured; setState(p,'calm'); p.g.visible=true; p.g.position.copy(randPt()); p.target=randPt(); });
+    doorMat.color.setHex(0x6b4a22); setFrieze('K I R K G A T E   B A N K'); closedSign.visible=false;
+    $('#banner').classList.remove('show');
+    setBars(); hud();
+  }
+  api.reset=reset;
+  resS.addEventListener('input',reset); insS.addEventListener('input',reset);
+
+  const PRESETS={
+    '1866':[25,0,'Overend, Gurney & Co collapsed in 1866 with no deposit insurance at all — a classic Victorian panic. Try a rumour and watch it spread.'],
+    'rock':[10,40,'Northern Rock held very little liquidity and 2007-era protection only covered 100% of £2,000 and 90% of the next £33,000 — so many savers still had a reason to queue.'],
+    'svb':[12,6,'About 94% of SVB deposits were above the $250,000 insurance limit. Almost nobody is protected — expect a lightning-fast run.'],
+    'uk':[15,95,'Today the FSCS covers up to £120,000 per eligible depositor, per authorised firm. Brands that share a banking licence share one limit. Most retail savers are fully covered. Start a rumour and compare: does anyone still queue?']
+  };
+  $$('[data-preset]').forEach(b=>b.addEventListener('click',()=>{ const p=PRESETS[b.dataset.preset]; resS.value=p[0]; insS.value=p[1]; $('#preset-note').textContent=p[2]; reset(); }));
+
+  function startPanic(p){ if(sim.failed||p.state==='served'||p.state==='gone'||p.state==='queue') return; setState(p,'panic'); sim.runStarted=true; sim.ended=false; sim.calmTimer=0; }
+  $('#b-rumour').addEventListener('click',()=>{
+    if(sim.failed) return;
+    let pool=people.filter(p=>p.state==='calm'&&!p.insured); if(pool.length<3) pool=people.filter(p=>p.state==='calm');
+    pool.sort(()=>Math.random()-.5).slice(0,3).forEach(startPanic);
+    toast('🗣 "I heard the bank has lost everything…" — 3 depositors panic');
+  });
+  $('#b-lolr').addEventListener('click',()=>{
+    if(sim.failed){ toast('Too late — the bank has already failed. Reset and try earlier.'); return; }
+    if(sim.truck){ toast('The van is already on its way'); return; }
+    const avail=sim.cbCap-sim.cbOwed;
+    if(avail<1){ toast(`🏛 No more emergency lending: all £${sim.cbCap} of eligible collateral is already pledged. The Bank of England lends against good collateral, not without limit.`); return; }
+    const amt=Math.min(20,avail);
+    sim.truck={t:0,amt}; sim.lolrUses++; sim.cbOwed+=amt;
+    toast(`🚚 The Bank of England lends £${amt} at a penalty rate, secured on the bank's loans. Collateral left: £${sim.cbCap-sim.cbOwed}.`);
+  });
+  $('#b-reset').addEventListener('click',reset);
+
+  function fail(){
+    sim.failed=true; doorMat.color.setHex(0x8f1d1d); setFrieze('C L O S E D',true); closedSign.visible=true;
+    const left=sim.queue.length, loans=N-sim.res0;
+    people.filter(p=>p.state==='queue'||p.state==='panic').forEach(p=>{ setState(p,'served'); p.bag.visible=false; p.target=exitPt(p); });
+    sim.queue=[];
+    $('#banner-h').textContent='🔒 The bank has failed';
+    $('#banner-p').innerHTML=`The vault ran dry with <b>${left}</b> depositors still queuing. Yet the bank still owned <b>£${loans}</b> of loans — it was <b>illiquid, not insolvent</b>. ${sim.cbOwed>=sim.cbCap&&sim.cbCap>0?`The bank had already pledged all £${sim.cbCap} of its eligible collateral to the Bank of England, so emergency lending had run out. Lender-of-last-resort support is large but not unlimited.`:sim.lolrUses?'The central bank arrived, but not soon enough.':'Try again and send in the lender of last resort, or raise the insured share.'}`;
+    $('#banner').classList.add('show');
+  }
+
+  function tick(){
+    if(sim.failed) return;
+    const spreaders=people.filter(p=>p.state==='panic'||p.state==='queue');
+    const qLen=sim.queue.length;
+    people.forEach(p=>{
+      if(p.state!=='calm'&&p.state!=='worried') return;
+      const sus=p.insured?0.06:1;
+      let hit=false;
+      for(const s of spreaders){ const dx=s.g.position.x-p.g.position.x, dz=s.g.position.z-p.g.position.z;
+        if(dx*dx+dz*dz<12 && Math.random()<0.10*sus*(sim.lolr?0.5:1)){ hit=true; break; } }
+      if(!hit && p.state==='worried' && Math.random()<0.0045*qLen*sus*(sim.lolr?0.4:1)) hit=true;
+      if(hit){ if(p.state==='calm') setState(p,'worried'); else startPanic(p); }
+      else if(p.state==='worried'){ const calmP=0.006+(sim.lolr?0.04:0)+(p.insured?0.03:0); if(Math.random()<calmP) setState(p,'calm'); }
+    });
+    if(sim.lolr) people.forEach(p=>{ if(p.state==='panic' && Math.random()<0.02) setState(p,'worried'); });
+  }
+
+  function update(dt){
+    vehicles.forEach(v=>{ v.g.position.x+=v.dir*v.speed*dt; if(v.g.position.x>80) v.g.position.x=-80; if(v.g.position.x<-80) v.g.position.x=80; });
+    if(sim.truck){
+      const tr=sim.truck; tr.t+=dt;
+      const face=(a,b)=>{ truck.rotation.y=Math.atan2(b.z-a.z,-(b.x-a.x)); };
+      if(tr.t<3){ truck.position.lerpVectors(truckHome,truckDock,tr.t/3); face(truckHome,truckDock); }
+      else if(tr.t<4.2){ if(!tr.paid){ tr.paid=true; sim.reserves+=tr.amt; sim.lolr=true; setBars(); } }
+      else if(tr.t<7){ truck.position.lerpVectors(truckDock,truckHome,(tr.t-4.2)/2.8); face(truckDock,truckHome); }
+      else { truck.position.copy(truckHome); truck.rotation.y=0; sim.truck=null; }
+    }
+    sim.acc+=dt; while(sim.acc>0.25){ sim.acc-=0.25; tick(); }
+    people.forEach(p=>{
+      if(p.state==='gone') return;
+      if(p.state==='panic' && !sim.failed){ p.target=queueSlot(sim.queue.length); }
+      const pos=p.g.position, dx=p.target.x-pos.x, dz=p.target.z-pos.z, dist=Math.hypot(dx,dz);
+      const running=p.state==='panic';
+      const sp=running?3.4:p.state==='served'?2.4:p.state==='queue'?1.6:p.speed;
+      const moving=dist>0.06;
+      if(moving){ const st=Math.min(dist,sp*dt); pos.x+=dx/dist*st; pos.z+=dz/dist*st; p.g.rotation.y=Math.atan2(dx,dz); }
+      pos.y=groundY(pos.x,pos.z);
+      if(moving){ p.phase+=dt*(running?11:6.5); const s=Math.sin(p.phase), a=running?.85:.45;
+        p.legs[0].rotation.x=s*a; p.legs[1].rotation.x=-s*a; p.arms[0].rotation.x=-s*a*.8; p.arms[1].rotation.x=p.state==='served'?-.15:s*a*.8; }
+      else { [p.legs[0],p.legs[1],p.arms[0],p.arms[1]].forEach(l=>l.rotation.x*=0.8); }
+      p.body.rotation.x=running?.18:0;
+      if(dist<0.25){
+        if(p.state==='calm'||p.state==='worried') p.target=randPt();
+        else if(p.state==='panic' && !sim.failed){ setState(p,'queue'); sim.queue.push(p); }
+        else if(p.state==='served'){ setState(p,'gone'); p.g.visible=false; }
+      }
+    });
+    if(!sim.failed && sim.queue.length){
+      sim.serveAcc+=dt;
+      const interval=sim.lolr?0.22:0.42;
+      if(sim.serveAcc>interval){
+        sim.serveAcc=0;
+        if(sim.reserves>=1){
+          const p=sim.queue.shift(); sim.reserves-=1; setBars(); setState(p,'served'); p.target=exitPt(p);
+          sim.queue.forEach((q,i)=>q.target=queueSlot(i));
+        } else if(!sim.truck){ fail(); }
+      }
+    }
+    if(sim.runStarted && !sim.failed && !sim.ended){
+      const activeRun=people.some(p=>p.state==='panic'||p.state==='queue');
+      sim.calmTimer = activeRun?0:sim.calmTimer+dt;
+      if(sim.calmTimer>3){ sim.ended=true; const gone=people.filter(p=>p.state==='gone'||p.state==='served').length;
+        toast(`✅ The run is over — the bank survived. ${gone} of ${N} depositors withdrew.`); }
+    }
+  }
+
+  function hud(){
+    const score=people.reduce((a,p)=>a+(p.state==='calm'?1:p.state==='worried'?0.5:0),0);
+    const conf=Math.round(100*score/N);
+    $('#h-conf').textContent=conf+'%';
+    const bar=$('#h-conf-bar'); bar.style.width=conf+'%'; bar.style.background=conf>66?'#1f9d55':conf>33?'#e08a00':'#d64545';
+    $('#h-res').textContent='£'+Math.max(0,Math.round(sim.reserves));
+    $('#h-res-sub').textContent=`of £${N} deposited · £${N-sim.res0} on loan`;
+    $('#h-q').textContent=sim.queue.length;
+    $('#h-cb').textContent='£'+sim.cbOwed; $('#h-cb-sub').textContent=`collateral left £${Math.max(0,sim.cbCap-sim.cbOwed)}`;
+    $('#h-status').textContent=sim.failed?'FAILED':sim.truck?'Cash arriving':sim.lolr&&sim.queue.length?'Backed by CB':sim.queue.length>15?'Bank run!':sim.queue.length?'Queue forming':people.some(p=>p.state==='worried')?'Uneasy':'Calm';
+  }
+
+  /* ---------- camera orbit & picking ---------- */
+  const cam={theta:0.38,phi:0.95,r:60,target:new T.Vector3(2,3,-2)};
+  function placeCam(){ C.position.set(cam.target.x+cam.r*Math.sin(cam.phi)*Math.sin(cam.theta), cam.target.y+cam.r*Math.cos(cam.phi), cam.target.z+cam.r*Math.sin(cam.phi)*Math.cos(cam.theta)); C.lookAt(cam.target); }
+  let drag=null;
+  R.domElement.addEventListener('pointerdown',e=>{ drag={x:e.clientX,y:e.clientY,moved:0}; R.domElement.setPointerCapture(e.pointerId); });
+  R.domElement.addEventListener('pointermove',e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.moved+=Math.abs(dx)+Math.abs(dy); drag.x=e.clientX; drag.y=e.clientY;
+    cam.theta-=dx*0.006; cam.phi=clamp(cam.phi-dy*0.006,0.25,1.45); placeCam(); });
+  R.domElement.addEventListener('pointerup',e=>{ if(drag&&drag.moved<6) pick(e); drag=null; });
+  R.domElement.addEventListener('wheel',e=>{ e.preventDefault(); cam.r=clamp(cam.r*(1+Math.sign(e.deltaY)*0.08),14,160); placeCam(); },{passive:false});
+  const ray=new T.Raycaster(), mv=new T.Vector2();
+  function pick(e){
+    const rc=R.domElement.getBoundingClientRect(); mv.set(((e.clientX-rc.left)/rc.width)*2-1, -((e.clientY-rc.top)/rc.height)*2+1);
+    ray.setFromCamera(mv,C);
+    const hit=ray.intersectObjects(clickables,false)[0];
+    if(hit){ const p=people[hit.object.userData.pid];
+      if(p.state==='calm'||p.state==='worried'){ startPanic(p); toast(p.insured?'🗣 Rumour started — but this saver is insured, so watch how little it spreads':'🗣 Rumour started — watch it spread to the people nearby'); }
+      return; }
+    if(ray.intersectObject(glass,false)[0]) toast(`🏦 Vault: £${Math.round(sim.reserves)} cash. Depositors are owed £${people.filter(p=>p.state!=='gone'&&p.state!=='served').length}. The other £${N-sim.res0} was lent out.`);
+    else if(ray.intersectObjects(loanMeshes,false)[0]) toast('🏠 These mortgages are good assets, but the bank cannot demand them back today — that is the liquidity mismatch.');
+    else if(ray.intersectObject(boe,false)[0]) toast('🏛 The Bank of England can lend cash to a solvent bank in a run — press "Lender of last resort".');
+  }
+
+  function resize(){ const w=stage.clientWidth, h=stage.clientHeight; if(!w||!h) return; R.setSize(w,h); C.aspect=w/h; C.updateProjectionMatrix(); }
+  window.addEventListener('resize',resize);
+  let hudAcc=0;
+  function loop(){
+    requestAnimationFrame(loop);
+    let dt=Math.min(clock.getDelta(),0.25);
+    if(!active) return;
+    hudAcc+=dt; while(dt>0){ const s=Math.min(dt,0.05); update(s); dt-=s; }
+    if(hudAcc>0.2){ hudAcc=0; hud(); }
+    R.render(S,C);
+  }
+  api.setActive=v=>{ active=v; if(v){ clock.getDelta(); setTimeout(resize,30); } };
+  placeCam(); reset(); resize(); setTimeout(resize,100); loop();
+  return api;
+})();
+
+/* ======================= GAME ======================= */
+const SCEN = {
+  classic:{
+    icon:'🗣', name:'Kirkgate Bank', title:'The Rumour Mill', diff:2, unit:'Day', rounds:8, cur:'£', cb:'Bank of England',
+    blurb:'A sound, profitable high-street bank. Then someone posts a false rumour. Can you stop belief becoming reality?',
+    real:'A fictional bank — the pure Diamond–Dybvig run, driven only by expectations.',
+    cash:8, bonds:22, loans:70, insDep:60, uninsDep:30, wholesale:0, conf:72, heat:1, mv:1, wsRate:0, leak:0.35,
+    labels:null,
+    events:[
+      {h:'Business as usual',t:'Monday. You borrow short (deposits) and lend long (mortgages) — exactly what banks do. Your cash covers about 9% of deposits.',f:s=>{}},
+      {h:'Rumour on a local forum',t:'A post claims Kirkgate "lost millions on bad loans". It is false — but who checks?',f:s=>{s.conf-=12;}},
+      {h:'Rival bank cuts its dividend',t:'Investors start asking whether all banks in the region are weak.',f:s=>{s.conf-=6;}},
+      {h:'Queue photo goes viral',t:'A photo of a short queue outside your Briggate branch is shared 40,000 times.',f:s=>{s.conf-=10; s.heat+=0.4;}},
+      {h:'Ratings agency puts you on watch',t:'"Liquidity position under review."',f:s=>{s.conf-=6;}},
+      {h:'Local paper: "Is Kirkgate safe?"',t:'Reporters stake out branches. Anything you say will be quoted.',f:s=>{s.conf-=4;}},
+      {h:'Payday',t:'Salaries land in customer accounts — fresh deposits arrive.',f:s=>{s.cash+=2; s.insDep+=2; s.conf+=3;}},
+      {h:'Friday: the weekend looms',t:'Depositors fear the doors won\'t reopen on Monday.',f:s=>{s.conf-=5;}}
+    ]
+  },
+  rock:{
+    icon:'🪨', name:'Northern Rock', title:'Northern Rock, 2007', mode:'based', diff:3, unit:'Day', rounds:10, cur:'£', cb:'Bank of England',
+    blurb:'You fund most of your mortgages by borrowing in wholesale money markets. Then the markets freeze.',
+    real:'Northern Rock relied on wholesale funding for around three-quarters of its lending. It suffered the first UK bank run in about 150 years.',
+    cash:5, bonds:12, loans:83, insDep:14, uninsDep:16, wholesale:64, conf:72, heat:1, mv:1, wsRate:0, leak:0.6,
+    labels:['9 Aug','14 Aug','21 Aug','13 Sep','14 Sep','15 Sep','17 Sep','18 Sep','20 Sep','24 Sep'],
+    events:[
+      {h:'Money markets freeze',t:'BNP Paribas freezes funds tied to US sub-prime mortgages. Banks stop lending to each other — and 64bn of your funding is wholesale. Some lenders won\'t roll over.',f:s=>{s.conf-=4; s.wsRate=0.05;}},
+      {h:'Mortgage-backed securities become hard to sell',t:'Your bond holdings can now only be sold at a discount.',f:s=>{s.mv=0.93; s.conf-=3;}},
+      {h:'Wholesale lenders pull back further',t:'More short-term funding is not renewed.',f:s=>{s.wsRate=0.07; s.conf-=3;}},
+      {h:'BBC: bank seeks emergency support',t:'',f:s=>{ if(s.usedCB){ s.conf-=18; return 'The story is out: you have asked the Bank of England for help. To savers it sounds like a death sentence.'; } s.conf-=9; return 'Speculation that Northern Rock will need Bank of England help. You haven\'t asked yet — but the rumour alone hurts.'; }},
+      {h:'Queues outside the branches',t:'Television shows savers queuing round the block. Protection only covers 100% of the first £2,000 and 90% of the next £33,000.',f:s=>{s.conf-=10; s.heat+=0.6;}},
+      {h:'Website crashes under demand',t:'Online customers can\'t log in — and assume the worst.',f:s=>{s.conf-=6;}},
+      {h:'The Chancellor steps in',t:'',f:s=>{ if(s.conf<50){ s.guarantee=true; s.conf+=28; s.heat=Math.max(1,s.heat-0.6); return 'Alistair Darling guarantees ALL existing Northern Rock deposits. Retail savers now have far less reason to run, but your wholesale funding is still leaving.'; } s.conf+=5; return 'The Treasury says the bank is solvent and well supported. No blanket guarantee is needed — yet.'; }},
+      {h:'Shares slump',t:'The share price has fallen by more than half.',f:s=>{s.conf-=4;}},
+      {h:'Search for a buyer begins',t:'Virgin and private-equity firms circle. Nobody will buy without seeing a stable balance sheet.',f:s=>{}},
+      {h:'Final day of the crisis window',t:'Hold on through today and the immediate run is over.',f:s=>{s.conf+=2;}}
+    ]
+  },
+  svb:{
+    icon:'📱', name:'Silicon Valley Bank', title:'SVB, March 2023', mode:'alt', diff:4, unit:'Phase', rounds:6, cur:'$', cb:'Federal Reserve',
+    blurb:'Your depositors are tech start-ups — almost all uninsured. Rates have soared and your bonds are under water. Group chats move faster than queues.',
+    real:'⚠️ Alternative-history challenge. The real SVB lost $42bn on Thursday 9 March and regulators closed it on Friday 10 March. Here you try to do what SVB could not: hold out until the Sunday 12 March guarantee.',
+    cash:6, bonds:56, loans:38, insDep:6, uninsDep:86, wholesale:0, conf:76, heat:1.4, mv:0.85, wsRate:0, leak:0.5,
+    labels:['Wed AM','Wed PM','Thu AM','Thu PM','Fri','Sun'],
+    events:[
+      {h:'Interest rates have soared',t:'The Fed has raised rates from near zero to over 4.5%. Bonds you bought at low yields are worth 15% less than you paid. Start-ups are burning cash as venture funding dries up.',f:s=>{s.conf-=2;}},
+      {h:'VC funds message their start-ups',t:'Several big venture-capital firms quietly tell portfolio companies to move their cash.',f:s=>{s.conf-=12; s.heat+=0.6;}},
+      {h:'Group chats light up',t:'Founders share screenshots of withdrawals. Everyone can move millions with a few taps.',f:s=>{s.conf-=14; s.heat+=0.8;}},
+      {h:'Share price collapses',t:'Shares fall more than 60%. Analysts ask whether you\'re solvent at market prices.',f:s=>{s.conf-=8;}},
+      {h:'Friday: regulators on standby',t:'The California regulator and the FDIC are ready to close the bank. (Historically, this is the day SVB was closed. From here on the game is alternative history.)',f:s=>{s.conf-=5;}},
+      {h:'Sunday: systemic risk decision',t:'',f:s=>{ s.guarantee=true; s.conf+=30; s.heat=1; return 'ALTERNATIVE HISTORY: unlike the real SVB, you lasted until Sunday. As happened in reality on 12 March, authorities invoke a systemic-risk exception and guarantee ALL deposits, insured or not. The run largely stops.'; }}
+    ]
+  }
+};
+
+const ACTIONS = [
+  {id:'cb', icon:'🏛', t:s=>`Borrow from the ${SCEN[s.key].cb}`, d:'Lender of last resort. Cash against collateral at a penalty rate (2% fee). Risk: news of it may leak.', amts:[5,10,20]},
+  {id:'bonds', icon:'📄', t:()=>'Sell bonds', d:s=>s.mv<1?`Bonds are only worth ${Math.round(s.mv*100)}p in the £ — selling turns paper losses into real ones, and the market notices.`:'Fairly liquid. Each extra sale today gets a slightly worse price.', amts:[3,6,10]},
+  {id:'loans', icon:'🏠', t:()=>'Fire-sell loans', d:'Loans are illiquid: buyers pay only 60p in the £. Fast cash, big losses.', amts:[5,10]},
+  {id:'capital', icon:'📈', t:()=>'Raise new share capital (3bn)', d:'Boosts cash AND equity. Success depends on confidence — a failed share sale is a disaster.', amts:[3]},
+  {id:'statement', icon:'🎙', t:()=>'Public statement: "Your money is safe"', d:'Works if you clearly have the cash to back it up. Backfires if you don\'t.', amts:[0]},
+  {id:'rate', icon:'💷', t:()=>'Raise savings rates', d:'Costs 0.3bn. Small confidence boost and 15% fewer withdrawals this round.', amts:[0]},
+  {id:'buyer', icon:'🤝', t:()=>'Seek a takeover buyer', d:'Ends the game if a buyer will take you — but only if you\'re worth something at market prices. Available from round 3.', amts:[0]}
+];
+
+let st=null;
+const fmt=v=>(Math.round(v*10)/10).toFixed(1);
+const deposits=s=>s.insDep+s.uninsDep;
+const liabs=s=>deposits(s)+s.wholesale+s.cbLoan;
+const equity=s=>s.cash+s.bonds+s.loans-liabs(s);
+const mtm=s=>s.cash+s.bonds*s.mv+s.loans-liabs(s);
+const cbCap=s=>s.bonds*s.mv*0.95+s.loans*0.65;
+function forecast(s){
+  const c=s.conf/100, u=s.guarantee?(0.004+0.05*(1-c)**2):(0.01+0.40*(1-c)**2), i=0.004+0.05*(1-c)**2;
+  const k=(1+0.25*(s.heat-1))*(s.rateUp?0.85:1);
+  const du=s.uninsDep*u*k, di=s.insDep*i*k, dep=du+di;
+  const ws=s.wholesale*s.wsRate;
+  return {du,di,dep,ws,lo:dep*0.85+ws,hi:dep*1.15+ws,mid:dep+ws};
+}
+function roundLabel(s){ const sc=SCEN[s.key]; return sc.labels?`${sc.unit} ${s.round} · ${sc.labels[s.round-1]}`:`${sc.unit} ${s.round}`; }
+
+function buildPick(){
+  $('#scen-grid').innerHTML=Object.entries(SCEN).map(([k,s])=>`
+    <div class="card scen" data-k="${k}">
+      <div class="top">${s.icon}</div>
+      <span class="pill" style="background:${s.mode==='alt'?'#fdecc8':s.mode==='based'?'#e3f1e8':'#eef2fa'};color:${s.mode==='alt'?'#8a5a00':s.mode==='based'?'#1f6b3d':'#16325c'};margin-right:4px">${s.mode==='alt'?'Alternative history':s.mode==='based'?'Based on real events':'Fictional'}</span>
+      <span class="pill">${s.rounds} ${s.unit.toLowerCase()}s · <span class="stars">${'★'.repeat(s.diff)}${'☆'.repeat(5-s.diff)}</span></span>
+      <h3>${s.title}</h3>
+      <p>${s.blurb}</p>
+      <p class="muted" style="font-size:12.5px">${s.real}</p>
+      <button class="btn gold">Play as ${s.name}</button>
+    </div>`).join('');
+  $$('.scen').forEach(c=>c.addEventListener('click',()=>startGame(c.dataset.k)));
+}
+
+function startGame(k){
+  const sc=SCEN[k];
+  st={key:k,round:1,ap:2,cash:sc.cash,bonds:sc.bonds,loans:sc.loans,insDep:sc.insDep,uninsDep:sc.uninsDep,wholesale:sc.wholesale,cbLoan:0,
+      conf:sc.conf,heat:sc.heat,mv:sc.mv,wsRate:sc.wsRate,guarantee:false,rateUp:false,fireToday:0,
+      eq0:0,dep0:sc.insDep+sc.uninsDep,flags:{},log:[],trade:[],lastShare:0,over:false,news:null};
+  st.eq0=equity(st);
+  $('#g-pick').style.display='none'; $('#g-play').style.display='block';
+  $('#g-name').innerHTML=`${sc.icon} ${sc.name}`+(sc.mode==='alt'?' <span class="pill" style="background:#fdecc8;color:#8a5a00;vertical-align:middle">Alternative-history challenge</span>':sc.mode==='based'?' <span class="pill" style="background:#e3f1e8;color:#1f6b3d;vertical-align:middle">Based on real events: your choices change the outcome</span>':'');
+  $('#g-unit').textContent=`(${sc.cur}bn, scaled)`;
+  applyEvent(); render();
+}
+
+function applyEvent(){
+  const ev=SCEN[st.key].events[st.round-1];
+  const before=st.conf;
+  const extra=ev.f(st);
+  st.conf=clamp(st.conf,0,100);
+  st.news={h:ev.h,t:extra||ev.t,d:Math.round(st.conf-before)};
+  addLog(`📰 ${ev.h} (confidence ${st.news.d>=0?'+':''}${st.news.d})`);
+}
+function addLog(msg){ st.log.unshift({r:roundLabel(st),msg}); }
+
+function doAction(id,amt){
+  if(!st||st.over||st.ap<=0) return;
+  const sc=SCEN[st.key], cur=sc.cur;
+  const b0={c:st.cash,e:equity(st),f:st.conf};
+  let msg='';
+  if(id==='cb'){
+    const avail=cbCap(st)-st.cbLoan;
+    if(amt>avail+1e-9){ toast(`Not enough collateral — you can borrow at most ${cur}${fmt(Math.max(0,avail))}bn more`); return; }
+    st.cash+=amt*0.98; st.cbLoan+=amt; st.flags.cb=(st.flags.cb||0)+amt; st.usedCB=true;
+    msg=`Borrowed ${cur}${amt}bn from the ${sc.cb} (fee ${cur}${fmt(amt*0.02)}bn).`;
+    if(Math.random()<sc.leak){ const hit=Math.round(8*st.heat); st.conf-=hit; msg+=` ⚠️ It leaked to the press: confidence −${hit}.`; st.flags.leak=true; }
+  } else if(id==='bonds'){
+    if(st.bonds<0.1){ toast('No bonds left to sell'); return; }
+    amt=Math.min(amt,st.bonds);
+    const price=st.mv*(1-(0.01+0.012*st.fireToday)); st.fireToday+=amt/3;
+    const cash=amt*price, loss=amt-cash; st.bonds-=amt; st.cash+=cash; st.flags.bondLoss=(st.flags.bondLoss||0)+loss;
+    msg=`Sold ${cur}${fmt(amt)}bn of bonds for ${cur}${fmt(cash)}bn (loss ${cur}${fmt(loss)}bn).`;
+    if(loss>0.6){ const hit=Math.round(loss*3*st.heat); st.conf-=hit; msg+=` Headline: "Bank books ${cur}${fmt(loss)}bn loss" — confidence −${hit}.`; }
+  } else if(id==='loans'){
+    amt=Math.min(amt,st.loans);
+    const cash=amt*0.6; st.loans-=amt; st.cash+=cash; st.flags.loanSale=(st.flags.loanSale||0)+amt;
+    const hit=Math.round(3+amt*0.4*0.5*st.heat); st.conf-=hit;
+    msg=`Fire-sold ${cur}${amt}bn of loans for ${cur}${fmt(cash)}bn — a ${cur}${fmt(amt-cash)}bn loss. Looks desperate: confidence −${hit}.`;
+  } else if(id==='capital'){
+    if(st.flags.capTried){ toast('Investors won\'t take a second share sale this crisis'); return; }
+    st.flags.capTried=true;
+    const p=(st.conf/100)*(equity(st)>0?1:0.3)*(mtm(st)>0?1:0.7);
+    if(Math.random()<p){ st.cash+=3; st.conf+=6; st.flags.capOK=true; msg=`Share sale succeeded: +${cur}3bn cash and equity. Confidence +6.`; }
+    else { const hit=Math.round(14*st.heat); st.conf-=hit; st.flags.capFail=true; msg=`Share sale FLOPPED — investors wouldn't buy. Everyone now knows you needed money. Confidence −${hit}.`; }
+  } else if(id==='statement'){
+    const fc=forecast(st), cover=st.cash/Math.max(fc.hi,0.01), n=st.flags.stmts=(st.flags.stmts||0)+1, boost=Math.max(2,Math.round(10/n));
+    if(cover>=2){ st.conf+=boost; msg=`Reassuring statement — and your cash backs it up. Confidence +${boost}${n>1?' (each repeat statement convinces fewer people)':''}.`; }
+    else if(cover>=1){ st.conf+=3; msg='Statement lands softly. You can cover today, but not much more. Confidence +3.'; }
+    else { st.conf-=8; st.flags.backfire=true; msg='"Your money is safe" — while your cash can\'t cover today\'s withdrawals. Nobody believes it. Confidence −8.'; }
+  } else if(id==='rate'){
+    if(st.rateUp){ toast('Already raised rates this round'); return; }
+    st.cash-=0.3; st.rateUp=true; st.conf+=4; msg='Raised savings rates. Confidence +4, outflows −15% this round.';
+  } else if(id==='buyer'){
+    if(st.round<3){ toast('Too early — no buyer is interested until round 3'); return; }
+    if(mtm(st)>0.5){ st.ap--; addLog(`🤝 A rival agrees to buy the bank.`); endGame('rescued'); return; }
+    st.conf-=5; msg='Buyers looked at your books and walked away — they think you\'re worth nothing at market prices. Word gets out: confidence −5.';
+  }
+  st.conf=clamp(st.conf,0,100); st.ap--;
+  { const A=ACTIONS.find(x=>x.id===id); const nm=(typeof A.t==='function'?A.t(st):A.t)+(amt?` (${cur}${amt}bn)`:'');
+    st.trade.push({r:roundLabel(st),a:A.icon+' '+nm,dl:st.cash-b0.c,ds:equity(st)-b0.e,dc:st.conf-b0.f}); }
+  addLog(msg); toast(msg.length>110?msg.slice(0,108)+'…':msg);
+  if(equity(st)<0){ endGame('solvency'); return; }
+  render();
+}
+
+function endRound(){
+  if(!st||st.over) return;
+  const fc=forecast(st), r=rnd(0.85,1.15);
+  const depOut=fc.dep*r, wsOut=fc.ws, need=depOut+wsOut, dep0=deposits(st);
+  if(st.cash+1e-9<need){
+    st.lastShare=depOut/dep0;
+    addLog(`🏃 Withdrawals of ${SCEN[st.key].cur}${fmt(need)}bn demanded — you only had ${SCEN[st.key].cur}${fmt(st.cash)}bn.`);
+    st.shortfall=need-st.cash; endGame('liquidity'); return;
+  }
+  st.cash-=need;
+  st.uninsDep=Math.max(0,st.uninsDep-fc.du*r); st.insDep=Math.max(0,st.insDep-fc.di*r);
+  st.wholesale=Math.max(0,st.wholesale-wsOut);
+  const share=depOut/dep0; st.lastShare=share;
+  const before=st.conf;
+  st.conf-=share*100*0.9*st.heat;
+  if(share<0.02) st.conf+=3;
+  if(st.cash/Math.max(deposits(st),1)<0.04) st.conf-=4;
+  st.conf=clamp(st.conf,0,100);
+  addLog(`🏃 ${SCEN[st.key].cur}${fmt(depOut)}bn withdrawn by depositors${wsOut>0?` + ${SCEN[st.key].cur}${fmt(wsOut)}bn wholesale funding not rolled over`:''}. Seeing the outflows, confidence ${Math.round(st.conf-before)>=0?'+':''}${Math.round(st.conf-before)}.`);
+  if(equity(st)<0){ endGame('solvency'); return; }
+  if(st.round>=SCEN[st.key].rounds){ endGame('survived'); return; }
+  st.round++; st.ap=2; st.rateUp=false; st.fireToday=0;
+  applyEvent(); render();
+}
+
+function render(){
+  if(!st) return;
+  const sc=SCEN[st.key], cur=sc.cur;
+  $('#g-round').textContent=`${roundLabel(st)} / ${sc.rounds}`;
+  $('#g-ap').innerHTML='Actions '+[0,1].map(i=>`<i class="${i<st.ap?'':'used'}"></i>`).join('');
+  // gauge
+  const c=Math.round(st.conf), col=c>66?'#1f9d55':c>40?'#e08a00':'#d64545';
+  $('#g-arc').setAttribute('stroke-dasharray',`${Math.max(0.5,c)} 100`); $('#g-arc').setAttribute('stroke',col);
+  $('#g-conf').textContent=c; $('#g-conf').style.color=col;
+  $('#g-conf-word').textContent=c>75?'Calm':c>60?'Steady':c>45?'Nervous':c>30?'Alarmed':c>15?'Panic':'Stampede';
+  const hl=clamp(Math.round((st.heat-0.8)*3),1,10);
+  $('#g-heat').innerHTML=Array.from({length:10},(_,i)=>`<i class="${i<hl?'on':''}"></i>`).join('');
+  // news
+  const n=st.news; $('#g-news h4').textContent=n.h; $('#g-news p').innerHTML=`${n.t} <b style="color:${n.d<0?'#d64545':'#1f9d55'}">${n.d>=0?'+':''}${n.d} confidence</b>`;
+  // queue
+  const q=clamp(Math.round(st.lastShare*250),0,40);
+  $('#g-queue').textContent=st.round===1&&!st.lastShare?'—':('🧍'.repeat(q)||'(no queue)');
+  $('#g-queue-sub').textContent=st.lastShare?`${(st.lastShare*100).toFixed(1)}% of deposits withdrawn last round`:'No withdrawals yet';
+  // balance sheet
+  const A=[['Cash',st.cash,'#c9971a'],['Bonds',st.bonds,'#4a7fc1'],['Loans',st.loans,'#2b4c7e']];
+  const eq=equity(st);
+  const L=[['Insured deposits',st.insDep,'#2f9e66'],['Uninsured deposits',st.uninsDep,'#e08a00'],['Wholesale',st.wholesale,'#8a5cc4'],['CB loan',st.cbLoan,'#c0392b'],['Equity',Math.max(eq,0),'#0b1f3a']];
+  if(st.guarantee){ L[0][0]='Deposits (guaranteed)'; L[0][1]=deposits(st); L[1][1]=0; }
+  const tot=Math.max(A.reduce((a,x)=>a+x[1],0), L.reduce((a,x)=>a+x[1],0),1);
+  const stack=(arr)=>arr.map(([nm,v,cl])=>`<div style="flex:${Math.max(v,0)/tot*100};background:${cl}" title="${nm}">${v/tot>0.07?nm:''}</div>`).join('')+`<div style="flex:${(tot-arr.reduce((a,x)=>a+Math.max(x[1],0),0))/tot*100}"></div>`;
+  $('#g-assets').innerHTML=stack(A); $('#g-liabs').innerHTML=stack(L);
+  const key=arr=>arr.filter(x=>x[1]>0.05||x[0]==='Cash').map(([nm,v,cl])=>`<div><span><i class="dot" style="background:${cl}"></i>${nm}</span><b>${cur}${fmt(v)}</b></div>`).join('');
+  $('#g-assets-key').innerHTML=key(A)+(st.mv<1?`<div><span class="muted">Bonds at market price</span><b>${cur}${fmt(st.bonds*st.mv)}</b></div>`:'');
+  $('#g-liabs-key').innerHTML=key(L);
+  $('#g-eq').textContent=`${eq<0?'−':''}${cur}${fmt(Math.abs(eq))}bn`; $('#g-eq').style.color=eq>0?'#1f9d55':'#d64545';
+  const m=mtm(st); $('#g-mtm').textContent=`${m<0?'−':''}${cur}${fmt(Math.abs(m))}bn`; $('#g-mtm').style.color=m>0?'#1f9d55':'#d64545';
+  // forecast
+  const fc=forecast(st);
+  $('#g-fc').textContent=`${cur}${fmt(fc.lo)}–${fmt(fc.hi)}bn`;
+  $('#g-cash').textContent=`${cur}${fmt(st.cash)}bn`;
+  const cv=$('#g-cover');
+  if(st.cash>=fc.hi*1.3){cv.textContent='✓ Covered';cv.style.background='#1f9d55';}
+  else if(st.cash>=fc.hi){cv.textContent='Tight';cv.style.background='#e08a00';}
+  else if(st.cash>=fc.lo){cv.textContent='⚠ Coin-flip';cv.style.background='#d65a1f';}
+  else {cv.textContent='✗ Not covered';cv.style.background='#d64545';}
+  $('#g-fc-note').textContent=(fc.ws>0?`Includes ${cur}${fmt(fc.ws)}bn of wholesale funding that won't be renewed. `:'')+`Collateral left for central bank borrowing: ${cur}${fmt(Math.max(0,cbCap(st)-st.cbLoan))}bn.`+(st.guarantee?' All deposits are now government-guaranteed.':'');
+  // actions
+  $('#g-actions').innerHTML=ACTIONS.map(a=>{
+    const title=typeof a.t==='function'?a.t(st):a.t, desc=typeof a.d==='function'?a.d(st):a.d;
+    const dis=st.ap<=0||(a.id==='buyer'&&st.round<3)||(a.id==='capital'&&st.flags.capTried)||(a.id==='rate'&&st.rateUp);
+    const chips=a.amts.map(v=>`<button class="btn" data-a="${a.id}" data-v="${v}" ${dis?'disabled':''}>${v?`${cur}${v}bn`:'Do it'}</button>`).join('');
+    return `<div class="act ${dis?'disabled':''}"><div class="t"><span>${a.icon} ${title}</span></div><div class="d">${desc}</div><div class="chips">${chips}</div></div>`;
+  }).join('');
+  $$('#g-actions [data-a]').forEach(b=>b.addEventListener('click',()=>doAction(b.dataset.a,+b.dataset.v)));
+  $('#g-log').innerHTML=st.log.map(l=>`<div><span class="r">${l.r}</span> — ${l.msg}</div>`).join('');
+  $('#g-end').textContent=st.ap>0?`End round (${st.ap} action${st.ap>1?'s':''} unused) ➜`:'End round ➜ depositors decide';
+}
+
+function endGame(kind){
+  st.over=true; render();
+  const sc=SCEN[st.key], cur=sc.cur, eq=equity(st), kept=Math.round(100*deposits(st)/st.dep0);
+  let title, sub, score, stars;
+  if(kind==='survived'){ score=Math.round(500+st.conf*4+Math.max(eq,0)*25+kept*2); stars=(eq>=st.eq0*0.7&&st.conf>=55)?3:(eq>0&&st.conf>=35)?2:1;
+    title='🏆 You survived the run!'; sub=`${sc.name} is still open at the end of ${roundLabel(st)}.`+(st.key==='svb'?' <b>This is an alternative outcome.</b> The real SVB was closed by regulators on Friday 10 March 2023.':st.key==='rock'?' In reality Northern Rock also stayed open through the run, but only with Bank of England support and a government guarantee, and it was nationalised in February 2008.':''); }
+  else if(kind==='rescued'){ score=Math.round(300+Math.max(mtm(st),0)*20+kept); stars=1;
+    title='🤝 Rescued by takeover'; sub='A rival bought the bank. Depositors are safe, but your shareholders lose most of their investment.'; }
+  else if(kind==='liquidity'){ score=st.round*25; stars=0;
+    title='🔒 Bank failed — out of cash'; sub=eq>0?`You were still SOLVENT (equity ${cur}${fmt(eq)}bn) but ILLIQUID: depositors wanted ${cur}${fmt(st.shortfall+st.cash)}bn and the cash wasn't there. This is exactly how runs kill sound banks.`:`You were short of cash and already close to insolvent.`; }
+  else { score=st.round*20; stars=0;
+    title='📉 Bank failed — insolvent'; sub=`Your equity fell below zero (${cur}${fmt(eq)}bn). Losses from fire sales, fees and failed rescues wiped out the shareholders' cushion. Regulators close the bank.`; }
+  const L=[];
+  if(st.flags.cb) L.push(`<b>Lender of last resort.</b> You borrowed ${cur}${fmt(st.flags.cb)}bn from the ${sc.cb} against collateral at a penalty rate — Bagehot's rule in action. ${st.flags.leak?'But it leaked: emergency borrowing carries <b>stigma</b>, exactly what happened when the BBC broke the Northern Rock story on 13 September 2007.':''}`);
+  else L.push(`<b>You never used the lender of last resort.</b> Central bank lending exists to turn good-but-illiquid assets into cash — refusing it in a run is usually a mistake.`);
+  if(st.flags.bondLoss>0.5) L.push(`<b>Fire sale.</b> Selling bonds cost you ${cur}${fmt(st.flags.bondLoss)}bn. ${st.key==='svb'?'SVB announced a $1.8bn loss on a $21bn bond sale on 8 March 2023 — that announcement lit the fuse.':'Selling in a hurry crystallises losses and signals distress.'}`);
+  if(st.flags.loanSale) L.push(`<b>Illiquid assets.</b> Loans only fetched 60p in the £. That's why liquidity and solvency are linked: a liquidity crisis forces sales that destroy equity.`);
+  if(st.flags.capFail) L.push(`<b>Failed capital raise.</b> Like SVB's planned $2.25bn share sale, a failed raise tells the market you're in trouble.`);
+  if(st.flags.backfire) L.push(`<b>Cheap talk.</b> Reassurance only works when depositors believe you can pay. Confidence is about credible cash, not words.`);
+  if(st.guarantee) L.push(`<b>Government guarantee.</b> Once all deposits were guaranteed, the incentive to run fell sharply and withdrawals slowed (though not to zero). This shows how deposit insurance and guarantees weaken the self-fulfilling prophecy. The cost: <b>moral hazard</b>.`);
+  L.push(`<b>Self-fulfilling expectations.</b> Each round, withdrawals you couldn't control lowered confidence further — the Diamond–Dybvig spiral. Your job was to weaken the loop.`);
+  const real={classic:'Kirkgate is fictional, but the mechanism is the one Diamond and Dybvig modelled in 1983.',
+    rock:'In reality, Northern Rock survived the run thanks to Bank of England support and the Chancellor\'s guarantee, but its business model was broken. It was nationalised in February 2008 and the "good bank" was later sold to Virgin Money.',
+    svb:'In reality, SVB lost $42bn of deposits on 9 March 2023 and was closed by regulators on 10 March. US authorities guaranteed all deposits on 12 March, and HSBC bought SVB UK for £1 on 13 March.'}[st.key];
+  $('#g-over-card').innerHTML=`
+    <h2 class="result-title">${title}</h2><p>${sub}</p>
+    <div class="statgrid">
+      <div>Score<b>${score}</b></div><div>Rating<b class="stars">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</b></div>
+      <div>Confidence<b>${Math.round(st.conf)}</b></div><div>Book equity<b>${cur}${fmt(eq)}bn</b></div><div>Deposits kept<b>${kept}%</b></div>
+    </div>
+    <h3>What this shows</h3>${L.map(x=>`<div class="lesson">${x}</div>`).join('')}
+    <div class="lesson" style="border-left-color:var(--gold)"><b>Your game vs history.</b> ${st.key==='classic'?'':'Your result above is <i>your</i> outcome under the model\'s assumptions; it is not what happened. '}<b>What really happened:</b> ${real}</div>
+    <div class="debrief"><h3 style="margin:0 0 4px">💬 Discussion: did your action improve liquidity, solvency, confidence, or one at the expense of another?</h3>
+      <p style="margin:4px 0;font-size:13.5px">Each action you took is listed with its immediate effect. <b>Liquidity</b> = change in cash on hand. <b>Solvency</b> = change in book equity. <b>Confidence</b> = change in depositor confidence.</p>
+      ${ledger()}
+      <p style="margin:6px 0 0;font-size:13.5px">Choose one action that helped one measure but hurt another. Explain the trade-off, and whether it was worth it at that point in the crisis. Judge your strategy by your reasoning, not only by whether the bank survived.</p></div>
+    <h3 style="margin-top:14px">Tell me why…</h3><div id="g-why"></div>
+    <div class="end-row"><button class="btn gold" id="g-again">Play again</button><button class="btn ghost" id="g-other">Try another bank</button></div>`;
+  const pick=[0,1,4,5].map(i=>WHY[i]); if(st.key==='svb') pick[2]=WHY[3]; if(st.key==='rock') pick[3]=WHY[6];
+  renderWhy($('#g-why'),pick);
+  $('#g-over').classList.add('show');
+  $('#g-again').onclick=()=>{ $('#g-over').classList.remove('show'); startGame(st.key); };
+  $('#g-other').onclick=()=>{ $('#g-over').classList.remove('show'); quit(); };
+}
+function ledger(){
+  if(!st.trade.length) return '<p class="muted" style="font-size:13px">You took no actions. What does that tell you about the bank\'s liquidity, solvency and confidence over the crisis?</p>';
+  const cur=SCEN[st.key].cur;
+  const cell=(v,money)=>{ if(Math.abs(v)<0.05) return '<td class="flat">–</td>'; const t=money?`${cur}${fmt(Math.abs(v))}bn`:Math.round(Math.abs(v)); return `<td class="${v>0?'up':'dn'}">${v>0?'▲ +':'▼ −'}${t}</td>`; };
+  return `<table class="ledger"><tr><th>When</th><th>Action</th><th>Liquidity</th><th>Solvency</th><th>Confidence</th></tr>${st.trade.map(t=>`<tr><td>${t.r}</td><td>${t.a}</td>${cell(t.dl,1)}${cell(t.ds,1)}${cell(t.dc,0)}</tr>`).join('')}</table>`;
+}
+function quit(){ st=null; $('#g-play').style.display='none'; $('#g-pick').style.display='block'; }
+
+$('#g-end').addEventListener('click',endRound);
+$('#g-quit').addEventListener('click',quit);
+buildPick();
+</script>
+</body>
+</html>
