@@ -283,7 +283,7 @@ footer{text-align:center;padding:2rem;border-top:1px solid var(--border);font-fa
   <div class="hero">
     <div class="eyebrow">// Economics Arcade · Word Game</div>
     <h1>Economics<br><em>Word Search</em></h1>
-    <p>Choose a topic, generate a fresh puzzle. Find all the hidden economics terms — words run in all 8 directions.</p>
+    <p>Choose a topic, generate a fresh puzzle and find all the hidden economics terms. GCSE puzzles read forwards only; A-Level puzzles run in all 8 directions, including backwards.</p>
   </div>
 
   <!-- CONTROLS -->
@@ -292,8 +292,8 @@ footer{text-align:center;padding:2rem;border-top:1px solid var(--border);font-fa
     <div class="topic-grid" id="topic-grid"></div>
     <div class="ctrl-row">
       <div class="seg-group">
-        <button class="seg-btn active" data-diff="gcse" onclick="setDiff('gcse',this)">GCSE</button>
-        <button class="seg-btn" data-diff="alevel" onclick="setDiff('alevel',this)">A-Level</button>
+        <button class="seg-btn active" data-diff="gcse" onclick="setDiff('gcse',this)">GCSE · forwards</button>
+        <button class="seg-btn" data-diff="alevel" onclick="setDiff('alevel',this)">A-Level · all 8 directions</button>
       </div>
       <button class="gen-btn" id="gen-btn" onclick="generatePuzzle()">Generate Puzzle →</button>
     </div>
@@ -409,7 +409,7 @@ const WS_BANK = {
     {word:'REGULATION',def:'Government rules controlling behaviour.'},
     {word:'NUDGE',def:'Behavioural policy steering choices without force.'},
     {word:'POLLUTION',def:'Classic negative externality harming third parties.'},
-    {word:'FREERIDE',def:'Consuming a good without contributing to its cost.'},
+    {word:'FREERIDER',def:'Someone who consumes a good without contributing to its cost.'},
     {word:'ASYMMETRIC',def:'Information failure where one party knows more.'},
     {word:'PIGOUVIAN',def:'Tax equal to the marginal external cost.'},
     {word:'DEADWEIGHT',def:'Welfare loss from allocative inefficiency.'},
@@ -618,6 +618,7 @@ const DIRS = [
   [0,1],[0,-1],[1,0],[-1,0],
   [1,1],[1,-1],[-1,1],[-1,-1]
 ];
+const FORWARD_DIRS = [[0,1],[1,0],[1,1],[-1,1]]; // right, down, and the two left-to-right diagonals
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function emptyGrid(){
@@ -637,18 +638,19 @@ function placeWord(grid,word,r,c,dr,dc){
   for(let i=0;i<word.length;i++) grid[r+dr*i][c+dc*i]=word[i];
 }
 
-function buildWordSearch(words){
+function buildWordSearch(words, dirs){
+  dirs = dirs || DIRS;
   const grid=emptyGrid();
   const placed=[];
   const clean=words.map(w=>({...w,word:w.word.toUpperCase().replace(/[^A-Z]/g,'')}))
-                   .filter(w=>w.word.length>=3&&w.word.length<=14)
+                   .filter(w=>w.word.length>=3&&w.word.length<=SIZE)
                    .sort((a,b)=>b.word.length-a.word.length);
 
   for(const entry of clean){
     const word=entry.word;
     let success=false;
     for(let a=0;a<300&&!success;a++){
-      const [dr,dc]=DIRS[Math.floor(Math.random()*DIRS.length)];
+      const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
       const r=Math.floor(Math.random()*SIZE);
       const c=Math.floor(Math.random()*SIZE);
       if(canPlace(grid,word,r,c,dr,dc)){
@@ -688,12 +690,13 @@ function generatePuzzle(){
     try{
       const topicLabel=TOPICS.find(t=>t.id===selectedTopic)?.label||selectedTopic;
       const diffLabel=selectedDiff==='gcse'?'GCSE':'A-Level';
-      let pool = (WS_BANK[selectedTopic]||[]);
-      if(selectedDiff==='gcse') pool=pool.filter(w=>w.word.length<=8).concat(pool.filter(w=>w.word.length>8)).slice(0,14);
+      const pool = (WS_BANK[selectedTopic]||[]);
       const entries=pool.slice().sort(()=>Math.random()-0.5).slice(0,14);
       if(entries.length<5) throw new Error('Not enough words for this topic.');
+      const dirs = selectedDiff==='gcse' ? FORWARD_DIRS : DIRS;
+      const dirLabel = selectedDiff==='gcse' ? 'Forwards only' : 'All 8 directions, including backwards';
 
-      const {grid,placed}=buildWordSearch(entries);
+      const {grid,placed}=buildWordSearch(entries, dirs);
       if(placed.length<5) throw new Error('Could not place enough words. Try again.');
 
       currentPuzzle={grid,placed};
@@ -705,7 +708,7 @@ function generatePuzzle(){
       document.getElementById('pm-topic').textContent=topicLabel;
       document.getElementById('pm-difficulty').textContent=diffLabel;
       document.getElementById('pm-date').textContent=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-      document.getElementById('pm-sub-left').textContent=`${topicLabel} · ${placed.length} words · All 8 directions`;
+      document.getElementById('pm-sub-left').textContent=`${topicLabel} · ${placed.length} words · ${dirLabel}`;
 
       document.getElementById('game-area').classList.add('visible');
       document.getElementById('print-btn').disabled=false;

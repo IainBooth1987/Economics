@@ -72,7 +72,7 @@
   .solvedRow .words{font-size:14px; font-weight:600;}
 
   .grid{
-    display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:18px;
+    display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:8px; margin-bottom:18px;
   }
   .tile{
     aspect-ratio:1.3/1; background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
@@ -80,6 +80,7 @@
     font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.3px;
     cursor:pointer; padding:6px; user-select:none; transition:.12s;
     color:var(--text);
+    line-height:1.2; overflow-wrap:break-word;
   }
   .tile:hover{border-color:var(--amber);}
   .tile.selected{background:var(--amber); color:#1a1200; border-color:var(--amber);}
@@ -121,9 +122,13 @@
 
   @media (max-width:480px){
     .statbar{gap:20px;}
-    .tile{font-size:11px;}
+    .tile{font-size:11px; padding:3px; letter-spacing:0;}
+    .tile.lg{font-size:9.5px;}
+    .tile.xl{font-size:8px; overflow-wrap:anywhere;}
     .actionrow button{flex:1 1 auto;}
   }
+  @media (max-width:480px){ .card{padding:16px 12px;} .grid{gap:6px;} }
+  @media (max-width:360px){ .tile{font-size:9.5px;} .tile.lg{font-size:8px;} .tile.xl{font-size:7px;} }
 </style>
 </head>
 <body>
@@ -187,7 +192,7 @@ const DIFF_META = [
 const PUZZLES = [
   { title:"Macro Fundamentals", groups:[
     {cat:"Types of unemployment", diff:0, words:["FRICTIONAL","STRUCTURAL","CYCLICAL","SEASONAL"]},
-    {cat:"Fiscal policy tools", diff:1, words:["TAXATION","SPENDING","BORROWING","REGULATION"]},
+    {cat:"Fiscal policy terms", diff:1, words:["TAXATION","SPENDING","BORROWING","DEFICIT"]},
     {cat:"Trade barriers", diff:2, words:["TARIFF","QUOTA","EMBARGO","LICENSING"]},
     {cat:"___ RATE", diff:3, words:["EXCHANGE","INTEREST","GROWTH","INFLATION"]}
   ]},
@@ -199,14 +204,14 @@ const PUZZLES = [
   ]},
   { title:"Trade & Globalisation", groups:[
     {cat:"Exchange rate systems", diff:0, words:["FIXED","FLOATING","MANAGED","PEGGED"]},
-    {cat:"Balance of payments accounts", diff:1, words:["CURRENT","CAPITAL","FINANCIAL","TRADE"]},
-    {cat:"Trade blocs", diff:2, words:["EU","NAFTA","ASEAN","MERCOSUR"]},
+    {cat:"Balance of payments terms", diff:1, words:["CURRENT","CAPITAL","FINANCIAL","INVISIBLES"]},
+    {cat:"Trade blocs", diff:2, words:["EU","USMCA","ASEAN","MERCOSUR"]},
     {cat:"___ ADVANTAGE", diff:3, words:["ABSOLUTE","COMPARATIVE","COMPETITIVE","NATURAL"]}
   ]},
   { title:"Costs, Curves & Goods", groups:[
     {cat:"Types of cost", diff:0, words:["FIXED","VARIABLE","MARGINAL","AVERAGE"]},
     {cat:"Named economic curves", diff:1, words:["LORENZ","PHILLIPS","LAFFER","ENGEL"]},
-    {cat:"Unusual demand goods", diff:2, words:["NORMAL","INFERIOR","GIFFEN","VEBLEN"]},
+    {cat:"Types of good, by demand", diff:2, words:["NORMAL","INFERIOR","GIFFEN","VEBLEN"]},
     {cat:"DEMAND-___ / DEMAND ___", diff:3, words:["CURVE","SIDE","PULL","SHOCK"]}
   ]},
   { title:"Money & Banking", groups:[
@@ -220,6 +225,30 @@ const PUZZLES = [
     {cat:"Keynesian-tradition economists", diff:1, words:["KEYNES","PHILLIPS","GALBRAITH","SAMUELSON"]},
     {cat:"Free-market / monetarist economists", diff:2, words:["FRIEDMAN","HAYEK","LAFFER","STIGLER"]},
     {cat:"Behavioural & development economists", diff:3, words:["THALER","KAHNEMAN","DUFLO","SEN"]}
+  ]},
+  { title:"Factors & Supply Side", groups:[
+    {cat:"Factors of production", diff:0, words:["LAND","LABOUR","CAPITAL","ENTERPRISE"]},
+    {cat:"Rewards to the factors", diff:1, words:["RENT","WAGES","INTEREST","PROFIT"]},
+    {cat:"Supply-side policies", diff:2, words:["TRAINING","DEREGULATION","PRIVATISATION","APPRENTICESHIPS"]},
+    {cat:"___ ECONOMY", diff:3, words:["GIG","MIXED","COMMAND","HIDDEN"]}
+  ]},
+  { title:"Market Failure", groups:[
+    {cat:"Government interventions", diff:0, words:["TAX","SUBSIDY","REGULATION","PERMITS"]},
+    {cat:"Demerit goods", diff:1, words:["ALCOHOL","TOBACCO","GAMBLING","SUGAR"]},
+    {cat:"Merit goods", diff:2, words:["EDUCATION","HEALTHCARE","VACCINES","MUSEUMS"]},
+    {cat:"Public goods", diff:3, words:["LIGHTHOUSE","DEFENCE","STREETLIGHTS","FIREWORKS"]}
+  ]},
+  { title:"The Macroeconomy", groups:[
+    {cat:"Components of AD", diff:0, words:["CONSUMPTION","INVESTMENT","GOVERNMENT","EXPORTS"]},
+    {cat:"Phases of the economic cycle", diff:1, words:["BOOM","RECESSION","RECOVERY","TROUGH"]},
+    {cat:"Measures of inflation", diff:2, words:["CPI","RPI","CPIH","DEFLATOR"]},
+    {cat:"___ GAP", diff:3, words:["OUTPUT","SAVINGS","SKILLS","PRODUCTIVITY"]}
+  ]},
+  { title:"Firms & Growth", groups:[
+    {cat:"Business objectives", diff:0, words:["PROFIT","REVENUE","SALES","SURVIVAL"]},
+    {cat:"Types of integration", diff:1, words:["HORIZONTAL","VERTICAL","CONGLOMERATE","LATERAL"]},
+    {cat:"Economies of scale", diff:2, words:["TECHNICAL","PURCHASING","MANAGERIAL","FINANCIAL"]},
+    {cat:"Barriers to entry", diff:3, words:["PATENTS","BRANDING","LICENCES","CONTRACTS"]}
   ]}
 ];
 
@@ -323,7 +352,7 @@ function renderAll(){
   tiles.forEach(t => {
     if(solvedGroups.some(g => g.words.includes(t.word))) return;
     const div = document.createElement('div');
-    div.className = 'tile' + (selected.includes(t.word) ? ' selected' : '');
+    div.className = 'tile' + (t.word.length >= 11 ? ' xl' : t.word.length >= 8 ? ' lg' : '') + (selected.includes(t.word) ? ' selected' : '');
     div.textContent = t.word;
     div.onclick = () => toggleTile(t.word);
     els.grid.appendChild(div);
