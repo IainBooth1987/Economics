@@ -91,22 +91,57 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding
 .empty-sub{font-size:14px;line-height:1.6;}
 
 @media print{
-  header,.panel,#side-panel{display:none!important;}
-  .page{grid-template-columns:1fr!important;padding:0!important;}
+  header,#side-panel>.panel:first-child,.empty-state{display:none!important;}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,'Times New Roman',serif!important;}
+  body::before{display:none!important;}
+  .print-only{display:block!important;}
+  .print-head{border-bottom:2px solid #000;margin-bottom:14px;padding-bottom:8px;}
+  .print-head .ph-brand{font-weight:700;font-size:10pt;letter-spacing:.05em;}
+  .print-head .ph-title{font-size:17pt;font-weight:700;margin:2px 0 6px;}
+  .print-head .ph-name{font-size:10pt;border:1.5px solid #1e2a5a;color:#1e2a5a;background:#fff;padding:6px 8px;}
+
+  .page{display:block!important;padding:0!important;}
+  .cw-title{display:none!important;}
+  .cw-grid{background:#fff!important;border:none!important;gap:0!important;}
+  @page{size:A4;margin:10mm;}
+  .cw-cell{border-radius:0!important;width:26px!important;height:26px!important;}
+  .cw-grid{grid-template-columns:repeat(var(--gs),26px)!important;grid-template-rows:repeat(var(--gs),26px)!important;padding:0!important;}
+  .cell-input{font-size:12px!important;}
+  .cell-num{font-size:7px!important;}
+  .cw-sub{color:#000!important;margin-bottom:8px!important;}
+  .clue-item{font-size:9.5pt!important;margin:0!important;}
+  .cw-cell.correct-cell,.cw-cell.wrong-cell,.cw-cell.word-hl,.cw-cell.active-cell{background:#fff!important;}
+  .cell-num{color:#000!important;}
+  #clues-panel{background:#fff!important;border:none!important;padding:0!important;display:grid!important;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;page-break-inside:avoid;}
+  #clues-panel>div{margin:0!important;}
+  .clue-item{padding:2px 0!important;opacity:1!important;background:none!important;border:none!important;}
+  .clue-num{color:#000!important;font-family:Georgia,serif!important;}
+  .clue-text{color:#000!important;}
+  .clue-section-title{color:#000!important;font-family:Georgia,serif!important;}
   .cw-cell.white{border:1px solid #000!important;background:#fff!important;}
   .cw-cell.black{background:#000!important;}
   .cell-input{color:#000!important;}
 }
+
+.print-only{display:none;}
+.print-btn{padding:0 12px;height:32px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;margin-right:8px;}
+.print-btn:hover{border-color:var(--border-acc);color:var(--accent);}
 </style>
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">BIZ-<span>OMICS</span></a>
   <a href="arcade.html" class="back-link">← Arcade</a>
+  <button class="print-btn" onclick="printPuzzle()">🖨 Print</button>
   <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
 </header>
 
 <div class="page">
+<div class="print-only print-head">
+  <div class="ph-brand">BIZ-OMICS · Business Arcade · biz-omics.co.uk</div>
+  <div class="ph-title">Business Crossword</div>
+  <div class="ph-name">Name: ______________________ &nbsp; Class: __________ &nbsp; Date: __________</div>
+</div>
   <!-- Grid side -->
   <div>
     <div class="cw-title">✏️ Crossword</div>
@@ -157,7 +192,7 @@ const CW_WORDS = [
   // Finance
   {w:'PROFIT',c:'Revenue minus all costs',t:'finance'},
   {w:'REVENUE',c:'Total income from sales before deductions',t:'finance'},
-  {w:'CASHFLOW',c:'Movement of money into and out of a business',t:'finance'},
+  {w:'CASHFLOW',c:'Movement of money into and out of a business',t:'finance',en:'4,4'},
   {w:'BUDGET',c:'A financial plan of expected income and spending',t:'finance'},
   {w:'ASSET',c:'Something of value owned by a business',t:'finance'},
   {w:'LIABILITY',c:'A financial debt or obligation of a business',t:'finance'},
@@ -229,6 +264,16 @@ let gridData = {}; // key: "r,c" -> {letter, entries:[]}
 let gridSize = 0;
 let activeEntry = null;
 let scores = {correct:0, total:0};
+let revealed = false, completed = false;
+const CW_STATS='bizcrossword_stats_v1';
+function checkComplete(){
+  if (revealed || completed || !placedEntries.length) return;
+  const ok = Object.keys(gridData).filter(k=>k!=='_numbered').every(k => { const [r,c]=k.split(',').map(Number); const i=cellEl(r,c); return i && i.value.toUpperCase()===gridData[k].letter; });
+  if (!ok) return;
+  completed = true; checkAnswers();
+  document.getElementById('cw-sub').textContent = '🎉 Puzzle complete! All ' + placedEntries.length + ' answers correct.';
+  try{ const st=JSON.parse(localStorage.getItem(CW_STATS))||{played:0}; st.played++; localStorage.setItem(CW_STATS, JSON.stringify(st)); }catch(e){}
+}
 
 function setTopic(t, btn) {
   currentTopic = t;
@@ -244,6 +289,7 @@ function generatePuzzle() {
   const attempt = tryBuild(pool, maxWords);
   if (!attempt || attempt.length < 3) { alert('Could not place enough words — try All Topics or a different topic.'); return; }
   placedEntries = attempt;
+  revealed = false; completed = false;
   buildGridData();
   renderCrossword();
   renderClues();
@@ -259,12 +305,12 @@ function tryBuild(pool, max) {
   // Place first word horizontally in centre
   const first = pool[0];
   const r0 = Math.floor(GRID/2), c0 = Math.floor((GRID - first.w.length)/2);
-  placed.push({word:first.w, clue:first.c, startRow:r0, startCol:c0, dir:'across'});
+  placed.push({word:first.w, clue:first.c, en:first.en, startRow:r0, startCol:c0, dir:'across'});
 
   for (let i = 1; i < pool.length && placed.length < max; i++) {
     const candidate = pool[i];
     const best = findBestPlacement(candidate.w, placed, GRID);
-    if (best) placed.push({word:candidate.w, clue:candidate.c, ...best});
+    if (best) placed.push({word:candidate.w, clue:candidate.c, en:candidate.en, ...best});
   }
   return placed;
 }
@@ -313,19 +359,29 @@ function getOccupied(placed, GRID) {
 }
 
 function canPlaceCW(word, sr, sc, dir, occupied, GRID, placed) {
+  // directions already using each cell, so a word can only CROSS another, never overlap it
+  const dirsAt = {};
+  placed.forEach(e => { for (let i = 0; i < e.word.length; i++) {
+    const k = (e.dir==='across'?e.startRow:e.startRow+i)+','+(e.dir==='down'?e.startCol:e.startCol+i);
+    (dirsAt[k] = dirsAt[k] || []).push(e.dir); } });
+  let crossings = 0;
   for (let i = 0; i < word.length; i++) {
     const r = dir === 'across' ? sr : sr + i;
     const c = dir === 'down'   ? sc : sc + i;
     if (r < 0 || r >= GRID || c < 0 || c >= GRID) return false;
     const key = r+','+c;
-    if (occupied[key] && occupied[key] !== word[i]) return false;
-    // Check adjacency (don't run parallel to another word)
-    if (!occupied[key]) {
-      const perpR = dir === 'across' ? [r-1,r+1] : [r,r];
-      const perpC = dir === 'down'   ? [c-1,c+1] : [c,c];
-      // Allow adjacency only at intersection
+    if (occupied[key]) {
+      if (occupied[key] !== word[i]) return false;
+      if ((dirsAt[key]||[]).includes(dir)) return false;      // would overlap a word running the same way
+      crossings++;
+    } else {
+      // an empty cell must not touch another word side-on
+      const n1 = dir === 'across' ? (r-1)+','+c : r+','+(c-1);
+      const n2 = dir === 'across' ? (r+1)+','+c : r+','+(c+1);
+      if (occupied[n1] || occupied[n2]) return false;
     }
   }
+  if (crossings === 0) return false;
   // Check cells before and after
   const endR = dir === 'across' ? sr : sr + word.length;
   const endC = dir === 'down'   ? sc : sc + word.length;
@@ -388,6 +444,7 @@ function renderCrossword() {
   grid.className = 'cw-grid';
   grid.style.gridTemplateColumns = `repeat(${gs},38px)`;
   grid.style.gridTemplateRows = `repeat(${gs},38px)`;
+  grid.style.setProperty('--gs', gs);
 
   for (let r = 0; r < gs; r++) {
     for (let c = 0; c < gs; c++) {
@@ -468,6 +525,7 @@ function handleInput(e, r, c) {
   const val = e.target.value.replace(/[^a-zA-Z]/g,'').toUpperCase();
   e.target.value = val ? val[val.length-1] : '';
   if (e.target.value && activeEntry) moveNext(r,c);
+  checkComplete();
 }
 
 function handleKeydown(e, r, c) {
@@ -511,7 +569,7 @@ function renderClues() {
       const item = document.createElement('div');
       item.className = 'clue-item';
       item.id = `clue-${idPrefix}-${e.number}`;
-      item.innerHTML = `<span class="clue-num">${e.number}</span><span class="clue-text">${e.clue} (${e.word.length})</span>`;
+      item.innerHTML = `<span class="clue-num">${e.number}</span><span class="clue-text">${e.clue} (${e.en || e.word.length})</span>`;
       item.addEventListener('click', () => { activeEntry = e; highlightActive(); highlightClue(); cellEl(e.startRow,e.startCol)?.focus(); });
       wrap.appendChild(item);
     });
@@ -551,6 +609,7 @@ function checkAnswers() {
 }
 
 function revealAll() {
+  revealed = true;
   placedEntries.forEach(e => {
     for (let i = 0; i < e.word.length; i++) {
       const r = e.dir==='across'?e.startRow:e.startRow+i;
@@ -566,6 +625,11 @@ function revealAll() {
   document.getElementById('score-num').textContent = placedEntries.length + '/' + placedEntries.length;
 }
 
+function printPuzzle(){
+  if (!placedEntries.length) generatePuzzle();
+  // print a blank puzzle unless the student has filled it in themselves
+  window.print();
+}
 (function(){
   var t=localStorage.getItem('biz-omics-business-theme')||'dark';
   document.documentElement.setAttribute('data-theme',t);

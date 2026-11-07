@@ -64,9 +64,9 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding
 .grid-wrap{position:relative;}
 .grid-title{font-family:'Fraunces',serif;font-size:22px;font-weight:700;margin-bottom:6px;}
 .grid-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
-.grid-container{display:inline-block;user-select:none;-webkit-user-select:none;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.grid-container{display:inline-block;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
 .grid-row{display:flex;}
-.grid-cell{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:0;cursor:pointer;transition:background .1s,color .1s;background:var(--bg-card);color:var(--text);}
+.grid-cell{width:var(--cell,36px);height:var(--cell,36px);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;letter-spacing:0;cursor:pointer;transition:background .1s,color .1s;background:var(--bg-card);color:var(--text);}
 .grid-cell:hover{background:var(--bg-hover);}
 .grid-cell.selecting{background:var(--select);}
 .grid-cell.found-cell{background:var(--found-bg);color:var(--found);}
@@ -82,18 +82,48 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding
 .win-btn-sec{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
 .win-btn-sec:hover{border-color:var(--border-acc);color:var(--text);}
 
-@media(max-width:500px){.grid-cell{width:28px;height:28px;font-size:11px;}}
-@media print{header{display:none!important;}}
+@media(max-width:500px){.grid-cell{font-size:11px;}}
+@media print{
+  @page{margin:12mm;}
+  header,.controls,.win-overlay,.grid-title,.grid-sub,.found-count{display:none!important;}
+  body{background:#fff!important;color:#000!important;font-family:Georgia,'Times New Roman',serif!important;}
+  body::before{display:none!important;}
+  .print-only{display:block!important;}
+  .print-head{border-bottom:2px solid #000;margin-bottom:14px;padding-bottom:8px;}
+  .print-head .ph-brand{font-weight:700;font-size:10pt;letter-spacing:.05em;}
+  .print-head .ph-title{font-size:17pt;font-weight:700;margin:2px 0 6px;}
+  .print-head .ph-name{font-size:10pt;border:1.5px solid #1e2a5a;color:#1e2a5a;background:#fff;padding:6px 8px;}
+
+  .page{display:grid!important;grid-template-columns:auto 1fr!important;gap:22px!important;padding:0!important;}
+  .print-head{grid-column:1/-1;}
+  .grid-container{border:2px solid #000!important;border-radius:0!important;}
+  .grid-cell{--cell:30px;width:30px!important;height:30px!important;background:#fff!important;color:#000!important;font-family:Georgia,serif!important;border:0.5px solid #bbb;}
+  .word-list-wrap{background:#fff!important;border:none!important;margin:0!important;padding:0!important;}
+  .word-list{max-height:none!important;overflow:visible!important;}
+  .word-item{background:none!important;color:#000!important;text-decoration:none!important;opacity:1!important;border:none!important;padding:2px 0!important;}
+  .word-check{border-color:#000!important;background:#fff!important;}
+  .ctrl-label{color:#000!important;}
+}
+
+.print-only{display:none;}
+.print-btn{padding:0 12px;height:32px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;margin-right:8px;}
+.print-btn:hover{border-color:var(--border-acc);color:var(--accent);}
 </style>
 </head>
 <body>
 <header>
   <a href="index.html" class="logo">BIZ-<span>OMICS</span></a>
   <a href="arcade.html" class="back-link">← Arcade</a>
+  <button class="print-btn" onclick="window.print()">🖨 Print</button>
   <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
 </header>
 
 <div class="page">
+<div class="print-only print-head">
+  <div class="ph-brand">BIZ-OMICS · Business Arcade · biz-omics.co.uk</div>
+  <div class="ph-title">Business Word Search</div>
+  <div class="ph-name">Name: ______________________ &nbsp; Class: __________ &nbsp; Date: __________</div>
+</div>
   <!-- Grid side -->
   <div>
     <div class="grid-title">🔍 Word Search</div>
@@ -191,6 +221,7 @@ let selCurrent = null;
 let timerSec = 0;
 let timerInterval = null;
 let gameActive = false;
+const WS_STATS='bizwordsearch_stats_v1';
 
 function setTopic(t, btn) {
   currentTopic = t;
@@ -218,7 +249,7 @@ function newGame() {
   const pool = getPool();
   buildGrid(pool.map(p => p.w));
   renderGrid();
-  renderWordList(pool);
+  renderWordList(placedWords.map(p => ({w:p.word})));
   gameActive = true;
   timerInterval = setInterval(() => { timerSec++; updateTimerDisplay(); }, 1000);
   document.getElementById('win-overlay').classList.remove('show');
@@ -285,9 +316,17 @@ function placeWord(word, r, c, dir) {
 
 function cellKey(r,c){ return r+','+c; }
 
+function fitCells(){
+  const box = document.getElementById('grid-container').parentElement;
+  const avail = Math.min(box.clientWidth - 4, 36 * gridSize + 2);
+  const cell = Math.max(18, Math.min(36, Math.floor(avail / gridSize)));
+  document.documentElement.style.setProperty('--cell', cell + 'px');
+}
+window.addEventListener('resize', fitCells);
 function renderGrid() {
   const container = document.getElementById('grid-container');
   container.innerHTML = '';
+  fitCells();
   for (let r = 0; r < gridSize; r++) {
     const row = document.createElement('div');
     row.className = 'grid-row';
@@ -299,8 +338,8 @@ function renderGrid() {
       cell.addEventListener('mousedown', startSelect);
       cell.addEventListener('mouseover', moveSelect);
       cell.addEventListener('mouseup', endSelect);
-      cell.addEventListener('touchstart', touchStart, {passive:true});
-      cell.addEventListener('touchmove', touchMove, {passive:true});
+      cell.addEventListener('touchstart', touchStart, {passive:false});
+      cell.addEventListener('touchmove', touchMove, {passive:false});
       cell.addEventListener('touchend', endSelect);
       row.appendChild(cell);
     }
@@ -358,8 +397,9 @@ function endSelect() {
     }
   }
 }
-function touchStart(e){ startSelect({currentTarget:e.currentTarget}); }
+function touchStart(e){ e.preventDefault(); startSelect({currentTarget:e.currentTarget}); }
 function touchMove(e){
+  e.preventDefault();
   const t = e.touches[0];
   const el = document.elementFromPoint(t.clientX, t.clientY);
   if (el && el.classList.contains('grid-cell')) moveSelect({currentTarget:el});
@@ -391,6 +431,7 @@ function endGame() {
   gameActive = false;
   const m = Math.floor(timerSec/60), s = timerSec%60;
   document.getElementById('win-time').textContent = `Completed in ${m}:${String(s).padStart(2,'0')}`;
+  try{ const st=JSON.parse(localStorage.getItem(WS_STATS))||{played:0,best:0}; st.played++; if(!st.best||timerSec<st.best) st.best=timerSec; localStorage.setItem(WS_STATS, JSON.stringify(st)); }catch(e){}
   document.getElementById('win-overlay').classList.add('show');
 }
 
