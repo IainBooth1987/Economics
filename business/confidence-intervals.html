@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidence Intervals Made Simple | BIZ-OMICS</title>
+<style>
+:root{
+  --navy:#14213d;--navy2:#24365f;--teal:#0f766e;--teal-l:#ccfbf1;--teal-d:#134e4a;
+  --green:#15803d;--green-l:#dcfce7;--amber:#b45309;--amber-l:#fef3c7;--red:#b91c1c;--red-l:#fee2e2;
+  --ink:#1f2937;--muted:#5b6475;--line:#d9dee7;--bg:#f4f6fa;--card:#ffffff;--gold:#f59e0b;
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body.big{font-size:21px}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px}
+header.top{background:var(--navy);color:#fff;padding:18px 0 0}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-weight:800;letter-spacing:.5px;font-size:1.05rem}
+.logo span{color:#5eead4}
+.spec{font-size:.8rem;background:rgba(255,255,255,.12);padding:3px 10px;border-radius:99px}
+h1{margin:10px 0 4px;font-size:1.9rem;line-height:1.2}
+.sub{margin:0 0 14px;color:#cbd5e1}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.tbtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:6px 12px;font-size:.85rem}
+.tbtn:hover{background:rgba(255,255,255,.22)}
+.tabs{display:flex;gap:6px;margin-top:16px}
+.tab{background:transparent;color:#cbd5e1;border:none;border-radius:10px 10px 0 0;padding:12px 20px;font-weight:700;font-size:1rem}
+.tab.on{background:var(--bg);color:var(--navy)}
+.tab small{display:block;font-weight:500;font-size:.75rem;opacity:.8}
+main{padding:26px 18px 50px}
+.panel{display:none}.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:16px}
+.muted{color:var(--muted)}
+.btn{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700}
+.btn:hover{background:var(--navy2)}
+.btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn.teal{background:var(--teal)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* progress + stepper */
+.progress{display:flex;gap:5px;margin:4px 0 14px;flex-wrap:wrap}
+.pdot{flex:1;min-width:34px;height:34px;border-radius:8px;border:2px solid var(--line);background:#fff;font-weight:700;color:var(--muted);font-size:.85rem}
+.pdot.done{background:var(--teal-l);border-color:var(--teal);color:var(--teal-d)}
+.pdot.now{background:var(--navy);border-color:var(--navy);color:#fff}
+.step{display:none}.step.on{display:block}
+.stepno{display:inline-block;background:var(--teal);color:#fff;font-weight:800;border-radius:99px;padding:3px 12px;font-size:.8rem;letter-spacing:.5px}
+.step h2{font-size:1.6rem;margin:10px 0 6px;color:var(--navy);line-height:1.25}
+.big-idea{font-size:1.25rem;background:var(--teal-l);border-left:6px solid var(--teal);padding:14px 18px;border-radius:0 10px 10px 0;margin:14px 0;color:var(--teal-d);font-weight:600}
+.key{font-size:1.15rem;background:#eef2ff;border:2px dashed #6366f1;border-radius:12px;padding:14px 18px;margin:14px 0}
+.key b{color:#3730a3}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.qbox{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0}
+.qbox .q{font-weight:700;margin:0 0 10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;background:#fff;border:2px solid var(--line);border-radius:10px;padding:10px 14px}
+.opt:hover{border-color:var(--navy2)}
+.opt.right{background:var(--green-l);border-color:var(--green)}
+.opt.wrong{background:var(--red-l);border-color:var(--red)}
+.fb{margin-top:10px;font-weight:600;display:none;padding:10px 14px;border-radius:10px}
+.fb.ok{display:block;background:var(--green-l);color:#14532d}
+.fb.no{display:block;background:var(--red-l);color:#7f1d1d}
+.why{margin-top:10px}
+.why button{background:#fff;border:2px solid var(--gold);color:#92400e;border-radius:99px;padding:5px 14px;font-weight:700;font-size:.9rem}
+.why .ans{display:none;margin-top:8px;background:var(--amber-l);border-radius:10px;padding:10px 14px}
+.why.open .ans{display:block}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.pick{background:#fff;border:2px solid var(--line);border-radius:12px;padding:16px;text-align:center}
+.pick .n{font-size:1.5rem;font-weight:800;color:var(--navy)}
+.pick .res{display:none;margin-top:8px;font-weight:600}
+.pick.show .res{display:block}
+.pick.show{border-color:var(--navy)}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700}
+.tag.g{background:var(--green-l);color:#14532d}.tag.a{background:var(--amber-l);color:#78350f}.tag.r{background:var(--red-l);color:#7f1d1d}
+.light{display:grid;grid-template-columns:60px 1fr;gap:12px;align-items:center;padding:12px;border-radius:12px;margin-bottom:10px}
+.light .bulb{width:48px;height:48px;border-radius:50%}
+.light.g{background:var(--green-l)}.light.g .bulb{background:#22c55e}
+.light.a{background:var(--amber-l)}.light.a .bulb{background:#f59e0b}
+.light.r{background:var(--red-l)}.light.r .bulb{background:#ef4444}
+.frame{font-size:1.2rem;line-height:2.4}
+.frame select{font:inherit;font-weight:700;padding:2px 6px;border-radius:8px;border:2px solid var(--navy);background:#fff}
+.slider{display:flex;align-items:center;gap:12px;margin:10px 0}
+.slider input{flex:1;accent-color:var(--teal)}
+.slider .val{min-width:70px;font-weight:800;color:var(--navy)}
+.seg{display:inline-flex;border:2px solid var(--navy);border-radius:10px;overflow:hidden}
+.seg button{background:#fff;border:none;padding:8px 14px;font-weight:700;color:var(--navy)}
+.seg button.on{background:var(--navy);color:#fff}
+.readout{font-size:1.1rem;background:#f8fafc;border-radius:10px;padding:10px 14px;margin-top:8px}
+svg.bar{width:100%;height:auto;display:block}
+table.t{width:100%;border-collapse:collapse;margin:10px 0}
+table.t td,table.t th{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+table.t th{background:var(--navy);color:#fff}
+.tf{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}
+.tf .btns button{margin-left:6px;border:2px solid var(--navy);background:#fff;border-radius:8px;padding:4px 12px;font-weight:700}
+.tf .btns button.right{background:var(--green-l);border-color:var(--green)}
+.tf .btns button.wrong{background:var(--red-l);border-color:var(--red)}
+.tf .exp{grid-column:1/-1;display:none;font-size:.95rem;color:var(--muted)}
+.tf.done .exp{display:block}
+.chain{display:grid;gap:8px}
+.chain .link{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start}
+.chain .link b{background:var(--navy);color:#fff;border-radius:8px;padding:6px 10px;font-size:.85rem;text-align:center}
+.chain textarea{width:100%;min-height:54px;font:inherit;border:2px solid var(--line);border-radius:8px;padding:6px 10px}
+.model{display:none;background:var(--teal-l);border-radius:12px;padding:14px 18px;margin-top:12px}
+.model.on{display:block}
+.summary li{margin-bottom:8px}
+.fq{border-bottom:1px solid var(--line);padding:12px 0}
+.fq .row input{font:inherit;width:120px;padding:6px 10px;border:2px solid var(--navy);border-radius:8px}
+.fq .work{display:none;margin-top:8px;background:var(--amber-l);border-radius:10px;padding:10px 14px;font-size:.95rem}
+.fq.shown .work{display:block}
+
+
+/* simulator */
+.hud{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.stat .l{font-size:.78rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat .v{font-size:1.4rem;font-weight:800;color:var(--navy)}
+.client{display:grid;grid-template-columns:72px 1fr;gap:16px;align-items:center}
+.avatar{width:72px;height:72px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:800;color:#fff}
+.needbox{background:#fff7ed;border:2px solid #fb923c;border-radius:12px;padding:12px 16px;margin-top:12px}
+.phase{border-top:2px dashed var(--line);padding-top:16px;margin-top:16px}
+.phase h3{margin:0 0 8px;color:var(--navy)}
+.phase.locked{opacity:.35;pointer-events:none}
+.pill{display:inline-block;background:var(--navy);color:#fff;border-radius:99px;width:28px;height:28px;text-align:center;line-height:28px;font-weight:800;margin-right:8px;font-size:.9rem}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.big3 button{border:3px solid;border-radius:12px;padding:12px;font-weight:800;background:#fff}
+.big3 .g{border-color:var(--green);color:var(--green)}
+.big3 .a{border-color:var(--amber);color:var(--amber)}
+.big3 .r{border-color:var(--red);color:var(--red)}
+.big3 button.sel.g{background:var(--green-l)}.big3 button.sel.a{background:var(--amber-l)}.big3 button.sel.r{background:var(--red-l)}
+.dec{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.dec button{padding:14px;border-radius:12px;font-weight:800;font-size:1.05rem;border:none;color:#fff}
+.dec button small{display:block;font-weight:500;font-size:.8rem;opacity:.9;margin-top:2px}
+.dec .go{background:var(--green)}.dec .no{background:var(--red)}.dec .hold{background:var(--amber)}
+.quote{background:#eef4fb;border-left:6px solid var(--teal);border-radius:0 12px 12px 0;padding:12px 16px;margin-top:14px;font-size:1.05rem}
+.quote .who{font-weight:800;color:var(--teal);font-size:.85rem;margin-bottom:2px}
+.riskbox{background:var(--red-l);border:2px solid #fca5a5;border-radius:12px;padding:10px 14px;margin-top:10px;font-weight:600;color:#7f1d1d}
+.risklbl{background:var(--red);color:#fff;border-radius:6px;padding:2px 8px;font-size:.75rem;font-weight:800;margin-right:6px}
+.headline{text-align:center;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:18px}
+.hnum{font-size:3.6rem;font-weight:900;color:var(--teal);line-height:1.1}
+.verdict-tag{display:inline-block;background:var(--navy);color:#fff;border-radius:99px;padding:5px 16px;font-weight:800;margin-top:4px}
+.spinner{width:42px;height:42px;border:5px solid var(--teal-l);border-top-color:var(--teal);border-radius:50%;margin:10px auto;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+.reveal{display:none}
+.reveal.on{display:block}
+.pts td:last-child{text-align:right;font-weight:800}
+.examline{background:#eef2ff;border-left:6px solid #6366f1;padding:12px 16px;border-radius:0 10px 10px 0;font-style:italic}
+.stars{font-size:1.6rem;color:var(--gold);letter-spacing:3px}
+.err{color:var(--red);font-weight:600;font-size:.9rem;margin-top:6px;display:none}
+.log{font-size:.9rem;color:var(--muted);margin-top:6px}
+input.num{font:inherit;width:110px;padding:6px 10px;border:2px solid var(--navy);border-radius:8px}
+.intro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.intro-grid div{background:#f8fafc;border-radius:12px;padding:14px;border:1px solid var(--line)}
+.print-only{display:none}
+.lab-row{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:6px}
+@media(max-width:640px){h1{font-size:1.5rem}.big3,.dec{grid-template-columns:1fr}.chain .link{grid-template-columns:1fr}.tab{padding:10px 12px}}
+
+@media print{
+  @page{margin:16mm}
+  body{background:#fff;color:#000;font-family:Georgia,"Times New Roman",serif;font-size:11.5pt}
+  header.top,.tabs,.toolbar,.progress,.nav,.opts,.why button,.qbox,.slider,.seg,svg,.btn,.tf .btns,.chain textarea,.grid3 .pick button,#panel-sim,.pick,.no-print,select{display:none !important}
+  .print-only{display:block !important}
+  .print-head{border-bottom:2px solid #000;margin-bottom:12px;padding-bottom:6px}
+  .panel,.step{display:block !important}
+  #panel-learn{display:block !important}
+  .card{border:none;padding:0;margin:0}
+  .step{page-break-inside:avoid;margin-bottom:18px}
+  .step h2{color:#000;font-size:15pt}
+  .step:nth-of-type(5),.step:nth-of-type(9){page-break-before:always}
+  .big-idea,.key,.light{background:#fff !important;border:1px solid #000 !important;color:#000 !important}
+  .why .ans,.tf .exp,.model{display:block !important;background:#fff !important;border:1px solid #999}
+  .stepno{background:#fff;color:#000;border:1px solid #000}
+  table.t th{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">BIZ-<span>OMICS</span></div>
+      <div class="toolbar">
+        <span class="spec">AQA A-level Business 7138 · 3.1.3 Market research</span>
+        <button class="tbtn" id="bigBtn" type="button">Board mode: off</button>
+        <button class="tbtn" type="button" onclick="window.print()">Print notes</button>
+      </div>
+    </div>
+    <h1>Confidence intervals made simple</h1>
+    <p class="sub">A survey gives you a range, not one exact number. Learn to read that range and use it to make a decision.</p>
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="learn" role="tab" type="button">1. Learn it step by step<small>14 short steps</small></button>
+      <button class="tab" data-tab="sim" role="tab" type="button">2. The Research Desk<small>Simulator · 5 clients</small></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+<div class="print-only print-head"><b>BIZ-OMICS</b> · Confidence intervals made simple · AQA A-level Business 7138 (3.1.3)<br>Name: ____________________ Class: ________ Date: ________</div>
+
+<!-- ============ LEARN TAB ============ -->
+<section class="panel on" id="panel-learn">
+  <div class="progress" id="progress"></div>
+  <div class="card">
+
+    <!-- 1 -->
+    <div class="step" data-title="The problem">
+      <span class="stepno">STEP 1 · THE PROBLEM</span>
+      <h2>A business can't ask everyone</h2>
+      <p><b>Brew Box</b> is a coffee subscription company in Leeds with <b>20,000 customers</b>. It wants to launch oat-milk lattes.</p>
+      <p>It can't ask all 20,000 customers, because that would take too long and cost too much. So it asks <b>400 of them</b>. This smaller group is called a <b>sample</b>.</p>
+      <div class="big-idea">Of the 400 customers asked, 58% said they would buy.</div>
+      <div class="qbox" data-mcq data-correct="1">
+        <p class="q">Does this mean exactly 58% of all 20,000 customers will buy?</p>
+        <div class="opts">
+          <button class="opt" type="button">Yes, the survey tells us the exact answer</button>
+          <button class="opt" type="button">No, it's only a close guess</button>
+        </div>
+        <div class="fb" data-ok="Correct. If Brew Box asked a different 400 customers, it would get a slightly different answer, maybe 55% or 61%." data-no="Not quite. A different 400 customers would give a slightly different answer. 58% is only a best guess."></div>
+      </div>
+      <p>So we need a way of saying <b>"about 58%, give or take a bit"</b>. That's what a confidence interval does.</p>
+    </div>
+
+    <!-- 2 -->
+    <div class="step" data-title="Guess my age">
+      <span class="stepno">STEP 2 · THE HOOK</span>
+      <h2>Guess your teacher's age</h2>
+      <p>You've been asked to guess your teacher's age. Which answer is best? Click each one to find out.</p>
+      <div class="grid3" id="ageGrid">
+        <div class="pick" tabindex="0"><div class="n">"Exactly 37"</div><button class="btn ghost" type="button">Reveal</button><div class="res"><span class="tag r">Precise but probably wrong</span><br>One exact number is very unlikely to be right.</div></div>
+        <div class="pick" tabindex="0"><div class="n">"Between 30 and 45"</div><button class="btn ghost" type="button">Reveal</button><div class="res"><span class="tag g">Useful and probably right</span><br>It's a range, so you're fairly sure, and it's narrow enough to be useful.</div></div>
+        <div class="pick" tabindex="0"><div class="n">"Between 10 and 90"</div><button class="btn ghost" type="button">Reveal</button><div class="res"><span class="tag a">Very likely right, but useless</span><br>It's very likely to include the right age, but the range is so wide it tells us nothing.</div></div>
+      </div>
+      <div class="big-idea">Wider range = MORE sure but LESS useful.<br>Narrower range = MORE useful but LESS sure.</div>
+      <p>This is the whole idea behind confidence intervals.</p>
+    </div>
+
+    <!-- 3 -->
+    <div class="step" data-title="Confidence interval">
+      <span class="stepno">STEP 3 · KEY WORD 1</span>
+      <h2>Confidence interval = the range</h2>
+      <div class="key"><b>Confidence interval:</b> the range of values that the real answer is likely to be in.</div>
+      <p>Brew Box's survey said 58%. The interval might be <b>53% to 63%</b>. The real figure for all 20,000 customers is probably somewhere in that range.</p>
+      <svg class="bar" viewBox="0 0 640 110" data-bar="53,63,58"></svg>
+      <p class="muted">The dot is the survey result (the best guess). The green box is the confidence interval.</p>
+      <div class="qbox" data-mcq data-correct="1">
+        <p class="q">A report says: "The real figure is likely to be between 48% and 56%." What is "48% to 56%"?</p>
+        <div class="opts">
+          <button class="opt" type="button">The sample</button>
+          <button class="opt" type="button">The confidence interval</button>
+          <button class="opt" type="button">The confidence level</button>
+        </div>
+        <div class="fb" data-ok="Correct. It's a range, so it's the confidence interval." data-no="Not quite. A range of values is the confidence interval."></div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="step" data-title="Confidence level">
+      <span class="stepno">STEP 4 · KEY WORD 2</span>
+      <h2>Confidence level = how reliable the range is</h2>
+      <div class="key"><b>Confidence level:</b> how reliable the method for working out the range is. It's usually <b>90%</b>, <b>95%</b> or <b>99%</b>.</div>
+      <p><b>The simple version:</b> a 95% confidence level means we've used a very reliable method. It gives a range that catches the real answer most of the time.</p>
+      <p><b>The accurate version (learn this one):</b> if we took lots of different samples and worked out a range from each one, about <b>95% of those ranges</b> would contain the real answer.</p>
+      <table class="t">
+        <tr><th>Confidence level</th><th>In plain English</th></tr>
+        <tr><td>90%</td><td>About 9 in every 10 ranges worked out this way would catch the real answer.</td></tr>
+        <tr><td>95%</td><td>About 19 in every 20 ranges would catch it. <b>This is the one used most often.</b></td></tr>
+        <tr><td>99%</td><td>About 99 in every 100 ranges would catch it.</td></tr>
+      </table>
+      <p><b>See it for yourself.</b> The real figure is 50% (the dashed line). Each bar is the 95% range from a different survey of 200 people.</p>
+      <div class="row no-print"><button class="btn" type="button" id="labBtn2">Run 20 surveys</button></div>
+      <svg class="bar" viewBox="0 0 640 470" id="labSvg2"></svg>
+      <p id="labOut2" class="readout" style="display:none"></p>
+      <div class="qbox" data-mcq data-correct="2">
+        <p class="q">What does "95% confidence" mean?</p>
+        <div class="opts">
+          <button class="opt" type="button">95% of customers will buy the product</button>
+          <button class="opt" type="button">95% of people answered the survey</button>
+          <button class="opt" type="button">If we repeated the survey many times, about 95% of the ranges we worked out would contain the real answer</button>
+        </div>
+        <div class="fb" data-ok="Correct. The 95% is about how reliable the method for making ranges is. It says nothing about how many people will buy." data-no="Careful, this is the most common mistake. The 95% is about how reliable the method for making ranges is, not how many people will buy or answered."></div>
+      </div>
+    </div>
+
+    <!-- 5 -->
+    <div class="step" data-title="Say it properly">
+      <span class="stepno">STEP 5 · SAY IT PROPERLY</span>
+      <h2>The magic sentence</h2>
+      <p>Learn this sentence. It earns marks every time you use it in an exam:</p>
+      <div class="big-idea">"We are __% confident that the true figure is between __ and __."</div>
+      <p><b>Your turn.</b> A survey of 500 customers found that <b>42%</b> would buy. At the <b>90%</b> confidence level, the interval is <b>38% to 46%</b>.</p>
+      <div class="frame">
+        We are
+        <select id="f1"><option value="">choose</option><option>42%</option><option>90%</option><option>500</option></select>
+        confident that the true figure is between
+        <select id="f2"><option value="">choose</option><option>38%</option><option>42%</option><option>90%</option></select>
+        and
+        <select id="f3"><option value="">choose</option><option>46%</option><option>90%</option><option>500</option></select>.
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn teal" type="button" id="frameCheck">Check my sentence</button></div>
+      <div class="fb" id="frameFb"></div>
+    </div>
+
+    <!-- calc -->
+    <div class="step" data-title="Calculate it">
+      <span class="stepno">STEP 6 · CAN YOU CALCULATE IT?</span>
+      <h2>Working out the range from a margin of error</h2>
+      <p>Sometimes you're given the <b>best guess</b> and a <b>margin of error</b> (the "give or take" amount, written with a ± sign), and you have to work out the range yourself.</p>
+      <div class="key">
+        <b>Lower limit</b> = best guess − margin of error<br>
+        <b>Upper limit</b> = best guess + margin of error
+      </div>
+      <div class="qbox" style="background:#fff">
+        <p class="q">Worked example</p>
+        <p>A supermarket surveys 100 customers. Average spending is <b>£40</b>, with a margin of error of <b>±£3</b> (95% confidence).</p>
+        <p>Lower limit = 40 − 3 = <b>£37</b><br>Upper limit = 40 + 3 = <b>£43</b><br>Confidence interval = <b>£37 to £43</b></p>
+        <p><b>What it means:</b> we are 95% confident that the average spend of <i>all</i> the supermarket's customers is between £37 and £43. It can plan on an average of roughly £37 to £43 per customer.</p>
+        <p class="muted" style="margin:0">Watch out: this is about the <b>average</b> customer. Some individual customers will spend £5 and others £150.</p>
+      </div>
+      <h3 style="color:var(--navy)">Your turn: a new question every time</h3>
+      <div class="row" style="margin-bottom:6px"><button class="btn" type="button" id="calcNew">New question</button><span id="calcScore" class="muted"></span></div>
+      <div class="key" id="calcBrief" style="background:#fff;border-style:solid"></div>
+      <div id="calcQs"></div>
+    </div>
+
+    <!-- 6 -->
+    <div class="step" data-title="Lever 1: sample size">
+      <span class="stepno">STEP 7 · WHAT CHANGES THE RANGE? (1)</span>
+      <h2>Ask more people, get a narrower range</h2>
+      <div class="qbox" data-mcq data-correct="1" data-unlock="lev1">
+        <p class="q">Predict first: if Brew Box asks MORE people, what happens to the range?</p>
+        <div class="opts">
+          <button class="opt" type="button">It gets wider</button>
+          <button class="opt" type="button">It gets narrower</button>
+          <button class="opt" type="button">It stays the same</button>
+        </div>
+        <div class="fb" data-ok="Correct. More people means more information, so the guess is more precise." data-no="Not quite. Try the slider below to see what really happens."></div>
+      </div>
+      <div id="lev1">
+        <div class="slider"><label for="l1n">People asked</label><input type="range" id="l1n" min="50" max="2000" step="50" value="100"><span class="val" id="l1nv">100</span></div>
+        <svg class="bar" viewBox="0 0 640 110" id="l1bar"></svg>
+        <div class="readout" id="l1out"></div>
+      </div>
+      <div class="why"><button type="button">Tell me why</button><div class="ans">A small sample might, by chance, contain lots of people who love oat milk (or hate it). A big sample evens out those flukes, so the result is more likely to be close to the truth.</div></div>
+    </div>
+
+    <!-- 7 -->
+    <div class="step" data-title="Lever 2: confidence level">
+      <span class="stepno">STEP 8 · WHAT CHANGES THE RANGE? (2)</span>
+      <h2>Want to be more sure? Use a wider range</h2>
+      <div class="qbox" data-mcq data-correct="0">
+        <p class="q">Predict first: Brew Box wants to be 99% sure instead of 95% sure. What happens to the range?</p>
+        <div class="opts">
+          <button class="opt" type="button">It gets wider</button>
+          <button class="opt" type="button">It gets narrower</button>
+          <button class="opt" type="button">It stays the same</button>
+        </div>
+        <div class="fb" data-ok="Correct. It's like the age guess: to be more certain, you need a wider range." data-no="Think back to the age guess. To be MORE certain, did we need a wider or a narrower range?"></div>
+      </div>
+      <p>Same survey: <b>400 people, 58% said yes</b>. Click each confidence level:</p>
+      <div class="seg" id="l2seg"><button type="button" data-z="1.645">90%</button><button type="button" data-z="1.96" class="on">95%</button><button type="button" data-z="2.576">99%</button></div>
+      <svg class="bar" viewBox="0 0 640 110" id="l2bar"></svg>
+      <div class="readout" id="l2out"></div>
+      <div class="why"><button type="button">Tell me why</button><div class="ans">Think of it like fishing with a net. If you want to be more certain you'll catch the fish (the real answer), you need a bigger net (a wider range).</div></div>
+    </div>
+
+    <!-- 8 -->
+    <div class="step" data-title="The trade-off">
+      <span class="stepno">STEP 9 · THE TRADE-OFF</span>
+      <h2>Being sure AND precise costs money</h2>
+      <p>Every business wants a range that is both narrow (useful) and very sure (95% or 99%). The only way to get both is to <b>ask more people</b>.</p>
+      <table class="t">
+        <tr><th>What the business wants</th><th>What it has to do</th><th>The catch</th></tr>
+        <tr><td>A narrower range</td><td>Survey more people</td><td>Costs more money and takes more time</td></tr>
+        <tr><td>To be more sure</td><td>Use a higher confidence level</td><td>The range gets wider (less useful)</td></tr>
+        <tr><td>Both</td><td>Survey a lot more people</td><td>The most expensive option</td></tr>
+      </table>
+      <div class="why"><button type="button">Tell me why a small start-up might accept a wide range</button><div class="ans">It may not have the money or time for a big survey. A rough idea from a small sample is better than no research at all, as long as it knows the result is uncertain.</div></div>
+      <div class="why"><button type="button">Tell me why a big firm might pay for a huge sample</button><div class="ans">If it's about to spend millions on a launch, getting it wrong is very expensive. Paying extra for a precise result is worth it to reduce the risk.</div></div>
+    </div>
+
+    <!-- 9 -->
+    <div class="step" data-title="Make a decision">
+      <span class="stepno">STEP 10 · USE IT TO DECIDE</span>
+      <h2>The traffic-light rule</h2>
+      <p>A business usually has a <b>target line</b>, the % of customers it needs to buy for the idea to be worth it (for example, to break even). Compare the <b>whole range</b> with that line:</p>
+      <div class="light g"><div class="bulb"></div><div><b>GREEN: the whole range is above the line.</b><br>Even the bottom of the range is good enough, so the evidence supports going ahead.</div></div>
+      <div class="light a"><div class="bulb"></div><div><b>AMBER: the line is inside the range.</b><br>It could go either way. It's risky, so do more research or be cautious.</div></div>
+      <div class="light r"><div class="bulb"></div><div><b>RED: the whole range is below the line.</b><br>Even the best case isn't good enough, so don't do it.</div></div>
+      <div class="qbox" style="background:var(--amber-l);border-color:#fcd34d"><b>Green is not a guarantee.</b> It means the research evidence is good, not that the launch will definitely succeed. The real answer could still be outside the range, the sample could be biased (for example, only loyal customers were asked), people don't always do what they say in a survey, and things can change (a new competitor, or a recession).</div>
+      <p><b>Practise:</b> the orange dashed line is the target. Which colour is each one?</p>
+      <div id="classify"></div>
+    </div>
+
+    <!-- forecast graphs -->
+    <div class="step" data-title="Forecast graphs">
+      <span class="stepno">STEP 11 · FORECAST GRAPHS</span>
+      <h2>Reading a sales forecast graph</h2>
+      <p>AQA often shows confidence intervals on a <b>sales forecast graph</b>. It looks complicated, but there are only three parts:</p>
+      <svg class="bar" viewBox="0 0 640 420" id="fanExample"></svg>
+      <div class="grid3" style="margin:10px 0">
+        <div class="pick" style="text-align:left"><b>1. The solid line</b><br>Real sales from past years. These figures are known.</div>
+        <div class="pick" style="text-align:left"><b>2. The fan</b><br>The forecast for next year. It spreads out because the future is uncertain.</div>
+        <div class="pick" style="text-align:left"><b>3. Top and bottom of the fan</b><br>The two ends of the confidence interval.</div>
+      </div>
+      <div class="big-idea">Read the top and bottom of the fan, then use the magic sentence:<br>"We are 90% confident that sales in 2027 will be between £260,000 and £320,000."</div>
+      <div class="key"><b>Worked example: the % calculation AQA loves</b><br>
+        Calculate the <b>maximum</b> % increase in sales between 2026 and 2027.<br>
+        Step 1: Last real figure (2026) = £280k. Highest forecast (2027) = £320k.<br>
+        Step 2: Change = 320 − 280 = <b>40</b><br>
+        Step 3: 40 ÷ 280 × 100 = <b>14.3%</b><br>
+        <span class="muted">For the <b>minimum</b> change, use the bottom of the fan instead: (260 − 280) ÷ 280 × 100 = <b>−7.1%</b>. That's a fall!</span></div>
+      <div class="why"><button type="button">Tell me why the fan gets wider further into the future</button><div class="ans">The further ahead you forecast, the more things can change (the economy, competitors, customer tastes), so the business is less sure, and the range has to be wider to stay 90% confident.</div></div>
+      <div class="why"><button type="button">Tell me why a business would want a forecast with a range rather than one number</button><div class="ans">So it can plan for the worst case as well as the best case. For example, it can check it still has enough cash if sales only reach the bottom of the fan.</div></div>
+
+      <h3 style="color:var(--navy);margin-top:22px">Practice: a new graph every time</h3>
+      <p class="muted">Answer in £000s, just like the graph. Round percentages to 1 decimal place.</p>
+      <div class="row" style="margin-bottom:6px"><button class="btn" type="button" id="fanNew">New graph</button><span id="fanScore" class="muted"></span></div>
+      <svg class="bar" viewBox="0 0 640 420" id="fanPractice"></svg>
+      <div id="fanQs"></div>
+    </div>
+
+    <!-- 10 -->
+    <div class="step" data-title="Watch out">
+      <span class="stepno">STEP 12 · WATCH OUT</span>
+      <h2>Common mistakes: true or false?</h2>
+      <div id="tfList"></div>
+    </div>
+
+    <!-- 11 -->
+    <div class="step" data-title="Exam practice">
+      <span class="stepno">STEP 13 · EXAM PRACTICE</span>
+      <h2>A 6-mark Analyse question</h2>
+      <div class="key">Brew Box surveyed 400 customers. 58% said they would buy oat-milk lattes. At the 95% confidence level, the interval is 53% to 63%. Brew Box needs at least 50% of customers to buy for the launch to break even.<br><br><b>Analyse why the confidence interval might help Brew Box decide whether to launch oat-milk lattes. [6 marks]</b></div>
+      <p>Build one chain of reasoning. Fill in each box:</p>
+      <div class="chain">
+        <div class="link"><b>Point</b><textarea placeholder="What does the interval tell Brew Box?"></textarea></div>
+        <div class="link"><b>Because</b><textarea placeholder="Use the numbers: 53% to 63% vs 50%"></textarea></div>
+        <div class="link"><b>This means</b><textarea placeholder="What happens to the risk of launching?"></textarea></div>
+        <div class="link"><b>So</b><textarea placeholder="What's the effect on Brew Box (profit, decision)?"></textarea></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn teal" type="button" id="modelBtn">Show a model answer</button></div>
+      <div class="model" id="model">
+        <p><b>Model answer:</b></p>
+        <p>The confidence interval shows Brew Box that we are 95% confident the true proportion of customers who would buy oat-milk lattes is between 53% and 63%. <b>Because</b> even the bottom of this range (53%) is above the 50% break-even level, Brew Box can be fairly sure the launch would at least break even. <b>This means</b> the risk of losing money on the launch is low, as the result is very unlikely to be a fluke of the sample. <b>So</b> Brew Box can launch with more confidence, and is less likely to waste money on stock and marketing for a product that doesn't sell, which helps protect its profit.</p>
+        <p>However, the survey only reflects what customers <i>say</i> they will do. If the sample was not representative (for example, only loyal customers replied), the interval could be misleading.</p>
+      </div>
+    </div>
+
+    <!-- 12 -->
+    <div class="step" data-title="Summary">
+      <span class="stepno">STEP 14 · SUMMARY</span>
+      <h2>Six things to remember</h2>
+      <ol class="summary">
+        <li>A survey result is a <b>best guess</b>, not an exact answer.</li>
+        <li><b>Confidence interval</b> = the <b>range</b> the real answer is likely to be in.</li>
+        <li><b>Confidence level</b> = how reliable the method is. At 95%, about 19 out of every 20 ranges made this way would contain the real answer.</li>
+        <li><b>Lower limit</b> = best guess − margin of error. <b>Upper limit</b> = best guess + margin of error.</li>
+        <li><b>More people asked</b> means a narrower range. <b>More sure</b> means a wider range. Narrow and sure costs more money.</li>
+        <li>Compare the <b>whole range</b> with the target: green = good evidence to go ahead (not a guarantee), amber = risky, red = don't.</li>
+      </ol>
+      <div class="big-idea">"We are __% confident that the true figure is between __ and __."</div>
+      <div class="row no-print"><button class="btn teal" type="button" onclick="showTab('sim')">Now try the simulator</button></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn ghost" id="prev" type="button">Back</button>
+      <span class="muted" id="stepCount"></span>
+      <button class="btn" id="next" type="button">Next</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SIM TAB ============ -->
+<section class="panel" id="panel-sim">
+  <div class="card" id="simIntro">
+    <span class="stepno">THE RESEARCH DESK</span>
+    <h2 style="color:var(--navy);margin:10px 0 4px">You're the market researcher</h2>
+    <p>Five businesses each have a big yes-or-no decision to make. They need you to survey customers and tell them whether to go ahead.</p>
+    <div class="intro-grid">
+      <div><b><span class="pill">1</span>Read the brief</b><br>Find the target line, the % of customers the business needs.</div>
+      <div><b><span class="pill">2</span>Do the research</b><br>Survey more people (it costs money) and pick a confidence level.</div>
+      <div><b><span class="pill">3</span>Read the result</b><br>Is it green, amber or red?</div>
+      <div><b><span class="pill">4</span>Make the call</b><br>Launch, don't launch, or "too close to call". Then see what really happened.</div>
+    </div>
+    <p><b>How you score (per client):</b></p>
+    <table class="t" style="max-width:640px">
+      <tr><td>Clear result (green or red), and you made the right call</td><td><b>+100</b></td></tr>
+      <tr><td>Amber result, and you said "too close to call" (sensible, but the client loses time)</td><td><b>+70</b></td></tr>
+      <tr><td>Amber result, and you gambled on launch or don't launch</td><td><b>+100 if lucky, 0 if not</b></td></tr>
+      <tr><td>Clear result, but you said "too close to call" (over-cautious)</td><td><b>+30</b></td></tr>
+      <tr><td>Reading the traffic light correctly first time</td><td><b>+20</b></td></tr>
+      <tr><td>Each £100 of research budget you don't spend</td><td><b>+1</b> (up to +40)</td></tr>
+    </table>
+    <p class="muted">Tip: if you're stuck on amber, you can buy more research to try to get a clear answer and the full 100.</p>
+    <p class="muted">The survey results are random, just like real surveys. Play again and you'll get different numbers.</p>
+    <button class="btn teal" type="button" id="startSim">Start: meet client 1</button>
+  </div>
+
+  <div id="simGame" style="display:none">
+    <div class="hud">
+      <div class="stat"><div class="l">Client</div><div class="v" id="hClient">1 / 5</div></div>
+      <div class="stat"><div class="l">Score</div><div class="v" id="hScore">0</div></div>
+      <div class="stat"><div class="l">Budget left</div><div class="v" id="hBudget">£4,000</div></div>
+      <div class="stat"><div class="l">People surveyed</div><div class="v" id="hN">0</div></div>
+    </div>
+
+    <div class="card">
+      <div class="client">
+        <div class="avatar" id="cAv">BB</div>
+        <div>
+          <h2 style="margin:0;color:var(--navy)" id="cName"></h2>
+          <div class="muted" id="cTag"></div>
+        </div>
+      </div>
+      <div class="quote"><div class="who" id="cOwner"></div><div id="cBrief"></div></div>
+      <div class="riskbox"><span class="risklbl">IF IT GOES WRONG</span> <span id="cRisk"></span></div>
+      <div class="needbox" id="needBox"></div>
+
+      <div class="phase" id="ph2">
+        <h3><span class="pill">2</span>Do the research</h3>
+        <div class="headline" id="headline">
+          <div class="muted">Your free pilot survey of <b>50 people</b> says</div>
+          <div class="hnum" id="hNum">0%</div>
+          <div><b>would say yes</b></div>
+          <p class="muted" id="hHint" style="margin:8px 0 12px">That's only 50 people. How much can we trust this number?</p>
+          <button class="btn teal" type="button" id="showRange">Show me how sure we can be</button>
+        </div>
+        <div id="researchArea" style="display:none">
+        <p class="muted">That single number is just a best guess, so here is the range. Each extra person you survey costs <b>£10</b>.</p>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn" type="button" data-buy="50">Survey 50 more (£500)</button>
+          <button class="btn" type="button" data-buy="100">Survey 100 more (£1,000)</button>
+          <button class="btn" type="button" data-buy="200">Survey 200 more (£2,000)</button>
+        </div>
+        <div class="row" style="margin-bottom:6px"><span><b>Confidence level:</b></span>
+          <div class="seg" id="simSeg"><button type="button" data-z="1.645">90% fairly sure</button><button type="button" data-z="1.96" class="on">95% very sure</button><button type="button" data-z="2.576">99% almost certain</button></div>
+        </div>
+        <svg class="bar" viewBox="0 0 640 110" id="simBar"></svg>
+        <div class="readout" id="simOut"></div>
+        <div class="log" id="simLog"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="ph3">
+        <h3><span class="pill">3</span>Read the result: which colour is it?</h3>
+        <div class="big3" id="lightPick">
+          <button class="g" type="button" data-c="g">GREEN<br><small>whole range above the line</small></button>
+          <button class="a" type="button" data-c="a">AMBER<br><small>line inside the range</small></button>
+          <button class="r" type="button" data-c="r">RED<br><small>whole range below the line</small></button>
+        </div>
+        <div class="fb" id="lightFb"></div>
+      </div>
+
+      <div class="phase locked" id="ph4">
+        <h3><span class="pill">4</span>Make the call</h3>
+        <div class="dec">
+          <button class="go" type="button" data-d="go">LAUNCH<small>Tell them to go for it</small></button>
+          <button class="hold" type="button" data-d="hold">TOO CLOSE TO CALL<small>Advise a bigger survey first</small></button>
+          <button class="no" type="button" data-d="no">DON'T LAUNCH<small>Tell them not to do it</small></button>
+        </div>
+      </div>
+
+      <div class="phase" id="waiting" style="display:none;text-align:center">
+        <div class="spinner"></div>
+        <p style="font-weight:700;color:var(--navy)" id="waitText"></p>
+      </div>
+
+      <div class="reveal" id="reveal">
+        <div class="phase">
+          <div style="text-align:center;margin-bottom:10px"><div class="stars" id="rStars"></div><span class="verdict-tag" id="rTag"></span></div>
+          <div class="quote"><div class="who" id="rWho"></div><div id="rQuote"></div></div>
+          <h3>What really happened</h3>
+          <svg class="bar" viewBox="0 0 640 160" id="revBar"></svg>
+          <div id="revText"></div>
+          <table class="t pts" id="ptsTable"></table>
+          <p><b>Write it like an examiner:</b></p>
+          <div class="examline" id="examLine"></div>
+          <div class="row" style="margin-top:14px"><button class="btn teal" type="button" id="nextClient">Next client</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="simEnd" style="display:none">
+    <span class="stepno">REPORT CARD</span>
+    <h2 style="color:var(--navy);margin:10px 0 4px">Your research career</h2>
+    <div class="stars" id="endStars"></div>
+    <p id="endSummary" style="font-size:1.15rem"></p>
+    <table class="t" id="endTable"></table>
+    <div class="key" id="endLesson"></div>
+    <h3 style="color:var(--navy)">Bonus: what does "95% confident" really mean?</h3>
+    <p>Imagine one business ran the same survey 20 times, each time with 200 different people. The real figure is <b>50%</b> (the dashed line). Each bar is one survey's 95% interval.</p>
+    <button class="btn" type="button" id="labBtn">Run 20 surveys</button>
+    <svg class="bar" viewBox="0 0 640 470" id="labSvg"></svg>
+    <p id="labOut" class="readout" style="display:none"></p>
+    <div class="row" style="margin-top:14px"><button class="btn teal" type="button" id="restart">Play again</button><button class="btn ghost" type="button" onclick="showTab('learn')">Back to the steps</button></div>
+  </div>
+</section>
+</main>
+
+<script>
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const X=v=>30+v*5.8;
+const moe=(p,n,z)=>z*Math.sqrt(p*(1-p)/n)*100;
+const confName={"1.645":"90%","1.96":"95%","2.576":"99%"};
+function barSVG(lo,hi,mid,opt={}){
+  lo=Math.max(0,lo);hi=Math.min(100,hi);
+  const y=opt.y||44;let s='';
+  for(let v=0;v<=100;v+=10){s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${y+28}" y2="${y+34}" stroke="#94a3b8"/><text x="${X(v)}" y="${y+50}" text-anchor="middle" font-size="13" fill="#5b6475">${v}%</text>`}
+  s=`<line x1="${X(0)}" x2="${X(100)}" y1="${y+31}" y2="${y+31}" stroke="#94a3b8" stroke-width="2"/>`+s;
+  const col=opt.col||{f:'#ccfbf1',s:'#0f766e'};
+  s+=`<rect x="${X(lo)}" y="${y}" width="${Math.max(2,X(hi)-X(lo))}" height="26" rx="6" fill="${col.f}" stroke="${col.s}" stroke-width="2"/>`;
+  s+=`<circle cx="${X(mid)}" cy="${y+13}" r="6" fill="#14213d"/>`;
+  s+=`<text x="${X(lo)}" y="${y-8}" text-anchor="middle" font-size="13" font-weight="700" fill="#134e4a">${lo.toFixed(1)}%</text><text x="${X(hi)}" y="${y-8}" text-anchor="middle" font-size="13" font-weight="700" fill="#134e4a">${hi.toFixed(1)}%</text>`;
+  if(opt.need!=null){s+=`<line x1="${X(opt.need)}" x2="${X(opt.need)}" y1="${y-24}" y2="${y+36}" stroke="#ea580c" stroke-width="3" stroke-dasharray="6 4"/><text x="${X(opt.need)}" y="${y-28}" text-anchor="middle" font-size="13" font-weight="700" fill="#c2410c">Target ${opt.need}%</text>`}
+  if(opt.truth!=null){s+=`<polygon points="${X(opt.truth)-8},${y+88} ${X(opt.truth)+8},${y+88} ${X(opt.truth)},${y+74}" fill="#7c3aed"/><text x="${X(opt.truth)}" y="${y+104}" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Real figure: ${opt.truth}%</text>`}
+  return s;
+}
+function light(lo,hi,need){return lo>need?'g':hi<need?'r':'a'}
+const lightCol={g:{f:'#dcfce7',s:'#15803d'},a:{f:'#fef3c7',s:'#b45309'},r:{f:'#fee2e2',s:'#b91c1c'}};
+const lightName={g:'GREEN',a:'AMBER',r:'RED'};
+
+/* ---------- tabs + board mode ---------- */
+function showTab(t){$$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));$$('.panel').forEach(p=>p.classList.toggle('on',p.id==='panel-'+t));window.scrollTo({top:0,behavior:'smooth'})}
+$$('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+$('#bigBtn').onclick=()=>{document.documentElement.style.fontSize=document.body.classList.toggle('big')?'21px':'17px';$('#bigBtn').textContent='Board mode: '+(document.body.classList.contains('big')?'on':'off')};
+
+/* ---------- stepper ---------- */
+const steps=$$('.step');let cur=0;const seen=new Set([0]);
+steps.forEach((s,i)=>{const b=document.createElement('button');b.className='pdot';b.type='button';b.textContent=i+1;b.title=s.dataset.title;b.onclick=()=>go(i);$('#progress').appendChild(b)});
+function go(i){cur=Math.max(0,Math.min(steps.length-1,i));seen.add(cur);steps.forEach((s,k)=>s.classList.toggle('on',k===cur));
+  $$('.pdot').forEach((d,k)=>{d.className='pdot'+(k===cur?' now':seen.has(k)?' done':'')});
+  $('#prev').style.visibility=cur?'visible':'hidden';$('#next').style.visibility=cur<steps.length-1?'visible':'hidden';
+  $('#stepCount').textContent=`Step ${cur+1} of ${steps.length}: ${steps[cur].dataset.title}`;
+  window.scrollTo({top:0,behavior:'smooth'})}
+$('#prev').onclick=()=>go(cur-1);$('#next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{if($('#panel-learn').classList.contains('on')&&!/SELECT|TEXTAREA|INPUT/.test(e.target.tagName)){if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)}});
+
+/* ---------- MCQs ---------- */
+$$('[data-mcq]').forEach(box=>{const c=+box.dataset.correct,fb=box.querySelector('.fb');
+  box.querySelectorAll('.opt').forEach((o,i)=>o.onclick=()=>{box.querySelectorAll('.opt').forEach(x=>x.classList.remove('right','wrong'));
+    if(i===c){o.classList.add('right');fb.className='fb ok';fb.textContent=fb.dataset.ok}else{o.classList.add('wrong');fb.className='fb no';fb.textContent=fb.dataset.no}})});
+$$('.why button').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));
+$$('#ageGrid .pick').forEach(p=>{p.querySelector('button').onclick=()=>p.classList.add('show')});
+
+/* static bars */
+$$('svg[data-bar]').forEach(s=>{const [a,b,c]=s.dataset.bar.split(',').map(Number);s.innerHTML=barSVG(a,b,c)});
+
+/* frame */
+$('#frameCheck').onclick=()=>{const a=$('#f1').value,b=$('#f2').value,c=$('#f3').value,fb=$('#frameFb');
+  if(!a||!b||!c){fb.className='fb no';fb.textContent='Choose an answer in all three boxes first.';return}
+  if(a==='90%'&&b==='38%'&&c==='46%'){fb.className='fb ok';fb.textContent='Correct: "We are 90% confident that the true figure is between 38% and 46%." The 42% is the best guess in the middle.'}
+  else{fb.className='fb no';fb.textContent='Not quite. Hint: the first gap is the confidence level (how sure). The other two gaps are the ends of the range.'}};
+['#f1','#f2','#f3'].forEach(s=>$(s).onchange=()=>{$('#frameFb').className='fb'});
+
+/* lever 1 */
+function lev1(){const n=+$('#l1n').value,m=moe(.58,n,1.96);$('#l1nv').textContent=n;$('#l1bar').innerHTML=barSVG(58-m,58+m,58);
+  $('#l1out').innerHTML=`Asked <b>${n}</b> people: 95% confident the real figure is between <b>${(58-m).toFixed(1)}%</b> and <b>${(58+m).toFixed(1)}%</b>. The range is <b>${(2*m).toFixed(1)}</b> percentage points wide.`}
+$('#l1n').oninput=lev1;lev1();
+/* lever 2 */
+let l2z=1.96;function lev2(){const m=moe(.58,400,l2z);$('#l2bar').innerHTML=barSVG(58-m,58+m,58);
+  $('#l2out').innerHTML=`At <b>${confName[l2z]}</b> confidence: between <b>${(58-m).toFixed(1)}%</b> and <b>${(58+m).toFixed(1)}%</b>, a range <b>${(2*m).toFixed(1)}</b> points wide.`;
+  $$('#l2seg button').forEach(b=>b.classList.toggle('on',+b.dataset.z===l2z))}
+$$('#l2seg button').forEach(b=>b.onclick=()=>{l2z=+b.dataset.z;lev2()});lev2();
+
+/* classify */
+const cls=[{lo:31,hi:39,mid:35,need:45},{lo:52,hi:60,mid:56,need:40},{lo:44,hi:54,mid:49,need:50}];
+cls.forEach((c,i)=>{const d=document.createElement('div');d.className='qbox';const ans=light(c.lo,c.hi,c.need);
+  d.innerHTML=`<p class="q">Example ${i+1}</p><svg class="bar" viewBox="0 0 640 110">${barSVG(c.lo,c.hi,c.mid,{need:c.need})}</svg><div class="big3"><button class="g" type="button" data-c="g">GREEN</button><button class="a" type="button" data-c="a">AMBER</button><button class="r" type="button" data-c="r">RED</button></div><div class="fb"></div>`;
+  const fb=d.querySelector('.fb');d.querySelectorAll('.big3 button').forEach(b=>b.onclick=()=>{d.querySelectorAll('.big3 button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    const why={g:`the whole range (${c.lo}% to ${c.hi}%) is above the ${c.need}% target, so the evidence supports going ahead (though it isn't a guarantee).`,a:`the ${c.need}% target is inside the range (${c.lo}% to ${c.hi}%), so it could go either way. It's risky.`,r:`the whole range (${c.lo}% to ${c.hi}%) is below the ${c.need}% target, so don't do it.`}[ans];
+    if(b.dataset.c===ans){fb.className='fb ok';fb.textContent=`Correct, it's ${lightName[ans]}: ${why}`}else{fb.className='fb no';fb.textContent=`Not quite. Look at where the orange line is compared with the WHOLE green box.`}});
+  $('#classify').appendChild(d)});
+
+/* true/false */
+const tfs=[
+ ["\"95% confident\" means 95% of customers will buy.",false,"False. It means we're 95% sure the real answer is inside the range. It says nothing about how many will buy."],
+ ["Surveying more people makes the confidence interval narrower.",true,"True. A bigger sample gives a more precise result."],
+ ["A narrow interval proves the research is accurate.",false,"False. If the sample is biased (for example, only loyal customers were asked), the range can be narrow and still wrong."],
+ ["If the target line is inside the range, the decision is risky.",true,"True. That's AMBER: the real figure could be above or below the target."],
+ ["A 99% confidence interval is narrower than a 95% one from the same survey.",false,"False. Being more sure needs a wider range."]
+];
+tfs.forEach(([s,a,e])=>{const d=document.createElement('div');d.className='tf';
+  d.innerHTML=`<div>${s}</div><div class="btns"><button type="button" data-v="1">True</button><button type="button" data-v="0">False</button></div><div class="exp">${e}</div>`;
+  d.querySelectorAll('button').forEach(b=>b.onclick=()=>{d.querySelectorAll('button').forEach(x=>x.classList.remove('right','wrong'));b.classList.add((b.dataset.v==='1')===a?'right':'wrong');d.classList.add('done')});
+  $('#tfList').appendChild(d)});
+$('#modelBtn').onclick=()=>$('#model').classList.toggle('on');
+go(0);
+
+/* ---------- forecast fan charts ---------- */
+function fanSVG(o){
+  const [ya,yb,yc]=o.years,vals=[o.v0,o.v1,o.lo,o.hi].concat(o.target!=null?[o.target]:[]);
+  let mn=Math.floor((Math.min(...vals)-20)/20)*20,mx=Math.ceil((Math.max(...vals)+20)/20)*20;
+  const L=90,R=560,T=40,B=360,Y=v=>B-30-(v-mn)/(mx-mn)*(B-T-40),XA=200,XB=370,XC=520;
+  let s='';
+  for(let v=mn;v<=mx;v+=5){const maj=v%20===0;s+=`<line x1="${L}" x2="${R+40}" y1="${Y(v)}" y2="${Y(v)}" stroke="${maj?'#b6bfcc':'#e3e8ef'}" stroke-width="${maj?1.2:.8}"/>`;if(maj)s+=`<text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="13" fill="#1f2937">${v}</text>`}
+  [XA,XB,XC].forEach((x,i)=>{s+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${B}" stroke="#b6bfcc"/><text x="${x}" y="${B+20}" text-anchor="middle" font-size="13" fill="#1f2937">${o.years[i]}</text>`});
+  s+=`<line x1="${L}" x2="${L}" y1="${T}" y2="${B}" stroke="#1f2937" stroke-width="2"/><line x1="${L}" x2="${R+40}" y1="${B}" y2="${B}" stroke="#1f2937" stroke-width="2"/>`;
+  s+=`<polyline points="${L-6},${B-14} ${L+6},${B-20} ${L-6},${B-26} ${L+6},${B-32}" fill="none" stroke="#1f2937" stroke-width="1.5"/>`;
+  s+=`<text x="${L-8}" y="${B+4}" text-anchor="end" font-size="13" fill="#1f2937">0</text>`;
+  s+=`<text x="${L}" y="${T-14}" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2937">Sales (£000s)</text>`;
+  s+=`<text x="${(XB+XC)/2}" y="${B+42}" text-anchor="middle" font-size="12" fill="#5b6475">← Forecast →</text>`;
+  if(o.target!=null)s+=`<line x1="${L}" x2="${R+40}" y1="${Y(o.target)}" y2="${Y(o.target)}" stroke="#ea580c" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${L+6}" y="${Y(o.target)-6}" font-size="12" font-weight="700" fill="#c2410c" stroke="#fff" stroke-width="4" paint-order="stroke">Target £${o.target}k</text>`;
+  s+=`<polygon points="${XB},${Y(o.v1)} ${XC},${Y(o.hi)} ${XC},${Y(o.lo)}" fill="#ccfbf1" opacity=".7"/>`;
+  s+=`<line x1="${XA}" y1="${Y(o.v0)}" x2="${XB}" y2="${Y(o.v1)}" stroke="#14213d" stroke-width="3"/>`;
+  for(let k=0;k<5;k++){const v=o.lo+(o.hi-o.lo)*k/4;s+=`<line x1="${XB}" y1="${Y(o.v1)}" x2="${XC}" y2="${Y(v)}" stroke="#0f766e" stroke-width="1.8"/><circle cx="${XC}" cy="${Y(v)}" r="4" fill="#0f766e"/>`}
+  s+=`<circle cx="${XA}" cy="${Y(o.v0)}" r="5" fill="#14213d"/><circle cx="${XB}" cy="${Y(o.v1)}" r="5" fill="#14213d"/>`;
+  const bx=XC+14;s+=`<path d="M${bx},${Y(o.hi)} q8,0 8,8 L${bx+8},${(Y(o.hi)+Y(o.lo))/2-6} l6,6 l-6,6 L${bx+8},${Y(o.lo)-8} q0,8 -8,8" fill="none" stroke="#1f2937" stroke-width="1.5"/>`;
+  s+=`<text x="${bx+20}" y="${(Y(o.hi)+Y(o.lo))/2-10}" font-size="13" fill="#1f2937">${o.conf}%</text><text x="${bx+20}" y="${(Y(o.hi)+Y(o.lo))/2+5}" font-size="13" fill="#1f2937">confidence</text><text x="${bx+20}" y="${(Y(o.hi)+Y(o.lo))/2+20}" font-size="13" fill="#1f2937">interval</text>`;
+  if(o.labels){s+=`<text x="${(XA+XB)/2-30}" y="${(Y(o.v0)+Y(o.v1))/2+30}" font-size="12" font-weight="700" fill="#14213d">1. Real sales</text><text x="${XB+14}" y="${Y(o.v1+(o.hi-o.v1)*0.27)-10}" font-size="12" font-weight="700" fill="#0f766e">2. The fan</text><text x="${XC-10}" y="${Y(o.hi)-10}" text-anchor="end" font-size="12" font-weight="700" fill="#134e4a">3. Top: £${o.hi}k</text><text x="${XC}" y="${Y(o.lo)+22}" text-anchor="middle" font-size="12" font-weight="700" fill="#134e4a">3. Bottom: £${o.lo}k</text>`}
+  return s}
+$('#fanExample').innerHTML=fanSVG({years:[2025,2026,2027],v0:240,v1:280,lo:260,hi:320,conf:90,labels:true});
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+let F,fanRight=0;
+function newFan(){
+  const y=ri(2026,2028),v0=ri(10,30)*10,v1=v0+ri(1,6)*10,centre=v1+ri(-1,3)*10,hw=ri(1,4)*10,lo=centre-hw,hi=centre+hw,conf=[90,95][ri(0,1)];
+  const tp=ri(0,2),target=tp===0?lo-ri(1,2)*5:tp===1?centre:hi+ri(1,2)*5;
+  F={years:[y-2,y-1,y],v0,v1,lo,hi,conf,target};fanRight=0;
+  $('#fanPractice').innerHTML=fanSVG(F);
+  const inc=(hi-v1)/v1*100,chg=(lo-v1)/v1*100,ans=light(lo,hi,target);
+  const qs=[
+    {q:`What is the <b>lowest</b> forecast value of sales for ${y}? (£000s)`,a:lo,tol:.01,w:`Read the bottom of the fan: <b>£${lo}k</b>.`},
+    {q:`What is the <b>highest</b> forecast value of sales for ${y}? (£000s)`,a:hi,tol:.01,w:`Read the top of the fan: <b>£${hi}k</b>.`},
+    {q:`How <b>wide</b> is the confidence interval? (£000s)`,a:hi-lo,tol:.01,w:`Top − bottom = ${hi} − ${lo} = <b>£${hi-lo}k</b>.`},
+    {q:`Calculate the <b>maximum</b> % increase in sales between ${y-1} and ${y}. (1 d.p.)`,a:+inc.toFixed(1),tol:.15,w:`Last real figure = ${v1}. Highest forecast = ${hi}.<br>(${hi} − ${v1}) ÷ ${v1} × 100 = <b>${inc.toFixed(1)}%</b>`},
+    {q:`Calculate the <b>minimum</b> % change in sales between ${y-1} and ${y}. (1 d.p., use a minus sign for a fall)`,a:+chg.toFixed(1),tol:.15,w:`Last real figure = ${v1}. Lowest forecast = ${lo}.<br>(${lo} − ${v1}) ÷ ${v1} × 100 = <b>${chg.toFixed(1)}%</b>${chg<0?' (a fall)':''}`},
+    {q:`The business needs sales of at least <b>£${target}k</b> in ${y} (the orange line). Is the forecast green, amber or red?`,light:ans,w:{g:`GREEN. Even the bottom of the fan (£${lo}k) is above the £${target}k target.`,a:`AMBER. The £${target}k target is inside the fan (£${lo}k to £${hi}k), so it could go either way.`,r:`RED. Even the top of the fan (£${hi}k) is below the £${target}k target.`}[ans]}
+  ];
+  F.n=qs.length;
+  $('#fanQs').innerHTML=qs.map((q,i)=>`<div class="fq" data-i="${i}"><div><b>Q${i+1}.</b> ${q.q}</div><div class="row" style="margin-top:6px">${q.light?`<div class="big3" style="flex:1">${['g','a','r'].map(c=>`<button class="${c}" type="button" data-c="${c}">${lightName[c]}</button>`).join('')}</div>`:`<input type="number" step="any" aria-label="Answer to question ${i+1}"><button class="btn teal" type="button">Check</button>`}</div><div class="fb"></div><div class="work">${q.w}</div></div>`).join('')+
+    `<div class="examline" style="margin-top:14px">Exam sentence: "We are ${conf}% confident that sales in ${y} will be between £${lo},000 and £${hi},000."</div>`;
+  $$('#fanQs .fq').forEach(el=>{const q=qs[+el.dataset.i],fb=el.querySelector('.fb');let done=false;
+    const mark=ok=>{if(ok){fb.className='fb ok';fb.textContent='Correct!';if(!done){fanRight++;done=true}}else{fb.className='fb no';fb.textContent='Not quite. Have a look at the working below.'}el.classList.add('shown');$('#fanScore').textContent=`Score on this graph: ${fanRight} / ${F.n}`};
+    if(q.light){el.querySelectorAll('.big3 button').forEach(b=>b.onclick=()=>{el.querySelectorAll('.big3 button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');mark(b.dataset.c===q.light)})}
+    else{const inp=el.querySelector('input');el.querySelector('button').onclick=()=>{const v=inp.value.trim();if(v===''||isNaN(+v)){fb.className='fb no';fb.textContent='Enter a number first.';return}mark(Math.abs(+v-q.a)<=q.tol)};inp.oninput=()=>{fb.className='fb'}}});
+  $('#fanScore').textContent=`Score on this graph: 0 / ${F.n}`}
+$('#fanNew').onclick=newFan;newFan();
+
+/* ============ SIMULATOR ============ */
+const clients=[
+ {name:'Brew Box',owner:'Jas Kaur, founder',av:'BB',col:'#0f766e',tag:'Coffee subscription · Leeds',
+  brief:"Our customers keep emailing about oat milk, so I'm thinking of launching an oat-milk latte range. The trouble is it means new equipment and a big order of stock. Is the demand really there?",
+  risk:"If too few people buy, Jas is stuck with £15,000 of equipment and stock that goes out of date.",
+  need:40,needText:'Jas needs at least <b>40%</b> of customers to buy for the launch to be worth it.',truth:55,
+  react:{win:"The oat lattes are flying out. Best thing we've done this year!",lose:"Hardly anyone's ordering them. I've had to bin two pallets of stock.",saved:"Fair enough. I'll put the money into something else.",missed:"Our rival launched oat lattes and they're selling brilliantly. That could have been us.",hold:"More research? I suppose so... but customers keep asking now."}},
+ {name:'Glow Gym',owner:'Marcus Reid, manager',av:'GG',col:'#7c3aed',tag:'24-hour gym · Bradford',
+  brief:"We're full most evenings, so I want to open a second site across town. A new lease is a five-year commitment. Will enough local people actually sign up?",
+  risk:"A five-year lease on a half-empty gym could drag the whole business into a loss.",
+  need:35,needText:'Marcus needs at least <b>35%</b> of local residents to be interested in joining.',truth:24,
+  react:{win:"The new site is packed. Great call.",lose:"The new site's a ghost town. We're paying rent on empty treadmills.",saved:"Good. I'd rather keep one busy gym than two quiet ones.",missed:"Turns out the area was crying out for a gym. Someone else got there first.",hold:"Another survey? OK, but the landlord won't hold the building forever."}},
+ {name:'Pedal Pals',owner:'Ellie Shaw, owner',av:'PP',col:'#ea580c',tag:'Mobile bike repair van · York',
+  brief:"E-bikes are everywhere now. I could train my mechanics and buy the specialist tools, but it isn't cheap. Would my customers actually use an e-bike service?",
+  risk:"Training and tools cost £8,000. If customers don't use the service, that money is gone.",
+  need:50,needText:'Ellie needs at least <b>50%</b> of her customers to say they would use e-bike servicing.',truth:44,
+  react:{win:"The e-bike bookings are rolling in. Thank you!",lose:"Barely any e-bike jobs. The tools are gathering dust in the van.",saved:"OK, I'll wait until more of my customers have e-bikes.",missed:"I keep turning e-bike jobs away. I should have gone for it.",hold:"Makes sense to check properly. I'll wait for the bigger survey."}},
+ {name:'Crunch Co',owner:'Tom Hayes, sales director',av:'CC',col:'#db2777',tag:'Vegan crisps · Sheffield',
+  brief:"A local school wants to trial our crisps in its canteen. The school will only keep stocking them if enough pupils buy every week.",
+  risk:"Crunch Co has to pay for a special school-size pack. If sales are too low, the school drops it after one term.",
+  need:45,calc:{q:'The canteen needs <b>270 of its 600 pupils</b> to buy every week. What % is that?',hint:'Divide 270 by 600, then multiply by 100.'},truth:47,
+  react:{win:"The school's ordering more every week. Brilliant.",lose:"Sales were too low, and the school has dropped us. The packaging was wasted.",saved:"OK, we'll keep our focus on the shops.",missed:"Another brand took the canteen deal, and it's doing well.",hold:"Fine. I'll ask the school for a bit more time."}},
+ {name:'StreamFit',owner:'Priya Nair, CEO',av:'SF',col:'#2563eb',tag:'Fitness app · Manchester',
+  brief:"I want to launch a premium tier with live classes. Coaches are expensive, so it only works if enough of our users upgrade.",
+  risk:"StreamFit would sign coaches up to a year-long contract. Too few upgrades means a big loss.",
+  need:25,calc:{q:'Priya needs <b>1 in every 4</b> users to upgrade. What % is that?',hint:'1 out of 4 is a quarter. What is a quarter as a percentage?'},truth:33,
+  react:{win:"Upgrades are way ahead of plan. The live classes are a hit.",lose:"Not enough upgrades. We're paying coaches for empty classes.",saved:"Right, we'll stick with the free app for now.",missed:"A competitor launched live classes and our users are moving to them.",hold:"Fine. Let's get a proper answer before signing any contracts."}}
+];
+const BUDGET=4000,COST=10;
+let S;
+function sample(p,n){let y=0;for(let i=0;i<n;i++)if(Math.random()<p)y++;return y}
+function fmt(n){return '£'+n.toLocaleString('en-GB')}
+function newGame(){S={i:0,score:0,results:[]};$('#simIntro').style.display='none';$('#simEnd').style.display='none';$('#simGame').style.display='block';loadClient()}
+function loadClient(){const c=clients[S.i];
+  S.c=c;S.n=50;S.yes=sample(c.truth/100,50);S.budget=BUDGET;S.z=1.96;S.light=null;S.lightOk=null;S.needKnown=!c.calc;S.decided=false;S.buys=[];S.revealed=false;
+  $('#cAv').textContent=c.av;$('#cAv').style.background=c.col;$('#cName').textContent=c.name;$('#cTag').textContent=c.tag;$('#cBrief').textContent='"'+c.brief+'"';$('#cOwner').textContent=c.owner;$('#cRisk').textContent=c.risk;
+  $('#hNum').textContent=Math.round(S.yes/50*100)+'%';$('#headline').style.display='block';$('#researchArea').style.display='none';$('#waiting').style.display='none';
+  $('#reveal').classList.remove('on');$('#lightFb').className='fb';$$('#lightPick button').forEach(b=>b.classList.remove('sel'));
+  $('#ph4').classList.add('locked');
+  renderNeed();
+  $$('#simSeg button').forEach(b=>b.classList.toggle('on',+b.dataset.z===S.z));
+  $('#simLog').textContent='Pilot survey: 50 people (free).';
+  updateSim();window.scrollTo({top:0,behavior:'smooth'})}
+function renderNeed(){const c=S.c,box=$('#needBox');
+  if(S.needKnown){box.innerHTML=`<b><span class="pill">1</span>The target line</b><br>${c.needText||('The target is <b>'+c.need+'%</b>.')}`;$('#ph2').classList.remove('locked');$('#ph3').classList.toggle('locked',!S.revealed);return}
+  box.innerHTML=`<b><span class="pill">1</span>Work out the target line</b><br>${c.calc.q}<div class="row" style="margin-top:8px"><input class="num" id="needIn" type="number" step="any" placeholder="e.g. 30"><span>%</span><button class="btn" type="button" id="needBtn">Check</button><button class="btn ghost" type="button" id="hintBtn">Hint</button></div><div class="err" id="needErr"></div>`;
+  $('#ph2').classList.add('locked');$('#ph3').classList.add('locked');S.tries=0;
+  $('#hintBtn').onclick=()=>{const e=$('#needErr');e.style.display='block';e.style.color='#92400e';e.textContent='Hint: '+c.calc.hint};
+  $('#needIn').oninput=()=>{$('#needErr').style.display='none'};
+  $('#needBtn').onclick=()=>{const v=$('#needIn').value.trim(),e=$('#needErr');e.style.color='';
+    if(v===''||isNaN(+v)){e.style.display='block';e.textContent='Enter a number first.';return}
+    if(Math.abs(+v-c.need)<=0.5){S.needKnown=true;c.needText=`Correct, the target is <b>${c.need}%</b>. ${c.name} needs at least ${c.need}% of customers to buy.`;renderNeed();updateSim()}
+    else{S.tries++;e.style.display='block';if(S.tries>=2){e.textContent=`The answer is ${c.need}%. Here's why: ${c.calc.hint} Type ${c.need} to carry on.`}else e.textContent='Not quite. Try again, or press Hint.'}};
+}
+function cur_(){const p=S.yes/S.n,m=moe(p,S.n,S.z);return {p:p*100,lo:p*100-m,hi:p*100+m,m}}
+function updateSim(){const c=S.c,r=cur_();
+  $('#hClient').textContent=`${S.i+1} / ${clients.length}`;$('#hScore').textContent=S.score;$('#hBudget').textContent=fmt(S.budget);$('#hN').textContent=S.n;
+  $('#simBar').innerHTML=barSVG(r.lo,r.hi,r.p,{need:S.needKnown?c.need:null});
+  $('#simOut').innerHTML=`<b>${S.yes}</b> of <b>${S.n}</b> people said yes = <b>${r.p.toFixed(1)}%</b> (best guess).<br>We are <b>${confName[S.z]}</b> confident that the true figure is between <b>${Math.max(0,r.lo).toFixed(1)}%</b> and <b>${Math.min(100,r.hi).toFixed(1)}%</b>.`;
+  $$('[data-buy]').forEach(b=>b.disabled=S.decided||(+b.dataset.buy*COST>S.budget));
+  // research changed -> must re-read the light
+  if(S.light!==null&&!S.decided){S.light=null;S.lightOk=null;$$('#lightPick button').forEach(b=>b.classList.remove('sel'));$('#lightFb').className='fb';$('#ph4').classList.add('locked')}
+}
+$$('[data-buy]').forEach(b=>b.onclick=()=>{const k=+b.dataset.buy;if(k*COST>S.budget||S.decided)return;const y=sample(S.c.truth/100,k);S.yes+=y;S.n+=k;S.budget-=k*COST;
+  S.buys.push(k);$('#simLog').textContent=`Pilot: 50 free. Extra surveys: ${S.buys.join(' + ')} people. Latest batch: ${y} of ${k} said yes (${(y/k*100).toFixed(0)}%). Notice it's never exactly the same!`;updateSim()});
+$$('#simSeg button').forEach(b=>b.onclick=()=>{if(S.decided)return;S.z=+b.dataset.z;$$('#simSeg button').forEach(x=>x.classList.toggle('on',x===b));updateSim()});
+$$('#lightPick button').forEach(b=>b.onclick=()=>{if(S.decided)return;const r=cur_(),ans=light(r.lo,r.hi,S.c.need),fb=$('#lightFb');
+  $$('#lightPick button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+  if(S.lightOk===null){S.lightOk=(b.dataset.c===ans)}
+  S.light=b.dataset.c;
+  if(b.dataset.c===ans){fb.className='fb ok';fb.textContent={g:`Correct, GREEN. Even the bottom of the range (${r.lo.toFixed(1)}%) is above the ${S.c.need}% target.`,a:`Correct, AMBER. The ${S.c.need}% target is inside the range, so it could go either way. You could buy more research to narrow it, or decide now and accept the risk.`,r:`Correct, RED. Even the top of the range (${r.hi.toFixed(1)}%) is below the ${S.c.need}% target.`}[ans]}
+  else{fb.className='fb no';fb.textContent=`Not quite (no reading bonus this time). Look at the WHOLE box: where is the orange ${S.c.need}% line? The answer is ${lightName[ans]}.`}
+  $('#ph4').classList.remove('locked')});
+$$('.dec button').forEach(b=>b.onclick=()=>{if(S.decided||S.light===null)return;S.decided=true;
+  const c=S.c,r=cur_(),act=light(r.lo,r.hi,c.need),d=b.dataset.d;
+  $$('[data-buy]').forEach(x=>x.disabled=true);$('#ph4').classList.add('locked');
+  $('#waitText').textContent=`Sending your advice to ${c.owner.split(',')[0]}...`;$('#waiting').style.display='block';
+  $('#waiting').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>{$('#waiting').style.display='none';showOutcome(c,r,act,d)},1400)});
+function showOutcome(c,r,act,d){
+  const shouldLaunch=c.truth>=c.need,contains=c.truth>=r.lo&&c.truth<=r.hi;
+  let pDec,right,callTxt,story,react,tag;
+  if(d==='hold'){
+    pDec=act==='a'?70:30;right=act==='a';callTxt='Too close to call';react=c.react.hold;
+    story=act==='a'?`You advised ${c.name} to get a bigger survey first. With the target inside the range, that was a sensible, careful call. For the record, the real figure was <b>${c.truth}%</b> against a ${c.need}% target.`
+      :`You advised ${c.name} to wait for more research, but your range was clearly ${lightName[act]}. The evidence was already strong enough to decide, so the delay cost time. The real figure was <b>${c.truth}%</b> against a ${c.need}% target.`;
+    tag=act==='a'?'Careful and sensible':'Too cautious';
+  }else{
+    const launch=d==='go';right=launch===shouldLaunch;pDec=right?100:0;callTxt=launch?'Launch':"Don't launch";
+    if(launch&&right){story=`${c.name} launched. The real figure was <b>${c.truth}%</b>, above the ${c.need}% target, so it was a success.`;react=c.react.win}
+    else if(launch){story=`${c.name} launched, but the real figure was only <b>${c.truth}%</b>, below the ${c.need}% target. It lost money.`;react=c.react.lose}
+    else if(right){story=`${c.name} didn't launch. Good call: the real figure was only <b>${c.truth}%</b>, below the ${c.need}% target. You saved it from a loss.`;react=c.react.saved}
+    else{story=`${c.name} didn't launch, but the real figure was <b>${c.truth}%</b>, above the ${c.need}% target. It missed out on profit.`;react=c.react.missed}
+    tag=act==='a'?(right?'A gamble that paid off':'A gamble that backfired'):(right?'Spot-on reading':'Good reading, unlucky sample');
+  }
+  const pRead=S.lightOk?20:0,pMoney=Math.min(40,Math.floor(S.budget/100)),tot=pDec+pRead+pMoney;
+  S.score+=tot;S.results.push({name:c.name,need:c.need,truth:c.truth,lo:r.lo,hi:r.hi,conf:confName[S.z],n:S.n,act,callTxt,right,contains,tot,spent:BUDGET-S.budget});
+  const st=tot>=140?3:tot>=100?2:1;$('#rStars').textContent='★'.repeat(st)+'☆'.repeat(3-st);$('#rTag').textContent=tag;
+  $('#rWho').textContent=c.owner;$('#rQuote').textContent='"'+react+'"';
+  $('#revBar').innerHTML=barSVG(r.lo,r.hi,r.p,{need:c.need,truth:c.truth,col:lightCol[act]});
+  let lesson={g:'Your range was GREEN, so launching was the sensible call. Remember, green means good evidence, not a guaranteed success.',r:'Your range was RED, so not launching was the sensible call.',a:'Your range was AMBER, so a launch-or-not decision was always a gamble. You could buy more research to narrow the range (it costs money), or say "too close to call".'}[act];
+  if(act!=='a'&&d!=='hold'&&!right)lesson+=' Even a good reading is occasionally wrong: a range can miss the real figure through sampling variation. That is exactly what the confidence level warns you about.';
+  const capt=contains?`Your interval <b>did</b> contain the real figure.`:`Your interval <b>missed</b> the real figure. With a ${confName[S.z]} confidence level, a range can miss through sampling variation alone (some samples are unusual by chance). In real research, a biased sample or badly worded questions can also make results misleading.`;
+  $('#revText').innerHTML=`<p style="font-size:1.1rem">${story}</p><p>${capt}</p><p>${lesson}</p>`;
+  $('#ptsTable').innerHTML=`<tr><td>Your call: ${callTxt} (${lightName[act]} result)</td><td>${pDec}</td></tr><tr><td>Traffic-light reading (${S.lightOk?'correct first time':'not correct first time'})</td><td>${pRead}</td></tr><tr><td>Budget left: ${fmt(S.budget)}</td><td>${pMoney}</td></tr><tr><th>This client</th><th style="text-align:right">${tot} / 160</th></tr>`;
+  const verdict={g:`As even the bottom of the range is above the ${c.need}% target, the evidence supports launching, although success is not guaranteed.`,r:`As even the top of the range is below the ${c.need}% target, ${c.name} should not go ahead.`,a:`As the ${c.need}% target lies inside the range, the decision is risky, so ${c.name} may want to carry out more research before deciding.`}[act];
+  $('#examLine').textContent=`"Based on a sample of ${S.n} people, we are ${confName[S.z]} confident that the true figure is between ${Math.max(0,r.lo).toFixed(1)}% and ${Math.min(100,r.hi).toFixed(1)}%. ${verdict}"`;
+  $('#nextClient').textContent=S.i<clients.length-1?'Next client':'See my report card';
+  $('#reveal').classList.add('on');$('#hScore').textContent=S.score;
+  setTimeout(()=>$('#reveal').scrollIntoView({behavior:'smooth',block:'start'}),50)}
+$('#nextClient').onclick=()=>{S.i++;if(S.i<clients.length)loadClient();else endGame()};
+function endGame(){$('#simGame').style.display='none';$('#simEnd').style.display='block';
+  const max=clients.length*160,pct=S.score/max,st=pct>=.85?5:pct>=.7?4:pct>=.55?3:pct>=.4?2:1;
+  $('#endStars').textContent='★'.repeat(st)+'☆'.repeat(5-st);
+  const right=S.results.filter(r=>r.right).length,caught=S.results.filter(r=>r.contains).length;
+  $('#endSummary').innerHTML=`Score: <b>${S.score} / ${max}</b>. Sensible calls: <b>${right} / ${clients.length}</b>. Your intervals contained the real figure <b>${caught} / ${clients.length}</b> times.`;
+  $('#endTable').innerHTML='<tr><th>Client</th><th>Target</th><th>Your range</th><th>Light</th><th>Your call</th><th>Real figure</th><th>Points</th></tr>'+S.results.map(r=>`<tr><td>${r.name}</td><td>${r.need}%</td><td>${Math.max(0,r.lo).toFixed(1)}% to ${Math.min(100,r.hi).toFixed(1)}%<br><small>${r.n} people · ${r.conf}</small></td><td><span class="tag ${r.act}">${lightName[r.act]}</span></td><td>${r.callTxt} ${r.right?'✔':'✘'}</td><td>${r.truth}%</td><td><b>${r.tot}</b></td></tr>`).join('');
+  const amb=S.results.filter(r=>r.act==='a').length,spent=S.results.reduce((a,r)=>a+r.spent,0);
+  $('#endLesson').innerHTML=`<b>What this tells you:</b> you spent ${fmt(spent)} on research in total. ${amb?`${amb} of your results ended up AMBER. When the target is inside the range, the research can't settle it, and that's when a business either pays for more research or has to use judgement.`:'None of your results ended up AMBER, so every decision had clear evidence behind it.'} Remember: a bigger sample gives a narrower range, but it costs more.`;
+  $('#labSvg').innerHTML='';$('#labOut').style.display='none';window.scrollTo({top:0,behavior:'smooth'})}
+$('#showRange').onclick=()=>{S.revealed=true;$('#headline').style.display='none';$('#researchArea').style.display='block';$('#ph3').classList.remove('locked');updateSim()};
+$('#startSim').onclick=newGame;$('#restart').onclick=newGame;
+/* lab */
+function runLab(svgSel,outSel){let s='',miss=0;const n=200,t=.5;
+  s+=`<line x1="${X(50)}" x2="${X(50)}" y1="0" y2="440" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4"/>`;
+  for(let v=20;v<=80;v+=10)s+=`<text x="${X(v)}" y="462" text-anchor="middle" font-size="13" fill="#5b6475">${v}%</text>`;
+  for(let i=0;i<20;i++){const y=sample(t,n),p=y/n,m=moe(p,n,1.96)/100,lo=(p-m)*100,hi=(p+m)*100,ok=lo<=50&&hi>=50;if(!ok)miss++;
+    const yy=10+i*21;s+=`<rect x="${X(lo)}" y="${yy}" width="${X(hi)-X(lo)}" height="14" rx="4" fill="${ok?'#ccfbf1':'#fee2e2'}" stroke="${ok?'#0f766e':'#b91c1c'}" stroke-width="1.5"/><circle cx="${X(p*100)}" cy="${yy+7}" r="3.5" fill="#14213d"/>`}
+  $(svgSel).innerHTML=s;$(outSel).style.display='block';
+  $(outSel).innerHTML=`<b>${20-miss} of 20</b> ranges caught the real figure (green). <b>${miss}</b> missed (red). With a 95% confidence level we expect about 19 out of 20 to catch it, but it won't be exactly 19 every time. <b>This is what "95% confident" really means:</b> the method works about 95% of the time. Press the button again to run 20 new surveys.`}
+$('#labBtn').onclick=()=>runLab('#labSvg','#labOut');$('#labBtn2').onclick=()=>runLab('#labSvg2','#labOut2');
+/* ---------- calculation checkpoint ---------- */
+let calcRight=0;
+function newCalc(){
+  const types=[
+    {biz:['A supermarket','A cinema','A garden centre','A sandwich shop'],what:'average spending per customer',unit:'£',mid:[15,80],m:[1,6]},
+    {biz:['A gym','A games company','A bakery','A phone network'],what:'percentage of customers who would buy a new product',unit:'%',mid:[25,70],m:[2,8]}
+  ];
+  const t=types[ri(0,1)],biz=t.biz[ri(0,t.biz.length-1)],mid=ri(t.mid[0],t.mid[1]),m=ri(t.m[0],t.m[1]),n=[100,200,250,400,500][ri(0,4)],conf=[90,95,99][ri(0,2)];
+  const f=v=>t.unit==='£'?'£'+v:v+'%',lo=mid-m,hi=mid+m;calcRight=0;
+  $('#calcBrief').innerHTML=`${biz} surveys <b>${n}</b> customers. The ${t.what} is <b>${f(mid)}</b>, with a margin of error of <b>±${f(m)}</b> (${conf}% confidence).`;
+  const sentOpts=[[`We are ${conf}% confident that the true ${t.what} is between ${f(lo)} and ${f(hi)}.`,1],[`${conf}% of customers have a figure between ${f(lo)} and ${f(hi)}.`,0],[`The true ${t.what} is exactly ${f(mid)}.`,0]];
+  const meanOpts=t.unit==='£'?[[`Every customer spends between ${f(lo)} and ${f(hi)}.`,0],[`The average spend of all its customers is probably between ${f(lo)} and ${f(hi)}, so it can plan on an average of at least about ${f(lo)}.`,1],[`Customers will definitely spend more than ${f(hi)} next year.`,0]]
+    :[[`Exactly ${f(mid)} of all customers will buy.`,0],[`Between ${f(lo)} and ${f(hi)} of all its customers would probably buy, so it should plan for at least about ${f(lo)} in the worst case.`,1],[`The survey proves more than ${f(hi)} will buy.`,0]];
+  const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+  const qs=[
+    {q:'Calculate the <b>lower limit</b>.',a:lo,w:`Best guess − margin of error = ${mid} − ${m} = <b>${f(lo)}</b>`},
+    {q:'Calculate the <b>upper limit</b>.',a:hi,w:`Best guess + margin of error = ${mid} + ${m} = <b>${f(hi)}</b>`},
+    {q:'Which sentence <b>correctly states</b> the confidence interval?',opts:shuffle(sentOpts),w:`Use the magic sentence: "We are ${conf}% confident that the true ${t.what} is between ${f(lo)} and ${f(hi)}." The ${conf}% is about how reliable the method is, not about customers.`},
+    {q:'What does this range mean for the business?',opts:shuffle(meanOpts),w:t.unit==='£'?`The range is about the <b>average</b> customer, not every customer, and it's a likely range, not a certainty. Planning on the lower limit is the cautious approach.`:`It's a likely range, not an exact answer or proof. A cautious business plans for the lower limit (the worst case).`}
+  ];
+  $('#calcQs').innerHTML=qs.map((q,i)=>`<div class="fq" data-i="${i}"><div><b>Q${i+1}.</b> ${q.q}</div><div style="margin-top:6px">${q.opts?`<div class="opts">${q.opts.map((o,k)=>`<button class="opt" type="button" data-k="${k}">${o[0]}</button>`).join('')}</div>`:`<div class="row">${t.unit==='£'?'<span>£</span>':''}<input type="number" step="any" aria-label="Answer to question ${i+1}">${t.unit==='%'?'<span>%</span>':''}<button class="btn teal" type="button">Check</button></div>`}</div><div class="fb"></div><div class="work">${q.w}</div></div>`).join('');
+  $$('#calcQs .fq').forEach(el=>{const q=qs[+el.dataset.i],fb=el.querySelector('.fb');let done=false;
+    const mark=ok=>{if(ok){fb.className='fb ok';fb.textContent='Correct!';if(!done){calcRight++;done=true}}else{fb.className='fb no';fb.textContent='Not quite. Have a look at the working below.'}el.classList.add('shown');$('#calcScore').textContent=`Score: ${calcRight} / 4`};
+    if(q.opts){el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{el.querySelectorAll('.opt').forEach(x=>x.classList.remove('right','wrong'));const ok=q.opts[+b.dataset.k][1]===1;b.classList.add(ok?'right':'wrong');mark(ok)})}
+    else{const inp=el.querySelector('input');el.querySelector('button').onclick=()=>{const v=inp.value.trim();if(v===''||isNaN(+v)){fb.className='fb no';fb.textContent='Enter a number first.';return}mark(Math.abs(+v-q.a)<=0.01)};inp.oninput=()=>{fb.className='fb'}}});
+  $('#calcScore').textContent='Score: 0 / 4'}
+$('#calcNew').onclick=newCalc;newCalc();
+</script>
+</body>
+</html>
