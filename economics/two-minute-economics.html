@@ -878,6 +878,20 @@ body.page-bites{--glow-a:rgba(20,184,166,0.16);--glow-b:rgba(59,130,246,0.14);}
 .player-frame{position:relative;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5);}
 .player-frame iframe,.player-frame video{position:absolute;inset:0;width:100%;height:100%;border:0;}
 .print-head{display:none;}
+/* topic filter + sort */
+.topic-bar{display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;margin:0.2rem 0 0.8rem;}
+.topic-bar .tb-lbl{font-family:var(--ff-mono);font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-right:0.2rem;}
+.tchip{font-family:var(--ff-sans);font-size:0.78rem;font-weight:600;padding:0.38rem 0.75rem;border-radius:100px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;}
+.tchip:hover{color:var(--text);border-color:rgba(20,184,166,0.4);}
+.tchip.on{color:var(--text);background:rgba(20,184,166,0.12);border-color:rgba(20,184,166,0.45);}
+.tchip .n{font-family:var(--ff-mono);font-size:0.66rem;opacity:0.7;margin-left:0.3rem;}
+.sort-sel{font-family:var(--ff-sans);font-size:0.82rem;font-weight:600;padding:0.65rem 0.8rem;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;}
+.sort-sel:focus{outline:none;border-color:var(--bite);}
+.topic-head{grid-column:1/-1;display:flex;align-items:baseline;gap:0.7rem;margin:0.8rem 0 -0.2rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
+.topic-head:first-child{margin-top:0;}
+.topic-head h2{font-family:var(--ff-head);font-size:1.2rem;font-weight:700;letter-spacing:-0.02em;}
+.topic-head span{font-family:var(--ff-mono);font-size:0.68rem;color:var(--muted);}
+.ttag{font-size:0.7rem;font-weight:600;color:var(--muted);}
 @media(max-width:660px){.bites-wrap{padding:0 1rem 3rem;}.bites-grid{grid-template-columns:1fr;}}
 @media print{
   .bg-fx,header,.toolbar,.bites-status,.player,.vthumb,.vlinks,.hero .stats,.crumbs,.filter-note,footer,script{display:none !important;}
@@ -891,6 +905,9 @@ body.page-bites{--glow-a:rgba(20,184,166,0.16);--glow-b:rgba(59,130,246,0.14);}
   .vtitle,.vdesc,.vref,.vref b,.ep{color:#000 !important;}
   .vcard[data-print-url]::after{content:"Watch: " attr(data-print-url);display:block;padding:0 1.25rem 0.8rem;font-size:9pt;color:#000;}
   .spec-tag,.ptag{border:1px solid #000;color:#000 !important;background:none !important;}
+  .topic-bar{display:none !important;}
+  .topic-head{border-bottom:1px solid #000;margin:14px 0 8px;break-after:avoid;}
+  .topic-head h2,.topic-head span,.ttag{color:#000 !important;}
 }
 </style>
 </head>
@@ -941,8 +958,14 @@ body.page-bites{--glow-a:rgba(20,184,166,0.16);--glow-b:rgba(59,130,246,0.14);}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="bite-search" class="search-input" placeholder="Search episodes&hellip; e.g. &ldquo;current account&rdquo;, &ldquo;deficit&rdquo;" autocomplete="off" oninput="render()">
     </div>
+    <select id="sort-sel" class="sort-sel" aria-label="Sort episodes" onchange="render()">
+      <option value="topic">Group by topic</option>
+      <option value="newest">Newest first</option>
+      <option value="order">Episode order</option>
+    </select>
     <button type="button" class="print-btn" onclick="window.print()">&#128424; Print list</button>
   </div>
+  <div class="topic-bar" id="topic-bar" role="group" aria-label="Filter by topic"></div>
   <p class="filter-note" id="filter-note"></p>
   <div class="bites-status" id="bites-status"></div>
   <div class="bites-grid" id="bites-grid"></div>
@@ -977,6 +1000,9 @@ body.page-bites{--glow-a:rgba(20,184,166,0.16);--glow-b:rgba(59,130,246,0.14);}
                (GitHub's web uploader only takes files up to 25 MB)
      Leave both empty and the card shows "Coming soon".
      paper   : 'macro' or 'micro'
+     topic   : the topic heading the episode sits under. Use one already in
+               TOPIC_ORDER below so it groups with the others, or type a new
+               one and a new topic button appears automatically.
      ref     : spec references shown on the card, one per exam board
      thumb   : optional picture for the card (YouTube videos get theirs automatically)
      related : optional link to a matching resource
@@ -987,7 +1013,7 @@ var EPISODES = [
     title: 'The balance of payments',
     youtube: 'SSE7pZEVvhk', file: '',
     duration: '2:38',
-    paper: 'macro',
+    paper: 'macro', topic: 'The international economy',
     ref: { 'AQA': '4.2.6.3 The balance of payments', 'Edexcel': '2.1.4 and 4.1.7 Balance of payments' },
     desc: 'How the UK spent £91.6 billion more abroad than it earned in 2025 and the books still balanced. Covers the four parts of the current account, a German car import recorded twice, Mark Carney\'s "kindness of strangers", Greece\'s 2008 deficit, when a deficit is sustainable, and why China\'s $1.2 trillion surplus causes problems too.',
     keywords: 'balance of payments current account deficit surplus capital account financial account trade in goods trade in services primary income secondary income remittances overseas aid hot money fdi foreign direct investment double entry exchange rate interest rates greece austerity bailout china trade surplus tariffs carney kindness of strangers international economy'
@@ -997,7 +1023,7 @@ var EPISODES = [
     title: 'Budget deficits: cyclical and structural',
     youtube: 'sEc-sxWtq1w', file: '',
     duration: '3:07',
-    paper: 'macro',
+    paper: 'macro', topic: 'Fiscal policy',
     ref: { 'AQA': '4.2.5.1 Fiscal policy', 'Edexcel': '4.5.3 Public sector finances' },
     desc: 'The UK borrowed £153 billion in 2010, but how much of that would fix itself? Splits a deficit into the cyclical part caused by the economic cycle and the structural part that stays when the economy is back to normal. Covers austerity after 2010, the pressure of an ageing population, Japan, the US, Germany\'s debt brake and the output gap.',
     keywords: 'budget deficit fiscal deficit cyclical structural public sector net borrowing government borrowing national debt automatic stabilisers recession universal credit tax receipts austerity osborne ageing population pensions nhs japan united states germany debt brake schuldenbremse output gap fiscal policy public finances',
@@ -1008,7 +1034,7 @@ var EPISODES = [
     title: 'Crowding out and crowding in',
     youtube: '6abL9gHJsCo', file: '',
     duration: '',
-    paper: 'macro',
+    paper: 'macro', topic: 'Fiscal policy',
     ref: { 'AQA': '4.2.5.1 Fiscal policy', 'Edexcel': '4.5.1 Public expenditure' },
     desc: 'Does government spending push out private sector spending and investment, or pull more of it in? How crowding out and crowding in work, and when each is more likely.',
     keywords: 'crowding out crowding in government spending public expenditure borrowing interest rates private investment fiscal policy multiplier spare capacity output gap bonds gilts',
@@ -1019,21 +1045,92 @@ var EPISODES = [
     title: 'Progressive, regressive and proportional taxes',
     youtube: 'apcbigD5Ghg', file: '',
     duration: '',
-    paper: 'macro',
+    paper: 'macro', topic: 'Fiscal policy',
     ref: { 'AQA': '4.2.5.1 Fiscal policy', 'Edexcel': '4.5.2 Taxation' },
     desc: 'How the share of income paid in tax changes as income rises: progressive taxes take a bigger share from higher earners, regressive taxes a bigger share from lower earners, and proportional taxes the same share from everyone.',
     keywords: 'progressive tax regressive tax proportional tax proportionate flat tax income tax vat average rate marginal rate tax bands tax burden equity inequality redistribution taxation fiscal policy',
     related: { href: 'UK_Taxation_Hub.html', label: 'UK Taxation Hub' }
+  },
+  {
+    ep: 5,
+    title: 'The circular flow of income',
+    youtube: 'BLAFZJ_ocvk', file: '',
+    duration: '',
+    paper: 'macro', topic: 'How the macroeconomy works',
+    ref: { 'AQA': '4.2.2.1 The circular flow of income', 'Edexcel': '2.4.2 Injections and withdrawals' },
+    desc: 'How money flows between households and firms, and how the circular flow links national income, output and spending. Covers injections (investment, government spending and exports) and withdrawals (saving, taxation and imports), and what happens to national income when they do not balance.',
+    keywords: 'circular flow of income national income output expenditure households firms injections withdrawals leakages investment government spending exports saving savings taxation imports equilibrium real flow money flow gdp',
+    related: { href: 'ppf-circular-flow-national-income-guide.html', label: 'PPF, circular flow and national income guide' }
+  },
+  {
+    ep: 6,
+    title: 'Aggregate demand',
+    youtube: 'LWQVTd1UNq4', file: '',
+    duration: '',
+    paper: 'macro', topic: 'How the macroeconomy works',
+    ref: { 'AQA': '4.2.2.2 AD and AS analysis; 4.2.2.3 The determinants of AD', 'Edexcel': '2.2 Aggregate demand' },
+    desc: 'What makes up aggregate demand, AD = C + I + G + (X \u2212 M). Explains why the AD curve slopes downward (the wealth, interest rate and international competitiveness effects) and what shifts AD to the left or right.',
+    keywords: 'aggregate demand ad c+i+g+x-m consumption investment government spending net exports exports imports downward sloping wealth effect interest rate effect international competitiveness trade effect shifts in ad movement along price level real gdp ad as',
+    related: { href: 'ad-as-suite.html', label: 'AD/AS suite' }
+  },
+  {
+    ep: 7,
+    title: 'The multiplier effect',
+    youtube: 'r6NlGv_pGDI', file: '',
+    duration: '',
+    paper: 'macro', topic: 'How the macroeconomy works',
+    ref: { 'AQA': '4.2.2.4 AD and the level of economic activity', 'Edexcel': '2.4.4 The multiplier' },
+    desc: 'Why an injection of spending can raise national income by more than the original amount. Shows how each round of spending becomes someone else\u2019s income, how withdrawals shrink each round, and how the size of the multiplier is worked out.',
+    keywords: 'multiplier effect multiplier ratio marginal propensity to consume mpc marginal propensity to save mps marginal propensity to withdraw mpw marginal propensity to import mpm marginal rate of tax mrt injection national income rounds of spending 1/mpw 1/(1-mpc) keynes fiscal policy',
+    related: { href: 'Multiplier_Accelerator_Suite (1).html', label: 'Multiplier and accelerator suite' }
   }
+];
+
+/* Topic headings appear in this order (roughly the order of the specification).
+   A topic not listed here still works; it is just shown after these. */
+var TOPIC_ORDER = [
+  'How the macroeconomy works',
+  'Economic performance',
+  'Financial markets and monetary policy',
+  'Fiscal policy',
+  'Supply-side policies',
+  'The international economy',
+  'Individual economic decision making',
+  'Price determination in a competitive market',
+  'Production, costs and revenue',
+  'Market structures',
+  'The labour market',
+  'Distribution of income and wealth',
+  'Market failure and government intervention'
 ];
 
 var CHANNEL = 'https://www.youtube.com/channel/UCe8C5P1Dq-0EFo4v9z3Ia1A';
 var filter = 'all';
+var topicFilter = 'all';
 
 function esc(s){ return String(s || '').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function norm(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function playable(e){ return !!(e.youtube || e.file); }
 function watchUrl(e){ return e.youtube ? 'https://www.youtube.com/watch?v=' + e.youtube : (e.file || CHANNEL); }
+
+function topicRank(t){ var i = TOPIC_ORDER.indexOf(t); return i === -1 ? 999 : i; }
+function topicSort(a, b){ return (topicRank(a) - topicRank(b)) || a.localeCompare(b); }
+function epTopic(e){ return e.topic || 'Other'; }
+function setTopic(t){ topicFilter = t; render(); }
+
+function renderTopicBar(){
+  var counts = {};
+  EPISODES.forEach(function(e){ if (filter === 'all' || e.paper === filter){ var t = epTopic(e); counts[t] = (counts[t] || 0) + 1; } });
+  var topics = Object.keys(counts).sort(topicSort);
+  if (topicFilter !== 'all' && !counts[topicFilter]) topicFilter = 'all';
+  var total = topics.reduce(function(s, t){ return s + counts[t]; }, 0);
+  var h = '<span class="tb-lbl">Topic</span>' +
+    '<button type="button" class="tchip' + (topicFilter === 'all' ? ' on' : '') + '" onclick="setTopic(\'all\')">All topics<span class="n">' + total + '</span></button>';
+  topics.forEach(function(t){
+    h += '<button type="button" class="tchip' + (topicFilter === t ? ' on' : '') + '" data-t="' + esc(t) + '" onclick="setTopic(this.getAttribute(\'data-t\'))">' + esc(t) + '<span class="n">' + counts[t] + '</span></button>';
+  });
+  document.getElementById('topic-bar').innerHTML = h;
+}
 
 function setFilter(f){
   filter = f;
@@ -1044,20 +1141,31 @@ function setFilter(f){
 function render(){
   var q = norm(document.getElementById('bite-search').value);
   var grid = document.getElementById('bites-grid'), html = '', shown = 0;
-  EPISODES.forEach(function(e, i){
+  renderTopicBar();
+  var sort = document.getElementById('sort-sel').value;
+  var list = EPISODES.map(function(e, i){ return { e: e, i: i }; });
+  if (sort === 'newest') list.sort(function(a, b){ return b.e.ep - a.e.ep; });
+  else if (sort === 'topic') list.sort(function(a, b){ return topicSort(epTopic(a.e), epTopic(b.e)) || a.e.ep - b.e.ep; });
+  else list.sort(function(a, b){ return a.e.ep - b.e.ep; });
+  var groupCounts = {}, lastTopic = null;
+  list.forEach(function(o){ groupCounts[epTopic(o.e)] = 0; });
+  var cards = [];
+  list.forEach(function(o){
+    var e = o.e, i = o.i;
     if (filter !== 'all' && e.paper !== filter) return;
+    if (topicFilter !== 'all' && epTopic(e) !== topicFilter) return;
     var refs = Object.keys(e.ref || {}).map(function(k){ return k + ' ' + e.ref[k]; }).join(' ');
     if (q){
-      var hay = norm([e.title, e.desc, e.keywords, refs, e.paper, 'episode ' + e.ep].join(' '));
+      var hay = norm([e.title, e.desc, e.keywords, refs, e.paper, epTopic(e), 'episode ' + e.ep].join(' '));
       var ok = q.split(' ').every(function(t){ return hay.indexOf(t) !== -1; });
       if (!ok) return;
     }
     shown++;
     var pic = e.youtube ? 'https://i.ytimg.com/vi/' + e.youtube + '/hqdefault.jpg' : (e.thumb || '');
     var thumb = pic ? '<img src="' + esc(pic) + '" alt="" loading="lazy">' : '';
-    var tags = '<span class="ptag ' + esc(e.paper) + '">' + (e.paper === 'micro' ? 'Micro' : 'Macro') + '</span>';
+    var tags = '<span class="ptag ' + esc(e.paper) + '">' + (e.paper === 'micro' ? 'Micro' : 'Macro') + '</span>' + (sort === 'topic' ? '' : '<span class="ttag">' + esc(epTopic(e)) + '</span>');
     var refLines = Object.keys(e.ref || {}).map(function(k){ return '<div><b>' + esc(k) + '</b> &middot; ' + esc(e.ref[k]) + '</div>'; }).join('');
-    html += '<article class="vcard" data-print-url="' + esc(playable(e) ? watchUrl(e) : 'coming soon') + '">' +
+    var card = '<article class="vcard" data-print-url="' + esc(playable(e) ? watchUrl(e) : 'coming soon') + '">' +
       '<button type="button" class="vthumb' + (pic ? ' has-img' : '') + (playable(e) ? '' : ' soon') + '" ' +
         (playable(e) ? 'onclick="openPlayer(' + i + ')" aria-label="Play ' + esc(e.title) + '"' : 'aria-disabled="true" tabindex="-1"') + '>' +
         thumb + '<span class="ttl-on">' + esc(e.title) + '</span><span class="ep-big">' + String(e.ep).padStart(2,'0') + '</span>' +
@@ -1075,6 +1183,16 @@ function render(){
           (e.related ? '<a class="rel" href="' + esc(e.related.href) + '">' + esc(e.related.label) + ' &rarr;</a>' : '') +
         '</div>' +
       '</div></article>';
+    groupCounts[epTopic(e)]++;
+    cards.push({ topic: epTopic(e), html: card });
+  });
+  cards.forEach(function(c){
+    if (sort === 'topic' && c.topic !== lastTopic){
+      var n = groupCounts[c.topic];
+      html += '<div class="topic-head"><h2>' + esc(c.topic) + '</h2><span>' + n + (n === 1 ? ' episode' : ' episodes') + '</span></div>';
+      lastTopic = c.topic;
+    }
+    html += c.html;
   });
   if (!shown) html = '<div class="empty">No episodes match. Try a different word or filter.</div>';
   grid.innerHTML = html;
@@ -1084,7 +1202,7 @@ function render(){
     'micro': 'Showing <b>microeconomics</b> episodes: individuals, firms, markets and market failure.'
   };
   document.getElementById('filter-note').innerHTML = notes[filter];
-  document.getElementById('bites-status').innerHTML = q ? 'Showing <strong>' + shown + '</strong> of ' + EPISODES.length + ' episodes' : '';
+  document.getElementById('bites-status').innerHTML = (q || topicFilter !== 'all') ? 'Showing <strong>' + shown + '</strong> of ' + EPISODES.length + ' episodes' : '';
 }
 
 function openPlayer(i){
@@ -1118,6 +1236,8 @@ function toggleTheme(){
   document.getElementById('st-new').textContent = EPISODES.filter(function(e){ return e.paper === 'macro'; }).length;
   document.getElementById('st-cur').textContent = EPISODES.filter(function(e){ return e.paper === 'micro'; }).length;
   var paper = new URLSearchParams(location.search).get('paper');
+  var tp = new URLSearchParams(location.search).get('topic');
+  if (tp) EPISODES.forEach(function(e){ if (norm(epTopic(e)) === norm(tp)) topicFilter = epTopic(e); });
   if (paper === 'macro' || paper === 'micro') setFilter(paper); else render();
 })();
 </script>
