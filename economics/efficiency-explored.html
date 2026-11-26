@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Efficiency explored</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Condensed:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: clear, brisk A-level tutor; every idea followed by a question
+   IDEA: an examiner's revision workbook: theory page, then practice page
+   PICTURE: the cost diagram itself, large, where P = MC = min AC
+   COLOUR and TYPE: white, black ink, vermilion accent; Sofia Sans Condensed + Instrument Sans
+   LAYOUT: sticky toolbar with search; one band per efficiency; theory beside diagram, practice tabs below */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#120d0b);--panel:light-dark(#f5f3f0,#1d1714);--ink:light-dark(#111111,#f3eee9);--soft:light-dark(#55524d,#bdb5ad);--line:light-dark(#dedad4,#3a322d);--acc:light-dark(#e0400f,#ff6a42);--accbg:light-dark(#fff0ea,#3a1c12);--blue:light-dark(#1f6fd1,#6aa8f5);--vio:light-dark(#5a48d0,#a497f5);--grn:light-dark(#127a52,#4fd19c);--grnbg:light-dark(#e6f6ee,#123326);--red:light-dark(#c0302f,#ff8080);--redbg:light-dark(#fdeaea,#3a1515)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16.5px/1.6 "Instrument Sans",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Sofia Sans Condensed","Arial Narrow",sans-serif;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,7vw,72px);font-weight:800}
+h2{font-size:clamp(32px,4.5vw,48px);font-weight:800}
+h3{font-size:22px;font-weight:700;margin:1.4em 0 .4em}
+p{margin:.6em 0;max-width:68ch}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.hero{border-bottom:1px solid var(--line)}
+.hero .lede{font-size:19px;color:var(--soft);max-width:60ch}
+.herogrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:32px;align-items:center;margin-top:28px}
+.herofig svg{width:100%;height:auto;display:block}
+.callouts{display:grid;gap:14px}
+.callout{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.callout b{display:block;font-size:17px}
+.callout span{color:var(--soft);font-size:15px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:10px max(5vw,16px)}
+.bar .wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.links{display:flex;gap:6px;overflow-x:auto;flex:1 1 420px;scrollbar-width:thin}
+.links a{flex:none;text-decoration:none;color:var(--ink);font-size:14px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.links a:hover{border-color:var(--acc)}
+.tools{display:flex;gap:8px;align-items:center;flex:1 1 320px;position:relative}
+.tools input{flex:1;font-size:16px;height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.btn{height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--ink);background:var(--bg);font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--panel)}
+.btn.pri{background:var(--ink);color:var(--bg)}
+.score{font-size:14px;color:var(--soft);white-space:nowrap}
+.score b{color:var(--ink);font-size:16px}
+#results{position:absolute;top:50px;left:0;right:0;background:var(--bg);border:1px solid var(--line);border-radius:10px;max-height:60vh;overflow:auto;display:none;box-shadow:0 12px 30px rgba(0,0,0,.15)}
+#results button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:10px 14px;font-size:14px}
+#results button:hover{background:var(--panel)}
+#results small{display:block;color:var(--acc);font-weight:600}
+mark{background:var(--accbg);color:var(--ink);padding:0 2px}
+.sec{border-bottom:1px solid var(--line)}
+.sec .kick{color:var(--acc);font-weight:600;font-size:15px;margin-bottom:6px}
+.sec .sum{font-size:18px;color:var(--soft);max-width:62ch;margin-top:10px}
+.tgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;margin-top:20px}
+.theory ul{padding-left:1.2em;margin:.4em 0}.theory li{margin:.3em 0;max-width:66ch}
+.rule{background:var(--accbg);border-radius:10px;padding:14px 18px;margin:14px 0}
+.rule b{font-family:"Sofia Sans Condensed",sans-serif;font-size:24px;display:block}
+.eg{border-left:4px solid var(--acc);padding:4px 0 4px 16px;margin:16px 0}
+.eg b{display:block}
+.fig svg{width:100%;height:auto;display:block}
+.figcap{font-size:14px;color:var(--soft);margin-top:6px}
+.acts{margin-top:34px;background:var(--panel);border-radius:14px;padding:clamp(16px,2.5vw,28px)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tabs button{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-size:15px}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.panel[hidden]{display:none}
+.bank{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.bank span{background:var(--bg);border:1px dashed var(--soft);border-radius:6px;padding:3px 10px;font-size:15px}
+.cloze{font-size:17px;line-height:2.3;max-width:none}
+.cloze input{font:inherit;font-size:16px;width:10.5em;height:36px;padding:0 8px;border:1px solid var(--soft);border-radius:6px;background:var(--bg);color:var(--ink)}
+.cloze input.ok{border-color:var(--grn);background:var(--grnbg)}
+.cloze input.no{border-color:var(--red);background:var(--redbg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.err{color:var(--red);font-size:14px}
+.res{font-weight:600}
+.mm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px}
+.mm .col{display:grid;gap:8px;align-content:start}
+.mm button{text-align:left;min-height:48px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:15px}
+.mm button.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.mm button.done{background:var(--grnbg);border-color:var(--grn);cursor:default}
+.mm button.bad{background:var(--redbg);border-color:var(--red)}
+.q{background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--line)}
+.q p{margin:0 0 8px;font-weight:500;max-width:none}
+.opts{display:grid;gap:6px}
+.opts button,.tf button{min-height:44px;text-align:left;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:15px}
+.tf{display:flex;gap:8px}.tf button{min-width:90px;text-align:center}
+.opts button:hover:not(:disabled),.tf button:hover:not(:disabled){border-color:var(--ink)}
+button.right{background:var(--grnbg)!important;border-color:var(--grn)!important}
+button.wrong{background:var(--redbg)!important;border-color:var(--red)!important}
+button:disabled{cursor:default}
+.fb{font-size:15px;margin-top:8px;color:var(--soft)}
+.fb b{color:var(--ink)}
+.why .q p{font-weight:500}
+.ans{margin-top:8px;padding:10px 12px;border-radius:8px;background:var(--grnbg);font-size:15px}
+.tbl{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;background:var(--panel)}
+.printhead{display:none}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s}
+#toast.on{opacity:1}
+footer{padding:28px max(5vw,16px);color:var(--soft);font-size:14px}
+@media(max-width:900px){.tgrid,.herogrid{grid-template-columns:minmax(0,1fr)}.bar{position:static}}
+@media(max-width:600px){.mm{grid-template-columns:minmax(0,1fr)}.mm .col.defs{margin-top:8px}table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;font-weight:600}}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}html{scroll-behavior:auto}}
+.ana{background:var(--grnbg);border-radius:10px;padding:14px 18px;margin:14px 0}
+.ana b{display:block;font-family:"Sofia Sans Condensed",sans-serif;font-size:21px;margin-bottom:2px}
+.ana p{margin:.4em 0}
+.stab{width:100%;border-collapse:separate;border-spacing:0 8px;table-layout:fixed}
+.stab td{background:var(--bg);border:0;padding:12px 14px;vertical-align:top}
+.stab td:first-child{width:32%;font-weight:600;border-radius:10px 0 0 10px}
+.stab td:last-child{border-radius:0 10px 10px 0}
+.stab textarea{width:100%;font:inherit;font-size:16px;min-height:52px;padding:8px 10px;border:1px solid var(--soft);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+.stab .ans{margin-top:8px}
+.stab .rv{margin-top:6px;height:36px;font-size:14px}
+.grid{overflow-x:auto}.grid table{min-width:640px;border-collapse:collapse}
+.grid th,.grid td{border:1px solid var(--line);background:var(--bg);padding:8px;vertical-align:top}
+.grid th{background:var(--panel)}
+.grid textarea{width:100%;font:inherit;font-size:15px;min-height:48px;padding:6px 8px;border:1px solid var(--soft);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.grid .ans{margin-top:6px;font-size:14px;padding:6px 8px}
+@media(max-width:600px){.stab td{display:block;width:auto!important;border-radius:10px!important}.stab tr{display:block;margin-bottom:8px}}
+@media print{.ana{background:#fff;border:1px dashed #000}}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+@media print{
+ :root{color-scheme:light}
+ body{font-family:Georgia,"Times New Roman",serif;color:#000;background:#fff;font-size:11.5pt}
+ .bar,.acts,svg,.fig,.herofig,.callouts,#toast,footer,.lede-hide{display:none!important}
+ .printhead{display:block;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:12px;font-family:Arial,sans-serif}
+ .printhead b{font-size:16pt}
+ .sec{page-break-before:always;border:0}
+ .band{padding:8px 0}
+ .tgrid{display:block}
+ .rule{background:#fff;border:1px solid #000}
+ .eg{border-left:3px solid #000}
+ h1,h2,h3{color:#000}
+ .kick,.sum{color:#000}
+ th{background:#eee}
+}
+</style>
+<!-- BIZ-OMICS app support -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#070b16">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script src="/pwa.js" defer></script>
+</head>
+<body>
+<div class="printhead"><b>BIZ-OMICS</b> · Efficiency explored: A-level Economics</div>
+
+<header class="band hero">
+ <div class="wrap">
+  <div class="kick" style="color:var(--acc);font-weight:600">BIZ-OMICS · A-level Economics · Market structures</div>
+  <h1>Efficiency, explored</h1>
+  <p class="lede">Productive, allocative, static, dynamic, X- and Pareto efficiency. Each one comes with the theory, a diagram, a real example and five ways to practise it: missing words, mix and match, true or false, multiple choice and quick "tell me why" questions, a plain-English analogy, and a summary table to fill in and check.</p>
+  <div class="herogrid">
+   <div class="herofig" id="heroFig"></div>
+   <div class="callouts">
+    <div class="callout"><b>Productive: is it made as cheaply as possible?</b><span>Output at the lowest point of AC, where MC = AC.</span></div>
+    <div class="callout"><b>Allocative: is the right amount being made?</b><span>Price equals marginal cost, so value to consumers equals the cost of resources used.</span></div>
+    <div class="callout"><b>Dynamic: is it getting better over time?</b><span>Innovation and investment shift costs down and improve products.</span></div>
+   </div>
+  </div>
+ </div>
+</header>
+
+<nav class="bar" aria-label="Sections and tools">
+ <div class="wrap">
+  <div class="links" id="links"></div>
+  <div class="tools">
+   <input id="search" type="search" placeholder="Search terms, theory and questions" aria-label="Search the resource" autocomplete="off">
+   <span class="score" id="score">Score <b>0</b> / 0</span>
+   <button class="btn" id="printBtn">Print</button>
+   <div id="results" role="listbox"></div>
+  </div>
+ </div>
+</nav>
+
+<main id="main"></main>
+
+<section class="band sec" id="s-mixed">
+ <div class="wrap">
+  <div class="kick">Bringing it together</div>
+  <h2>Mixed challenge</h2>
+  <p class="sum">Ten questions drawn at random from every section. Press "New set" for a fresh mix.</p>
+  <div class="acts">
+   <div class="row" style="margin:0 0 14px"><button class="btn pri" id="newMix">New set</button><span class="res" id="mixRes"></span></div>
+   <div id="mixBox"></div>
+  </div>
+ </div>
+</section>
+
+<footer><div class="wrap">BIZ-OMICS · biz-omics.co.uk · AQA A-level Economics (7136) market structures and efficiency.</div></footer>
+<div id="toast" role="status"></div>
+
+<script>
+{
+const X=q=>50+3.9*q, Y=p=>290-2.6*p;
+const AC=q=>30+0.02*(q-50)**2, MC=q=>80-4*q+0.06*q*q;
+const path=(f,a,b,dx=0)=>{let d='';for(let q=a;q<=b;q+=0.5){const p=f(q);if(p<0||p>100)continue;d+=(d?'L':'M')+(X(q)+dx).toFixed(1)+' '+Y(p).toFixed(1);}return d};
+const T=(x,y,t,c='var(--ink)',a='start',w=500)=>`<text x="${x}" y="${y}" fill="${c}" font-size="15" font-weight="${w}" text-anchor="${a}" font-family="Instrument Sans,sans-serif">${t}</text>`;
+const dot=(x,y,c)=>`<circle cx="${x}" cy="${y}" r="6" fill="${c}" stroke="var(--bg)" stroke-width="2"/>`;
+const guide=(q,p)=>`<path d="M${X(q)} ${Y(p)}V290M50 ${Y(p)}H${X(q)}" stroke="var(--soft)" stroke-dasharray="3 4" fill="none"/>`;
+const axes=(xl='Quantity',yl='Costs, revenue')=>`<path d="M50 20V290H450" stroke="var(--soft)" fill="none" stroke-width="1.5"/>${T(448,312,xl,'var(--soft)','end',400)}${T(56,22,yl,'var(--soft)','start',400)}`;
+const svg=(inner,label)=>`<svg viewBox="0 0 460 320" role="img" aria-label="${label}">${inner}</svg>`;
+const ln=(d,c,dash)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" ${dash?'stroke-dasharray="7 5"':''}/>`;
+
+const D={
+ hero:()=>svg(axes()+ln(path(MC,3,72),'var(--blue)')+ln(path(AC,6,95),'var(--vio)')+ln(`M${X(0)} ${Y(30)}H${X(98)}`,'var(--grn)')+guide(50,30)+guide(25,AC(25))+dot(X(25),Y(AC(25)),'var(--soft)')+dot(X(50),Y(30),'var(--acc)')+T(X(71),Y(MC(71))-8,'MC','var(--blue)','start',600)+T(X(93),Y(AC(93))-10,'AC','var(--vio)','end',600)+T(X(97),Y(30)-10,'P = AR = MR','var(--grn)','end',600)+T(X(50),Y(30)+26,'P = MC = min AC','var(--acc)','middle',600)+T(X(28),Y(35),'higher AC','var(--soft)','start',400),'Long-run perfect competition: price equals marginal cost at the minimum of average cost'),
+ productive:()=>svg(axes('Output','Cost per unit')+ln(path(MC,3,72),'var(--blue)')+ln(path(AC,6,95),'var(--vio)')+guide(50,30)+dot(X(50),Y(30),'var(--acc)')+dot(X(22),Y(AC(22)),'var(--soft)')+dot(X(80),Y(AC(80)),'var(--soft)')+T(X(71),Y(MC(71))-8,'MC','var(--blue)','start',600)+T(X(93),Y(AC(93))-10,'AC','var(--vio)','end',600)+T(X(50),Y(30)+26,'MC = AC: minimum AC','var(--acc)','middle',600)+T(X(22)+10,Y(AC(22))+4,'too little output','var(--soft)','start',400)+T(X(80)+10,Y(AC(80))+4,'too much','var(--soft)','start',400)+T(X(50),306,'optimum output','var(--soft)','middle',400),'Productive efficiency at the minimum of the average cost curve, where marginal cost cuts it'),
+ allocative:()=>{const qm=32,q=50;let tri=`M${X(qm)} ${Y(90-0.8*qm)}L${X(q)} ${Y(50)}L${X(qm)} ${Y(10+0.8*qm)}Z`;return svg(axes('Quantity','Price, cost')+`<path d="${tri}" fill="var(--acc)" fill-opacity=".22"/>`+ln(`M${X(0)} ${Y(90)}L${X(100)} ${Y(10)}`,'var(--grn)')+ln(`M${X(0)} ${Y(10)}L${X(100)} ${Y(90)}`,'var(--blue)')+guide(q,50)+guide(qm,90-0.8*qm)+dot(X(q),Y(50),'var(--acc)')+T(X(98),Y(12)+22,'D = MB','var(--grn)','end',600)+T(X(98),Y(88)-8,'S = MC','var(--blue)','end',600)+T(X(q)+10,Y(50)+4,'P = MC','var(--acc)','start',600)+T(X(qm)+8,Y(90-0.8*qm)-10,'P > MC at Qm','var(--ink)','start',400)+T(X(38),Y(43),'DWL','var(--acc)','middle',600)+T(X(qm),306,'Qm','var(--soft)','middle',400)+T(X(q),306,'Q*','var(--soft)','middle',400),'Allocative efficiency where price equals marginal cost, with deadweight loss when output is restricted')},
+ ppf:(mode)=>{const P=x=>100*Math.sqrt(1-(x/100)**2);let d='';for(let x=0;x<=100;x+=1)d+=(d?'L':'M')+X(x*0.95).toFixed(1)+' '+Y(P(x)*0.95).toFixed(1);let s=axes('Consumer goods','Capital goods')+ln(d,'var(--vio)')+T(X(70),Y(85),'PPF','var(--vio)','start',600);
+  if(mode==='static'){s+=dot(X(35),Y(40),'var(--soft)')+T(X(35)+10,Y(40)+4,'A: inside, inefficient','var(--soft)','start',400)+dot(X(25*0.95),Y(P(25)*0.95),'var(--blue)')+T(X(23)+10,Y(P(25)*0.95)-10,'B: productively efficient','var(--blue)','start',500)+dot(X(70*0.95),Y(P(70)*0.95),'var(--acc)')+T(X(66.5)-12,Y(P(70)*0.95)+22,'C: what society wants most','var(--acc)','end',600)}
+  else{s+=`<path d="M${X(35)} ${Y(40)}H${X(35)} ${Y(40)} L${X(35)} ${Y(P(36.8)*0.95)}" fill="none"/>`+`<path d="M${X(35)} ${Y(40)}L${X(35)} ${Y(87)}L${X(35)} ${Y(40)}L${X(85)} ${Y(40)}" stroke="var(--grn)" stroke-width="2" fill="none" stroke-dasharray="5 4"/>`+`<path d="M${X(35)} ${Y(40)}L${X(60)} ${Y(68)}" stroke="var(--grn)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>`+`<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--grn)"/></marker></defs>`+dot(X(35),Y(40),'var(--ink)')+T(X(35)-10,Y(40)+22,'starting point','var(--ink)','end',400)+T(X(52),Y(54),'Pareto','var(--grn)','start',600)+T(X(52),Y(54)+17,'improvements','var(--grn)','start',600)+T(X(82),Y(20),'any point on the PPF','var(--soft)','end',400)+T(X(82),Y(20)+17,'is Pareto optimal','var(--soft)','end',400)}
+  return svg(s,mode==='static'?'Production possibility frontier showing inefficient, productively efficient and statically efficient points':'Production possibility frontier showing Pareto improvements from a point inside the frontier')},
+ dynamic:()=>svg(axes('Output','Cost per unit')+ln(path(AC,6,95),'var(--vio)')+ln(path(q=>AC(q-6)-14,12,98),'var(--acc)')+`<defs><marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs><path d="M${X(50)} ${Y(32)}L${X(56)} ${Y(18)}" stroke="var(--ink)" stroke-width="2" marker-end="url(#ad)" fill="none"/>`+T(X(6),Y(AC(6))-12,'AC: year 1','var(--vio)','start',600)+T(X(56),Y(16)+24,'AC: after innovation','var(--acc)','middle',600),'Dynamic efficiency shown as the average cost curve shifting down over time'),
+ x:()=>svg(axes('Output','Cost per unit')+ln(path(AC,6,95),'var(--vio)')+ln(path(q=>AC(q)+16,6,95),'var(--red)',1)+`<path d="M${X(50)} ${Y(46)}V${Y(30)}" stroke="var(--red)" stroke-width="2" fill="none"/>`+dot(X(50),Y(30),'var(--vio)')+dot(X(50),Y(46),'var(--red)')+T(X(50),Y(30)+24,'AC: lowest possible cost','var(--vio)','middle',600)+T(X(93),Y(AC(93)+16)-10,'actual costs','var(--red)','end',600)+T(X(50),Y(46)-22,'X-inefficiency','var(--red)','middle',600),'X-inefficiency: the firm operates above its lowest possible average cost curve'),
+ pareto:()=>D.ppf('pareto')
+};
+
+const S=[
+{id:'productive',title:'Productive efficiency',kick:'Is it made as cheaply as possible?',sum:'A firm is productively efficient when it makes its output at the lowest possible cost per unit: the minimum point of its average cost curve.',dia:'productive',cap:'MC cuts AC at its lowest point. Anywhere else on the curve, each unit costs more than it needs to.',
+theory:`<div class="rule"><b>Condition: MC = AC (minimum AC)</b>Output is at the lowest point of the average cost curve.</div>
+<h3>Why MC cuts AC at its minimum</h3><p>Think of a test average. If your next mark (the marginal) is below your average, the average falls. If it is above, the average rises. So the average stops falling and starts rising exactly where the marginal crosses it. MC and AC work the same way, which is why productive efficiency is where MC = AC.</p>
+<h3>At the level of the economy</h3><p>For a whole economy, productive efficiency means being <i>on</i> the production possibility frontier. A point inside it means resources are unemployed or used wastefully: more of one good could be made without giving up any of another.</p>
+<h3>Technical efficiency is not the same thing</h3><p>Technical efficiency means getting the maximum output from a given set of inputs (no wasted labour or machine time). A firm can be technically efficient at <i>any</i> output level, but it is productively efficient at only one: the output where AC is lowest, using the cheapest combination of inputs.</p>
+<h3>Across market structures</h3><ul><li><b>Perfect competition (long run):</b> entry drives price down to minimum AC, so firms must produce there or make a loss and leave.</li><li><b>Monopoly:</b> profit maximisation (MC = MR) usually happens to the left of minimum AC, so it is productively inefficient. But economies of scale may mean its whole AC curve sits lower than a small competitive firm's.</li></ul>
+<div class="eg"><b>Real-world example: Toyota</b>The Toyota Production System, developed in post-war Japan, built lean production around cutting waste: just-in-time stock, kaizen (continuous small improvements) and stopping the line when faults appear. The aim is to push cost per car down towards the lowest achievable, which is productive efficiency in practice.</div>`,
+why:[['Why must MC cut AC at its lowest point?','If the extra unit costs less than the average, it pulls the average down; if it costs more, it pushes the average up. The average is therefore lowest at the point where the two are equal.'],['Why can a monopoly have lower costs than a competitive firm, yet still be productively inefficient?','Economies of scale can give it a lower AC curve overall. But productive efficiency is judged against its own AC curve, and profit-maximising output (MC = MR) is usually left of that curve\'s minimum.'],['Why is a point inside the PPF productively inefficient?','The economy could make more of one good without making less of another, because some resources are unemployed or badly used.'],['Why does long-run perfect competition force firms to be productively efficient?','Free entry pushes price down to minimum AC. Any firm with higher costs makes a loss at that price and is forced out of the market.']],
+cloze:{t:'A firm is productively efficient when it produces at the {minimum} point of its {average cost/ac} curve. This happens where {marginal cost/mc} equals average cost. For the whole economy, productive efficiency means being {on} the production possibility frontier. A firm that gets the maximum output from a given set of inputs is {technically/technical} efficient.',bank:['minimum','average cost','marginal cost','on','technically','maximum','inside','marginal revenue']},
+match:[['Productive efficiency','Producing at the lowest point of the AC curve'],['Technical efficiency','Maximum output from a given quantity of inputs'],['MC = AC','The condition that marks the minimum of average cost'],['Point inside the PPF','Resources unemployed or used wastefully'],['Optimum output','The output level where average cost is lowest']],
+tf:[['A productively efficient firm must also be allocatively efficient.',false,'They are separate tests. A firm can be at minimum AC while price is still above MC.'],['MC always cuts AC at its minimum point.',true,'This follows from the relationship between marginal and average values.'],['Any point on the PPF is productively efficient.',true,'All resources are fully and efficiently used, though only one point is allocatively efficient.'],['A monopolist with large economies of scale must be productively efficient.',false,'Lower costs overall do not mean it produces at the minimum of its own AC curve.'],['Technical efficiency guarantees productive efficiency.',false,'A firm can avoid waste at any output, but only one output is at minimum AC.']],
+mcq:[['Productive efficiency occurs where:',['P = MC','MC = AC','MC = MR','AR = AC'],1,'MC cuts AC at its lowest point, so MC = AC marks minimum average cost.'],['In long-run perfect competition, a firm produces:',['At the minimum of AC','To the left of minimum AC','To the right of minimum AC','Where AR is above AC'],0,'Free entry pushes price to minimum AC, and P = MR = MC = AC there.'],['An economy producing inside its PPF is:',['Allocatively but not productively efficient','Productively efficient','Productively inefficient','Dynamically efficient'],2,'More of one good could be made without less of the other.'],['Which best describes technical efficiency?',['Producing where P = MC','Maximum output from given inputs','Lower costs over time','No one can be made better off'],1,'Technical efficiency is about avoiding wasted inputs at whatever output is chosen.']]},
+
+{id:'allocative',title:'Allocative efficiency',kick:'Is the right amount being made?',sum:'Resources are allocatively efficient when they make the mix of goods and services that consumers value most. The test is whether price equals marginal cost.',dia:'allocative',cap:'At Q*, price equals marginal cost. Restricting output to Qm leaves P > MC and creates the shaded deadweight loss.',
+theory:`<div class="rule"><b>Condition: P = MC</b>The value consumers place on the last unit equals the cost of the resources used to make it.</div>
+<h3>What each side means</h3><p><b>Price</b> shows how much consumers value the last unit: their marginal benefit. <b>Marginal cost</b> shows the value of the resources used to make that unit, which is their opportunity cost. Comparing the two tells you whether one more unit is worth making.</p>
+<ul><li><b>P &gt; MC:</b> consumers value another unit more than it costs, so output is too low (under-production).</li><li><b>P &lt; MC:</b> the last unit costs more than it is worth to consumers, so output is too high (over-production).</li><li><b>P = MC:</b> no gain from producing more or less, so welfare (consumer surplus plus producer surplus) is maximised.</li></ul>
+<h3>Monopoly and deadweight loss</h3><p>A monopolist maximises profit where MR = MC. Because it must cut the price on every unit to sell one more, MR lies below price, so at its chosen output P &gt; MC. Units that consumers value above their cost are never made. The lost surplus is a deadweight loss: it is not transferred to anyone, it simply disappears.</p>
+<h3>The externality twist</h3><p>Even perfect competition can fail this test. If production creates pollution, the market sets P = <i>private</i> MC, but the true cost to society (marginal social cost) is higher. Allocative efficiency then needs MSB = MSC, which links this topic to market failure.</p>
+<div class="eg"><b>Real-world example: tobacco</b>Smokers pay a price that covers the private cost of making cigarettes, not the costs smoking imposes on others through the NHS and passive smoking. At the market price, P &lt; MSC, so the market over-produces. UK excise duty on tobacco is an attempt to move output back towards MSB = MSC.</div>`,
+why:[['Why does P = MC mean the "right" amount is produced?','Price is the value consumers put on the last unit; MC is the value of the resources used to make it. When they are equal, producing more or less would make society worse off.'],['Why does a monopolist leave P above MC?','It profit-maximises where MR = MC. To sell one more unit it must lower the price on all units, so MR is below price and P ends up above MC.'],['Why might a perfectly competitive market still be allocatively inefficient?','Externalities. Firms set P equal to private MC, but if there is pollution the marginal social cost is higher, so the market over-produces.'],['Why is deadweight loss a loss to society rather than a transfer?','The units that are not made would have been worth more than they cost. Nobody gets that surplus; it simply vanishes.']],
+cloze:{t:'Allocative efficiency occurs where price equals {marginal cost/mc}. Price reflects the value consumers place on the {last/marginal} unit. If price is above marginal cost, the good is {under}-produced. A monopolist restricts output and creates a {deadweight} loss. When externalities exist, allocative efficiency requires marginal social benefit to equal marginal {social} cost.',bank:['marginal cost','last','under','deadweight','social','over','average cost','private']},
+match:[['Allocative efficiency','Making the mix of goods consumers value most (P = MC)'],['Deadweight loss','Welfare lost when units worth more than they cost are not produced'],['P > MC','A sign that output is too low'],['P < MC','A sign that output is too high'],['MSB = MSC','The allocative condition when externalities exist']],
+tf:[['In long-run perfect competition, P = MC.',true,'P = MR = MC for a price taker, so the condition always holds.'],['A monopolist produces where P = MC.',false,'It produces where MR = MC, and price is above MC.'],['With no externalities, allocative efficiency maximises consumer surplus plus producer surplus.',true,'Every unit worth more than it costs is produced, and none that are worth less.'],['If P < MC, society would gain from producing more.',false,'The last unit costs more than it is worth, so society gains from producing less.'],['A firm making only normal profit must be allocatively efficient.',false,'In long-run monopolistic competition, firms make normal profit but P > MC.']],
+mcq:[['Allocative efficiency occurs where:',['MC = AC','MR = MC','P = MC','P = AC'],2,'Price (consumer value) equals marginal cost (resource cost).'],['A monopoly creates a deadweight loss because:',['Output is too high','Output is too low and P > MC','Costs are too low','It makes normal profit'],1,'It restricts output, so units valued above their cost are not produced.'],['Consumers value the last unit at £8 and its MC is £5. The good is:',['Over-produced','Allocatively efficient','Under-produced','Productively inefficient'],2,'P > MC, so society would gain from producing more.'],['A polluting factory in a perfectly competitive market leads to:',['Under-production','Over-production compared with the social optimum','Allocative efficiency','X-inefficiency'],1,'P = private MC, but MSC is higher, so too much is produced.']]},
+
+{id:'static',title:'Static efficiency',kick:'How efficient is it right now?',sum:'Static efficiency is efficiency at a single point in time, with technology and resources held fixed. It combines productive and allocative efficiency.',dia:'static',cap:'A wastes resources. B uses them fully. Only C also matches what society wants, so only C is statically efficient.',
+theory:`<div class="rule"><b>Static = productive + allocative</b>A snapshot: are current resources and technology being used as well as they could be?</div>
+<h3>The PPF picture</h3><ul><li>A point <b>inside</b> the PPF is neither productively nor allocatively efficient.</li><li><b>Any</b> point on the PPF is productively efficient: no resources are wasted.</li><li>Only <b>one</b> point on the PPF is also allocatively efficient: the combination of goods that society values most.</li></ul>
+<h3>Perfect competition as the benchmark</h3><p>In long-run perfect competition, P = MC = minimum AC. Both conditions hold at the same output, which is why textbooks use it as the benchmark of static efficiency. Every other market structure is judged against it.</p>
+<h3>The limitation</h3><p>Because static efficiency holds technology fixed, it says nothing about whether firms are improving. A market could be statically efficient this year and stagnant for the next twenty. That is why economists also judge markets on dynamic efficiency, and why a monopoly can sometimes be defended despite failing the static tests.</p>
+<h3>Watch out for the short run</h3><p>In the short run, a perfectly competitive firm making supernormal profit still has P = MC (allocatively efficient) but is producing beyond minimum AC (not productively efficient). Entry of new firms then restores both conditions in the long run.</p>
+<div class="eg"><b>Real-world example: agricultural commodity markets</b>Markets such as wheat come close to the perfect competition model: thousands of farmers, a homogeneous product and a world price that each farmer takes as given. These markets tend to push prices towards cost, but farms have little profit to spend on research, and much agricultural R&D is publicly funded or comes from large seed and machinery firms.</div>`,
+why:[['Why is perfect competition called the benchmark of static efficiency?','In the long run, P = MC = minimum AC, so both productive and allocative efficiency hold at the same time.'],['Why are all points on the PPF productively efficient but only one allocatively efficient?','Every point on the frontier uses resources fully, but only one mix of goods matches what consumers value most.'],['Why does static efficiency hold technology fixed?','It measures how well today\'s resources and techniques are used, not how they change over time.'],['Why might policymakers not aim for static efficiency alone?','Chasing it could sacrifice innovation. Long-run living standards depend more on dynamic efficiency.']],
+cloze:{t:'Static efficiency is efficiency at a {point} in time, with technology held {constant/fixed}. It combines {productive} efficiency and {allocative} efficiency. Long-run perfect competition is the {benchmark} because P = MC = minimum AC.',bank:['point','constant','productive','allocative','benchmark','period','dynamic','changing']},
+match:[['Static efficiency','Productive plus allocative efficiency at a point in time'],['Point inside the PPF','Neither productively nor allocatively efficient'],['Any point on the PPF','Productively efficient'],['Preferred point on the PPF','Productive and allocative efficiency together'],['Long-run perfect competition','The textbook benchmark of static efficiency']],
+tf:[['Static efficiency includes dynamic efficiency.',false,'Static is a snapshot; dynamic is about improvement over time.'],['A statically efficient firm can still fail to innovate.',true,'Static efficiency says nothing about future improvements.'],['Every point on the PPF is allocatively efficient.',false,'Only the point matching consumer preferences is.'],['Static efficiency assumes technology is fixed.',true,'That is what makes it a point-in-time measure.'],['A profit-maximising monopoly is usually statically efficient.',false,'It typically fails both tests: P > MC and output left of minimum AC.']],
+mcq:[['Static efficiency combines:',['Productive and dynamic efficiency','Allocative and X-efficiency','Productive and allocative efficiency','Technical and dynamic efficiency'],2,'Static efficiency is productive plus allocative efficiency at a point in time.'],['Which point is statically efficient?',['Any point inside the PPF','Any point on the PPF','The point on the PPF matching consumer preferences','A point outside the PPF'],2,'It is on the frontier (productive) and the right mix (allocative).'],['A perfectly competitive firm making short-run supernormal profit is:',['Productively and allocatively efficient','Allocatively but not productively efficient','Productively but not allocatively efficient','Neither'],1,'P = MC, but output is beyond the minimum of AC.'],['The main weakness of static efficiency as a policy goal is that it:',['Ignores consumers','Ignores innovation over time','Ignores costs','Only applies to monopoly'],1,'It holds technology fixed and so ignores dynamic gains.']]},
+
+{id:'dynamic',title:'Dynamic efficiency',kick:'Is it getting better over time?',sum:'Dynamic efficiency is about improvements in productive and allocative efficiency over time, through innovation, research and development, and investment.',dia:'dynamic',cap:'R&D and new technology (process innovation) shift the whole AC curve down. Product innovation creates better goods that consumers value more.',
+theory:`<div class="rule"><b>Over time: AC shifts down, products improve</b>Driven by R&amp;D, investment in capital and skills, and new ideas.</div>
+<h3>Two types of innovation</h3><ul><li><b>Process innovation:</b> a new method of production that lowers costs, such as robotics or better logistics software. It shifts the AC curve down.</li><li><b>Product innovation:</b> a new or improved good or service, such as a smartphone replacing a basic mobile. It increases consumer welfare and can shift demand.</li></ul>
+<h3>What dynamic efficiency needs</h3><ul><li><b>Funds:</b> R&amp;D is risky, so it is usually paid for from retained profit. Supernormal profit helps.</li><li><b>An incentive:</b> firms need to be able to keep the reward. Patents (which last up to 20 years in the UK) give inventors a temporary monopoly.</li><li><b>Pressure:</b> competition or the threat of rivals pushes firms to keep improving.</li></ul>
+<h3>Schumpeter and creative destruction</h3><p>Joseph Schumpeter, in <i>Capitalism, Socialism and Democracy</i> (1942), argued that the competition that matters is not over price but from new products and technologies that destroy old ones: "creative destruction". He suggested large firms with market power were best placed to innovate, which turns the static case against monopoly on its head.</p>
+<h3>Why perfect competition struggles</h3><p>Firms make only normal profit in the long run, so they have little to spend on R&amp;D. Perfect information also means any improvement is copied immediately, so there is no reward for innovating.</p>
+<div class="eg"><b>Real-world example: Kodak</b>Kodak engineer Steven Sasson built one of the first digital cameras in 1975. Kodak was hugely profitable from film, held back on digital to protect that business, and filed for bankruptcy in 2012 as digital photography took over. Supernormal profit is necessary for dynamic efficiency, but it is not enough on its own: the firm also has to use it.</div>`,
+why:[['Why is supernormal profit important for dynamic efficiency?','R&D is risky and is mostly funded from retained profit. Supernormal profit provides the funds and rewards the risk.'],['Why does perfect information undermine innovation in perfect competition?','Rivals can copy any improvement immediately, so the innovator gets no lasting reward.'],['Why do governments grant patents even though they create monopolies?','They accept some static inefficiency now in exchange for the incentive to invent, which brings dynamic gains later.'],['Why didn\'t Kodak\'s profits make it dynamically efficient?','It used its profits to protect its film business rather than develop digital. Profit makes innovation possible, but it doesn\'t guarantee it.']],
+cloze:{t:'Dynamic efficiency is the improvement in efficiency over {time}. It comes from {innovation}, research and development, and investment. Firms with {supernormal/abnormal} profit can afford R&D. Schumpeter called the process by which new products replace old ones creative {destruction}. Governments grant {patents} to reward inventors with a temporary monopoly.',bank:['time','innovation','supernormal','destruction','patents','normal','competition','subsidies']},
+match:[['Dynamic efficiency','Improvements in efficiency over time'],['Process innovation','A new method that lowers the cost of production'],['Product innovation','A new or improved good or service'],['Creative destruction','New technologies replacing old firms and products'],['Patent','A legal right giving an inventor a temporary monopoly']],
+tf:[['Dynamic efficiency can be shown by the AC curve shifting down over time.',true,'Process innovation lowers costs at every output.'],['Perfectly competitive firms are well placed to fund R&D.',false,'They make only normal profit in the long run.'],['Supernormal profit guarantees dynamic efficiency.',false,'Kodak shows profit has to be reinvested in the right things.'],['Patents can create a trade-off between static and dynamic efficiency.',true,'A temporary monopoly is statically inefficient but encourages invention.'],['Dynamic efficiency only concerns new products, not new processes.',false,'It covers both product and process innovation.']],
+mcq:[['Which best illustrates dynamic efficiency?',['A firm sets P = MC','A firm\'s AC curve shifts down after it invests in robotics','A firm produces at minimum AC','A firm cuts its price'],1,'Lower costs over time through investment is dynamic efficiency.'],['Schumpeter argued that innovation was most likely to come from:',['Perfectly competitive firms','Large firms with market power','Government departments','Consumers'],1,'He argued that large firms with market power had the funds and incentive to innovate.'],['Perfect competition is weak on dynamic efficiency because of:',['High barriers to entry','Normal profit and perfect information','Economies of scale','Product differentiation'],1,'There are no funds for R&D and no way to protect the gains.'],['Patent policy is best described as:',['Improving static efficiency','Sacrificing some static efficiency for dynamic efficiency','Reducing X-inefficiency','Removing barriers to entry'],1,'The temporary monopoly trades short-term P > MC for incentives to innovate.']]},
+
+{id:'x',title:'X-inefficiency',kick:'Is the firm wasting resources?',sum:'X-inefficiency occurs when a firm\'s costs are higher than the lowest possible for the output it produces. It operates above its average cost curve, not just at the wrong point on it.',dia:'x',cap:'The firm is at the right output, but organisational slack means its actual costs sit above the lowest achievable AC.',
+theory:`<div class="rule"><b>Above the AC curve, not just on the wrong part of it</b>Costs are higher than they need to be for the output produced.</div>
+<h3>Where the idea comes from</h3><p>Harvey Leibenstein introduced X-inefficiency in a 1966 article in the <i>American Economic Review</i>. He argued that the losses from slack inside firms could be larger than the allocative losses economists usually focused on.</p>
+<h3>Causes</h3><ul><li><b>Lack of competitive pressure:</b> monopolies can survive with high costs because rivals can't undercut them.</li><li><b>Organisational slack:</b> overstaffing, perks, poor management and wasted time.</li><li><b>The principal-agent problem:</b> managers pursue their own goals (a quiet life, status) rather than the owners'.</li><li><b>Weak profit motive:</b> state-owned organisations with guaranteed funding may face little pressure to cut costs.</li></ul>
+<h3>Productive inefficiency vs X-inefficiency</h3><p>A productively inefficient firm is <i>on</i> its AC curve but not at the minimum. An X-inefficient firm is <i>above</i> its AC curve at whatever output it chooses. A firm can be at the right output and still be X-inefficient.</p>
+<h3>Remedies</h3><ul><li>More competition, or contestability (the threat of entry).</li><li>Privatisation, introducing shareholders and a profit motive.</li><li>RPI-X price caps used by UK regulators such as Ofwat: prices can rise by inflation minus X%, so firms must cut costs to protect profit, and they keep any extra savings.</li></ul>
+<div class="eg"><b>Real-world example: UK privatisation</b>From the 1980s, the UK privatised firms such as British Telecom (1984) and British Gas (1986), and later Royal Mail (2013). Part of the argument was that state ownership had allowed X-inefficiency to build up, and that shareholders, competition and regulation would squeeze costs down. How far it worked is still debated, which makes good evaluation material.</div>`,
+why:[['Why is X-inefficiency more common in monopoly?','There is no competitive pressure, and supernormal profit hides slack. Owners can\'t easily compare costs with rivals.'],['How is X-inefficiency different from productive inefficiency?','Productive inefficiency is being on the AC curve but not at its minimum. X-inefficiency is being above the curve at whatever output is chosen.'],['Why might an RPI-X price cap reduce X-inefficiency?','Prices can only rise by inflation minus X, so the firm must cut costs to maintain profit. It keeps any savings beyond X, so it has an incentive.'],['Why might a contestable monopoly be X-efficient?','If it lets costs rise, the threat of hit-and-run entry means an entrant could undercut it, so it has to stay lean.']],
+cloze:{t:'X-inefficiency occurs when a firm\'s costs are {above/higher than} the lowest possible average cost for its output. The idea was introduced by Harvey {Leibenstein} in 1966. It is caused by organisational {slack} and a lack of {competitive/competition} pressure. Regulators may use {RPI-X} price caps to force cost cutting.',bank:['above','Leibenstein','slack','competitive','RPI-X','below','Schumpeter','CPI+X']},
+match:[['X-inefficiency','Costs above the lowest possible AC for the output produced'],['Organisational slack','Wasted resources and effort inside a firm'],['RPI-X','A price cap that forces regulated firms to cut costs'],['Privatisation','Transfer of a state-owned firm to the private sector'],['Principal-agent problem','Managers pursuing their own goals instead of the owners\'']],
+tf:[['An X-inefficient firm operates above its AC curve.',true,'Its costs are higher than the lowest achievable for its output.'],['X-inefficiency only occurs in the public sector.',false,'Any firm without competitive pressure can suffer from it, especially monopolies.'],['A firm can be X-inefficient even at the output where AC is lowest.',true,'It can be at the right output but still have costs above the curve.'],['More competition tends to reduce X-inefficiency.',true,'Rivals force firms to cut slack or lose customers.'],['X-inefficiency is the same as diseconomies of scale.',false,'Diseconomies are rising AC along the curve as scale grows; X-inefficiency is being above the curve.']],
+mcq:[['X-inefficiency is best defined as:',['Producing where P > MC','Costs higher than the minimum possible for a given output','Failing to innovate over time','Producing inside the PPF'],1,'This is Leibenstein\'s definition.'],['Which firm is most likely to be X-inefficient?',['A firm in a perfectly competitive market','A state-owned monopoly with guaranteed funding','A firm in a contestable market','A new entrant'],1,'No competition and no profit pressure allow slack to build up.'],['Which policy most directly targets X-inefficiency?',['A subsidy','An RPI-X price cap','A minimum price','A tariff'],1,'It forces the firm to cut costs to keep its profit.'],['On a cost diagram, X-inefficiency is shown by:',['A point at the minimum of AC','A point on the falling part of AC','A point above the AC curve','A downward shift in AC'],2,'Costs are above the lowest achievable AC.']]},
+
+{id:'pareto',title:'Pareto efficiency',kick:'Could anyone be better off without hurting someone else?',sum:'An allocation is Pareto efficient (Pareto optimal) when it is impossible to make anyone better off without making someone else worse off.',dia:'pareto',cap:'From a point inside the PPF, moving towards the frontier can make someone better off without anyone losing: a Pareto improvement.',
+theory:`<div class="rule"><b>No one better off without someone worse off</b>Named after the Italian economist Vilfredo Pareto (1848–1923).</div>
+<h3>Optimality and improvements</h3><ul><li><b>Pareto optimal:</b> every possible gain for one person would cost someone else.</li><li><b>Pareto improvement:</b> a change that makes at least one person better off and nobody worse off. If one is still available, the allocation is not Pareto optimal.</li></ul>
+<h3>How it links to the other efficiencies</h3><p>Pareto efficiency across the whole economy needs productive efficiency (no waste, so on the PPF) and allocative efficiency (P = MC, the right mix of goods). Economic theory shows that if every market were perfectly competitive with no market failure, the result would be Pareto optimal. This is why market failure, such as monopoly or externalities, is described as a departure from Pareto optimality.</p>
+<h3>The big weakness: equity</h3><p>Pareto efficiency says nothing about fairness. An economy where one person owns almost everything can be Pareto optimal, because any redistribution would make that person worse off. There are also many Pareto-optimal points (every point on the PPF), so the concept can't tell us which one society should choose.</p>
+<h3>Stretch: the Kaldor-Hicks test</h3><p>Most real policies create winners and losers, so they are rarely Pareto improvements. Economists Nicholas Kaldor and John Hicks proposed a looser test: a change is efficient if the winners <i>could</i> compensate the losers and still be better off, even if compensation is not actually paid. Cost-benefit analysis of projects such as HS2 is based on this idea.</p>
+<div class="eg"><b>Real-world example: trade liberalisation</b>Removing a tariff usually raises total welfare, because consumers gain more than producers lose. But it is not a Pareto improvement, because some workers in protected industries lose out. That is why free trade debates are about distribution as much as efficiency.</div>`,
+why:[['Why can a Pareto-optimal outcome be unfair?','Pareto efficiency ignores distribution. If one person owns everything, any change would make them worse off, so it is Pareto optimal.'],['Why is a move from inside the PPF to the frontier a potential Pareto improvement?','More of at least one good can be made without less of another, so someone can gain without anyone losing.'],['Why does market failure mean an economy is not Pareto optimal?','With monopoly or externalities, MSB does not equal MSC, so output could be reallocated to make someone better off without harming anyone (with compensation).'],['Why do economists use the Kaldor-Hicks test?','Most policies have losers, so they can\'t be Pareto improvements. The test asks whether the winners could compensate the losers and still be better off.']],
+cloze:{t:'An allocation is Pareto {optimal/efficient} when nobody can be made better off without making someone {worse} off. A change that helps at least one person and harms nobody is a Pareto {improvement}. Pareto efficiency requires both productive and {allocative} efficiency. A major weakness is that it ignores {equity/fairness}.',bank:['optimal','worse','improvement','allocative','equity','better','dynamic','profit']},
+match:[['Pareto optimality','No one can be better off without someone being worse off'],['Pareto improvement','At least one person better off and nobody worse off'],['Vilfredo Pareto','The Italian economist behind the efficiency concept'],['Kaldor-Hicks test','Could the winners compensate the losers and still gain?'],['Equity','Fairness in the distribution of income and resources']],
+tf:[['A Pareto-optimal economy must have a fair distribution of income.',false,'Pareto efficiency ignores distribution entirely.'],['There is only one Pareto-optimal allocation.',false,'Every point on the PPF can be Pareto optimal.'],['Moving from inside the PPF to the frontier can be a Pareto improvement.',true,'Someone can gain without anyone losing.'],['Perfect competition in every market, with no market failure, would be Pareto optimal.',true,'Both productive and allocative efficiency would hold everywhere.'],['Most government policies are Pareto improvements.',false,'Most create losers as well as winners, hence the Kaldor-Hicks test.']],
+mcq:[['Pareto optimality means:',['Everyone is equally well off','No one can be better off without someone being worse off','Total output is maximised','Prices are as low as possible'],1,'This is the definition of Pareto efficiency.'],['Which of these is a Pareto improvement?',['A tax on the rich to fund the poor','A rise in output that makes some consumers better off and nobody worse off','A tariff that protects jobs','A price cut by one firm that harms its rival'],1,'Only this option has no losers.'],['The key criticism of Pareto efficiency is that it:',['Ignores fairness','Ignores costs','Only applies to firms','Requires government intervention'],0,'An unequal outcome can still be Pareto optimal.'],['Pareto optimality across an economy requires:',['Dynamic efficiency only','Productive and allocative efficiency in all markets','X-efficiency only','Monopoly'],1,'No waste and the right mix of goods everywhere.']]},
+
+{id:'structures',title:'Efficiency across market structures',kick:'Putting it all together',sum:'Use the same tests on every market structure, then evaluate with economies of scale, dynamic efficiency and contestability.',dia:null,cap:'',
+theory:`<div class="tbl"><table class="stack"><thead><tr><th>Market structure</th><th>Productive</th><th>Allocative</th><th>X-efficiency</th><th>Dynamic</th></tr></thead><tbody>
+<tr><td>Perfect competition (long run)</td><td>Yes: P = min AC</td><td>Yes: P = MC</td><td>Yes: high-cost firms are forced out</td><td>Weak: normal profit, instant copying</td></tr>
+<tr><td>Monopolistic competition (long run)</td><td>No: excess capacity</td><td>No: P = AC &gt; MC</td><td>Mostly: some competitive pressure</td><td>Some: product differentiation</td></tr>
+<tr><td>Oligopoly</td><td>Usually no</td><td>Usually no: P well above MC</td><td>Varies: depends on rivalry</td><td>Often strong: profit plus non-price competition</td></tr>
+<tr><td>Monopoly</td><td>No: output left of min AC</td><td>No: deadweight loss</td><td>Often no: no pressure</td><td>Potentially strong: funds and patents</td></tr>
+<tr><td>Contestable market</td><td>Pushed towards yes</td><td>Pushed towards yes</td><td>Yes: threat of entry</td><td>Depends</td></tr></tbody></table></div>
+<h3>Monopolistic competition: normal profit but inefficient</h3><p>In the long run, entry shrinks each firm's demand until AR is tangent to AC. Because demand slopes down, the tangency is on the falling part of AC, to the left of the minimum. So P = AC (normal profit) but P &gt; MC, and output is below the cost-minimising level: excess capacity. The defence is that consumers get variety.</p>
+<h3>Oligopoly: it depends on behaviour</h3><p>The kinked demand curve model predicts sticky prices well above MC. Collusion produces results close to monopoly; a price war can push outcomes towards the competitive one. Oligopolists such as large pharmaceutical and technology firms are often the biggest spenders on R&amp;D.</p>
+<h3>Contestability</h3><p>William Baumol (with John Panzar and Robert Willig, 1982) argued that the threat of entry matters more than the number of firms. A perfectly contestable market has no barriers to entry or exit and, crucially, no sunk costs. Incumbents must price close to AC and keep costs down, or hit-and-run entrants will take their profit. A market with one firm can therefore still behave efficiently.</p>
+<div class="eg"><b>Real-world example: airline routes</b>An airline can move an aircraft from one route to another, so leaving a route involves few sunk costs. That makes individual routes fairly contestable: an incumbent charging high fares can quickly face a low-cost rival. Airport slots, which are scarce at airports such as Heathrow, are the barrier that limits this.</div>
+<h3>Natural monopoly</h3><p>Where economies of scale are huge relative to the market, as with the National Grid's transmission network, one firm can supply at a lower AC than several could. Breaking it up would raise costs, so regulation (price caps, performance targets) is used instead.</p>`,
+why:[['Why does monopolistic competition fail both static tests even with normal profit?','Downward-sloping demand is tangent to AC on its falling part, so P = AC but P > MC, and output is left of minimum AC (excess capacity).'],['Why might breaking up a natural monopoly raise costs?','The smaller firms lose economies of scale, so each operates higher up its AC curve.'],['Why does a lack of sunk costs make a market contestable?','Entrants can leave without losing their investment, so hit-and-run entry is cheap and the threat is credible.'],['Why might an oligopoly be more dynamically efficient than perfect competition?','Supernormal profit funds R&D, and non-price competition rewards firms that innovate.']],
+cloze:{t:'In the long run, monopolistic competition leads to {excess} capacity because output is to the left of minimum AC. In a perfectly {contestable} market, there are no barriers to entry or exit. The key condition is the absence of {sunk} costs. The threat of {hit-and-run/hit and run} entry forces incumbents towards normal profit. A {natural} monopoly arises when one firm can supply the whole market at a lower cost than several firms could.',bank:['excess','contestable','sunk','hit-and-run','natural','fixed','legal','perfect']},
+match:[['Excess capacity','Output below the level that minimises AC'],['Contestable market','The threat of entry disciplines incumbent firms'],['Sunk costs','Costs that can\'t be recovered when leaving a market'],['Natural monopoly','One firm supplies the market at the lowest cost'],['Kinked demand curve','An oligopoly model explaining sticky prices']],
+tf:[['In long-run monopolistic competition, firms are allocatively efficient.',false,'P = AC but P > MC.'],['A contestable market can contain only one firm.',true,'It is the threat of entry, not the number of firms, that matters.'],['Breaking up a natural monopoly always reduces costs.',false,'It loses economies of scale and raises AC.'],['Oligopolies are often strong on dynamic efficiency.',true,'Profit plus non-price competition encourages R&D.'],['Perfect competition is efficient in every sense.',false,'It is statically efficient but weak on dynamic efficiency.']],
+mcq:[['Which market structure is both productively and allocatively efficient in the long run?',['Monopoly','Oligopoly','Perfect competition','Monopolistic competition'],2,'P = MC = minimum AC.'],['The most important condition for a perfectly contestable market is:',['Many firms','No sunk costs','Homogeneous products','Government regulation'],1,'Without sunk costs, hit-and-run entry is possible.'],['In long-run monopolistic competition:',['P = MC = AC','P = AC > MC','P > AC > MC','P < MC'],1,'Normal profit, but price is above marginal cost.'],['The strongest argument against breaking up a monopoly is that:',['It makes supernormal profit','Economies of scale may give it lower AC than smaller firms','It is allocatively efficient','It has no X-inefficiency'],1,'Its whole AC curve may be lower, so prices could be lower too.']]}
+];
+
+
+const EXTRA={
+productive:{ana:['The cupcake batch','<p>Imagine baking cupcakes to sell. Bake just 2 and the cost of heating the oven is shared between only two cakes, so each one is expensive. Bake 300 and you run out of trays, the kitchen gets crowded and cakes start to burn, so the cost per cake rises again. Somewhere in the middle there\'s a batch size where each cupcake costs the least it possibly can. That batch size is productive efficiency: the bottom of the AC curve.</p><p>Technical efficiency is simply not wasting anything, such as no dropped eggs or burnt cakes, whatever batch size you choose.</p>'],
+ st:[['Explain it in one sentence','Producing output at the lowest possible cost per unit.'],['The condition','MC = AC, at the minimum point of the AC curve.'],['What it looks like on a PPF','Any point on the frontier (not inside it).'],['Market structure that achieves it','Perfect competition in the long run.'],['Why a profit-maximising monopoly usually fails','It produces where MC = MR, which is left of minimum AC (though economies of scale may make its AC lower overall).'],['Your analogy in a few words','The cupcake batch size where each cake is cheapest.']]},
+allocative:{ana:['The pizza party','<p>You\'re ordering pizzas for a party. If you order too few, people are still hungry and would happily pay more for another slice than the slice costs: that\'s P &gt; MC, so you should have ordered more (under-production). If you order too many, the last pizzas cost more than anyone values them and end up in the bin: that\'s P &lt; MC (over-production).</p><p>The perfect order is where the last slice is worth exactly what it cost. That\'s allocative efficiency: P = MC. A monopolist is like a host who deliberately orders too few pizzas so they can charge guests a high price for each slice.</p>'],
+ st:[['Explain it in one sentence','Producing the amount and mix of goods that consumers value most.'],['The condition','P = MC (or MSB = MSC when there are externalities).'],['What P > MC means','Under-production: consumers value more units than are being made.'],['What P < MC means','Over-production: the last units cost more than they are worth to consumers.'],['Why monopoly fails','It restricts output to raise price, so P > MC and there is a deadweight loss.'],['Your analogy in a few words','Ordering exactly the right number of pizzas for the party.']]},
+static:{ana:['The team photo','<p>Static efficiency is a photo of a football team on match day. Are the players in the right positions (allocative)? Is everyone fit and playing at their best (productive)? If both are true, the team is statically efficient today.</p><p>But the photo tells you nothing about next season: is the club investing in its academy, training methods or new signings? A team can look perfect in today\'s photo and still be overtaken in three years. That\'s why static efficiency on its own isn\'t enough.</p>'],
+ st:[['Explain it in one sentence','Efficiency at a single point in time, with technology held fixed.'],['It is made up of','Productive efficiency plus allocative efficiency.'],['Where it is on a PPF','The point on the frontier that matches what society wants most.'],['The benchmark market structure','Long-run perfect competition, where P = MC = minimum AC.'],['Its main limitation','It ignores innovation and improvement over time (dynamic efficiency).'],['Your analogy in a few words','A team photo on match day: good now, but says nothing about next season.']]},
+dynamic:{ana:['The phone upgrade','<p>Think about a phone from 2010 compared with one today. For a similar price you now get a far better camera, a faster processor and much more storage. Nobody made the old phone more cheaply at a single moment. The improvement came from years of research, new technology and investment. That\'s dynamic efficiency: getting better over time.</p><p>Back to the football club: dynamic efficiency is the academy and the training ground. It costs money now, and that money has to come from somewhere (profit), but it makes the team better every year.</p>'],
+ st:[['Explain it in one sentence','Improvements in productive and allocative efficiency over time.'],['How it shows on a cost diagram','The AC curve shifts downwards over time.'],['The two types of innovation','Process innovation (cheaper methods) and product innovation (new or better products).'],['Three things it needs','Funds (supernormal profit), an incentive (e.g. patents) and pressure (competition or the threat of it).'],['Structures that tend to do well and badly','Oligopoly and monopoly can do well; perfect competition does badly (normal profit, instant copying).'],['Your analogy in a few words','Phones getting better every year for a similar price.']]},
+x:{ana:['Revision with your phone next to you','<p>You sit down to revise five pages of notes. With your phone switched off, it takes an hour. With your phone next to you, buzzing, you still get through the same five pages, but it takes three hours. Same output, much higher cost in time. That wasted effort is X-inefficiency.</p><p>Firms are the same. A monopoly with no rivals is like a student with no exam coming up: there\'s no pressure, so slack creeps in. Competition is the exam date that forces you to put the phone away.</p>'],
+ st:[['Explain it in one sentence','Costs are higher than the lowest possible for the output being produced.'],['Where it shows on a cost diagram','A point above the AC curve.'],['Who introduced the idea, and when','Harvey Leibenstein, 1966.'],['Three causes','Lack of competition, organisational slack, and the principal-agent problem (managers\' own goals).'],['Three remedies','More competition or contestability, privatisation, and RPI-X price caps.'],['Your analogy in a few words','Revising the same notes but taking three hours because of your phone.']]},
+pareto:{ana:['The last slice of pizza','<p>Eight friends share a pizza. If one slice is left over and someone is still hungry, giving it to them makes them better off and nobody worse off. That\'s a Pareto improvement. Once every slice has been eaten, the only way to give someone more is to take it from someone else. That\'s Pareto optimal.</p><p>Here\'s the catch: it would still be Pareto optimal if one friend ate seven slices and the other seven shared one. Pareto efficiency doesn\'t care whether the split is fair, which is why economists talk about equity separately.</p>'],
+ st:[['Explain it in one sentence','Nobody can be made better off without making someone else worse off.'],['What a Pareto improvement is','A change that makes at least one person better off and nobody worse off.'],['What it requires across the economy','Productive and allocative efficiency in every market.'],['Its main weakness','It ignores equity: a very unequal outcome can be Pareto optimal.'],['The looser test used in cost-benefit analysis','The Kaldor-Hicks test: could the winners compensate the losers?'],['Your analogy in a few words','No slice left over, even if one person ate most of the pizza.']]},
+structures:{ana:['Where to buy lunch','<p><b style="display:inline;font-size:inherit;font-family:inherit">Perfect competition</b> is a row of market stalls selling identical apples: nobody can charge more than the others. <b style="display:inline;font-size:inherit;font-family:inherit">Monopolistic competition</b> is the high street\'s cafés: lots of them, each slightly different, so each has a little pricing power. <b style="display:inline;font-size:inherit;font-family:inherit">Oligopoly</b> is the big supermarkets, watching each other\'s every move. <b style="display:inline;font-size:inherit;font-family:inherit">Monopoly</b> is the only shop on a small island.</p><p><b style="display:inline;font-size:inherit;font-family:inherit">Contestability</b> is a food truck that could pull up next to the island shop at any moment and drive away again just as easily. Even if it never arrives, the shop keeps its prices fair, because it knows the truck could come.</p>'],
+ grids:[{title:'Grid 1: each efficiency at a glance',cols:['Efficiency','The question it asks','The condition or test','My analogy'],rows:[['Productive','Is it made as cheaply as possible?','MC = AC (minimum AC); on the PPF','Cupcake batch size'],['Allocative','Is the right amount being made?','P = MC (MSB = MSC with externalities)','Pizza party order'],['Static','How efficient is it right now?','Productive + allocative at a point in time','Team photo'],['Dynamic','Is it getting better over time?','AC shifts down; new or better products','Phone upgrades'],['X-efficiency','Is the firm wasting resources?','Costs on, not above, the AC curve','Revising with your phone away'],['Pareto','Could anyone gain without someone losing?','No Pareto improvements left','The last slice of pizza']]},
+ {title:'Grid 2: market structures scorecard',cols:['Market structure','Productive?','Allocative?','Dynamic?'],rows:[['Perfect competition (LR)','Yes: P = min AC','Yes: P = MC','Weak: normal profit, instant copying'],['Monopolistic competition (LR)','No: excess capacity','No: P = AC > MC','Some: product differentiation'],['Oligopoly','Usually no','Usually no: P well above MC','Often strong: R&D and non-price competition'],['Monopoly','No: output left of min AC','No: deadweight loss','Potentially strong: profit and patents'],['Contestable market','Pushed towards yes','Pushed towards yes','Depends']]}]}
+};
+S.forEach(s=>Object.assign(s,EXTRA[s.id]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let score=0,tries=0;
+const bump=ok=>{tries++;if(ok)score++;document.getElementById('score').innerHTML=`Score <b>${score}</b> / ${tries}`};
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),3000)};
+
+const tabNames=[['cloze','Missing words'],['match','Mix and match'],['tf','True or false'],['mcq','Multiple choice'],['why','Quick questions'],['table','Summary table']];
+document.getElementById('heroFig').innerHTML=D.hero();
+document.getElementById('links').innerHTML=S.map(s=>`<a href="#s-${s.id}">${s.title}</a>`).join('')+`<a href="#s-mixed">Mixed challenge</a>`;
+
+document.getElementById('main').innerHTML=S.map(s=>`<section class="band sec" id="s-${s.id}"><div class="wrap">
+<div class="kick">${s.kick}</div><h2>${s.title}</h2><p class="sum">${s.sum}</p>
+<div class="tgrid"><div class="theory"><div class="ana"><b>In plain English: ${s.ana[0]}</b>${s.ana[1]}</div>${s.theory}</div>${s.dia?`<div><div class="fig">${s.dia==='static'?D.ppf('static'):D[s.dia]()}</div><p class="figcap">${s.cap}</p></div>`:''}</div>
+<div class="acts"><h3 style="margin-top:0">Practise: ${s.title.toLowerCase()}</h3>
+<div class="tabs" role="tablist">${tabNames.map((t,i)=>`<button role="tab" aria-selected="${i===0}" data-sec="${s.id}" data-tab="${t[0]}">${t[1]}</button>`).join('')}</div>
+${tabNames.map((t,i)=>`<div class="panel" id="p-${s.id}-${t[0]}" ${i?'hidden':''}></div>`).join('')}
+</div></div></section>`).join('');
+
+function renderCloze(s){
+ const el=document.getElementById(`p-${s.id}-cloze`);let n=0;
+ const html=esc(s.cloze.t).replace(/\{([^}]+)\}/g,(m,a)=>`<input aria-label="Gap ${++n}" data-a="${a}" autocomplete="off" spellcheck="false">`);
+ el.innerHTML=`<p style="margin:0 0 8px;color:var(--soft)">Type the missing key words. Not every word in the bank is needed.</p><div class="bank">${shuffle(s.cloze.bank).map(w=>`<span>${esc(w)}</span>`).join('')}</div><p class="cloze">${html}</p><div class="row"><button class="btn pri" data-k="check">Check answers</button><button class="btn" data-k="reveal">Reveal</button><button class="btn" data-k="reset">Reset</button><span class="err" role="alert"></span><span class="res"></span></div>`;
+ const ins=[...el.querySelectorAll('input')],err=el.querySelector('.err'),res=el.querySelector('.res');let counted=false;
+ ins.forEach(i=>i.addEventListener('input',()=>{err.textContent='';i.classList.remove('ok','no')}));
+ el.querySelector('[data-k=check]').onclick=()=>{if(ins.some(i=>!i.value.trim())){err.textContent='Fill in every gap first.';return}
+  let c=0;ins.forEach(i=>{const ok=i.dataset.a.toLowerCase().split('/').includes(i.value.trim().toLowerCase());i.classList.toggle('ok',ok);i.classList.toggle('no',!ok);if(ok)c++;if(!counted)bump(ok)});counted=true;res.textContent=`${c} / ${ins.length} correct`};
+ el.querySelector('[data-k=reveal]').onclick=()=>{ins.forEach(i=>{i.value=i.dataset.a.split('/')[0];i.classList.add('ok');i.classList.remove('no')});err.textContent='';res.textContent='Answers shown'};
+ el.querySelector('[data-k=reset]').onclick=()=>renderCloze(s);
+}
+function renderMatch(s){
+ const el=document.getElementById(`p-${s.id}-match`);
+ const L=shuffle(s.match.map((p,i)=>[p[0],i])),R=shuffle(s.match.map((p,i)=>[p[1],i]));
+ el.innerHTML=`<p style="margin:0 0 10px;color:var(--soft)">Choose a key term, then the definition that matches it.</p><div class="mm"><div class="col">${L.map(p=>`<button data-side="l" data-i="${p[1]}">${esc(p[0])}</button>`).join('')}</div><div class="col defs">${R.map(p=>`<button data-side="r" data-i="${p[1]}">${esc(p[0])}</button>`).join('')}</div></div><div class="row"><span class="res"></span><button class="btn" data-k="reset">Shuffle again</button></div>`;
+ let sel=null,done=0;const missed=new Set(),res=el.querySelector('.res');
+ el.querySelectorAll('.mm button').forEach(b=>b.onclick=()=>{if(b.classList.contains('done'))return;
+  if(b.dataset.side==='l'){el.querySelectorAll('[data-side=l]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');sel=b;return}
+  if(!sel){toast('Choose a key term first');return}
+  if(sel.dataset.i===b.dataset.i){[sel,b].forEach(x=>{x.classList.remove('sel');x.classList.add('done');x.disabled=true});bump(!missed.has(b.dataset.i));done++;sel=null;res.textContent=done===s.match.length?`All matched. ${s.match.length-missed.size} / ${s.match.length} first time.`:`${done} / ${s.match.length} matched`}
+  else{missed.add(sel.dataset.i);const a=sel;[a,b].forEach(x=>x.classList.add('bad'));setTimeout(()=>[a,b].forEach(x=>x.classList.remove('bad')),600)}});
+ el.querySelector('[data-k=reset]').onclick=()=>renderMatch(s);
+}
+const tfHTML=(items,pre)=>items.map((t,i)=>`<div class="q" data-ans="${t[1]}"><p>${esc(t[0])}</p><div class="tf"><button data-v="true">True</button><button data-v="false">False</button></div><div class="fb" aria-live="polite"></div></div>`).join('');
+function wireTF(el,items,onAns){el.querySelectorAll('.q[data-ans]').forEach((q,i)=>q.querySelectorAll('.tf button').forEach(b=>b.onclick=()=>{const ok=b.dataset.v===q.dataset.ans;q.querySelectorAll('.tf button').forEach(x=>{x.disabled=true;if(x.dataset.v===q.dataset.ans)x.classList.add('right')});if(!ok)b.classList.add('wrong');q.querySelector('.fb').innerHTML=`<b>${ok?'Correct.':'Not quite.'}</b> ${esc(items[i][2])}`;bump(ok);onAns&&onAns(ok)}))}
+const mcqHTML=items=>items.map(m=>`<div class="q" data-mcq><p>${esc(m[0])}</p><div class="opts">${m[1].map((o,j)=>`<button data-j="${j}">${esc(o)}</button>`).join('')}</div><div class="fb" aria-live="polite"></div></div>`).join('');
+function wireMCQ(el,items,onAns){el.querySelectorAll('.q[data-mcq]').forEach((q,i)=>q.querySelectorAll('.opts button').forEach(b=>b.onclick=()=>{const m=items[i],ok=+b.dataset.j===m[2];q.querySelectorAll('.opts button').forEach(x=>{x.disabled=true;if(+x.dataset.j===m[2])x.classList.add('right')});if(!ok)b.classList.add('wrong');q.querySelector('.fb').innerHTML=`<b>${ok?'Correct.':'Not quite.'}</b> ${esc(m[3])}`;bump(ok);onAns&&onAns(ok)}))}
+function renderTF(s){const el=document.getElementById(`p-${s.id}-tf`);el.innerHTML=tfHTML(s.tf)+`<button class="btn" data-k="reset">Try again</button>`;wireTF(el,s.tf);el.querySelector('[data-k=reset]').onclick=()=>renderTF(s)}
+function renderMCQ(s){const el=document.getElementById(`p-${s.id}-mcq`);el.innerHTML=mcqHTML(s.mcq)+`<button class="btn" data-k="reset">Try again</button>`;wireMCQ(el,s.mcq);el.querySelector('[data-k=reset]').onclick=()=>renderMCQ(s)}
+function renderWhy(s){const el=document.getElementById(`p-${s.id}-why`);el.classList.add('why');el.innerHTML=`<p style="margin:0 0 10px;color:var(--soft)">Answer out loud or on paper first, then check.</p>`+s.why.map((w,i)=>`<div class="q"><p>${esc(w[0])}</p><button class="btn" data-w="${i}">Show answer</button><div class="ans" hidden>${esc(w[1])}</div></div>`).join('');el.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const a=b.nextElementSibling;a.hidden=!a.hidden;b.textContent=a.hidden?'Show answer':'Hide answer'})}
+
+function renderTable(s){const el=document.getElementById(`p-${s.id}-table`);
+ const help=`<p style="margin:0 0 10px;color:var(--soft)">Write your answer in each box, then reveal the model answer and compare. Tick off what you got and add anything you missed.</p>`;
+ if(s.grids){el.innerHTML=help+s.grids.map((g,gi)=>`<h3 style="margin-top:${gi?'24px':'0'}">${esc(g.title)}</h3><div class="grid"><table><thead><tr>${g.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${g.rows.map((r,ri)=>`<tr><th>${esc(r[0])}</th>${r.slice(1).map((a,ci)=>`<td><textarea aria-label="${esc(r[0])}: ${esc(g.cols[ci+1])}"></textarea><div class="ans" hidden>${esc(a)}</div></td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="row"><button class="btn pri" data-g="${gi}">Reveal grid answers</button><span class="err" role="alert"></span><button class="btn" data-clear="${gi}">Clear</button></div>`).join('');
+  el.querySelectorAll('[data-g]').forEach(b=>{const grid=b.parentElement.previousElementSibling,err=b.parentElement.querySelector('.err');b.onclick=()=>{const tas=[...grid.querySelectorAll('textarea')];if(tas.every(t=>!t.value.trim())&&!b.dataset.warned){err.textContent='Have a go at some boxes first, or press again to reveal anyway.';b.dataset.warned=1;return}err.textContent='';grid.querySelectorAll('.ans').forEach(a=>a.hidden=false)};grid.addEventListener('input',()=>err.textContent='')});
+  el.querySelectorAll('[data-clear]').forEach(b=>b.onclick=()=>renderTable(s));return}
+ el.innerHTML=help+`<table class="stab"><tbody>${s.st.map((r,i)=>`<tr><td>${esc(r[0])}</td><td><textarea aria-label="${esc(r[0])}"></textarea><button class="btn rv" data-r="${i}">Reveal</button> <span class="err" role="alert"></span><div class="ans" hidden>${esc(r[1])}</div></td></tr>`).join('')}</tbody></table><div class="row"><button class="btn pri" data-k="all">Reveal all</button><button class="btn" data-k="clear">Clear</button></div>`;
+ el.querySelectorAll('[data-r]').forEach(b=>{const td=b.parentElement,ta=td.querySelector('textarea'),err=td.querySelector('.err');ta.addEventListener('input',()=>err.textContent='');b.onclick=()=>{if(!ta.value.trim()){err.textContent='Write your answer first.';return}td.querySelector('.ans').hidden=false;b.hidden=true}});
+ el.querySelector('[data-k=all]').onclick=()=>el.querySelectorAll('.ans').forEach(a=>{a.hidden=false;a.parentElement.querySelector('.rv').hidden=true});
+ el.querySelector('[data-k=clear]').onclick=()=>renderTable(s);
+}
+S.forEach(s=>{renderCloze(s);renderMatch(s);renderTF(s);renderMCQ(s);renderWhy(s);renderTable(s)});
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{const id=b.dataset.sec;b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',x===b));tabNames.forEach(t=>document.getElementById(`p-${id}-${t[0]}`).hidden=t[0]!==b.dataset.tab)});
+
+function mixed(){
+ const pool=shuffle([...S.flatMap(s=>s.tf.map(t=>({k:'tf',d:t,s:s.title}))),...S.flatMap(s=>s.mcq.map(m=>({k:'mcq',d:m,s:s.title})))]).slice(0,10);
+ const box=document.getElementById('mixBox'),res=document.getElementById('mixRes');let c=0,a=0;res.textContent='0 / 10 answered';
+ box.innerHTML=pool.map((p,i)=>`<div data-i="${i}">${p.k==='tf'?tfHTML([p.d]):mcqHTML([p.d])}</div>`).join('');
+ const up=ok=>{a++;if(ok)c++;res.textContent=a<10?`${a} / 10 answered, ${c} correct`:`Finished: ${c} / 10`};
+ box.querySelectorAll('[data-i]').forEach(w=>{const p=pool[+w.dataset.i];w.querySelector('.q').insertAdjacentHTML('afterbegin',`<div style="font-size:13px;color:var(--acc);font-weight:600;margin-bottom:4px">${esc(p.s)}</div>`);p.k==='tf'?wireTF(w,[p.d],up):wireMCQ(w,[p.d],up)});
+}
+document.getElementById('newMix').onclick=mixed;mixed();
+document.querySelectorAll('.stack').forEach(t=>{const hd=[...t.rows[0].cells].map(c=>c.textContent);[...t.tBodies[0].rows].forEach(r=>[...r.cells].forEach((c,i)=>c.dataset.l=hd[i]))});
+
+const strip=h=>{const d=document.createElement('div');d.innerHTML=h;return d.textContent.replace(/\s+/g,' ')};
+const IDX=S.flatMap(s=>[{s,type:'Analogy',text:s.ana[0]+': '+strip(s.ana[1])},...(s.st||[]).map(r=>({s,type:'Summary table',text:r[0]+': '+r[1]})),{s,type:'Theory',text:strip(s.theory)},{s,type:'Summary',text:s.sum},...s.match.map(m=>({s,type:'Key term',text:m[0]+': '+m[1]})),...s.why.map(w=>({s,type:'Quick question',text:w[0]})),...s.tf.map(t=>({s,type:'True or false',text:t[0]})),...s.mcq.map(m=>({s,type:'Multiple choice',text:m[0]+' '+m[1].join(' / ')}))]);
+const sb=document.getElementById('search'),rb=document.getElementById('results');
+sb.addEventListener('input',()=>{const q=sb.value.trim().toLowerCase();if(q.length<2){rb.style.display='none';return}
+ const hits=IDX.filter(r=>r.text.toLowerCase().includes(q)).slice(0,14);
+ rb.innerHTML=hits.length?hits.map((r,i)=>{const t=r.text,p=t.toLowerCase().indexOf(q),st=Math.max(0,p-50),snip=t.slice(st,p+q.length+70);const hp=snip.toLowerCase().indexOf(q);return `<button data-h="${i}"><small>${esc(r.s.title)} · ${r.type}</small>${st?'…':''}${esc(snip.slice(0,hp))}<mark>${esc(snip.slice(hp,hp+q.length))}</mark>${esc(snip.slice(hp+q.length))}…</button>`}).join(''):`<button disabled>No matches. Try "MC", "patent" or "sunk costs".</button>`;
+ rb.style.display='block';
+ rb.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{const r=hits[+b.dataset.h];rb.style.display='none';const map={'Summary table':'table','True or false':'tf','Multiple choice':'mcq','Quick question':'why','Key term':'match'};const tab=map[r.type];if(tab){document.querySelector(`.tabs button[data-sec="${r.s.id}"][data-tab="${tab}"]`).click();document.getElementById(`p-${r.s.id}-${tab}`).scrollIntoView({block:'center'})}else document.getElementById('s-'+r.s.id).scrollIntoView()})});
+document.addEventListener('click',e=>{if(!e.target.closest('.tools'))rb.style.display='none'});
+sb.addEventListener('keydown',e=>{if(e.key==='Escape'){sb.value='';rb.style.display='none'}});
+document.getElementById('printBtn').onclick=()=>{try{window.print()}catch(e){}toast('If no print dialogue opens, open the file from your site or save it and print from the browser.')};
+}
+</script>
+</body>
+</html>
