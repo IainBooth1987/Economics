@@ -192,6 +192,9 @@ table.cf input{width:80px}
 .spot .seg.flag{background:#fde68a;box-shadow:inset 0 0 0 2px #f59e0b}
 .spot .seg.ok{background:#bbf7d0!important;box-shadow:inset 0 0 0 2px #16a34a}
 .spot .seg.bad{background:#fecaca!important;box-shadow:inset 0 0 0 2px #dc2626}
+.spot.missing{outline:3px dashed #dc2626;outline-offset:5px;border-radius:8px}
+.spot-miss{display:none;margin-top:10px;color:#b91c1c;font-weight:700;font-size:14px;background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:7px 10px}
+.spot-miss.show{display:block}
 .cloze{background:#fff;border:1px solid #ddd8c9;border-radius:8px;padding:12px 14px;line-height:2.3;font-size:15px}
 .cloze input{width:165px;text-align:center;font-weight:700;font-size:14px;border:2px solid #c9c3b1;border-radius:7px;padding:4px 6px;color:var(--ink)}
 .cloze input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(20,40,75,.2)}
@@ -229,8 +232,8 @@ table.cf input{width:80px}
 /* ---------- Toasts / cards ---------- */
 #toasts{position:fixed;top:92px;left:50%;transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(560px,92vw)}
 .toast{background:rgba(13,17,23,.94);border:1px solid var(--haz);color:var(--text);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;text-align:center;animation:drop .3s ease-out;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-.toast.good{border-color:var(--green)}
-.toast.bad{border-color:var(--red)}
+.toast.good{border-color:var(--green)!important;background:rgba(6,32,18,.97)!important;color:#ffffff!important}
+.toast.bad{border-color:var(--red)!important;border-width:2px!important;background:rgba(48,8,8,.97)!important;color:#ffffff!important}
 #zoneCard{position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:18;text-align:center;display:none;width:min(620px,92vw);background:rgba(8,12,24,.96);border:2px solid var(--haz);border-radius:16px;padding:22px 26px 20px;box-shadow:0 20px 60px rgba(0,0,0,.65)}
 #zoneCard.show{display:block;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
 #zoneCard .zc1{font:900 13px var(--display);letter-spacing:.18em;color:var(--haz);line-height:1.4}
@@ -1432,9 +1435,9 @@ const W = {
   spot:{ render(b){ const wrap=mk('div'); const n=b.segs.filter(s=>s[1]).length; wrap.innerHTML=instr((b.prompt||'Click to flag.')+` Click again to un-flag.`);
       const w=mk('div','spot '+(b.inline?'inline':'lines'));
       b.segs.forEach(([t,f])=>{ const s=mk('span','seg',t); s.dataset.f=f?'1':''; s.addEventListener('click',()=>{ sfx.click(); s.classList.toggle('flag'); w.querySelectorAll('.seg').forEach(x=>x.classList.remove('ok','bad')); }); w.appendChild(s); if(b.inline) w.appendChild(document.createTextNode(' ')); });
-      wrap.appendChild(w); wrap._s=w; return wrap; },
-    check(wrap,b){ let found=0,wrongF=0; wrap._s.querySelectorAll('.seg').forEach(s=>{ s.classList.remove('ok','bad'); if(s.classList.contains('flag')){ if(s.dataset.f){ found++; s.classList.add('ok'); } else { wrongF++; s.classList.add('bad'); } } });
-      const n=b.segs.filter(s=>s[1]).length; return {ok:found,total:n+wrongF,blank:0}; },
+      wrap.appendChild(w); wrap._s=w; const mm=mk('div','spot-miss'); wrap.appendChild(mm); wrap._m=mm; w.addEventListener('click',()=>{ w.classList.remove('missing'); mm.classList.remove('show'); }); return wrap; },
+    check(wrap,b){ let found=0,wrongF=0; wrap._s.classList.remove('missing'); wrap._m.classList.remove('show'); wrap._s.querySelectorAll('.seg').forEach(s=>{ s.classList.remove('ok','bad'); if(s.classList.contains('flag')){ if(s.dataset.f){ found++; s.classList.add('ok'); } else { wrongF++; s.classList.add('bad'); } } });
+      const n=b.segs.filter(s=>s[1]).length, miss=n-found; if(miss>0){ wrap._s.classList.add('missing'); wrap._m.textContent=`You have found ${found} of ${n}. ${miss===1?'1 more is':miss+' more are'} still to find in the red dashed box. Look again.`; wrap._m.classList.add('show'); } return {ok:found,total:n+wrongF,blank:0,miss}; },
     solve(wrap){ wrap._s.querySelectorAll('.seg').forEach(s=>s.classList.toggle('flag',!!s.dataset.f)); },
     answer:b=>b.inline ? `<div class="data">${b.segs.map(([t,f])=>f?`<b class="ans">[✔ ${t}]</b>`:t).join(' ')}</div>` : `<ul class="alist">${b.segs.map(([t,f])=>`<li>${t.replace(/<\/span><span>/,' — ').replace(/<\/?span>/g,'')}${f?' <b class="ans">✖ ERROR</b>':''}</li>`).join('')}</ul>` },
 
@@ -1597,8 +1600,8 @@ function showStamp(st, already){
 }
 function checkPuzzle(){
   const {zi,si}=curStation, st=LV(ZONES[zi].stations[si]);
-  let ok=0,total=0,blank=0;
-  curBlocks.forEach(([b,e])=>{ const c=W[b.t].check; if(!c) return; const r=c(e,b); ok+=r.ok; total+=r.total; blank+=r.blank||0; });
+  let ok=0,total=0,blank=0,miss=0;
+  curBlocks.forEach(([b,e])=>{ const c=W[b.t].check; if(!c) return; const r=c(e,b); ok+=r.ok; total+=r.total; blank+=r.blank||0; miss+=r.miss||0; });
   if(ok===total){
     sfx.good(); S.solved[zi][si]=true; $('pzMsg').className='pz-msg ok';
     $('pzMsg').textContent = st.digit==null ? FINAL_MSG : 'All correct — label printed!';
@@ -1607,7 +1610,7 @@ function checkPuzzle(){
     showStamp(st,false); onStationSolved(zi,si); updateHUD();
   } else {
     sfx.bad(); S.wrong++; $('pzMsg').className='pz-msg bad';
-    $('pzMsg').textContent = `${ok} of ${total} correct` + (blank?` · ${blank} not answered yet`:'') + ' — fix the red ones.';
+    $('pzMsg').textContent = `${ok} of ${total} correct` + (blank?` · ${blank} not answered yet`:'') + (miss?` · ${miss} still to find`:'') + ' — fix anything marked in red.';
   }
 }
 function closePuzzle(){ $('puzzle').classList.add('hidden'); curStation=null; curBlocks=[]; S.mode='explore'; goHome(); }
